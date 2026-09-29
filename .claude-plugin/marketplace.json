@@ -1,0 +1,16 @@
+{
+  "name": "bunderlog",
+  "owner": {
+    "name": "Andrew Molyuk",
+    "email": "andrew@molyuk.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins from bunderlog."
+  },
+  "plugins": [
+    {
+      "name": "baloo",
+      "source": "./plugins/baloo"
+    }
+  ]
+}

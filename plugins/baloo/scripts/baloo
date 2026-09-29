@@ -1,0 +1,85 @@
+#!/bin/sh
+# The baloo binary's loader (ADR binary). `baloo install` downloads this machine's build of the
+# plugin's version from its GitHub Release into ${CLAUDE_PLUGIN_DATA}, unless it is there, and
+# checks it against the sha256 in SHA256SUMS beside this script; `baloo <args>` runs that build.
+# A failure says why on stderr and exits 2, which a SessionStart hook shows to the user.
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+# Where the builds are; a test points it elsewhere, and the sha256 check still applies.
+releases=${BALOO_RELEASES:-https://github.com/bunderlog/claude-plugins/releases/download}
+
+fail() {
+  echo "baloo: $*" >&2
+  exit 2
+}
+
+case $(uname -s) in
+  Darwin) os=darwin ;;
+  Linux) os=linux ;;
+  *) fail "no build for $(uname -s)" ;;
+esac
+case $(uname -m) in
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
+  *) fail "no build for $(uname -m)" ;;
+esac
+
+sums=$here/SHA256SUMS
+[ -f "$sums" ] || fail "$sums is missing: the plugin has no Release yet"
+line=$(grep "  baloo_[^ ]*_${os}_${arch}\$" "$sums" | head -n 1)
+[ -n "$line" ] || fail "no build for $os/$arch in $sums"
+sum=${line%% *}
+build=${line##* }
+version=${build#baloo_}
+version=${version%_"$os"_"$arch"}
+[ -n "${CLAUDE_PLUGIN_DATA:-}" ] || fail "CLAUDE_PLUGIN_DATA is not set"
+bin=$CLAUDE_PLUGIN_DATA/$build
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d ' ' -f 1
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | cut -d ' ' -f 1
+  else
+    fail "needs sha256sum or shasum to check $build"
+  fi
+}
+
+install() {
+  # A build already there is checked too, once a session: a damaged one is downloaded again.
+  if [ -x "$bin" ]; then
+    got=$(sha256 "$bin") || exit 2
+    [ "$got" = "$sum" ] && return 0
+  fi
+  mkdir -p "$CLAUDE_PLUGIN_DATA" || fail "could not create $CLAUDE_PLUGIN_DATA"
+  # A download lands beside its final path and is moved there in one step once checked, so a
+  # concurrent session never runs half a file.
+  tmp=$bin.$$.tmp
+  trap 'rm -f "$tmp"' EXIT
+  url=$releases/v$version/$build
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL --retry 2 --connect-timeout 10 --max-time 120 -o "$tmp" "$url" ||
+      fail "could not download $url"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q -T 60 -O "$tmp" "$url" || fail "could not download $url"
+  else
+    fail "needs curl or wget to download $url"
+  fi
+  got=$(sha256 "$tmp") || exit 2
+  [ "$got" = "$sum" ] || fail "$url has sha256 $got, not the $sum in $sums"
+  chmod +x "$tmp" || fail "could not make $tmp executable"
+  mv -f "$tmp" "$bin" || fail "could not move $build into $CLAUDE_PLUGIN_DATA"
+  # Builds of other versions go after a week unused, when no older session still runs them.
+  find "$CLAUDE_PLUGIN_DATA" -maxdepth 1 -name 'baloo_*' ! -name "$build" -mtime +7 \
+    -exec rm -f {} + 2>/dev/null
+  return 0
+}
+
+case ${1:-} in
+  install) install ;;
+  *)
+    [ -x "$bin" ] || fail "$build is not downloaded; it downloads at session start"
+    exec "$bin" "$@"
+    ;;
+esac

@@ -1,0 +1,11 @@
+{
+  "name": "baloo",
+  "version": "0.0.0",
+  "description": "Skills and hooks for working with Claude Code across projects; the hooks run as one Go binary, downloaded at session start.",
+  "author": {
+    "name": "Andrew Molyuk",
+    "email": "andrew@molyuk.com"
+  },
+  "repository": "https://github.com/bunderlog/claude-plugins",
+  "license": "MIT"
+}

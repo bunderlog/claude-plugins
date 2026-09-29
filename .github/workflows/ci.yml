@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v2
+      - run: mise run check
+      - run: mise run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sums-${{ matrix.os }}
+          path: dist/SHA256SUMS
+
+  # A Release is checked by rebuilding it in CI (ADR binary), so a build must not depend on the
+  # machine it's made on.
+  reproducible:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+      - run: diff sums-ubuntu-latest/SHA256SUMS sums-macos-latest/SHA256SUMS
