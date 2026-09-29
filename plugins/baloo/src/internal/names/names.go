@@ -4,8 +4,6 @@ package names
 const (
 	// Plugin is the plugin's name, its binary's name and the prefix of its builds.
 	Plugin = "baloo"
-	// Repo is the GitHub repo whose Releases hold the builds.
-	Repo = "bunderlog/claude-plugins"
 	// PluginDir is the plugin's folder in this repo.
 	PluginDir = "plugins/" + Plugin
 	// Src is the binary's Go module, inside the plugin it belongs to.
