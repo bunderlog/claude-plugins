@@ -1,5 +1,20 @@
 {
   "version": "0.2",
-  "language": "en",
-  "words": ["baloo", "gofmt", "shellcheck"]
+  "language": "en,en-US",
+  "words": [
+    "baloo",
+    "bunderlog",
+    "cowork",
+    "deepenings",
+    "gofmt",
+    "gomod",
+    "minisign",
+    "molyuk",
+    "shellcheck",
+    "throughs",
+    "toplevel",
+    "trimpath",
+    "webui"
+  ],
+  "overrides": [{ "filename": "**/scripts/baloo", "languageId": "shellscript" }]
 }

@@ -7,7 +7,8 @@ import (
 	"os"
 )
 
-// version is set at build time (`-X main.version=…`); a build from source says "dev".
+// version is set when a Release is built (`-X main.version=…`); a binary built from source
+// says "dev".
 var version = "dev"
 
 func main() {
