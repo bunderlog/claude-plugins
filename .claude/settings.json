@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "bunderlog": {
+      "source": {
+        "source": "directory",
+        "path": ".."
+      }
+    }
+  },
+  "enabledPlugins": {
+    "baloo@bunderlog": true
+  }
+}

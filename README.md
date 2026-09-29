@@ -12,7 +12,7 @@ Why things are the way they are is in [.about/adr/](.about/adr/).
 
 ## Development
 
-The binary's source is in `plugins/baloo/src/`; `mise run check` formats, vets and tests it.
-To try the plugin from a checkout, run `claude --plugin-dir plugins/baloo`; it downloads the
-binary of the last Release. To make a Release, run `mise run release` and push it with
-`git push --follow-tags`.
+This repo uses its own plugin: `.claude/settings.json` enables `baloo` from the working tree, so
+an edit to a skill or hook takes effect at the next session or `/reload-plugins`. The binary is
+the last Release's; its source is in `plugins/baloo/src/`, and `mise run check` formats, vets and
+tests it. To make a Release, run `mise run release` and push it with `git push --follow-tags`.
