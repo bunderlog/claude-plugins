@@ -1,6 +1,6 @@
 {
   "name": "baloo",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Skills and hooks for working with Claude Code across projects; the hooks run as one Go binary, downloaded at session start.",
   "author": {
     "name": "Andrew Molyuk",
