@@ -121,3 +121,35 @@ func split(command string) [][]string {
 func shortFlag(a string, f rune) bool {
 	return len(a) > 1 && a[0] == '-' && a[1] != '-' && strings.ContainsRune(a[1:], f)
 }
+
+// gitValued are git's options before its subcommand that take the next argument as their value.
+var gitValued = []string{"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
+
+// splitGit splits git's arguments `args` into the options before its subcommand, each followed
+// by its value where it takes one, the subcommand, "" for none, and the subcommand's arguments.
+func splitGit(args []string) (options []string, sub string, rest []string) {
+	for len(args) > 0 && strings.HasPrefix(args[0], "-") {
+		n := 1
+		if slices.Contains(gitValued, args[0]) && len(args) > 1 {
+			n = 2
+		}
+		options, args = append(options, args[:n]...), args[n:]
+	}
+	if len(args) == 0 {
+		return options, "", nil
+	}
+	return options, args[0], args[1:]
+}
+
+// hasFlag says whether the arguments `args` have one of the flags `flags`: a long one as it is,
+// a short one alone or among others (`-f` in `-fd`).
+func hasFlag(args []string, flags ...string) bool {
+	for _, f := range flags {
+		for _, a := range args {
+			if a == f || len(f) == 2 && f[0] == '-' && shortFlag(a, rune(f[1])) {
+				return true
+			}
+		}
+	}
+	return false
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -313,6 +314,34 @@ func TestCheckNoGitHookBypass(t *testing.T) {
 		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
 			t.Errorf("check no-git-hook-bypass on %s = %d, %q, %q; want 0, %q",
 				in, code, stdout.String(), stderr.String(), want)
+		}
+	}
+}
+
+// The PreToolUse Check no-destructive-commands denies a Bash command that destroys work, asks the
+// user first about one they often ask for by name, and says nothing of anything else.
+func TestCheckNoDestructiveCommands(t *testing.T) {
+	testkit.Repo(t) // for its environment
+	cwd := t.TempDir()
+	for command, want := range map[string]string{
+		"git push -f": `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",` +
+			`"permissionDecisionReason":"baloo:no-destructive-commands: git push --force rewrites remote ` +
+			"history; --force-with-lease is allowed. If it's really needed, ask the user to run it " +
+			"themselves with `! <command>`.\"}}\n",
+		"git push --delete origin x": `{"hookSpecificOutput":{"hookEventName":"PreToolUse",` +
+			`"permissionDecision":"ask","permissionDecisionReason":"baloo:no-destructive-commands: ` +
+			`git push --delete removes a remote branch"}}` + "\n",
+		"git reset --hard": `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",` +
+			`"permissionDecisionReason":"baloo:no-destructive-commands: git reset --hard discards ` +
+			"changes. If it's really needed, ask the user to run it themselves with `! <command>`.\"}}\n",
+		"git push": "",
+	} {
+		in := fmt.Sprintf(`{"tool_name": "Bash", "cwd": %q, "tool_input": {"command": %q}}`, cwd, command)
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"check", "no-destructive-commands"}, strings.NewReader(in), &stdout, &stderr)
+		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
+			t.Errorf("check no-destructive-commands on %q = %d, %q, %q; want 0, %q",
+				command, code, stdout.String(), stderr.String(), want)
 		}
 	}
 }

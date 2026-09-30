@@ -28,7 +28,7 @@ var version = "dev"
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check linear-history < <pushed refs> |\n" +
-	"  check no-git-hook-bypass < <PreToolUse input>"
+	"  check no-git-hook-bypass|no-destructive-commands < <PreToolUse input>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -56,6 +56,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "no-git-hook-bypass" {
 		return noGitHookBypass(stdin, stdout)
+	}
+	if len(args) == 2 && args[0] == "check" && args[1] == "no-destructive-commands" {
+		return noDestructiveCommands(stdin, stdout)
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
 		return linearHistory(stdin, stderr)
@@ -255,31 +258,62 @@ func linearHistory(stdin io.Reader, stderr io.Writer) int {
 }
 
 // noGitHookBypass is the Bash tool's PreToolUse Check baloo:no-git-hook-bypass: it denies a
-// command that would bypass the Git hooks, and tells Claude to leave it to the user. It says
-// nothing of any other tool call, or of input it can't read, which Claude Code then runs as usual.
+// command that would bypass the Git hooks.
 func noGitHookBypass(stdin io.Reader, stdout io.Writer) int {
+	if command, _, ok := bashCall(stdin); ok {
+		decide(stdout, "no-git-hook-bypass", checks.NoGitHookBypass(command), "")
+	}
+	return 0
+}
+
+// noDestructiveCommands is the Bash tool's PreToolUse Check baloo:no-destructive-commands: it
+// denies a command that would destroy work beyond undo, and asks the user first about one they
+// often ask for by name.
+func noDestructiveCommands(stdin io.Reader, stdout io.Writer) int {
+	if command, cwd, ok := bashCall(stdin); ok {
+		deny, ask := checks.NoDestructiveCommands(command, cwd)
+		decide(stdout, "no-destructive-commands", deny, ask)
+	}
+	return 0
+}
+
+// bashCall is the command of the Bash tool's call that Claude Code gives a PreToolUse hook on
+// `stdin`, with the folder it runs in; not ok for any other tool's call, or input it can't read,
+// which a Check then says nothing of, and Claude Code runs as usual.
+func bashCall(stdin io.Reader) (command, cwd string, ok bool) {
 	var call struct {
 		ToolName  string `json:"tool_name"`
+		Cwd       string `json:"cwd"`
 		ToolInput struct {
 			Command string `json:"command"`
 		} `json:"tool_input"`
 	}
 	if json.NewDecoder(stdin).Decode(&call) != nil || call.ToolName != "Bash" {
-		return 0
+		return "", "", false
 	}
-	why := checks.NoGitHookBypass(call.ToolInput.Command)
-	if why == "" {
-		return 0
+	return call.ToolInput.Command, call.Cwd, true
+}
+
+// decide prints the PreToolUse Check `check`'s decision for Claude Code: a denial, which tells
+// Claude to leave the command to the user, when `deny` says why; else a question to the user
+// when `ask` does; else nothing, and the call runs as usual.
+func decide(stdout io.Writer, check, deny, ask string) {
+	decision, reason := "deny", deny+". If it's really needed, ask the user to run it themselves "+
+		"with `! <command>`."
+	switch {
+	case deny != "":
+	case ask != "":
+		decision, reason = "ask", ask
+	default:
+		return
 	}
 	out := json.NewEncoder(stdout)
 	out.SetEscapeHTML(false)
 	out.Encode(map[string]any{"hookSpecificOutput": map[string]string{
-		"hookEventName":      "PreToolUse",
-		"permissionDecision": "deny",
-		"permissionDecisionReason": names.Plugin + ":no-git-hook-bypass: " + why + ". If it's " +
-			"really needed, ask the user to run it themselves with `! <command>`.",
+		"hookEventName":            "PreToolUse",
+		"permissionDecision":       decision,
+		"permissionDecisionReason": names.Plugin + ":" + check + ": " + reason,
 	}})
-	return 0
 }
 
 // oneLine escapes what isn't printable in `s`, as Go does in a string literal, so a line that

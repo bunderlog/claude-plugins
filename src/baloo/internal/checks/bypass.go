@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// gitValued are git's options before its subcommand that take the next argument as their value.
-var gitValued = []string{"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
-
 // NoGitHookBypass is the Check baloo:no-git-hook-bypass (PreToolUse on Bash): why the shell
 // command `command` would bypass the Git hooks, or "" when it wouldn't. That is `--no-verify` on
 // any git subcommand, `-n` on commit, core.hooksPath set for one command or written to git's
@@ -20,25 +17,14 @@ func NoGitHookBypass(command string) string {
 		if p.name != "git" {
 			continue
 		}
-		args := p.args
-		for len(args) > 0 && strings.HasPrefix(args[0], "-") {
-			option := args[0]
-			if slices.Contains(gitValued, option) && len(args) > 1 {
-				args = args[1:]
-				if option == "-c" && hooksPath(args[0]) {
-					return "git -c core.hooksPath=… bypasses the Git hooks"
-				}
-			} else if v, ok := strings.CutPrefix(option, "--config-env="); ok && hooksPath(v) {
+		options, sub, rest := splitGit(p.args)
+		for i, option := range options {
+			v, env := strings.CutPrefix(option, "--config-env=")
+			if env && hooksPath(v) || option == "-c" && i+1 < len(options) && hooksPath(options[i+1]) {
 				return "git -c core.hooksPath=… bypasses the Git hooks"
 			}
-			args = args[1:]
 		}
-		if len(args) == 0 {
-			continue
-		}
-		sub, rest := args[0], args[1:]
-		if slices.Contains(rest, "--no-verify") ||
-			sub == "commit" && slices.ContainsFunc(rest, func(a string) bool { return shortFlag(a, 'n') }) {
+		if slices.Contains(rest, "--no-verify") || sub == "commit" && hasFlag(rest, "-n") {
 			return "git " + sub + " --no-verify bypasses the Git hooks"
 		}
 		if sub == "config" && writesHooksPath(rest) {
