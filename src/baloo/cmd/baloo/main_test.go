@@ -397,6 +397,8 @@ func TestPreToolUse(t *testing.T) {
 			"ask the user to look in their own terminal, not with `!`, whose output enters the session."},
 		`{"tool_name": "Edit", "tool_input": {"file_path": "` + dir + `/.claude/baloo.yml"}}`: {"ask",
 			"baloo: this may change .claude/baloo.yml, which turns the plugin's checks on and off"},
+		bashCall("claude plugin disable baloo@bunderlog"): {"ask",
+			"baloo: this may turn off the hooks that run the plugin's checks"},
 		bashCall("git status"): {"", ""},
 		`nope`:                 {"", ""},
 	} {

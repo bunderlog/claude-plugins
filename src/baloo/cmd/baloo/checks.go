@@ -136,8 +136,8 @@ type hookCall struct {
 
 // preToolUse is the PreToolUse Hook on Claude's tool calls (ADR checks): it runs the Checks on
 // them that the Config turns on, and denies the call when one would, else asks the user first
-// when one would, and asks too before a change to the Config. It says nothing of input it can't
-// read, and Claude Code runs the call as usual.
+// when one would, and asks too before a change to the Config or one that may turn its Hooks off.
+// It says nothing of input it can't read, and Claude Code runs the call as usual.
 func preToolUse(stdin io.Reader, stdout io.Writer) int {
 	var call hookCall
 	dir, err := project()
@@ -173,6 +173,9 @@ func preToolUse(stdin io.Reader, stdout io.Writer) int {
 	if c.Root != "" && checks.ChangesConfig(call.ToolCall, call.Cwd, own) {
 		ask = append(ask, names.Plugin+": this may change "+names.Config+", which turns the plugin's "+
 			"checks on and off")
+	}
+	if checks.TurnsHooksOff(call.ToolCall, call.Cwd, os.Getenv("CLAUDE_CONFIG_DIR")) {
+		ask = append(ask, names.Plugin+": this may turn off the hooks that run the plugin's checks")
 	}
 	if len(ask) > 0 {
 		return decide(stdout, "ask", strings.Join(ask, "; "))
