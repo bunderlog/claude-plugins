@@ -195,32 +195,37 @@ func TestStatusLine(t *testing.T) {
 	}
 }
 
-// A Check fails with what is wrong, for the commit-msg hook to stop the commit and show it.
-func TestCheckNoAICoauthor(t *testing.T) {
-	for message, want := range map[string]struct {
-		code int
-		errs string
+// A commit-msg Check fails with what is wrong, for git to stop the commit and show it.
+func TestCheckCommitMessage(t *testing.T) {
+	for _, tc := range []struct {
+		name, message string
+		code          int
+		errs          string
 	}{
-		"feat: x\n\nCo-authored-by: Jane Doe <jane@example.com>\n": {0, ""},
-		"feat: x\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n": {1, "baloo:no-ai-coauthor: " +
-			"remove the AI co-author or credit:\nCo-Authored-By: Claude <noreply@anthropic.com>\n"},
+		{"no-ai-coauthor", "feat: x\n\nCo-authored-by: Jane Doe <jane@example.com>\n", 0, ""},
+		{"no-ai-coauthor", "feat: x\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n", 1,
+			"baloo:no-ai-coauthor: remove the AI co-author or credit:\n" +
+				"Co-Authored-By: Claude <noreply@anthropic.com>\n"},
+		{"conventional-commits", "feat: x\n", 0, ""},
+		{"conventional-commits", "Add x\n", 1,
+			"baloo:conventional-commits: \"Add x\" is not `type(scope): description`\n"},
 	} {
 		path := filepath.Join(t.TempDir(), "COMMIT_EDITMSG")
-		if err := os.WriteFile(path, []byte(message), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(tc.message), 0o644); err != nil {
 			t.Fatal(err)
 		}
 		var stdout, stderr bytes.Buffer
-		code := run([]string{"check", "no-ai-coauthor", path}, nil, &stdout, &stderr)
-		if code != want.code || stdout.Len() != 0 || stderr.String() != want.errs {
-			t.Errorf("check no-ai-coauthor on %q = %d, %q, %q; want %d, \"\", %q",
-				message, code, stdout.String(), stderr.String(), want.code, want.errs)
+		code := run([]string{"check", tc.name, path}, nil, &stdout, &stderr)
+		if code != tc.code || stdout.Len() != 0 || stderr.String() != tc.errs {
+			t.Errorf("check %s on %q = %d, %q, %q; want %d, \"\", %q",
+				tc.name, tc.message, code, stdout.String(), stderr.String(), tc.code, tc.errs)
 		}
 	}
 	var stdout, stderr bytes.Buffer
 	missing := filepath.Join(t.TempDir(), "nope")
-	if code := run([]string{"check", "no-ai-coauthor", missing}, nil, &stdout, &stderr); code != 2 ||
-		!strings.HasPrefix(stderr.String(), "baloo:no-ai-coauthor: ") {
-		t.Errorf("check no-ai-coauthor on a missing file = %d, %q; want 2 and why", code, stderr.String())
+	if code := run([]string{"check", "conventional-commits", missing}, nil, &stdout, &stderr); code != 2 ||
+		!strings.HasPrefix(stderr.String(), "baloo:conventional-commits: ") {
+		t.Errorf("check conventional-commits on a missing file = %d, %q; want 2 and why", code, stderr.String())
 	}
 }
 

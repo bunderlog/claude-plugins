@@ -26,7 +26,7 @@ import (
 var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  check no-ai-coauthor <message file>"
+	"  check no-ai-coauthor|conventional-commits <message file>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -46,8 +46,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return statusLine(stdin, stdout)
 		}
 	}
-	if len(args) == 3 && args[0] == "check" && args[1] == "no-ai-coauthor" {
-		return noAICoauthor(args[2], stderr)
+	if len(args) == 3 && args[0] == "check" && commitMessage[args[1]] != nil {
+		return checkCommitMessage(args[1], args[2], stderr)
 	}
 	fmt.Fprintln(stderr, usage)
 	return 2
@@ -176,20 +176,31 @@ func statusLine(stdin io.Reader, stdout io.Writer) int {
 	return 0
 }
 
-// noAICoauthor is the commit-msg hook's Check baloo:no-ai-coauthor on the message in the file
-// `path`: it fails with the lines that make an AI a co-author or credit one, for git to show.
-func noAICoauthor(path string, stderr io.Writer) int {
-	const name = names.Plugin + ":no-ai-coauthor"
+// commitMessage are the commit-msg hook's Checks, by name: each says what is wrong with a commit
+// message, or "" when nothing is.
+var commitMessage = map[string]func(message string) string{
+	"no-ai-coauthor": func(message string) string {
+		if found := checks.NoAICoauthor(message); len(found) > 0 {
+			return "remove the AI co-author or credit:\n" + strings.Join(found, "\n")
+		}
+		return ""
+	},
+	"conventional-commits": checks.ConventionalCommit,
+}
+
+// checkCommitMessage runs the commit-msg Check `name` on the message in the file `path`: it fails
+// with what is wrong, for git to show.
+func checkCommitMessage(name, path string, stderr io.Writer) int {
 	message, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
+		fmt.Fprintf(stderr, "%s:%s: %v\n", names.Plugin, name, err)
 		return 2
 	}
-	found := checks.NoAICoauthor(string(message))
-	if len(found) == 0 {
+	why := commitMessage[name](string(message))
+	if why == "" {
 		return 0
 	}
-	fmt.Fprintf(stderr, "%s: remove the AI co-author or credit:\n%s\n", name, strings.Join(found, "\n"))
+	fmt.Fprintf(stderr, "%s:%s: %s\n", names.Plugin, name, why)
 	return 1
 }
 
