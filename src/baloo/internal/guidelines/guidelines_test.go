@@ -23,7 +23,7 @@ func write(t *testing.T, root string, files map[string]string) {
 }
 
 func TestFitting(t *testing.T) {
-	always := []string{"principles", "design", "testing", "writing-for-agents"}
+	always := []string{"principles", "design", "testing", "debugging", "writing-for-agents"}
 	for _, tc := range []struct {
 		name  string
 		files map[string]string
@@ -64,7 +64,7 @@ func TestIndex(t *testing.T) {
 	// Without the rules for every task, the lines are still there.
 	lines := "Read a file when its task comes up:\n" +
 		"- " + All[0].When + ": " + filepath.Join(plugin, "guidelines", "principles.md") + "\n" +
-		"- " + All[6].When + ": " + filepath.Join(plugin, "guidelines", "vue.md")
+		"- " + All[7].When + ": " + filepath.Join(plugin, "guidelines", "vue.md")
 	on := map[string]bool{"principles": true, "vue": true}
 	if text, err := Index(plugin, on); err == nil || !strings.HasSuffix(text, lines) {
 		t.Errorf("Index without principles.md = %q, %v; want the lines and an error", text, err)

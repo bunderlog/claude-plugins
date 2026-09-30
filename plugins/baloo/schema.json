@@ -32,6 +32,10 @@
           "description": "Testing: writing tests and building test-first.",
           "type": "boolean"
         },
+        "debugging": {
+          "description": "Debugging: finding a bug's cause before fixing it.",
+          "type": "boolean"
+        },
         "writing-for-agents": {
           "description": "Writing for agents: skills, CLAUDE.md and AGENTS.md, prompts.",
           "type": "boolean"

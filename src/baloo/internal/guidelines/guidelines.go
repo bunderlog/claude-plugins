@@ -29,6 +29,8 @@ var All = []Guideline{
 		"data-model change)", nil},
 	{"design", "Designing a module or an interface, or deciding where it is tested from", nil},
 	{"testing", "Writing tests, or building test-first", nil},
+	{"debugging", "Finding or fixing the cause of a bug (wrong output, a crash, a failing or " +
+		"flaky test, a slowdown)", nil},
 	{"writing-for-agents", "Writing or editing a skill, a CLAUDE.md or AGENTS.md, or a prompt",
 		nil},
 	{"go", "Writing Go", func(m manifests) bool { return m.goMod }},
