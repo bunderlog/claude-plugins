@@ -2,8 +2,8 @@
   "extraKnownMarketplaces": {
     "bunderlog": {
       "source": {
-        "source": "directory",
-        "path": ".."
+        "source": "github",
+        "repo": "bunderlog/claude-plugins"
       }
     }
   },
