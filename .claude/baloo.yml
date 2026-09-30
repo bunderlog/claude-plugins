@@ -12,6 +12,11 @@ output-style: short-replies
 # settings file of Claude Code's but the user's own sets one; false takes it out.
 status-line: true
 
+# The Session review: when a session ends, a separate Claude session records in .about/glossary.md
+# and .about/adr/ what the conversation settled but nobody wrote down; the next session start
+# says what it changed. It never commits.
+session-review: true
+
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made.
