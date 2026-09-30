@@ -296,6 +296,27 @@ func TestCheckLinearHistory(t *testing.T) {
 	}
 }
 
+// The PreToolUse Check no-git-hook-bypass denies a Bash command that bypasses the Git hooks, and
+// says nothing of any other tool call, or of input it can't read.
+func TestCheckNoGitHookBypass(t *testing.T) {
+	for in, want := range map[string]string{
+		`{"tool_name": "Bash", "tool_input": {"command": "git commit --no-verify"}}`: `{"hookSpecificOutput":` +
+			`{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":` +
+			`"baloo:no-git-hook-bypass: git commit --no-verify bypasses the Git hooks. If it's really ` +
+			"needed, ask the user to run it themselves with `! <command>`.\"}}\n",
+		`{"tool_name": "Bash", "tool_input": {"command": "git commit"}}`:    "",
+		`{"tool_name": "Read", "tool_input": {"file_path": "--no-verify"}}`: "",
+		`nope`: "",
+	} {
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"check", "no-git-hook-bypass"}, strings.NewReader(in), &stdout, &stderr)
+		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
+			t.Errorf("check no-git-hook-bypass on %s = %d, %q, %q; want 0, %q",
+				in, code, stdout.String(), stderr.String(), want)
+		}
+	}
+}
+
 // Outside a repo, such as in the home folder, the session start writes nothing and says nothing.
 func TestSessionStartOutsideRepo(t *testing.T) {
 	dir := t.TempDir()

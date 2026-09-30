@@ -27,7 +27,8 @@ var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
-	"  check no-secrets-in-commits | check linear-history < <pushed refs>"
+	"  check no-secrets-in-commits | check linear-history < <pushed refs> |\n" +
+	"  check no-git-hook-bypass < <PreToolUse input>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -52,6 +53,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets-in-commits" {
 		return noSecretsInCommits(stderr)
+	}
+	if len(args) == 2 && args[0] == "check" && args[1] == "no-git-hook-bypass" {
+		return noGitHookBypass(stdin, stdout)
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
 		return linearHistory(stdin, stderr)
@@ -248,6 +252,34 @@ func linearHistory(stdin io.Reader, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "%s: rebase instead of merging, then push the rebased branch with "+
 		"--force-with-lease; merge commits:\n%s\n", name, strings.Join(found, "\n"))
 	return 1
+}
+
+// noGitHookBypass is the Bash tool's PreToolUse Check baloo:no-git-hook-bypass: it denies a
+// command that would bypass the Git hooks, and tells Claude to leave it to the user. It says
+// nothing of any other tool call, or of input it can't read, which Claude Code then runs as usual.
+func noGitHookBypass(stdin io.Reader, stdout io.Writer) int {
+	var call struct {
+		ToolName  string `json:"tool_name"`
+		ToolInput struct {
+			Command string `json:"command"`
+		} `json:"tool_input"`
+	}
+	if json.NewDecoder(stdin).Decode(&call) != nil || call.ToolName != "Bash" {
+		return 0
+	}
+	why := checks.NoGitHookBypass(call.ToolInput.Command)
+	if why == "" {
+		return 0
+	}
+	out := json.NewEncoder(stdout)
+	out.SetEscapeHTML(false)
+	out.Encode(map[string]any{"hookSpecificOutput": map[string]string{
+		"hookEventName":      "PreToolUse",
+		"permissionDecision": "deny",
+		"permissionDecisionReason": names.Plugin + ":no-git-hook-bypass: " + why + ". If it's " +
+			"really needed, ask the user to run it themselves with `! <command>`.",
+	}})
+	return 0
 }
 
 // oneLine escapes what isn't printable in `s`, as Go does in a string literal, so a line that
