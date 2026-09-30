@@ -14,6 +14,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -78,7 +79,7 @@ func sessionStart(stdout, stderr io.Writer) int {
 				"applies from their next message or session, and that to drop it they set "+
 				"output-style: false in %s and pick another style, Default too, with /output-style",
 				names.Plugin, c.OutputStyle, picked.Path, names.Config)
-			if picked.Enabled == outputstyle.Project {
+			if picked.Enabled == settings.Project {
 				line += "; the change to the team's settings is theirs to commit"
 			}
 			report = append(report, line)

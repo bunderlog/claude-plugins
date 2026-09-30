@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -180,7 +181,7 @@ func TestPickBadSettings(t *testing.T) {
 
 // Picked names the Scope that enables the plugin, which may not be the file's.
 func TestPickScope(t *testing.T) {
-	for scope, file := range map[Scope]string{Local: names.LocalSettings, Project: names.ProjectSettings, User: ""} {
+	for scope, file := range map[settings.Scope]string{settings.Local: names.LocalSettings, settings.Project: names.ProjectSettings, settings.User: ""} {
 		root, own := sandbox(t)
 		if file == "" {
 			write(t, filepath.Join(own, "settings.json"), on)
@@ -190,72 +191,6 @@ func TestPickScope(t *testing.T) {
 		got, err := Pick(root, root, "short-replies")
 		if err != nil || got.Enabled != scope {
 			t.Errorf("Pick enabled by %s = %+v, %v; want Enabled %s", scope, got, err, scope)
-		}
-	}
-}
-
-func TestWith(t *testing.T) {
-	const field = `"outputStyle": "x"`
-	fresh := "{\n  " + field + "\n}\n"
-	for _, tc := range []struct{ data, want string }{
-		{"", fresh},
-		{" \n", fresh},
-		{"{}", fresh},
-		{"{ }", fresh},
-		{"{\n}\n", fresh},
-		{"{\n  \"a\": 1\n}\n", "{\n  " + field + ",\n  \"a\": 1\n}\n"},
-	} {
-		got, err := with([]byte(tc.data), field)
-		if err != nil || string(got) != tc.want {
-			t.Errorf("with(%q) = %q, %v; want %q", tc.data, got, err, tc.want)
-		}
-	}
-	for _, data := range []string{"[]", "{nope", "1"} {
-		if got, err := with([]byte(data), field); err == nil {
-			t.Errorf("with(%q) = %q; want an error", data, got)
-		}
-	}
-}
-
-// A settings file is replaced whole, through a link to it too, and keeps its mode.
-func TestReplace(t *testing.T) {
-	dir := t.TempDir()
-	real := filepath.Join(dir, "real.json")
-	write(t, real, "{}")
-	if err := os.Chmod(real, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	link := filepath.Join(dir, "link.json")
-	if err := os.Symlink(real, link); err != nil {
-		t.Fatal(err)
-	}
-	if err := replace(link, []byte("{\"a\": 1}")); err != nil {
-		t.Fatal(err)
-	}
-	if got := contents(t, real); got != `{"a": 1}` {
-		t.Errorf("%s = %q; want the new text", real, got)
-	}
-	if info, err := os.Lstat(link); err != nil || info.Mode()&os.ModeSymlink == 0 {
-		t.Errorf("%s is no longer a link: %v", link, err)
-	}
-	if info, _ := os.Stat(real); info.Mode().Perm() != 0o600 {
-		t.Errorf("%s has mode %v; want 0600 kept", real, info.Mode().Perm())
-	}
-	if entries, _ := os.ReadDir(dir); len(entries) != 2 {
-		t.Errorf("replace left %d files in %s; want 2", len(entries), dir)
-	}
-}
-
-func TestPattern(t *testing.T) {
-	for rel, want := range map[string]string{
-		"a/.claude/settings.local.json": "a/.claude/settings.local.json",
-		"a[1]/b*/c?/d\\e":               "a\\[1]/b\\*/c\\?/d\\\\e",
-		"a /x":                          "a /x",
-		"#a/!b":                         "#a/!b",
-		"trailing  ":                    "trailing\\ \\ ",
-	} {
-		if got := pattern(rel); got != want {
-			t.Errorf("pattern(%q) = %q; want %q", rel, got, want)
 		}
 	}
 }
