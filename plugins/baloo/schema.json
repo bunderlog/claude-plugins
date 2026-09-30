@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "baloo config",
-  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each check and each guideline turns on or off with a key of its own.",
+  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each Check and each Guideline turns on or off with a key of its own.",
   "type": "object",
   "properties": {
     "output-style": {

@@ -202,7 +202,7 @@ func newConfig(fit []string) string {
 	}
 	return "# yaml-language-server: $schema=" + names.Schema + `
 #
-# baloo's settings for this repo. Each check and each guideline turns on or off with a key of its
+# baloo's settings for this repo. Each Check and each Guideline turns on or off with a key of its
 # own here. A wrong setting is reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
