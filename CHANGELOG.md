@@ -2,6 +2,14 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.7.0 — 2026-10-01
+
+### Features
+
+- checks: reject an accepted ADR changed without today's Date (bc6dfec)
+- retro: review past sessions for stalls and the setup changes that would spare them (4fe6687)
+- session-review: record what a closed session settled but nobody wrote down (1a0a623)
+
 ## 0.6.0 — 2026-10-01
 
 ### Features
