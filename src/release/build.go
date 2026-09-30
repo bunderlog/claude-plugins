@@ -1,5 +1,4 @@
-// Package release builds the baloo binary for every platform and makes a Release (ADR releases).
-package release
+package main
 
 import (
 	"crypto/sha256"
@@ -11,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bunderlog/claude-plugins/plugins/baloo/src/internal/names"
+	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
 // Platforms are the GOOS/GOARCH pairs the binary is built for; the loader picks its own.
@@ -23,9 +22,9 @@ var Platforms = [][2]string{
 }
 
 // Build builds the binary of `version` for every platform into `dir` under the repo at `root`, and
-// returns their SHA256SUMS. The build is reproducible, so CI rebuilding a Release gets the same
-// sha256 as the ones committed with it (ADR binary): the Go version comes from go.mod, and every
-// setting that changes the output is fixed here rather than taken from the environment.
+// returns their SHA256SUMS. The Go version comes from go.mod, and the other settings are fixed here
+// rather than taken from the environment, so each is a static binary, without cgo, that runs on
+// any machine of its platform (GOAMD64=v1, GOARM64=v8.0).
 func Build(root, dir, version string) (string, error) {
 	src := filepath.Join(root, names.Src)
 	gomod, err := os.ReadFile(filepath.Join(src, "go.mod"))
@@ -45,7 +44,7 @@ func Build(root, dir, version string) (string, error) {
 	}
 	var sums strings.Builder
 	for _, p := range Platforms {
-		name := names.Build(version, p[0], p[1])
+		name := names.Binary(version, p[0], p[1])
 		out := filepath.Join(dir, name)
 		cmd := exec.Command("go", "build", "-trimpath", "-buildvcs=false",
 			"-ldflags", "-s -w -X main.version="+version, "-o", out, "./cmd/"+names.Plugin)

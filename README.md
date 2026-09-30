@@ -14,5 +14,5 @@ Why things are the way they are is in [.about/adr/](.about/adr/).
 
 This repo uses its own plugin: `.claude/settings.json` enables `baloo` from the working tree, so
 an edit to a skill or hook takes effect at the next session or `/reload-plugins`. The binary is
-the last Release's; its source is in `plugins/baloo/src/`, and `mise run check` formats, vets and
-tests it. To make a Release, run `mise run release` and push it with `git push --follow-tags`.
+the last Release's; its source is in `src/baloo/`, and `mise run check` formats, vets and tests
+it. To make a Release, run `mise run release` and push it with `git push --follow-tags`.

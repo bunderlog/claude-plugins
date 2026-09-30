@@ -1,4 +1,4 @@
-package release
+package main
 
 import (
 	"fmt"
@@ -9,15 +9,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bunderlog/claude-plugins/plugins/baloo/src/internal/names"
+	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
 // Commit is one commit since the last Release: its short sha and full message.
 type Commit struct{ SHA, Message string }
 
-// Changes are the paths whose change needs a Release: the plugin, with its binary's source, but
-// not the release tool inside it.
-var Changes = []string{names.PluginDir, ":!" + names.Src + "/cmd/release", ":!" + names.Src + "/internal/release"}
+// Changes are the paths whose change needs a Release: the plugin and its binary's source, but not
+// their tests, which users don't get from a Release.
+var Changes = []string{names.PluginDir, names.Src, ":!*_test.go"}
 
 const changelogHeader = "# Changelog\n\nThe " + names.Plugin + " plugin's Releases, newest first.\n"
 
@@ -118,10 +118,10 @@ func git(root string, args ...string) (string, error) {
 }
 
 // Release makes a Release in the repo at `root` from the commits since the last `v*` tag: it
-// writes the next version to the manifest, builds the binary for every platform into `dist`,
-// writes their sha256 beside the loader and a section to CHANGELOG.md, commits these and tags the
-// commit. It returns the version.
-func Release(root, dist, date string) (string, error) {
+// builds the next version for every platform, to check that it builds, writes it to the manifest
+// and a section to CHANGELOG.md, commits these and tags the commit, whose push has CI build and
+// publish the binaries. It returns the version.
+func Release(root, date string) (string, error) {
 	if status, err := git(root, "status", "--porcelain"); err != nil || status != "" {
 		return "", fmt.Errorf("commit or stash your changes first")
 	}
@@ -160,6 +160,16 @@ func Release(root, dist, date string) (string, error) {
 	if version == "" {
 		return "", fmt.Errorf("nothing to release: %s is unchanged since v%s", strings.Join(Changes, " "), current)
 	}
+	// A version that doesn't build is never tagged: CI would publish no GitHub Release for it, and
+	// every Loader would fail to download it.
+	built, err := os.MkdirTemp("", "release")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(built)
+	if _, err := Build(root, built, version); err != nil {
+		return "", err
+	}
 
 	manifest := filepath.Join(root, names.Manifest)
 	text, err := os.ReadFile(manifest)
@@ -168,16 +178,6 @@ func Release(root, dist, date string) (string, error) {
 	}
 	bumped := regexp.MustCompile(`("version":\s*")[^"]*"`).ReplaceAll(text, []byte(`${1}`+version+`"`))
 	if err := os.WriteFile(manifest, bumped, 0o644); err != nil {
-		return "", err
-	}
-	if err := os.RemoveAll(dist); err != nil {
-		return "", err
-	}
-	sums, err := Build(root, dist, version)
-	if err != nil {
-		return "", err
-	}
-	if err := os.WriteFile(filepath.Join(root, names.Sums), []byte(sums), 0o644); err != nil {
 		return "", err
 	}
 	file := filepath.Join(root, "CHANGELOG.md")
@@ -197,7 +197,7 @@ func Release(root, dist, date string) (string, error) {
 		return "", err
 	}
 
-	if _, err := git(root, "add", names.Manifest, names.Sums, "CHANGELOG.md"); err != nil {
+	if _, err := git(root, "add", names.Manifest, "CHANGELOG.md"); err != nil {
 		return "", err
 	}
 	msg := "chore(release): " + version

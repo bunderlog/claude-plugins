@@ -16,5 +16,5 @@
     "trimpath",
     "webui"
   ],
-  "overrides": [{ "filename": "**/scripts/baloo", "languageId": "shellscript" }]
+  "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]
 }

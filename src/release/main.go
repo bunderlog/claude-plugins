@@ -1,9 +1,10 @@
-// Command release makes a Release of the baloo plugin (ADR releases). Run it in this module:
+// Command release makes a Release of the baloo plugin (ADR releases). It is not part of the
+// plugin, so a change to it needs no Release. Run it in this module:
 //
-//	go run ./cmd/release        make a Release from the commits since the last one
-//	go run ./cmd/release build  build the manifest's version for every platform into dist/
+//	go run .        make a Release from the commits since the last one
+//	go run . build  build the manifest's version for every platform into dist/
 //
-// dist/ is at the repo root.
+// dist/ is at the repo root, and a build empties it first, so it holds only the one version.
 package main
 
 import (
@@ -13,8 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/bunderlog/claude-plugins/plugins/baloo/src/internal/release"
 )
 
 func main() {
@@ -33,24 +32,27 @@ func run(args []string) error {
 	dist := filepath.Join(root, "dist")
 	switch {
 	case len(args) == 0:
-		version, err := release.Release(root, dist, time.Now().Format(time.DateOnly))
+		version, err := Release(root, time.Now().Format(time.DateOnly))
 		if err != nil {
 			return err
 		}
 		fmt.Printf("released %s: push it with `git push --follow-tags`\n", version)
 		return nil
 	case len(args) == 1 && args[0] == "build":
-		version, err := release.Version(root)
+		version, err := Version(root)
 		if err != nil {
 			return err
 		}
-		sums, err := release.Build(root, dist, version)
+		if err := os.RemoveAll(dist); err != nil {
+			return err
+		}
+		sums, err := Build(root, dist, version)
 		if err != nil {
 			return err
 		}
 		fmt.Print(sums)
 		return os.WriteFile(filepath.Join(dist, "SHA256SUMS"), []byte(sums), 0o644)
 	default:
-		return fmt.Errorf("usage: go run ./cmd/release [build]")
+		return fmt.Errorf("usage: go run . [build]")
 	}
 }

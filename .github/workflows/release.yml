@@ -12,18 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v2
-      - run: mise run build
-      # The sha256 the loader checks were committed with the Release (ADR binary); a build that
-      # differs is not published.
-      - name: Check the builds against the committed sha256
+      # The Loader downloads the binary of the version in plugin.json, so the tag must match it.
+      - name: Check the tag against plugin.json
         run: |
           version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' plugins/baloo/.claude-plugin/plugin.json)
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then
             echo "the tag is $GITHUB_REF_NAME, but plugin.json says $version"
             exit 1
           fi
-          diff plugins/baloo/scripts/SHA256SUMS dist/SHA256SUMS
+      - uses: jdx/mise-action@v2
+      - run: mise run build
       - name: Publish the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

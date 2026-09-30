@@ -1,0 +1,105 @@
+#!/bin/sh
+# The baloo binary's Loader (ADR binary). `loader install` downloads this machine's binary of the
+# plugin's version from its GitHub Release into ${CLAUDE_PLUGIN_DATA}, unless it is there and still
+# has the sha256 it was downloaded with, and checks it against the Release's SHA256SUMS;
+# `loader <args>` runs that binary.
+# A failure says why on stderr and exits 2, which a SessionStart hook shows to the user.
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+# Where the binaries are; a test points it elsewhere.
+releases=${BALOO_RELEASES:-https://github.com/bunderlog/claude-plugins/releases/download}
+
+fail() {
+  echo "baloo: $*" >&2
+  exit 2
+}
+
+case $(uname -s) in
+  Darwin) os=darwin ;;
+  Linux) os=linux ;;
+  *) fail "no binary for $(uname -s)" ;;
+esac
+case $(uname -m) in
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
+  *) fail "no binary for $(uname -m)" ;;
+esac
+
+manifest=$here/../.claude-plugin/plugin.json
+version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$manifest" 2>/dev/null | head -n 1)
+[ -n "$version" ] || fail "no version in $manifest"
+file=baloo_${version}_${os}_${arch}
+[ -n "${CLAUDE_PLUGIN_DATA:-}" ] || fail "CLAUDE_PLUGIN_DATA is not set"
+bin=$CLAUDE_PLUGIN_DATA/$file
+
+# download fetches $1 into $2 in two tries. With curl each gets at most $3 seconds, so both
+# downloads together stay under the SessionStart hook's timeout and a slow network gets this
+# script's message; wget only limits how long a read may stall, so a slow one can outlast the hook.
+download() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL --retry 1 --connect-timeout 10 --max-time "$3" -o "$2" "$1" ||
+      fail "could not download $1"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q -t 2 -T "$3" -O "$2" "$1" || fail "could not download $1"
+  else
+    fail "needs curl or wget to download $1"
+  fi
+}
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d ' ' -f 1
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | cut -d ' ' -f 1
+  else
+    fail "needs sha256sum or shasum to check $file"
+  fi
+}
+
+# install makes sure this machine has the plugin's version of the binary, then deletes other
+# versions a week after they were last run (each run touches its own), when no older session still
+# runs them.
+install() {
+  # A binary already there is checked too, once a session, against the sha256 kept beside it: a
+  # damaged one is downloaded again. sha256 runs in a subshell, where its fail exits only that.
+  kept=
+  if [ -x "$bin" ] && [ -f "$bin.sha256" ]; then
+    have=$(sha256 "$bin") || exit 2
+    [ "$have" = "$(cat "$bin.sha256")" ] && kept=1
+  fi
+  [ -n "$kept" ] || fetch
+  find "$CLAUDE_PLUGIN_DATA" -maxdepth 1 -name 'baloo_*' ! -name "$file" ! -name "$file.sha256" \
+    -mtime +7 -exec rm -f {} + 2>/dev/null
+  return 0
+}
+
+fetch() {
+  mkdir -p "$CLAUDE_PLUGIN_DATA" || fail "could not create $CLAUDE_PLUGIN_DATA"
+  # A download lands beside its final path and is moved there in one step once checked, so a
+  # concurrent session never runs half a file.
+  tmp=$bin.$$.tmp
+  sums=$bin.$$.sums
+  trap 'rm -f "$tmp" "$sums"' EXIT
+  release=$releases/v$version
+  download "$release/SHA256SUMS" "$sums" 15
+  sum=$(awk -v f="$file" '$2 == f { print $1; exit }' "$sums")
+  [ -n "$sum" ] || fail "no binary for $os/$arch in $release/SHA256SUMS"
+  download "$release/$file" "$tmp" 60
+  got=$(sha256 "$tmp") || exit 2
+  [ "$got" = "$sum" ] || fail "$release/$file has sha256 $got, not the $sum in its SHA256SUMS"
+  chmod +x "$tmp" || fail "could not make $tmp executable"
+  # The sha256 kept for later sessions lands in one step too, so none reads it half written. Without
+  # it the next session downloads the binary again, so failing to keep it is no failure.
+  { echo "$sum" >"$sums" && mv -f "$sums" "$bin.sha256"; } 2>/dev/null || rm -f "$sums"
+  mv -f "$tmp" "$bin" || fail "could not move $file into $CLAUDE_PLUGIN_DATA"
+}
+
+case ${1:-} in
+  install) install ;;
+  *)
+    [ -x "$bin" ] || fail "$file is not downloaded; it downloads at session start"
+    touch "$bin" "$bin.sha256" 2>/dev/null
+    exec "$bin" "$@"
+    ;;
+esac

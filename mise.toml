@@ -1,25 +1,27 @@
-# Tools and tasks for working on this repo; CI runs the same `mise run check`. A Release's builds
-# take their Go version from plugins/baloo/src/go.mod, whatever Go this installs (ADR binary).
+# Tools and tasks for working on this repo; CI runs the same `mise run check`. A Release's binaries
+# take their Go version from src/baloo/go.mod, whatever Go this installs.
 [tools]
 go = "1.27.1"
 shellcheck = "0.11.0"
 
 [tasks.check]
-description = "Format, vet and test the binary, and lint the loader"
-dir = "plugins/baloo/src"
+description = "Format, vet and test the binary and the release tool, and lint the loader"
+dir = "src"
 run = [
-  'test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }',
-  "go vet ./...",
-  "go test ./...",
-  "shellcheck ../scripts/baloo",
+  'test -z "$(gofmt -l baloo release)" || { gofmt -l baloo release; exit 1; }',
+  "go -C baloo vet ./...",
+  "go -C baloo test ./...",
+  "go -C release vet ./...",
+  "go -C release test ./...",
+  "shellcheck ../plugins/baloo/scripts/loader",
 ]
 
 [tasks.build]
 description = "Build every platform into dist/"
-dir = "plugins/baloo/src"
-run = "go run ./cmd/release build"
+dir = "src/release"
+run = "go run . build"
 
 [tasks.release]
 description = "Make a Release from the commits since the last one"
-dir = "plugins/baloo/src"
-run = "go run ./cmd/release"
+dir = "src/release"
+run = "go run ."
