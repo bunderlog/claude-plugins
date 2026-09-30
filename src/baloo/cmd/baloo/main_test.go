@@ -260,6 +260,42 @@ func TestCheckNoSecrets(t *testing.T) {
 	}
 }
 
+// The pre-push Check linear-history fails with the merge commits the push sends, as git gives them
+// on stdin.
+func TestCheckLinearHistory(t *testing.T) {
+	dir := testkit.Repo(t)
+	t.Chdir(dir)
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "feat: base")
+	testkit.Git(t, dir, "checkout", "-q", "-b", "side")
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "feat: side")
+	testkit.Git(t, dir, "checkout", "-q", "main")
+	base := strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
+	testkit.Git(t, dir, "merge", "-q", "--no-ff", "-m", "Merge side", "side")
+	merge := strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
+	for _, tc := range []struct {
+		local, remote string
+		code          int
+		errs          string
+	}{
+		{base, strings.Repeat("0", 40), 0, ""},
+		{merge, base, 1, "baloo:linear-history: rebase instead of merging, then push the rebased " +
+			"branch with --force-with-lease; merge commits:\nrefs/heads/main " + merge[:12] + "\n"},
+		{strings.Repeat("2", 40), base, 2, "baloo:linear-history: git rev-list: "},
+	} {
+		pushed := "refs/heads/main " + tc.local + " refs/heads/main " + tc.remote + "\n"
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"check", "linear-history"}, strings.NewReader(pushed), &stdout, &stderr)
+		wrong := stderr.String() != tc.errs
+		if tc.code == 2 { // after why git failed
+			wrong = !strings.HasPrefix(stderr.String(), tc.errs)
+		}
+		if code != tc.code || stdout.Len() != 0 || wrong {
+			t.Errorf("check linear-history of %q = %d, %q, %q; want %d, \"\", %q",
+				pushed, code, stdout.String(), stderr.String(), tc.code, tc.errs)
+		}
+	}
+}
+
 // Outside a repo, such as in the home folder, the session start writes nothing and says nothing.
 func TestSessionStartOutsideRepo(t *testing.T) {
 	dir := t.TempDir()

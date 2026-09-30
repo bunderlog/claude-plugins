@@ -26,7 +26,8 @@ import (
 var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  check no-ai-coauthor|conventional-commits <message file> | check no-secrets"
+	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
+	"  check no-secrets | check linear-history < <pushed refs>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -51,6 +52,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets" {
 		return noSecrets(stderr)
+	}
+	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
+		return linearHistory(stdin, stderr)
 	}
 	fmt.Fprintln(stderr, usage)
 	return 2
@@ -221,6 +225,27 @@ func noSecrets(stderr io.Writer) int {
 	}
 	fmt.Fprintf(stderr, "%s: remove each secret, or mark a false alarm with %s:\n%s\n",
 		name, checks.AllowSecret, strings.Join(found, "\n"))
+	return 1
+}
+
+// linearHistory is the pre-push hook's Check baloo:linear-history on the repo git runs it in: it
+// fails with the merge commits the push sends, from the refs git gives it on stdin.
+func linearHistory(stdin io.Reader, stderr io.Writer) int {
+	const name = names.Plugin + ":linear-history"
+	pushed, err := io.ReadAll(stdin)
+	var found []string
+	if err == nil {
+		found, err = checks.LinearHistory(".", string(pushed))
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", name, err)
+		return 2
+	}
+	if len(found) == 0 {
+		return 0
+	}
+	fmt.Fprintf(stderr, "%s: rebase instead of merging, then push the rebased branch with "+
+		"--force-with-lease; merge commits:\n%s\n", name, strings.Join(found, "\n"))
 	return 1
 }
 
