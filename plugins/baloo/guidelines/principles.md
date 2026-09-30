@@ -93,7 +93,7 @@ Done is "the user can do the thing, and it works", not "merged".
 | ---------------- | -------------------------------------------------------------------------- |
 | "Add validation" | "Invalid inputs are rejected with a clear message; tests cover each case"  |
 | "Fix the bug"    | "A failing test reproduces it and passes after the fix; nothing regresses" |
-| "Refactor X"     | "Behavior identical before and after (tests green on both sides)"         |
+| "Refactor X"     | "Behavior identical before and after (tests green on both sides)"          |
 
 Acceptance criteria cover:
 

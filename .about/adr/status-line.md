@@ -15,13 +15,17 @@ style (ADR output-styles), where both hold:
 - none of the project's local or project settings, nor the managed ones, sets `statusLine`: the
   user's own, for every project, gives way to the repo's key.
 
+Once the plugin's is set, one that the project or managed settings set later wins: the binary
+takes the plugin's out.
+
 It always writes the project's `.claude/settings.local.json`, whichever file enables the plugin,
 since the command names a path on one machine: `'<plugin data>/baloo' status-line # managed by
 baloo`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session start points at the binary
 running it, so the command stays the same from one version to the next; the comment marks it as
 the plugin's, which the binary sets again when its path changes and takes out with
-`status-line: false`. A `settings.local.json` it creates goes into the repo's `info/exclude`, and
-one that was there keeps the rest of its text as it was.
+`status-line: false`. A Config without the key, or with a value that is wrong, leaves the line as
+it is, so a typo in the Config never takes it out. A `settings.local.json` it creates goes into
+the repo's `info/exclude`, and one that was there keeps the rest of its text as it was.
 
 ## Considered options
 
