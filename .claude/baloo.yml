@@ -23,3 +23,17 @@ guidelines:
   go: true
   typescript: false
   vue: false
+
+# Checks, each on with true and off with false. Those on Claude's tool calls deny, or ask you
+# about, a command that would destroy work, bypass the Git hooks or show a secret, and are on
+# without their key too. Those in Git hooks check every commit or push, yours or Claude's.
+# conventional-commits also takes its settings instead of true, such as
+# { types: [feat, fix], max-length: 72 }; types: any takes any type, max-length: 0 any length.
+checks:
+  no-git-hook-bypass: true
+  no-destructive-commands: true
+  no-secrets-in-context: true
+  no-ai-coauthor: true
+  conventional-commits: true
+  no-secrets-in-commits: true
+  linear-history: true
