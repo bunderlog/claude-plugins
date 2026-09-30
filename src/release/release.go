@@ -15,8 +15,9 @@ import (
 // Commit is one commit since the last Release: its short sha and full message.
 type Commit struct{ SHA, Message string }
 
-// Changes are the paths whose change needs a Release: the plugin and its binary's source, but not
-// what users don't get from a Release: tests, and the schema, which editors read from main.
+// Changes are the paths whose change needs a Release, and whose commits alone count for its version
+// and CHANGELOG: the plugin and its binary's source, but not what users don't get from a Release:
+// tests, and the schema, which editors read from main.
 var Changes = []string{
 	names.PluginDir, names.Src, ":!*_test.go", ":!" + names.PluginDir + "/schema.json",
 }
@@ -144,7 +145,8 @@ func Release(root, date string) (string, error) {
 		}
 		changed = diff != ""
 	}
-	log, err := git(root, "log", "--reverse", "--format=%h%x00%B%x1e", since)
+	log, err := git(root, append([]string{"log", "--reverse", "--format=%h%x00%B%x1e", since, "--"},
+		Changes...)...)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +211,8 @@ func Release(root, date string) (string, error) {
 		return "", fmt.Errorf("the release commit failed: fix what failed, then "+
 			"`git commit -m %q && git tag -s v%s -m v%s`", msg, version, version)
 	}
-	// Signed whatever tag.gpgSign says, as ADR releases has it: -a alone would make an unsigned tag.
+	// Signed whatever tag.gpgSign says, as ADR releases has it: -a alone would make an unsigned
+	// tag.
 	if out, err := exec.Command("git", "-C", root, "tag", "-s", "v"+version, "-m", "v"+version).CombinedOutput(); err != nil {
 		return "", fmt.Errorf("the release tag failed: fix what failed, then `git tag -s v%s -m v%s`: %s",
 			version, version, out)
