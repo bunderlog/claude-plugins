@@ -2,6 +2,25 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.6.0 — 2026-10-01
+
+### Features
+
+- checks: reject an AI co-author or credit in a commit message (ad91efe)
+- checks: check that a commit message is a Conventional Commit (d32a66c)
+- checks: reject secrets and env files in the staged changes (73f8185)
+- checks: reject merge commits in a push (b91957b)
+- checks: deny a Bash command that bypasses the Git hooks (029c9b1)
+- checks: deny a Bash command that destroys work beyond undo (87d058d)
+- checks: deny a tool call that would show a secret to Claude (f7ea750)
+- checks: turn each Check on or off in the Config, and run them on Claude's tool calls (3c17b0f)
+
+### Fixes
+
+- status-line: keep the Status line when the Config's key can't be read (9fcc5ed)
+- status-line: give way to a status line the team sets later (16ba040)
+- status-line: show the line when a field has an unexpected type (84fb02b)
+
 ## 0.5.0 — 2026-09-30
 
 ### Features
