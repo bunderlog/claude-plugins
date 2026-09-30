@@ -1,6 +1,6 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 The marketplace installs `baloo` from this repo's `main`, and an installed copy updates only to a
 new version, so a change to `plugins/baloo/`, or to the binary's source in `src/baloo/`, reaches
@@ -28,6 +28,8 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   a list of folders to leave out.
 - Counting every commit since the last tag (until 2026-09-30) — a `fix` to the release tool
   showed in the users' notes, and a `feat` to it raised the plugin's minor.
+- A pre-push check that a push changing the plugin carries a Release — a Release is made when
+  someone decides to make one, not with every push.
 - CI making the Release on every push to `main` — no local step, but the release commit would be
   CI's, unsigned, and CI would push to `main`.
 
@@ -37,5 +39,5 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   read. A commit that changes the plugin and something else counts whole.
 - The release commit is signed like any other, and the tag always is (`git tag -s`), so the
   Release is made where the signing key is.
-- Nothing yet stops a push that changes `plugins/baloo/` or `src/baloo/` without a Release; a
-  pre-push check for it comes with the Git hooks.
+- Nothing stops a push that changes `plugins/baloo/` or `src/baloo/` without a Release: it
+  reaches users with the next one.
