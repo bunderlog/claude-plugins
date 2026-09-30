@@ -28,7 +28,8 @@ var version = "dev"
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
 	"  pre-tool-use |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
-	"  check no-secrets-in-commits | check linear-history < <pushed refs>"
+	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
+	"  check linear-history < <pushed refs>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
@@ -33,6 +34,7 @@ var commitMessage = map[string]func(message string, c config.Config) string{
 func check(name string, args []string, stdin io.Reader, stderr io.Writer) (code int, ok bool) {
 	run := map[string]func() int{
 		"no-secrets-in-commits": func() int { return noSecretsInCommits(stderr) },
+		"no-stale-adr-date":     func() int { return noStaleADRDate(stderr) },
 		"linear-history":        func() int { return linearHistory(stdin, stderr) },
 	}[name]
 	if commitMessage[name] != nil && len(args) == 1 {
@@ -81,6 +83,23 @@ func noSecretsInCommits(stderr io.Writer) int {
 	}
 	fmt.Fprintf(stderr, "%s: remove each secret, or mark a false alarm with %s:\n%s\n",
 		name, checks.AllowSecret, strings.Join(found, "\n"))
+	return 1
+}
+
+// noStaleADRDate is the pre-commit hook's Check baloo:no-stale-adr-date on the repo git runs it
+// in: it fails with each accepted ADR the staged changes change without dating it today.
+func noStaleADRDate(stderr io.Writer) int {
+	const name = names.Plugin + ":no-stale-adr-date"
+	found, err := checks.NoStaleADRDate(".", time.Now().Format(time.DateOnly))
+	if err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", name, err)
+		return 2
+	}
+	if len(found) == 0 {
+		return 0
+	}
+	fmt.Fprintf(stderr, "%s: an ADR's Date is when it last changed:\n%s\n", name,
+		strings.Join(found, "\n"))
 	return 1
 }
 

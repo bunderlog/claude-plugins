@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/testkit"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
@@ -205,7 +207,7 @@ func hookRepo(t *testing.T) string {
 	t.Chdir(dir)
 	var config strings.Builder
 	config.WriteString("checks:\n")
-	for _, name := range []string{"no-ai-coauthor", "conventional-commits", "no-secrets-in-commits", "linear-history"} {
+	for _, name := range checks.GitHookChecks {
 		config.WriteString("  " + name + ": true\n")
 	}
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
@@ -272,6 +274,42 @@ func TestCheckNoSecretsInCommits(t *testing.T) {
 		stdout.Len() != 0 || stderr.String() != want {
 		t.Errorf("check no-secrets-in-commits with a secret staged = %d, %q, %q; want 1, \"\", %q",
 			code, stdout.String(), stderr.String(), want)
+	}
+}
+
+// The pre-commit Check no-stale-adr-date fails with each accepted ADR changed without today's Date,
+// in the repo git runs it in.
+func TestCheckNoStaleADRDate(t *testing.T) {
+	dir := hookRepo(t)
+	path := filepath.Join(dir, ".about", "adr", "billing.md")
+	write := func(date, decision string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte("# Billing\n\nDate: "+date+"\n\n"+decision+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		testkit.Git(t, dir, "add", path)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write("2026-09-30", "Invoices are monthly.")
+	testkit.Git(t, dir, "commit", "-q", "-m", "docs: adr")
+	write("2026-09-30", "Invoices are weekly.")
+	var stdout, stderr bytes.Buffer
+	want := "baloo:no-stale-adr-date: an ADR's Date is when it last changed:\n" +
+		".about/adr/billing.md: changed, but its Date is 2026-09-30; set it to " +
+		time.Now().Format(time.DateOnly) + "\n"
+	if code := run([]string{"check", "no-stale-adr-date"}, nil, &stdout, &stderr); code != 1 ||
+		stdout.Len() != 0 || stderr.String() != want {
+		t.Errorf("check no-stale-adr-date = %d, %q, %q; want 1, \"\", %q", code, stdout.String(),
+			stderr.String(), want)
+	}
+	write(time.Now().Format(time.DateOnly), "Invoices are weekly.")
+	stderr.Reset()
+	if code := run([]string{"check", "no-stale-adr-date"}, nil, &stdout, &stderr); code != 0 ||
+		stdout.Len() != 0 || stderr.Len() != 0 {
+		t.Errorf("check no-stale-adr-date dated today = %d, %q, %q; want 0", code, stdout.String(),
+			stderr.String())
 	}
 }
 

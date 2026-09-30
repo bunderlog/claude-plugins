@@ -20,6 +20,8 @@ const (
 	// its folder: the team's and one person's.
 	ProjectSettings = ".claude/settings.json"
 	LocalSettings   = ".claude/settings.local.json"
+	// ADRs is a repo's folder of ADRs, from its root.
+	ADRs = ".about/adr/"
 	// Marker ends a command the plugin wrote into a file it shares, such as Claude Code's
 	// statusLine, so it knows the command for its own.
 	Marker = "# managed by " + Plugin

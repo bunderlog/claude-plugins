@@ -95,6 +95,10 @@
           "description": "pre-commit: the staged changes add no secret and no env file; baloo:allow-secret marks a false alarm.",
           "type": "boolean"
         },
+        "no-stale-adr-date": {
+          "description": "pre-commit: an accepted ADR the staged changes change has today's Date.",
+          "type": "boolean"
+        },
         "linear-history": {
           "description": "pre-push: the push sends no merge commit.",
           "type": "boolean"

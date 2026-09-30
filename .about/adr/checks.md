@@ -3,11 +3,11 @@
 Date: 2026-10-01
 
 Each Check turns on or off with a key of its own under `checks` in the Config, named as the Check
-without the plugin's prefix: `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`
-and `linear-history`, which Git hooks run, and `no-git-hook-bypass`, `no-destructive-commands`
-and `no-secrets-in-context`, which a Hook runs on Claude's tool calls. A key is `true` or `false`;
-`conventional-commits` also takes a map of its settings, `types` (a list, or `any`) and
-`max-length` (0 for none), which turns it on.
+without the plugin's prefix: `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
+`no-stale-adr-date` and `linear-history`, which Git hooks run, and `no-git-hook-bypass`,
+`no-destructive-commands` and `no-secrets-in-context`, which a Hook runs on Claude's tool calls. A
+key is `true` or `false`; `conventional-commits` also takes a map of its settings, `types` (a
+list, or `any`) and `max-length` (0 for none), which turns it on.
 
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
 the repo, Claude's or not, so it waits to be asked, and a new Config asks for all of them. The
@@ -33,7 +33,7 @@ session start has already said that no Check runs that session (ADR binary).
   one rule for all, but no protection outside a repo or in a Config made before the keys.
 - `no-secrets-in-context` always on, with no key — no repo could turn it off, but a false alarm
   would have no way around it.
-- The keys at the top of the Config — shorter, but seven keys mixed with the other settings.
+- The keys at the top of the Config — shorter, but eight keys mixed with the other settings.
 - A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
 - A project's own rules for commands to deny or ask about, as the old plugin's Guard had — no
   project used them.

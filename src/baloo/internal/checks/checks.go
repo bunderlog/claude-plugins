@@ -4,7 +4,7 @@ package checks
 
 // GitHookChecks are the Checks Git hooks run, by name: each is off without its key in the Config.
 var GitHookChecks = []string{"no-ai-coauthor", "conventional-commits", "no-secrets-in-commits",
-	"linear-history"}
+	"no-stale-adr-date", "linear-history"}
 
 // ToolCallChecks are the Checks a Hook runs on Claude's tool calls, by name: each is on without its
 // key in the Config (ADR checks).
