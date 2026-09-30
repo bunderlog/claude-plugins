@@ -2,7 +2,7 @@
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
 language, decisions and requirements explicit, Guidelines of working rules, Checks in one Go binary
-that hooks trigger, and an Output style for Claude's replies.
+that hooks trigger, an Output style for Claude's replies, and a Status line.
 
 ## Distribution
 
@@ -62,6 +62,13 @@ Config names the one to pick where no setting does.
 _Avoid_: "style" alone; tone
 
 **Status line**:
-The line Claude Code shows under the prompt; the plugin's own is drawn by the binary.
+The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars and
+the model, is drawn by the binary, and set in the project's local settings where the Config turns
+it on.
 _Avoid_: "status" alone, which is an ADR's or a PRD's Status
-_Planned_: not built yet
+_In code_: `src/baloo/internal/statusline`
+
+**Usage bar**:
+One of the Status line's three bars showing how much is used: the context window, and the 5-hour
+and 7-day rate limits.
+_Avoid_: meter, gauge

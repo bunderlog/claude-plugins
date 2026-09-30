@@ -20,6 +20,9 @@ const (
 	// its folder: the team's and one person's.
 	ProjectSettings = ".claude/settings.json"
 	LocalSettings   = ".claude/settings.local.json"
+	// Marker ends a command the plugin wrote into a file it shares, such as Claude Code's
+	// statusLine, so it knows the command for its own.
+	Marker = "# managed by " + Plugin
 	// Schema is where editors find the Config's JSON Schema, which a new Config names.
 	Schema = "https://raw.githubusercontent.com/bunderlog/claude-plugins/main/" + PluginDir +
 		"/schema.json"

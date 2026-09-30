@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -15,6 +16,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/statusline"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -22,7 +24,7 @@ import (
 // says "dev".
 var version = "dev"
 
-const usage = "usage: baloo version | session-start | allow-guideline"
+const usage = "usage: baloo version | session-start | allow-guideline | status-line"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -38,6 +40,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return sessionStart(stdout, stderr)
 		case "allow-guideline":
 			return allowGuideline(stdin, stdout)
+		case "status-line":
+			return statusLine(stdin, stdout)
 		}
 	}
 	fmt.Fprintln(stderr, usage)
@@ -55,10 +59,10 @@ func project() (string, error) {
 
 // sessionStart is the SessionStart hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
-// Claude Code's settings pick none (ADR output-styles). What it prints Claude Code adds to
-// Claude's context, so it prints only what Claude should know: a Config it created, an Output
-// style it picked, and the problems, each on one line; then the Guidelines the Config turns on
-// (ADR guidelines).
+// Claude Code's settings pick none (ADR output-styles), and sets the Status line or takes it out
+// (ADR status-line). What it prints Claude Code adds to Claude's context, so it prints only what
+// Claude should know: a Config it created, an Output style or a Status line it set, and the
+// problems, each on one line; then the Guidelines the Config turns on (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -87,6 +91,17 @@ func sessionStart(stdout, stderr io.Writer) int {
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("could not pick the %s:%s output style: %v",
 				names.Plugin, c.OutputStyle, err))
+		}
+	}
+	if c.Root != "" {
+		shown, err := statusline.Sync(dir, c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.StatusLine)
+		if shown {
+			report = append(report, fmt.Sprintf("set the %s status line in %s: tell the user, that "+
+				"it shows from their next message, and that status-line: false in %s takes it out",
+				names.Plugin, filepath.Join(dir, names.LocalSettings), names.Config))
+		}
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
 		}
 	}
 	index, err := guidelineIndex(c.Guidelines)
@@ -135,6 +150,22 @@ func allowGuideline(stdin io.Reader, stdout io.Writer) int {
 		"permissionDecision":       "allow",
 		"permissionDecisionReason": names.Plugin + ": one of the plugin's own guidelines",
 	}})
+	return 0
+}
+
+// statusLine is Claude Code's status line command (ADR status-line): it prints the Status line for
+// what Claude Code gives it on stdin, in a terminal as wide as COLUMNS says. Whatever goes wrong,
+// it prints nothing, since Claude Code shows under the prompt whatever it prints.
+func statusLine(stdin io.Reader, stdout io.Writer) int {
+	var in statusline.Input
+	if json.NewDecoder(stdin).Decode(&in) != nil {
+		return 0
+	}
+	columns, err := strconv.Atoi(os.Getenv("COLUMNS"))
+	if err != nil || columns <= 0 {
+		columns = 120
+	}
+	fmt.Fprintln(stdout, statusline.Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
 	return 0
 }
 

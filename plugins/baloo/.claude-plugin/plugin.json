@@ -1,7 +1,7 @@
 {
   "name": "baloo",
   "version": "0.4.0",
-  "description": "Skills, guidelines, checks and an output style for Claude's replies, for working with Claude Code across projects; the checks are one Go binary that the hooks run, downloaded at session start.",
+  "description": "Skills, guidelines, checks, an output style for Claude's replies and a status line, for working with Claude Code across projects; the checks are one Go binary that the hooks run, downloaded at session start.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"

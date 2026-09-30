@@ -321,6 +321,25 @@ func TestOutputStyleSetting(t *testing.T) {
 	}
 }
 
+func TestStatusLineSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml      string
+		on       bool
+		problems int
+	}{
+		{"status-line: true\n", true, 0},
+		{"status-line: false\n", false, 0},
+		{"status-line: yes please\n", false, 1},
+		{"status-line: {}\n", false, 1},
+		{"# none\n", false, 0},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.StatusLine != tc.on || len(problems) != tc.problems {
+			t.Errorf("parse(%q) = %v, %q; want %v and %d problems", tc.yml, c.StatusLine, problems, tc.on, tc.problems)
+		}
+	}
+}
+
 // Each Guideline turns on with its own key under guidelines, and a wrong entry is a problem at its
 // own line while the entries beside it apply.
 func TestGuidelinesSetting(t *testing.T) {

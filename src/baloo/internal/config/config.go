@@ -27,6 +27,8 @@ type Config struct {
 	// OutputStyle is the plugin's Output style that session start picks where Claude Code's
 	// settings pick none (ADR output-styles), or "" for none.
 	OutputStyle string
+	// StatusLine says whether session start sets the plugin's Status line (ADR status-line).
+	StatusLine bool
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 }
@@ -48,6 +50,12 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 			return []string{wrong(key.Line, key.Value, why)}
 		}
 		c.OutputStyle = value.Value
+		return nil
+	},
+	"status-line": func(c *Config, key, value *yaml.Node) []string {
+		if value.Tag != "!!bool" || value.Decode(&c.StatusLine) != nil {
+			return []string{wrong(key.Line, key.Value, "is not true or false")}
+		}
 		return nil
 	},
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {
@@ -106,6 +114,10 @@ func newConfig(fit []string) string {
 # The Output style for Claude's replies, picked at session start in the settings file that
 # enables the plugin, where no settings file of Claude Code's picks one; false picks none.
 output-style: short-replies
+
+# The plugin's Status line, set at session start in .claude/settings.local.json, where no
+# settings file of Claude Code's but the user's own sets one; false takes it out.
+status-line: true
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack

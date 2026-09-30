@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -117,6 +118,50 @@ func TestSessionStartOutputStyle(t *testing.T) {
 	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
 		strings.Contains(stdout.String(), "picked") {
 		t.Errorf("second session-start = %d, %q; want 0 and nothing picked", code, stdout.String())
+	}
+}
+
+// Where the plugin is enabled, a new Config sets the Status line in the project's
+// settings.local.json, once.
+func TestSessionStartStatusLine(t *testing.T) {
+	dir := inRepo(t)
+	t.Setenv("CLAUDE_PLUGIN_DATA", t.TempDir())
+	enable := `{"enabledPlugins": {"` + names.PluginID + `": true}}`
+	if err := os.WriteFile(filepath.Join(os.Getenv("CLAUDE_CONFIG_DIR"), "settings.json"), []byte(enable), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	want := "set the baloo status line in " + filepath.Join(dir, names.LocalSettings) + ": tell the user, that it " +
+		"shows from their next message, and that status-line: false in .claude/baloo.yml takes it out\n"
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		!strings.Contains(stdout.String(), "\n"+want) || stderr.Len() != 0 {
+		t.Errorf("session-start = %d, %q, %q; want 0 and %q", code, stdout.String(), stderr.String(), want)
+	}
+	if data, _ := os.ReadFile(filepath.Join(dir, names.LocalSettings)); !strings.Contains(string(data), "status-line # managed by baloo") {
+		t.Errorf("%s = %q; want the plugin's status line", names.LocalSettings, data)
+	}
+	stdout.Reset()
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		strings.Contains(stdout.String(), "status line") {
+		t.Errorf("second session-start = %d, %q; want 0 and nothing set", code, stdout.String())
+	}
+}
+
+// The status-line command prints the Status line for what Claude Code gives it, and nothing for
+// what it can't read.
+func TestStatusLine(t *testing.T) {
+	// 44 columns leave 40 for the line, which centres the 18 of the bar after 11 spaces.
+	t.Setenv("COLUMNS", "44")
+	for in, want := range map[string]string{
+		`{"context_window": {"used_percentage": 12}}`: strings.Repeat(" ", 11) + "Ctx █░░░░░░░░░ 12%\n",
+		`nope`: "",
+	} {
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"status-line"}, strings.NewReader(in), &stdout, &stderr)
+		got := regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(stdout.String(), "")
+		if code != 0 || got != want || stderr.Len() != 0 {
+			t.Errorf("status-line with %s = %d, %q, %q; want 0, %q", in, code, got, stderr.String(), want)
+		}
 	}
 }
 
