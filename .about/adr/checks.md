@@ -12,9 +12,9 @@ list, or `any`) and `max-length` (0 for none), which turns it on.
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
 the repo, Claude's or not, so it waits to be asked, and a new Config asks for all of them. The
 three Checks on Claude's tool calls are on without their key, outside a repo too, where no Config
-is read, and `false` turns one off: they guard against accidents where nobody set anything up,
-as the old plugin's Guard did everywhere. A Config that turns one off is named at every session
-start, so someone who opens a repo whose committed Config does so knows.
+is read, and `false` turns one off: they guard against accidents where nobody set anything up. A
+Config that turns one off is named at every session start, so someone who opens a repo whose
+committed Config does so knows.
 
 Since a Config can turn those Checks off, Claude asks the user before it changes the Config: a
 Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command that
@@ -40,8 +40,7 @@ session start has already said that no Check runs that session (ADR binary).
   would have no way around it.
 - The keys at the top of the Config — shorter, but eight keys mixed with the other settings.
 - A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
-- A project's own rules for commands to deny or ask about, as the old plugin's Guard had — no
-  project used them.
+- A project's own rules for commands to deny or ask about — no project has asked for them.
 - Asking before every change to Claude Code's settings — also covers a key missed here, but
   permissions and env are edited often, and a question on each teaches the user to say yes
   unread.

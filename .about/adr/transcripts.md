@@ -23,8 +23,8 @@ the plugin is replaced by its next Release. In this repo, the plugin's own, it m
 
 ## Considered options
 
-- The condenser as a TypeScript script run with `bun`, as the old plugin had it — `bun` would
-  have to be on every machine (ADR binary).
+- The condenser as a TypeScript script run with `bun` — `bun` would have to be on every machine
+  (ADR binary).
 - Masking by shape only — a short token, or one without digits, would still show.
 - Masking only the kinds `no-secrets-in-commits` knows — one of an unknown kind would show.
 - `no-secrets-in-context` denying reads of `~/.claude/projects/**/*.jsonl` — no Secret would come

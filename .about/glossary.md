@@ -122,10 +122,3 @@ wrote down, and the next session start says what it changed. Unlike a Retro, it 
 settled, not at how the work went.
 _Avoid_: session-end review
 _In code_: `src/baloo/internal/review`
-
-## Retired terms
-
-- **Guard** — the old plugin's one Hook for three unrelated jobs; now three Checks, each with a
-  key of its own: `baloo:no-destructive-commands` (commands that destroy work beyond undo),
-  `baloo:no-git-hook-bypass` (commands that bypass the Git hooks) and
-  `baloo:no-secrets-in-context` (tool calls that would Leak a Secret into Claude's context).

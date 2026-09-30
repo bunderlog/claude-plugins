@@ -29,13 +29,13 @@ It runs with the user's default model.
 - Dropping it, since most reviews change nothing — the few that do record what would otherwise
   be lost, and that is what it is for.
 - Off in a new Config too — no tokens without asking, but no review until someone knows to ask.
-- Handing over the conversation unmasked, as the old plugin did — a Secret the user pasted, or
-  Claude repeated, would reach one more session and Transcript.
+- Handing over the conversation unmasked — a Secret the user pasted, or Claude repeated, would
+  reach one more session and Transcript.
 - A cheaper model, pinned — less cost per session, but a subtle decision is more likely missed or
   recorded badly.
 - A key for the model — one more setting, for a choice nobody has asked to make.
-- Its state in the system's temporary folder under predictable names, as the old plugin had it —
-  shared with every other user and process on the machine.
+- Its state in the system's temporary folder under predictable names — shared with every other
+  user and process on the machine.
 
 ## Consequences
 
