@@ -12,10 +12,10 @@ Why things are the way they are is in [.about/adr/](.about/adr/).
 
 ## CI
 
-The Checks that Git hooks run can run in a project's CI too, for commits made where the hooks
-didn't: without the plugin, or in GitHub's web editor. Download the binary of a pinned Release,
-check it against the Release's `SHA256SUMS`, and give each Check the input its Git hook would,
-with `$BASE` the commit the checked commits start from:
+The Checks that Git hooks run can run in a project's CI too, for commits made where the Git
+hooks didn't: without the plugin, or in GitHub's web editor. Download the binary of a pinned
+Release, check it against the Release's `SHA256SUMS`, and give each Check the input its Git hook
+would, with `$BASE` the commit the checked commits start from:
 
 ```sh
 set -e
@@ -51,7 +51,7 @@ git reset -q --soft "$BASE" # the checked commits' changes, staged
 ## Development
 
 This repo uses its own plugin: `.claude/settings.json` installs `baloo` from GitHub, so a session
-here runs its last Release. To try an edit to a skill, Guideline or hook before a Release, start a
+here runs its last Release. To try an edit to a skill, Guideline or Hook before a Release, start a
 session with `claude --plugin-dir plugins/baloo`; the binary is still the last Release's. Its
 source is in `src/baloo/`, and `mise run check` checks its formatting, vets it and tests it. To
 make a Release, run `mise run release` and push it with `git push --follow-tags`.
