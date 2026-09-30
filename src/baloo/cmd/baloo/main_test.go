@@ -293,12 +293,12 @@ func TestCheckNoStaleADRDate(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	write("2026-09-30", "Invoices are monthly.")
+	write("2020-01-01", "Invoices are monthly.")
 	testkit.Git(t, dir, "commit", "-q", "-m", "docs: adr")
-	write("2026-09-30", "Invoices are weekly.")
+	write("2020-01-01", "Invoices are weekly.")
 	var stdout, stderr bytes.Buffer
 	want := "baloo:no-stale-adr-date: an ADR's Date is when it last changed:\n" +
-		".about/adr/billing.md: changed, but its Date is 2026-09-30; set it to " +
+		".about/adr/billing.md: changed, but its Date is 2020-01-01; set it to " +
 		time.Now().Format(time.DateOnly) + "\n"
 	if code := run([]string{"check", "no-stale-adr-date"}, nil, &stdout, &stderr); code != 1 ||
 		stdout.Len() != 0 || stderr.String() != want {
