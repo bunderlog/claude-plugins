@@ -28,6 +28,7 @@
     "hookspath",
     "httptest",
     "minisign",
+    "mktemp",
     "molyuk",
     "nohup",
     "nosystem",

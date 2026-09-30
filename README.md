@@ -10,6 +10,44 @@ claude plugin install baloo@bunderlog
 
 Why things are the way they are is in [.about/adr/](.about/adr/).
 
+## CI
+
+The Checks that Git hooks run can run in a project's CI too, for commits made where the hooks
+didn't: without the plugin, or in GitHub's web editor. Download the binary of a pinned Release,
+check it against the Release's `SHA256SUMS`, and give each Check the input its Git hook would,
+with `$BASE` the commit the checked commits start from:
+
+```sh
+set -e
+version=0.7.0
+file=baloo_${version}_linux_amd64
+dir=$(mktemp -d)
+for f in "$file" SHA256SUMS; do
+  curl -fsSL -o "$dir/$f" "https://github.com/bunderlog/claude-plugins/releases/download/v$version/$f"
+done
+(cd "$dir" && grep " $file\$" SHA256SUMS | sha256sum -c -)
+baloo=$dir/$file
+chmod +x "$baloo"
+for sha in $(git rev-list "$BASE"..HEAD); do
+  git log -1 --format=%B "$sha" > "$dir/msg"
+  "$baloo" check conventional-commits "$dir/msg"
+  "$baloo" check no-ai-coauthor "$dir/msg"
+done
+echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/base $BASE" | "$baloo" check linear-history
+git reset -q --soft "$BASE" # the checked commits' changes, staged
+"$baloo" check no-secrets-in-commits
+```
+
+- Check out the head with its full history, not a merge commit. In GitHub Actions that is
+  `fetch-depth: 0`, and on a pull request `ref: ${{ github.event.pull_request.head.sha }}` with
+  `BASE=$(git merge-base <the base's sha> HEAD)`; on a push, `BASE` is `github.event.before`.
+- Each Check takes its settings from the repo's `.claude/baloo.yml`, as in its Git hook, and one
+  the Config turns off passes.
+- `no-stale-adr-date` is left out: it compares an ADR's Date with today, so a change checked on a
+  later day than it was made would fail.
+- How a Check takes its input follows the Git hooks, not a promised interface; the pinned version
+  keeps a later Release from breaking CI.
+
 ## Development
 
 This repo uses its own plugin: `.claude/settings.json` installs `baloo` from GitHub, so a session
