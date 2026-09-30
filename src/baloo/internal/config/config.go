@@ -27,8 +27,9 @@ type Config struct {
 	// OutputStyle is the plugin's Output style that session start picks where Claude Code's
 	// settings pick none (ADR output-styles), or "" for none.
 	OutputStyle string
-	// StatusLine says whether session start sets the plugin's Status line (ADR status-line).
-	StatusLine bool
+	// StatusLine says whether session start sets the plugin's Status line or takes it out (ADR
+	// status-line), or is nil where the Config doesn't say, and the line is left as it is.
+	StatusLine *bool
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 }
@@ -53,9 +54,12 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		return nil
 	},
 	"status-line": func(c *Config, key, value *yaml.Node) []string {
-		if value.Tag != "!!bool" || value.Decode(&c.StatusLine) != nil {
-			return []string{wrong(key.Line, key.Value, "is not true or false")}
+		var on bool
+		if value.Tag != "!!bool" || value.Decode(&on) != nil {
+			why := ": is not true or false; the Status line is left as it is"
+			return []string{at(key.Line, key.Value+why)}
 		}
+		c.StatusLine = &on
 		return nil
 	},
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {

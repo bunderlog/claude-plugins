@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -324,18 +325,25 @@ func TestOutputStyleSetting(t *testing.T) {
 func TestStatusLineSetting(t *testing.T) {
 	for _, tc := range []struct {
 		yml      string
-		on       bool
+		on       string
 		problems int
 	}{
-		{"status-line: true\n", true, 0},
-		{"status-line: false\n", false, 0},
-		{"status-line: yes please\n", false, 1},
-		{"status-line: {}\n", false, 1},
-		{"# none\n", false, 0},
+		{"status-line: true\n", "true", 0},
+		{"status-line: false\n", "false", 0},
+		{"status-line: yes please\n", "unset", 1},
+		{"status-line: {}\n", "unset", 1},
+		{"# none\n", "unset", 0},
 	} {
 		c, problems := parse([]byte(tc.yml))
-		if c.StatusLine != tc.on || len(problems) != tc.problems {
-			t.Errorf("parse(%q) = %v, %q; want %v and %d problems", tc.yml, c.StatusLine, problems, tc.on, tc.problems)
+		got := "unset"
+		if c.StatusLine != nil {
+			got = strconv.FormatBool(*c.StatusLine)
+		}
+		if got != tc.on || len(problems) != tc.problems {
+			t.Errorf("parse(%q) = %s, %q; want %s and %d problems", tc.yml, got, problems, tc.on, tc.problems)
+		}
+		if want := ".claude/baloo.yml line 1: status-line: is not true or false; the Status line is left as it is"; tc.problems == 1 && problems[0] != want {
+			t.Errorf("parse(%q) problem = %q; want %q", tc.yml, problems[0], want)
 		}
 	}
 }

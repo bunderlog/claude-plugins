@@ -147,6 +147,35 @@ func TestSessionStartStatusLine(t *testing.T) {
 	}
 }
 
+// A Config whose status-line can't be read leaves the plugin's Status line as it is; only false
+// takes it out.
+func TestSessionStartStatusLineWrongKey(t *testing.T) {
+	dir := inRepo(t)
+	t.Setenv("CLAUDE_PLUGIN_DATA", t.TempDir())
+	enable := `{"enabledPlugins": {"` + names.PluginID + `": true}}`
+	if err := os.WriteFile(filepath.Join(os.Getenv("CLAUDE_CONFIG_DIR"), "settings.json"), []byte(enable), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("session-start = %d, %q", code, stderr.String())
+	}
+	local := filepath.Join(dir, names.LocalSettings)
+	for _, yml := range []string{"status-line: ture\n", "status-line: [\n", "status-line: false\n"} {
+		if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(yml), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+			t.Fatalf("session-start with %q = %d, %q", yml, code, stderr.String())
+		}
+		data, _ := os.ReadFile(local)
+		kept := strings.Contains(string(data), "status-line # managed by baloo")
+		if want := yml != "status-line: false\n"; kept != want {
+			t.Errorf("with %q, %s = %q; want the plugin's status line kept: %v", yml, names.LocalSettings, data, want)
+		}
+	}
+}
+
 // The status-line command prints the Status line for what Claude Code gives it, and nothing for
 // what it can't read.
 func TestStatusLine(t *testing.T) {
