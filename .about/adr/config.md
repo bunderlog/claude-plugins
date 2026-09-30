@@ -21,8 +21,8 @@ The binary reads it with `go.yaml.in/yaml/v3`, the YAML organization's maintaine
 `gopkg.in/yaml.v3`, and goes through its top-level keys itself. A key that isn't a setting, or a
 value that doesn't decode, is a problem, one line with its line number, and that setting keeps
 its default while the others apply; a file that isn't YAML or isn't a map of settings is one
-problem, and none of it applies. At session start the SessionStart hook prints, for Claude, only a
-Config it created and the problems.
+problem, and none of it applies. At session start the SessionStart hook prints, for Claude, a Config
+it created and the problems.
 
 ## Considered options
 
@@ -31,7 +31,7 @@ Config it created and the problems.
   for the Config.
 - Creating it at session start only where the project's own `.claude/settings.json` enables the
   plugin — a user-scope install would get no Check anywhere without a step of its own.
-- An `init` command that also downloads the binary and writes the hooks into the project's
+- An `init` command that also downloads the binary and writes the Hooks into the project's
   `.claude/settings.json` — nothing would run without asking, but project settings have no
   `${CLAUDE_PLUGIN_ROOT}`, so the binary would need a path of its own outside the plugin, and a
   plugin update would need `init` again.
@@ -43,7 +43,8 @@ Config it created and the problems.
   which name Go types.
 - `.baloo.yml` at the repo's root (until 2026-09-30) — one more file at the root, apart from the
   `.claude/settings.json` that enables the plugin.
-- Finding the root with `git rev-parse` — a process on every hook that reads the Config.
+- Finding the root with `git rev-parse` — a process on every Hook and Git hook that reads the
+  Config.
 
 ## Consequences
 

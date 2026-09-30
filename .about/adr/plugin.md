@@ -1,9 +1,9 @@
 # One plugin, `baloo`, in the `bunderlog` marketplace
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 This repo is the `bunderlog` marketplace, and it holds one plugin, `baloo`: skills, Guidelines,
-Output styles, hooks and the Go binary the hooks run (ADR binary). The skills always work; each
+Output styles, Hooks and the Go binary they run (ADR binary). The skills always work; each
 Check, and each Guideline (ADR guidelines), turns on with a key of its own in the Config, and an
 Output style and the Status line with Claude Code's own settings, which the Config's keys set
 where none is (ADR output-styles, ADR status-line). The binary's source is in `src/baloo/`,
@@ -15,7 +15,7 @@ manifests, the Loader and the docs.
 
 ## Considered options
 
-- Two plugins, skills and hooks, each installed on its own — the hooks do nothing useful without
+- Two plugins, skills and Hooks, each installed on its own — the Hooks do nothing useful without
   the skills, and where the binary can't be downloaded the one plugin is already only skills.
 - The binary's source inside the plugin, in `plugins/baloo/src/` (until 2026-09-30) — one folder
   for everything a Release ships, but every install carried the Go source, which no user runs.

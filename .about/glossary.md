@@ -1,9 +1,9 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit or run a Retro, a Session review, Guidelines of
-working rules, Checks in one Go binary that hooks trigger, an Output style for Claude's replies,
-and a Status line.
+language, decisions and requirements explicit or run a Retro; a Session review; Guidelines of
+working rules; Checks in one Go binary that Hooks and Git hooks trigger; an Output style for
+Claude's replies; and a Status line.
 
 ## Distribution
 
@@ -95,7 +95,7 @@ host.
 
 **Setup**:
 Everything that shapes how Claude works in a project: its CLAUDE.md, the Config, Claude Code's
-settings, and the skills, hooks and plugins it uses.
+settings, and the skills, Hooks and plugins it uses.
 _Avoid_: harness
 
 **Transcript**:

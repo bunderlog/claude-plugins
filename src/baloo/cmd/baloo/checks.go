@@ -14,8 +14,8 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// commitMessage are the commit-msg hook's Checks, by name: each says what is wrong with a commit
-// message under the Config `c`, or "" when nothing is.
+// commitMessage are the commit-msg Git hook's Checks, by name: each says what is wrong with a
+// commit message under the Config `c`, or "" when nothing is.
 var commitMessage = map[string]func(message string, c config.Config) string{
 	"no-ai-coauthor": func(message string, _ config.Config) string {
 		if found := checks.NoAICoauthor(message); len(found) > 0 {
@@ -68,7 +68,7 @@ func checkCommitMessage(name, path string, stderr io.Writer) int {
 	return 1
 }
 
-// noSecretsInCommits is the pre-commit hook's Check baloo:no-secrets-in-commits on the repo git
+// noSecretsInCommits is the pre-commit Git hook's Check baloo:no-secrets-in-commits on the repo git
 // runs it in: it fails with where each Secret the staged changes add is, for git to show, but
 // never the Secret.
 func noSecretsInCommits(stderr io.Writer) int {
@@ -86,7 +86,7 @@ func noSecretsInCommits(stderr io.Writer) int {
 	return 1
 }
 
-// noStaleADRDate is the pre-commit hook's Check baloo:no-stale-adr-date on the repo git runs it
+// noStaleADRDate is the pre-commit Git hook's Check baloo:no-stale-adr-date on the repo git runs it
 // in: it fails with each accepted ADR the staged changes change without dating it today.
 func noStaleADRDate(stderr io.Writer) int {
 	const name = names.Plugin + ":no-stale-adr-date"
@@ -103,8 +103,8 @@ func noStaleADRDate(stderr io.Writer) int {
 	return 1
 }
 
-// linearHistory is the pre-push hook's Check baloo:linear-history on the repo git runs it in: it
-// fails with the merge commits the push sends, from the refs git gives it on stdin.
+// linearHistory is the pre-push Git hook's Check baloo:linear-history on the repo git runs it in:
+// it fails with the merge commits the push sends, from the refs git gives it on stdin.
 func linearHistory(stdin io.Reader, stderr io.Writer) int {
 	const name = names.Plugin + ":linear-history"
 	pushed, err := io.ReadAll(stdin)

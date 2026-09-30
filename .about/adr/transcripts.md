@@ -18,7 +18,7 @@ first catches a known key however short; the second, one of a kind no list has y
 one for anything else, a grep that only counts lines too. The rule rests on the skill's text.
 
 When a Stall's cause is in baloo itself, such as a Check's false alarm or a skill's rule, a Retro
-writes the report to file on `bunderlog/claude-plugins` rather than a change: a project's copy of
+writes out an issue to file on `bunderlog/claude-plugins` rather than a change: a project's copy of
 the plugin is replaced by its next Release. In this repo, the plugin's own, it makes the change.
 
 ## Considered options

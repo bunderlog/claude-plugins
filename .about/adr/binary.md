@@ -1,6 +1,6 @@
-# The hooks run one Go binary, downloaded at session start from its GitHub Release
+# The Hooks and Git hooks run one Go binary, downloaded at session start from its GitHub Release
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 Claude Code's Hooks and Git hooks are only triggers: each runs one Go binary, `baloo`, which runs
 the Checks the Config turns on (ADR config). The Checks and the Status line are the binary's code,

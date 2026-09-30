@@ -35,7 +35,7 @@ conversation, and as a Guideline a project can turn it off.
 
 ## Considered options
 
-- A skill per Guideline, with no key (until 2026-09-30) — no hook for them, no stack detection,
+- A skill per Guideline, with no key (until 2026-09-30) — no Hook for them, no stack detection,
   no permission to read from the plugin's folder, but every session gets every stack's
   description, and a project can't turn one off.
 - `debugging` as a skill — `/debugging` calls it by name, but its description is in every
