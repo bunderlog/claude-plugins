@@ -2,6 +2,16 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.4.0 — 2026-09-30
+
+### Features
+
+- guidelines: name the Guidelines the Config turns on at session start (b5f2e6d)
+
+### Fixes
+
+- output-style: offer more help only when it is needed (240d58f)
+
 ## 0.3.0 — 2026-09-30
 
 ### Features
