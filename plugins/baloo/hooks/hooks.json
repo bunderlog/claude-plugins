@@ -14,6 +14,17 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "pre-tool-use"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "Read",
         "hooks": [
           {

@@ -372,6 +372,36 @@ func TestLoader(t *testing.T) {
 		}
 	})
 
+	t.Run("pre-tool-use never stops a tool call it can't check", func(t *testing.T) {
+		call := `{"tool_name": "Bash", "tool_input": {"command": "git status"}}`
+		l := setup(t, bin)
+		l.withSum(sum)
+		if out, errs, code := l.runWith(t, call, nil, "pre-tool-use"); code != 0 || out != "" || errs != "" {
+			t.Errorf("pre-tool-use, no binary = %d, %q, %q; want 0 and nothing", code, out, errs)
+		}
+		if n := l.downloads.Load(); n != 0 {
+			t.Errorf("pre-tool-use downloaded the binary %d times; want never", n)
+		}
+		if _, errs, code := l.run(t, nil, "install"); code != 0 {
+			t.Fatalf("install = %d, %q", code, errs)
+		}
+		// A binary of an older version, without pre-tool-use, fails: the Loader says nothing.
+		if err := os.WriteFile(filepath.Join(l.data, l.file), []byte("#!/bin/sh\necho usage >&2\nexit 2\n"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if out, errs, code := l.runWith(t, call, nil, "pre-tool-use"); code != 0 || out != "" || errs != "" {
+			t.Errorf("pre-tool-use with a binary that fails = %d, %q, %q; want 0 and nothing", code, out, errs)
+		}
+		// The binary gets every call, and what it prints reaches Claude Code.
+		script := "#!/bin/sh\ncat\n"
+		if err := os.WriteFile(filepath.Join(l.data, l.file), []byte(script), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if out, _, code := l.runWith(t, call, nil, "pre-tool-use"); code != 0 || out != call+"\n" {
+			t.Errorf("pre-tool-use = %d, %q; want 0 and the binary's %q", code, out, call+"\n")
+		}
+	})
+
 	t.Run("needs the plugin data folder", func(t *testing.T) {
 		l := setup(t, bin)
 		l.withSum(sum)

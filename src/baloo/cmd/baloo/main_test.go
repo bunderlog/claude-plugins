@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -197,8 +197,29 @@ func TestStatusLine(t *testing.T) {
 	}
 }
 
+// hookRepo is a repo whose Config turns on the Checks Git hooks run, and the folder git runs a Git
+// hook in until the test ends.
+func hookRepo(t *testing.T) string {
+	t.Helper()
+	dir := testkit.Repo(t)
+	t.Chdir(dir)
+	var config strings.Builder
+	config.WriteString("checks:\n")
+	for _, name := range []string{"no-ai-coauthor", "conventional-commits", "no-secrets-in-commits", "linear-history"} {
+		config.WriteString("  " + name + ": true\n")
+	}
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
 // A commit-msg Check fails with what is wrong, for git to stop the commit and show it.
 func TestCheckCommitMessage(t *testing.T) {
+	hookRepo(t)
 	for _, tc := range []struct {
 		name, message string
 		code          int
@@ -234,8 +255,7 @@ func TestCheckCommitMessage(t *testing.T) {
 // The pre-commit Check no-secrets-in-commits fails with where each Secret is, but not the Secret, in the repo
 // git runs it in.
 func TestCheckNoSecretsInCommits(t *testing.T) {
-	dir := testkit.Repo(t)
-	t.Chdir(dir)
+	dir := hookRepo(t)
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"check", "no-secrets-in-commits"}, nil, &stdout, &stderr); code != 0 ||
 		stdout.Len() != 0 || stderr.Len() != 0 {
@@ -253,19 +273,12 @@ func TestCheckNoSecretsInCommits(t *testing.T) {
 		t.Errorf("check no-secrets-in-commits with a secret staged = %d, %q, %q; want 1, \"\", %q",
 			code, stdout.String(), stderr.String(), want)
 	}
-	stderr.Reset()
-	t.Chdir(t.TempDir())
-	if code := run([]string{"check", "no-secrets-in-commits"}, nil, &stdout, &stderr); code != 2 ||
-		!strings.HasPrefix(stderr.String(), "baloo:no-secrets-in-commits: git diff: ") {
-		t.Errorf("check no-secrets-in-commits outside a repo = %d, %q; want 2 and why", code, stderr.String())
-	}
 }
 
 // The pre-push Check linear-history fails with the merge commits the push sends, as git gives them
 // on stdin.
 func TestCheckLinearHistory(t *testing.T) {
-	dir := testkit.Repo(t)
-	t.Chdir(dir)
+	dir := hookRepo(t)
 	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "feat: base")
 	testkit.Git(t, dir, "checkout", "-q", "-b", "side")
 	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "feat: side")
@@ -297,74 +310,122 @@ func TestCheckLinearHistory(t *testing.T) {
 	}
 }
 
-// The PreToolUse Check no-git-hook-bypass denies a Bash command that bypasses the Git hooks, and
-// says nothing of any other tool call, or of input it can't read.
-func TestCheckNoGitHookBypass(t *testing.T) {
-	for in, want := range map[string]string{
-		`{"tool_name": "Bash", "tool_input": {"command": "git commit --no-verify"}}`: `{"hookSpecificOutput":` +
-			`{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":` +
-			`"baloo:no-git-hook-bypass: git commit --no-verify bypasses the Git hooks. If it's really ` +
-			"needed, ask the user to run it themselves with `! <command>`.\"}}\n",
-		`{"tool_name": "Bash", "tool_input": {"command": "git commit"}}`:    "",
-		`{"tool_name": "Read", "tool_input": {"file_path": "--no-verify"}}`: "",
-		`nope`: "",
+// runPreToolUse runs pre-tool-use on the tool call `in`, a JSON object, and returns the decision it
+// prints for Claude Code, "" for none, with its reason.
+func runPreToolUse(t *testing.T, in string) (decision, reason string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"pre-tool-use"}, strings.NewReader(in), &stdout, &stderr); code != 0 || stderr.Len() != 0 {
+		t.Fatalf("pre-tool-use on %s = %d, %q", in, code, stderr.String())
+	}
+	if stdout.Len() == 0 {
+		return "", ""
+	}
+	var out struct {
+		HookSpecificOutput struct {
+			HookEventName, PermissionDecision, PermissionDecisionReason string
+		}
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil || out.HookSpecificOutput.HookEventName != "PreToolUse" {
+		t.Fatalf("pre-tool-use on %s printed %q", in, stdout.String())
+	}
+	return out.HookSpecificOutput.PermissionDecision, out.HookSpecificOutput.PermissionDecisionReason
+}
+
+func bashCall(command string) string {
+	in, _ := json.Marshal(map[string]any{"tool_name": "Bash", "tool_input": map[string]string{"command": command}})
+	return string(in)
+}
+
+// pre-tool-use runs the Checks on Claude's tool calls that the Config turns on, which are all of
+// them without a key; a denial wins over a question to the user.
+func TestPreToolUse(t *testing.T) {
+	dir := inRepo(t)
+	testkit.Repo(t) // for its environment: reset --hard asks git
+	for in, want := range map[string][2]string{
+		bashCall("git commit --no-verify"): {"deny", "baloo:no-git-hook-bypass: git commit --no-verify " +
+			"bypasses the Git hooks. If it's really needed, ask the user to run it themselves with `! <command>`."},
+		bashCall("git push -f"): {"deny", "baloo:no-destructive-commands: git push --force rewrites remote " +
+			"history; --force-with-lease is allowed. If it's really needed, ask the user to run it themselves " +
+			"with `! <command>`."},
+		bashCall("git push --delete origin x"): {"ask", "baloo:no-destructive-commands: git push --delete " +
+			"removes a remote branch"},
+		bashCall("git push --delete origin x; cat .env"): {"deny", "baloo:no-secrets-in-context: .env is an " +
+			"env file: showing it would put a secret into this session. If it's really needed, ask the user " +
+			"to look in their own terminal, not with `!`, whose output enters the session."},
+		`{"tool_name": "Read", "tool_input": {"file_path": "` + dir + `/.env"}}`: {"deny", "baloo:no-secrets-in-context: " +
+			dir + "/.env is an env file: showing it would put a secret into this session. If it's really needed, " +
+			"ask the user to look in their own terminal, not with `!`, whose output enters the session."},
+		`{"tool_name": "Edit", "tool_input": {"file_path": "` + dir + `/.claude/baloo.yml"}}`: {"ask",
+			"baloo: this may change .claude/baloo.yml, which turns the plugin's checks on and off"},
+		bashCall("git status"): {"", ""},
+		`nope`:                 {"", ""},
 	} {
-		var stdout, stderr bytes.Buffer
-		code := run([]string{"check", "no-git-hook-bypass"}, strings.NewReader(in), &stdout, &stderr)
-		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
-			t.Errorf("check no-git-hook-bypass on %s = %d, %q, %q; want 0, %q",
-				in, code, stdout.String(), stderr.String(), want)
+		if decision, reason := runPreToolUse(t, in); decision != want[0] || reason != want[1] {
+			t.Errorf("pre-tool-use on %s = %q, %q; want %q, %q", in, decision, reason, want[0], want[1])
 		}
 	}
 }
 
-// The PreToolUse Check no-destructive-commands denies a Bash command that destroys work, asks the
-// user first about one they often ask for by name, and says nothing of anything else.
-func TestCheckNoDestructiveCommands(t *testing.T) {
-	testkit.Repo(t) // for its environment
-	cwd := t.TempDir()
-	for command, want := range map[string]string{
-		"git push -f": `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",` +
-			`"permissionDecisionReason":"baloo:no-destructive-commands: git push --force rewrites remote ` +
-			"history; --force-with-lease is allowed. If it's really needed, ask the user to run it " +
-			"themselves with `! <command>`.\"}}\n",
-		"git push --delete origin x": `{"hookSpecificOutput":{"hookEventName":"PreToolUse",` +
-			`"permissionDecision":"ask","permissionDecisionReason":"baloo:no-destructive-commands: ` +
-			`git push --delete removes a remote branch"}}` + "\n",
-		"git reset --hard": `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",` +
-			`"permissionDecisionReason":"baloo:no-destructive-commands: git reset --hard discards ` +
-			"changes. If it's really needed, ask the user to run it themselves with `! <command>`.\"}}\n",
-		"git push": "",
-	} {
-		in := fmt.Sprintf(`{"tool_name": "Bash", "cwd": %q, "tool_input": {"command": %q}}`, cwd, command)
-		var stdout, stderr bytes.Buffer
-		code := run([]string{"check", "no-destructive-commands"}, strings.NewReader(in), &stdout, &stderr)
-		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
-			t.Errorf("check no-destructive-commands on %q = %d, %q, %q; want 0, %q",
-				command, code, stdout.String(), stderr.String(), want)
+// A Check the Config turns off doesn't run.
+func TestPreToolUseChecksOff(t *testing.T) {
+	dir := inRepo(t)
+	config := "checks:\n  no-git-hook-bypass: false\n  no-destructive-commands: false\n  no-secrets-in-context: false\n"
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, command := range []string{"git commit --no-verify", "git push -f", "cat .env"} {
+		if decision, reason := runPreToolUse(t, bashCall(command)); decision != "" {
+			t.Errorf("pre-tool-use on %q with its check off = %q, %q; want nothing", command, decision, reason)
 		}
 	}
 }
 
-// The PreToolUse Check no-secrets-in-context denies a tool call that would show a Secret, and says
-// nothing of any other.
-func TestCheckNoSecretsInContext(t *testing.T) {
-	cwd := t.TempDir()
-	for in, want := range map[string]string{
-		`{"tool_name": "Read", "cwd": "` + cwd + `", "tool_input": {"file_path": ".env"}}`: `{"hookSpecificOutput":` +
-			`{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":` +
-			`"baloo:no-secrets-in-context: .env is an env file: showing it would put a secret into this ` +
-			"session. If it's really needed, ask the user to look in their own terminal, not with `!`, " +
-			`whose output enters the session."}}` + "\n",
-		`{"tool_name": "Bash", "tool_input": {"command": "cat README.md"}}`: "",
-		`nope`: "",
+// A Git hook's Check the Config turns off passes everything, and conventional-commits takes its
+// settings from the Config.
+func TestCheckTakesTheConfig(t *testing.T) {
+	dir := testkit.Repo(t)
+	t.Chdir(dir)
+	message := filepath.Join(t.TempDir(), "COMMIT_EDITMSG")
+	if err := os.WriteFile(message, []byte("wip: x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for config, want := range map[string]int{
+		"": 0, // off without its key
+		"checks:\n  conventional-commits: true\n":              1,
+		"checks:\n  conventional-commits:\n    types: [wip]\n": 0,
+		"checks:\n  conventional-commits: false\n":             0,
 	} {
-		var stdout, stderr bytes.Buffer
-		code := run([]string{"check", "no-secrets-in-context"}, strings.NewReader(in), &stdout, &stderr)
-		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
-			t.Errorf("check no-secrets-in-context on %s = %d, %q, %q; want 0, %q",
-				in, code, stdout.String(), stderr.String(), want)
+		if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+			t.Fatal(err)
 		}
+		if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr bytes.Buffer
+		if code := run([]string{"check", "conventional-commits", message}, nil, &stdout, &stderr); code != want {
+			t.Errorf("check conventional-commits of wip: x with %q = %d, %q; want %d", config, code, stderr.String(), want)
+		}
+	}
+}
+
+// Session start names a Check on Claude's tool calls that the Config turns off, for the user.
+func TestSessionStartChecksOff(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("checks:\n  no-secrets-in-context: false\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	want := "baloo:\nchecks.no-secrets-in-context: false in .claude/baloo.yml turns off a check on Claude's " +
+		"tool calls: tell the user\n"
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.String() != want {
+		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)
 	}
 }
 

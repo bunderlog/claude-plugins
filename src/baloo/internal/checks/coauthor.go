@@ -1,4 +1,3 @@
-// Package checks holds the Checks that Git hooks run, each a function of what git gives the hook.
 package checks
 
 import (

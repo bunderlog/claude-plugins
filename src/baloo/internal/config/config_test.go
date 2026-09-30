@@ -13,6 +13,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
@@ -427,5 +428,123 @@ func TestGuidelines(t *testing.T) {
 	if got := slices.Sorted(maps.Keys(g.Properties)); !slices.Equal(got, want) ||
 		g.AdditionalProperties == nil || *g.AdditionalProperties {
 		t.Errorf("schema's guidelines has %q, additionalProperties %v; want %q and false", got, g.AdditionalProperties, want)
+	}
+}
+
+// Each Check turns on or off with its own key under checks, and a wrong entry is a problem at its
+// own line while the entries beside it apply. Without its key, a Check on Claude's tool calls is
+// on and a Git hook's is off (ADR checks).
+func TestChecksSetting(t *testing.T) {
+	all := append(slices.Clone(checks.GitHookChecks), checks.ToolCallChecks...)
+	for _, tc := range []struct {
+		yml      string
+		on       []string
+		problems []string
+	}{
+		{"checks:\n  no-ai-coauthor: true\n  no-secrets-in-context: false\n",
+			[]string{"no-ai-coauthor", "no-destructive-commands", "no-git-hook-bypass"}, nil},
+		{"", checks.ToolCallChecks, nil},
+		{"checks:\n", checks.ToolCallChecks, nil},
+		{"checks:\n  nope: true\n  linear-history: yes please\n  no-destructive-commands: false\n",
+			[]string{"no-git-hook-bypass", "no-secrets-in-context"}, []string{
+				".claude/baloo.yml line 2: checks.nope is not a check; ignored",
+				".claude/baloo.yml line 3: checks.linear-history: is not true or false; its default applies",
+			}},
+		{"checks: true\n", checks.ToolCallChecks, []string{
+			".claude/baloo.yml line 1: checks: is not a map of checks to true or false; its default applies",
+		}},
+		{"checks:\n  conventional-commits:\n    types: any\n", []string{"conventional-commits",
+			"no-destructive-commands", "no-git-hook-bypass", "no-secrets-in-context"}, nil},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		var on []string
+		for _, name := range all {
+			if c.CheckOn(name) {
+				on = append(on, name)
+			}
+		}
+		slices.Sort(on)
+		want := slices.Sorted(slices.Values(tc.on))
+		if !slices.Equal(on, want) || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %q, %q; want %q, %q", tc.yml, on, problems, want, tc.problems)
+		}
+	}
+}
+
+// conventional-commits takes its types, a list or any, and its longest line, 0 for none; a wrong
+// setting is a problem, and its default applies.
+func TestConventionalCommitsSetting(t *testing.T) {
+	max72, none := 72, 0
+	for _, tc := range []struct {
+		yml      string
+		rules    checks.CommitRules
+		problems []string
+	}{
+		{"checks:\n  conventional-commits: true\n", checks.CommitRules{}, nil},
+		{"checks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 72\n",
+			checks.CommitRules{Types: []string{"feat", "fix"}, MaxLength: &max72}, nil},
+		{"checks:\n  conventional-commits:\n    types: any\n    max-length: 0\n",
+			checks.CommitRules{AnyType: true, MaxLength: &none}, nil},
+		{"checks:\n  conventional-commits:\n    types: some\n    max-length: -1\n    nope: 1\n",
+			checks.CommitRules{}, []string{
+				".claude/baloo.yml line 3: checks.conventional-commits.types: is not a list of types or any; its default applies",
+				".claude/baloo.yml line 4: checks.conventional-commits.max-length: is not a length of 0 or more; its default applies",
+				".claude/baloo.yml line 5: checks.conventional-commits.nope is not a setting of conventional-commits; ignored",
+			}},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		got := c.CommitRules
+		if !slices.Equal(got.Types, tc.rules.Types) || got.AnyType != tc.rules.AnyType ||
+			(got.MaxLength == nil) != (tc.rules.MaxLength == nil) ||
+			got.MaxLength != nil && *got.MaxLength != *tc.rules.MaxLength ||
+			!c.CheckOn("conventional-commits") || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %+v, %q; want %+v, %q", tc.yml, got, problems, tc.rules, tc.problems)
+		}
+	}
+}
+
+// A new Config turns every Check on, and the schema has a key for each.
+func TestChecks(t *testing.T) {
+	root, _ := tempRepo(t)
+	c, _, problems := Load(root)
+	all := append(slices.Clone(checks.GitHookChecks), checks.ToolCallChecks...)
+	for _, name := range all {
+		if on, ok := c.Checks[name]; !ok || !on {
+			t.Errorf("new config's checks.%s = %v, %v; want true", name, on, ok)
+		}
+	}
+	if problems != nil {
+		t.Errorf("new config's problems = %q", problems)
+	}
+	data, err := os.ReadFile("../../../../" + names.PluginDir + "/schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		Properties map[string]struct {
+			Properties map[string]json.RawMessage
+		}
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		t.Fatal(err)
+	}
+	got := slices.Sorted(maps.Keys(schema.Properties["checks"].Properties))
+	if want := slices.Sorted(slices.Values(all)); !slices.Equal(got, want) {
+		t.Errorf("schema's checks = %q; want %q", got, want)
+	}
+}
+
+// Read reads a Config as Load does, but never creates one.
+func TestRead(t *testing.T) {
+	root, sub := tempRepo(t)
+	if c := Read(sub); c.Root != root || !c.CheckOn("no-secrets-in-context") {
+		t.Errorf("Read without a config = %+v; want the root %s and the defaults", c, root)
+	}
+	if _, err := os.Stat(filepath.Join(root, names.Config)); err == nil {
+		t.Error("Read created a config")
+	}
+	writeConfig(t, root, "checks:\n  no-secrets-in-context: false\n")
+	if c := Read(sub); c.CheckOn("no-secrets-in-context") {
+		t.Error("Read = no-secrets-in-context on; want the config's false")
 	}
 }

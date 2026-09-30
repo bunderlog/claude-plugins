@@ -14,6 +14,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
@@ -32,6 +33,19 @@ type Config struct {
 	StatusLine *bool
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
+	// Checks are the Checks the Config turns on or off, by name; see CheckOn for one it doesn't.
+	Checks map[string]bool
+	// CommitRules are conventional-commits' settings.
+	CommitRules checks.CommitRules
+}
+
+// CheckOn says whether the Check `name` is on: as the Config says, and else on for a Check on
+// Claude's tool calls, off for a Git hook's (ADR checks).
+func (c Config) CheckOn(name string) bool {
+	if on, ok := c.Checks[name]; ok {
+		return on
+	}
+	return slices.Contains(checks.ToolCallChecks, name)
 }
 
 // OutputStyles are the plugin's Output styles, the files in its output-styles/.
@@ -62,6 +76,37 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		c.StatusLine = &on
 		return nil
 	},
+	"checks": func(c *Config, key, value *yaml.Node) []string {
+		if value.Tag == "!!null" {
+			return nil
+		}
+		if value.Kind != yaml.MappingNode {
+			return []string{wrong(key.Line, key.Value, "is not a map of checks to true or false")}
+		}
+		c.Checks = map[string]bool{}
+		var problems []string
+		for i := 0; i+1 < len(value.Content); i += 2 {
+			name, on := value.Content[i], value.Content[i+1]
+			entry := key.Value + "." + name.Value
+			if !slices.Contains(checks.GitHookChecks, name.Value) &&
+				!slices.Contains(checks.ToolCallChecks, name.Value) {
+				problems = append(problems, at(name.Line, entry+" is not a check; ignored"))
+				continue
+			}
+			if name.Value == "conventional-commits" && on.Kind == yaml.MappingNode {
+				c.Checks[name.Value] = true
+				problems = append(problems, commitRules(&c.CommitRules, entry, on)...)
+				continue
+			}
+			var b bool
+			if on.Tag != "!!bool" || on.Decode(&b) != nil {
+				problems = append(problems, wrong(name.Line, entry, "is not true or false"))
+				continue
+			}
+			c.Checks[name.Value] = b
+		}
+		return problems
+	},
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {
 		if value.Tag == "!!null" {
 			return nil
@@ -90,6 +135,39 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 	},
 }
 
+// commitRules decodes conventional-commits' settings, the map `value` at `entry`, into `rules`, and
+// returns what is wrong with them; each wrong one keeps its default.
+func commitRules(rules *checks.CommitRules, entry string, value *yaml.Node) []string {
+	var problems []string
+	for i := 0; i+1 < len(value.Content); i += 2 {
+		key, v := value.Content[i], value.Content[i+1]
+		setting := entry + "." + key.Value
+		switch key.Value {
+		case "types":
+			var types []string
+			switch {
+			case v.Tag == "!!str" && v.Value == "any":
+				rules.AnyType = true
+			case v.Kind == yaml.SequenceNode && v.Decode(&types) == nil:
+				rules.Types = types
+			default:
+				problems = append(problems, wrong(key.Line, setting, "is not a list of types or any"))
+			}
+		case "max-length":
+			var n int
+			if v.Tag != "!!int" || v.Decode(&n) != nil || n < 0 {
+				problems = append(problems, wrong(key.Line, setting, "is not a length of 0 or more"))
+				continue
+			}
+			rules.MaxLength = &n
+		default:
+			why := " is not a setting of conventional-commits; ignored"
+			problems = append(problems, at(key.Line, setting+why))
+		}
+	}
+	return problems
+}
+
 // at is the problem `text` at line `line` of the Config.
 func at(line int, text string) string {
 	return fmt.Sprintf("%s line %d: %s", names.Config, line, text)
@@ -105,9 +183,12 @@ func wrong(line int, name, why string) string {
 // says in plain words how the settings work, for someone who has read neither the schema nor the
 // README.
 func newConfig(fit []string) string {
-	var list strings.Builder
+	var list, checkList strings.Builder
 	for _, name := range guidelines.Names() {
 		fmt.Fprintf(&list, "  %s: %t\n", name, slices.Contains(fit, name))
+	}
+	for _, name := range append(slices.Clone(checks.ToolCallChecks), checks.GitHookChecks...) {
+		fmt.Fprintf(&checkList, "  %s: true\n", name)
 	}
 	return "# yaml-language-server: $schema=" + names.Schema + `
 #
@@ -127,7 +208,14 @@ status-line: true
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made.
 guidelines:
-` + list.String()
+` + list.String() + `
+# Checks, each on with true and off with false. Those on Claude's tool calls deny, or ask you
+# about, a command that would destroy work, bypass the Git hooks or show a secret, and are on
+# without their key too. Those in Git hooks check every commit or push, yours or Claude's.
+# conventional-commits also takes its settings instead of true, such as
+# { types: [feat, fix], max-length: 72 }; types: any takes any type, max-length: 0 any length.
+checks:
+` + checkList.String()
 }
 
 // repo is the root of the repo `dir` is in, where its Config is: the nearest folder up from `dir`
@@ -166,6 +254,18 @@ func Load(dir string) (c Config, created string, problems []string) {
 	c, more := read(root)
 	c.Root = root
 	return c, created, append(problems, more...)
+}
+
+// Read reads the Config of the repo `dir` is in, as Load does, but never creates one, and leaves
+// its problems for session start to report.
+func Read(dir string) Config {
+	root, inRepo := repo(dir)
+	if !inRepo || claudeCodes(root) {
+		return Config{}
+	}
+	c, _ := read(root)
+	c.Root = root
+	return c
 }
 
 func read(root string) (Config, []string) {

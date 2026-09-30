@@ -46,6 +46,61 @@
         }
       },
       "additionalProperties": false
+    },
+    "checks": {
+      "description": "The plugin's Checks, each on with true and off with false. Those on Claude's tool calls are on without their key too; those in Git hooks are off.",
+      "type": ["object", "null"],
+      "properties": {
+        "no-git-hook-bypass": {
+          "description": "Denies a Bash command that would bypass the Git hooks: --no-verify, core.hooksPath, HUSKY=0.",
+          "type": "boolean"
+        },
+        "no-destructive-commands": {
+          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete.",
+          "type": "boolean"
+        },
+        "no-secrets-in-context": {
+          "description": "Denies a tool call that would show a secret to Claude, such as reading an env file or printing the environment, or mark an env file as holding none.",
+          "type": "boolean"
+        },
+        "no-ai-coauthor": {
+          "description": "commit-msg: no AI as a commit's co-author, and no line crediting one; a person's Co-Authored-By passes.",
+          "type": "boolean"
+        },
+        "conventional-commits": {
+          "description": "commit-msg: the message is a Conventional Commit, as commitlint's config-conventional reads it; its settings instead of true.",
+          "oneOf": [
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "properties": {
+                "types": {
+                  "description": "The types a subject may have, or any.",
+                  "oneOf": [
+                    { "type": "array", "items": { "type": "string" } },
+                    { "const": "any" }
+                  ]
+                },
+                "max-length": {
+                  "description": "The longest line, in characters; 0 for no limit. 100 without it.",
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "no-secrets-in-commits": {
+          "description": "pre-commit: the staged changes add no secret and no env file; baloo:allow-secret marks a false alarm.",
+          "type": "boolean"
+        },
+        "linear-history": {
+          "description": "pre-push: the push sends no merge commit.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

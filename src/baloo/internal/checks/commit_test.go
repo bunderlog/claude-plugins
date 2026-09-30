@@ -37,7 +37,7 @@ func TestConventionalCommit_Accepts(t *testing.T) {
 		"feat: x\n\nReviewed-by: Z\nCloses #42",
 		"",
 	} {
-		if got := ConventionalCommit(message); got != "" {
+		if got := ConventionalCommit(message, CommitRules{}); got != "" {
 			t.Errorf("ConventionalCommit(%q) = %q, want none", message, got)
 		}
 	}
@@ -62,7 +62,7 @@ func TestConventionalCommit_AcceptsTheSpecsExamples(t *testing.T) {
 	} {
 		crlf := strings.ReplaceAll(message, "\n", "\r\n") + "\r\n"
 		for _, m := range []string{message, crlf} {
-			if got := ConventionalCommit(m); got != "" {
+			if got := ConventionalCommit(m, CommitRules{}); got != "" {
 				t.Errorf("ConventionalCommit(%q) = %q, want none", m, got)
 			}
 		}
@@ -73,7 +73,7 @@ func TestConventionalCommit_RejectsASubjectOfAnotherShape(t *testing.T) {
 	for _, message := range []string{"add guard", "fix bug: x", "feat:add guard", "feat:  x",
 		"feat(): x", "feat( ): x", "feat (a): x", "feat: ", "Merge sort for the index"} {
 		want := `"` + message + `" is not ` + "`type(scope): description`"
-		if got := ConventionalCommit(message); got != want {
+		if got := ConventionalCommit(message, CommitRules{}); got != want {
 			t.Errorf("ConventionalCommit(%q) = %q, want %q", message, got, want)
 		}
 	}
@@ -94,7 +94,7 @@ func TestConventionalCommit_RejectsWhatCommitlintDoes(t *testing.T) {
 		{"fix: x\n\n" + strings.Repeat("y", 101), `"` + strings.Repeat("y", 40) + `…" is 101 characters, over 100`},
 		{"fix: x\n\nRefs: " + strings.Repeat("1", 100), `"Refs: ` + strings.Repeat("1", 34) + `…" is 106 characters, over 100`},
 	} {
-		if got := ConventionalCommit(tc.message); got != tc.want {
+		if got := ConventionalCommit(tc.message, CommitRules{}); got != tc.want {
 			t.Errorf("ConventionalCommit(%q) = %q, want %q", tc.message, got, tc.want)
 		}
 	}
@@ -104,13 +104,48 @@ func TestConventionalCommit_RejectsABreakingChangeFooterOfAnotherShape(t *testin
 	for _, footer := range []string{"Breaking-Change: x", "breaking-change: x", "BREAKING CHANGE #12",
 		"BREAKING-CHANGE #12"} {
 		want := `"` + footer + `" is not ` + "`BREAKING CHANGE: description`"
-		if got := ConventionalCommit("feat: x\n\nRefs: #1\n" + footer); got != want {
+		if got := ConventionalCommit("feat: x\n\nRefs: #1\n"+footer, CommitRules{}); got != want {
 			t.Errorf("ConventionalCommit with the footer %q = %q, want %q", footer, got, want)
 		}
 	}
 	// Footers are the trailing paragraphs that open with one, across blank lines.
 	want := `"breaking-change: y" is not ` + "`BREAKING CHANGE: description`"
-	if got := ConventionalCommit("feat: x\n\nBody.\n\nbreaking-change: y\n\nRefs: #1"); got != want {
+	if got := ConventionalCommit("feat: x\n\nBody.\n\nbreaking-change: y\n\nRefs: #1", CommitRules{}); got != want {
 		t.Errorf("ConventionalCommit with a footer two paragraphs up = %q, want %q", got, want)
+	}
+}
+
+func TestConventionalCommit_TakesItsOwnTypesOrAny(t *testing.T) {
+	own := CommitRules{Types: []string{"wip", "feat"}}
+	for _, tc := range []struct {
+		message string
+		rules   CommitRules
+		want    string
+	}{
+		{"wip: x", own, ""},
+		{"fix: x", own, `"fix" is not one of wip, feat`},
+		{"wip: x", CommitRules{AnyType: true}, ""},
+		{"add x", CommitRules{AnyType: true}, `"add x" is not ` + "`type(scope): description`"},
+	} {
+		if got := ConventionalCommit(tc.message, tc.rules); got != tc.want {
+			t.Errorf("ConventionalCommit(%q, %+v) = %q, want %q", tc.message, tc.rules, got, tc.want)
+		}
+	}
+}
+
+func TestConventionalCommit_TakesItsOwnLineLengthOrNone(t *testing.T) {
+	max72, none := 72, 0
+	for _, tc := range []struct {
+		message string
+		max     *int
+		want    string
+	}{
+		{"feat: " + strings.Repeat("x", 67), &max72, `"feat: ` + strings.Repeat("x", 34) + `…" is 73 characters, over 72`},
+		{"feat: x\n\n" + strings.Repeat("y", 73), &max72, `"` + strings.Repeat("y", 40) + `…" is 73 characters, over 72`},
+		{"feat: " + strings.Repeat("x", 500), &none, ""},
+	} {
+		if got := ConventionalCommit(tc.message, CommitRules{MaxLength: tc.max}); got != tc.want {
+			t.Errorf("ConventionalCommit(%q) with the limit %d = %q, want %q", tc.message, *tc.max, got, tc.want)
+		}
 	}
 }

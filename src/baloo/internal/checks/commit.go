@@ -29,8 +29,17 @@ var (
 var commitTypes = []string{"build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor",
 	"revert", "style", "test"}
 
-// maxLine is the longest line a commit message may have, in characters.
+// maxLine is config-conventional's longest line in a commit message, in characters.
 const maxLine = 100
+
+// CommitRules are conventional-commits' settings; the zero value is config-conventional's.
+type CommitRules struct {
+	// Types are the types a subject may have: nil for config-conventional's; any with AnyType.
+	Types   []string
+	AnyType bool
+	// MaxLength is the longest line, in characters: nil for 100, 0 for no limit.
+	MaxLength *int
+}
 
 // ConventionalCommit is the Check baloo:conventional-commits (commit-msg): why the commit message
 // isn't a Conventional Commit as commitlint's config-conventional reads it (its error rules), or
@@ -39,8 +48,15 @@ const maxLine = 100
 // a body after a blank line, lines of up to 100 characters, and a breaking change footer as
 // `BREAKING CHANGE: description`, in uppercase (its synonym `BREAKING-CHANGE` too). Footers are
 // the trailing paragraphs that open with one. A message git writes itself, such as a merge's,
-// passes.
-func ConventionalCommit(message string) string {
+// passes. `rules` may change the types and the longest line.
+func ConventionalCommit(message string, rules CommitRules) string {
+	types, max := commitTypes, maxLine
+	if rules.Types != nil {
+		types = rules.Types
+	}
+	if rules.MaxLength != nil {
+		max = *rules.MaxLength
+	}
 	var lines []string
 	for _, l := range newline.Split(scissors.Split(message, 2)[0], -1) {
 		if !strings.HasPrefix(l, "#") {
@@ -58,8 +74,8 @@ func ConventionalCommit(message string) string {
 	}
 	m := header.FindStringSubmatch(s)
 	kind, description := m[1], m[2]
-	if !slices.Contains(commitTypes, kind) {
-		return `"` + kind + `" is not one of ` + strings.Join(commitTypes, ", ")
+	if !rules.AnyType && !slices.Contains(types, kind) {
+		return `"` + kind + `" is not one of ` + strings.Join(types, ", ")
 	}
 	// Quoted text, such as `README`, may be in uppercase; a description that opens with it too.
 	first, _ := utf8.DecodeRuneInString(strings.TrimSpace(quoted.ReplaceAllString(description, "")))
@@ -76,8 +92,8 @@ func ConventionalCommit(message string) string {
 		return `leave a blank line between "` + s + `" and the body`
 	}
 	for _, l := range lines {
-		if n := utf8.RuneCountInString(l); n > maxLine {
-			return fmt.Sprintf(`"%s…" is %d characters, over %d`, string([]rune(l)[:40]), n, maxLine)
+		if n := utf8.RuneCountInString(l); max > 0 && n > max {
+			return fmt.Sprintf(`"%s…" is %d characters, over %d`, string([]rune(l)[:40]), n, max)
 		}
 	}
 	paragraphs := paragraph.Split(strings.TrimSpace(strings.Join(lines[1:], "\n")), -1)

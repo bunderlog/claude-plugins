@@ -26,9 +26,9 @@ import (
 var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
+	"  pre-tool-use |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
-	"  check no-secrets-in-commits | check linear-history < <pushed refs> |\n" +
-	"  check no-git-hook-bypass|no-destructive-commands|no-secrets-in-context < <PreToolUse input>"
+	"  check no-secrets-in-commits | check linear-history < <pushed refs>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -46,25 +46,14 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return allowGuideline(stdin, stdout)
 		case "status-line":
 			return statusLine(stdin, stdout)
+		case "pre-tool-use":
+			return preToolUse(stdin, stdout)
 		}
 	}
-	if len(args) == 3 && args[0] == "check" && commitMessage[args[1]] != nil {
-		return checkCommitMessage(args[1], args[2], stderr)
-	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets-in-commits" {
-		return noSecretsInCommits(stderr)
-	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "no-git-hook-bypass" {
-		return noGitHookBypass(stdin, stdout)
-	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "no-destructive-commands" {
-		return noDestructiveCommands(stdin, stdout)
-	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets-in-context" {
-		return noSecretsInContext(stdin, stdout)
-	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
-		return linearHistory(stdin, stderr)
+	if len(args) > 1 && args[0] == "check" {
+		if code, ok := check(args[1], args[2:], stdin, stderr); ok {
+			return code
+		}
 	}
 	fmt.Fprintln(stderr, usage)
 	return 2
@@ -83,8 +72,9 @@ func project() (string, error) {
 // repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), and sets the Status line or takes it out
 // (ADR status-line). What it prints Claude Code adds to Claude's context, so it prints only what
-// Claude should know: a Config it created, an Output style or a Status line it set, and the
-// problems, each on one line; then the Guidelines the Config turns on (ADR guidelines).
+// Claude should know: a Config it created, an Output style or a Status line it set, a Check on
+// Claude's tool calls it turns off (ADR checks), and the problems, each on one line; then the
+// Guidelines the Config turns on (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -124,6 +114,12 @@ func sessionStart(stdout, stderr io.Writer) int {
 		}
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
+		}
+	}
+	for _, name := range checks.ToolCallChecks {
+		if on, ok := c.Checks[name]; ok && !on {
+			report = append(report, fmt.Sprintf("checks.%s: false in %s turns off a check on Claude's "+
+				"tool calls: tell the user", name, names.Config))
 		}
 	}
 	index, err := guidelineIndex(c.Guidelines)
@@ -191,141 +187,6 @@ func statusLine(stdin io.Reader, stdout io.Writer) int {
 	}
 	fmt.Fprintln(stdout, statusline.Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
 	return 0
-}
-
-// commitMessage are the commit-msg hook's Checks, by name: each says what is wrong with a commit
-// message, or "" when nothing is.
-var commitMessage = map[string]func(message string) string{
-	"no-ai-coauthor": func(message string) string {
-		if found := checks.NoAICoauthor(message); len(found) > 0 {
-			return "remove the AI co-author or credit:\n" + strings.Join(found, "\n")
-		}
-		return ""
-	},
-	"conventional-commits": checks.ConventionalCommit,
-}
-
-// checkCommitMessage runs the commit-msg Check `name` on the message in the file `path`: it fails
-// with what is wrong, for git to show.
-func checkCommitMessage(name, path string, stderr io.Writer) int {
-	message, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Fprintf(stderr, "%s:%s: %v\n", names.Plugin, name, err)
-		return 2
-	}
-	why := commitMessage[name](string(message))
-	if why == "" {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s:%s: %s\n", names.Plugin, name, why)
-	return 1
-}
-
-// noSecretsInCommits is the pre-commit hook's Check baloo:no-secrets-in-commits on the repo git
-// runs it in: it fails with where each Secret the staged changes add is, for git to show, but
-// never the Secret.
-func noSecretsInCommits(stderr io.Writer) int {
-	const name = names.Plugin + ":no-secrets-in-commits"
-	found, err := checks.NoSecretsInCommits(".")
-	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
-		return 2
-	}
-	if len(found) == 0 {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s: remove each secret, or mark a false alarm with %s:\n%s\n",
-		name, checks.AllowSecret, strings.Join(found, "\n"))
-	return 1
-}
-
-// linearHistory is the pre-push hook's Check baloo:linear-history on the repo git runs it in: it
-// fails with the merge commits the push sends, from the refs git gives it on stdin.
-func linearHistory(stdin io.Reader, stderr io.Writer) int {
-	const name = names.Plugin + ":linear-history"
-	pushed, err := io.ReadAll(stdin)
-	var found []string
-	if err == nil {
-		found, err = checks.LinearHistory(".", string(pushed))
-	}
-	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
-		return 2
-	}
-	if len(found) == 0 {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s: rebase instead of merging, then push the rebased branch with "+
-		"--force-with-lease; merge commits:\n%s\n", name, strings.Join(found, "\n"))
-	return 1
-}
-
-// noGitHookBypass is the Bash tool's PreToolUse Check baloo:no-git-hook-bypass: it denies a
-// command that would bypass the Git hooks.
-func noGitHookBypass(stdin io.Reader, stdout io.Writer) int {
-	if call, ok := toolCall(stdin); ok && call.Tool == "Bash" {
-		if why := checks.NoGitHookBypass(call.Input.Command); why != "" {
-			decide(stdout, "no-git-hook-bypass", "deny", why+runItYourself)
-		}
-	}
-	return 0
-}
-
-// noDestructiveCommands is the Bash tool's PreToolUse Check baloo:no-destructive-commands: it
-// denies a command that would destroy work beyond undo, and asks the user first about one they
-// often ask for by name.
-func noDestructiveCommands(stdin io.Reader, stdout io.Writer) int {
-	if call, ok := toolCall(stdin); ok && call.Tool == "Bash" {
-		deny, ask := checks.NoDestructiveCommands(call.Input.Command, call.Cwd)
-		switch {
-		case deny != "":
-			decide(stdout, "no-destructive-commands", "deny", deny+runItYourself)
-		case ask != "":
-			decide(stdout, "no-destructive-commands", "ask", ask)
-		}
-	}
-	return 0
-}
-
-// noSecretsInContext is the PreToolUse Check baloo:no-secrets-in-context: it denies a tool call
-// that would Leak a Secret into Claude's context, or mark an Env file as holding none.
-func noSecretsInContext(stdin io.Reader, stdout io.Writer) int {
-	if call, ok := toolCall(stdin); ok {
-		if why := checks.NoSecretsInContext(call.ToolCall, call.Cwd); why != "" {
-			decide(stdout, "no-secrets-in-context", "deny", why)
-		}
-	}
-	return 0
-}
-
-// runItYourself ends the reason of a command denied, for Claude to leave it to the user.
-const runItYourself = ". If it's really needed, ask the user to run it themselves with " +
-	"`! <command>`."
-
-// hookCall is the tool call Claude Code gives a PreToolUse hook, with the folder it runs in.
-type hookCall struct {
-	checks.ToolCall
-	Cwd string `json:"cwd"`
-}
-
-// toolCall is the tool call Claude Code gives a PreToolUse hook on `stdin`; not ok for input it
-// can't read, which a Check then says nothing of, and Claude Code runs the call as usual.
-func toolCall(stdin io.Reader) (hookCall, bool) {
-	var call hookCall
-	err := json.NewDecoder(stdin).Decode(&call)
-	return call, err == nil
-}
-
-// decide prints the PreToolUse Check `check`'s `decision`, deny or ask, with its reason, for
-// Claude Code.
-func decide(stdout io.Writer, check, decision, reason string) {
-	out := json.NewEncoder(stdout)
-	out.SetEscapeHTML(false)
-	out.Encode(map[string]any{"hookSpecificOutput": map[string]string{
-		"hookEventName":            "PreToolUse",
-		"permissionDecision":       decision,
-		"permissionDecisionReason": names.Plugin + ":" + check + ": " + reason,
-	}})
 }
 
 // oneLine escapes what isn't printable in `s`, as Go does in a string literal, so a line that
