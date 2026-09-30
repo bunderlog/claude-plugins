@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.5.0 — 2026-09-30
+
+### Features
+
+- status-line: show the branch, usage bars and model under the prompt (44d3c4e)
+
 ## 0.4.0 — 2026-09-30
 
 ### Features
