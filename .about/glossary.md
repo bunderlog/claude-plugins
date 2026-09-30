@@ -1,7 +1,8 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, and Checks in one Go binary that hooks trigger.
+language, decisions and requirements explicit, Checks in one Go binary that hooks trigger, and an
+Output style for Claude's replies.
 
 ## Distribution
 
@@ -45,6 +46,12 @@ Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets
 until the Config turns it on.
 _Avoid_: built-in check
 _Planned_: not built yet
+
+**Output style**:
+Instructions for how Claude writes its replies, such as `short-replies`, that the plugin ships
+and Claude Code sends with every request once its own `outputStyle` setting picks one; the
+Config names the one to pick where no setting does.
+_Avoid_: "style" alone; tone
 
 **Status line**:
 The line Claude Code shows under the prompt; the plugin's own is drawn by the binary.

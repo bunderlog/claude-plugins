@@ -4,6 +4,10 @@ package names
 const (
 	// Plugin is the plugin's name, its binary's name and the prefix of the binary's file names.
 	Plugin = "baloo"
+	// Marketplace is the marketplace the plugin is in, this repo.
+	Marketplace = "bunderlog"
+	// PluginID is the plugin as Claude Code's settings name it, in enabledPlugins.
+	PluginID = Plugin + "@" + Marketplace
 	// PluginDir is the plugin's folder in this repo.
 	PluginDir = "plugins/" + Plugin
 	// Src is the binary's Go module, beside the plugin rather than in it (ADR plugin).
@@ -12,6 +16,10 @@ const (
 	Manifest = PluginDir + "/.claude-plugin/plugin.json"
 	// Config is a repo's Config file, from its root: beside Claude Code's own settings.
 	Config = ".claude/" + Plugin + ".yml"
+	// ProjectSettings and LocalSettings are Claude Code's own settings files of a project, from
+	// its folder: the team's and one person's.
+	ProjectSettings = ".claude/settings.json"
+	LocalSettings   = ".claude/settings.local.json"
 	// Schema is where editors find the Config's JSON Schema, which a new Config names.
 	Schema = "https://raw.githubusercontent.com/bunderlog/claude-plugins/main/" + PluginDir +
 		"/schema.json"

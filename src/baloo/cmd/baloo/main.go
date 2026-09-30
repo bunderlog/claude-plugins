@@ -10,6 +10,8 @@ import (
 	"unicode"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
+	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
 // version is set when a Release is built (`-X main.version=…`); a binary built from source
@@ -46,20 +48,38 @@ func project() (string, error) {
 }
 
 // sessionStart is the SessionStart hook's part, run once the Loader has the binary: it creates the
-// repo's Config when it has none (ADR config) and reads it. What it prints Claude Code adds to
-// Claude's context, so it prints only what Claude should know: a Config it created, and the
-// Config's problems, each on one line.
+// repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
+// Claude Code's settings pick none (ADR output-styles). What it prints Claude Code adds to
+// Claude's context, so it prints only what Claude should know: a Config it created, an Output
+// style it picked, and the problems, each on one line.
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
 		fmt.Fprintf(stderr, "baloo: %v\n", err)
 		return 1
 	}
-	_, created, problems := config.Load(dir)
+	c, created, problems := config.Load(dir)
 	var report []string
 	if created != "" {
 		report = append(report, fmt.Sprintf("created %s with every check on: tell the user, "+
 			"and that the file is theirs to commit and to change", created))
+	}
+	if c.OutputStyle != "" {
+		picked, err := outputstyle.Pick(dir, c.Root, c.OutputStyle)
+		if picked.Path != "" {
+			line := fmt.Sprintf("picked the %s:%s output style in %s: tell the user, that it "+
+				"applies from their next message or session, and that to drop it they set "+
+				"output-style: false in %s and pick another style, Default too, with /output-style",
+				names.Plugin, c.OutputStyle, picked.Path, names.Config)
+			if picked.Enabled == outputstyle.Project {
+				line += "; the change to the team's settings is theirs to commit"
+			}
+			report = append(report, line)
+		}
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("could not pick the %s:%s output style: %v",
+				names.Plugin, c.OutputStyle, err))
+		}
 	}
 	if report = append(report, problems...); len(report) > 0 {
 		for i, line := range report {

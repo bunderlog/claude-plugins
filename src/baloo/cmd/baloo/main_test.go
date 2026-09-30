@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
@@ -29,14 +30,17 @@ func TestRun(t *testing.T) {
 	}
 }
 
-// inRepo makes a temporary repo the folder that Claude Code runs a hook in.
+// inRepo makes a temporary repo the folder that Claude Code runs a hook in, with Claude Code's
+// user and managed settings of its own, none of them there.
 func inRepo(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
+	dir, own := t.TempDir(), t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, ".git"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("CLAUDE_PROJECT_DIR", dir)
+	t.Setenv("CLAUDE_CONFIG_DIR", own)
+	t.Setenv("BALOO_MANAGED_SETTINGS", filepath.Join(own, "managed-settings.json"))
 	return dir
 }
 
@@ -72,6 +76,32 @@ func TestSessionStart(t *testing.T) {
 		stdout.String() != want || stderr.Len() != 0 {
 		t.Errorf("session-start with a newline in a key = %d, %q, %q; want 0, %q",
 			code, stdout.String(), stderr.String(), want)
+	}
+}
+
+// Where the project's settings enable the plugin, a new Config picks its Output style there, once.
+func TestSessionStartOutputStyle(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	enable := `{"enabledPlugins": {"` + names.PluginID + `": true}}`
+	if err := os.WriteFile(filepath.Join(dir, names.ProjectSettings), []byte(enable), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	settings := filepath.Join(dir, names.ProjectSettings)
+	want := "picked the baloo:short-replies output style in " + settings + ": tell the user, " +
+		"that it applies from their next message or session, and that to drop it they set " +
+		"output-style: false in .claude/baloo.yml and pick another style, Default too, with " +
+		"/output-style; the change to the team's settings is theirs to commit\n"
+	if code := run([]string{"session-start"}, &stdout, &stderr); code != 0 ||
+		!strings.HasSuffix(stdout.String(), want) || stderr.Len() != 0 {
+		t.Errorf("session-start = %d, %q, %q; want 0 ending in %q", code, stdout.String(), stderr.String(), want)
+	}
+	stdout.Reset()
+	if code := run([]string{"session-start"}, &stdout, &stderr); code != 0 || stdout.Len() != 0 {
+		t.Errorf("second session-start = %d, %q; want 0 and nothing", code, stdout.String())
 	}
 }
 

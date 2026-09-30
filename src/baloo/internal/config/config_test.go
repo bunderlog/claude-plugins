@@ -263,3 +263,59 @@ func TestSchema(t *testing.T) {
 		t.Errorf("names.Schema = %s; want the URL of %s/schema.json", names.Schema, names.PluginDir)
 	}
 }
+
+// Every Output style the Config can name is a file in the plugin's output-styles/, and the schema
+// names the same.
+func TestOutputStyles(t *testing.T) {
+	entries, err := os.ReadDir("../../../../" + names.PluginDir + "/output-styles")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files []string
+	for _, e := range entries {
+		if name, ok := strings.CutSuffix(e.Name(), ".md"); ok && e.Type().IsRegular() {
+			files = append(files, name)
+		}
+	}
+	if !slices.Equal(files, slices.Sorted(slices.Values(OutputStyles))) {
+		t.Errorf("output-styles/ has %q; want %q", files, OutputStyles)
+	}
+	data, err := os.ReadFile("../../../../" + names.PluginDir + "/schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		Properties map[string]struct{ Enum []any }
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		t.Fatal(err)
+	}
+	var enum []string
+	for _, v := range schema.Properties["output-style"].Enum {
+		if s, ok := v.(string); ok {
+			enum = append(enum, s)
+		}
+	}
+	if !slices.Equal(enum, OutputStyles) {
+		t.Errorf("schema's output-style names %q; want %q", enum, OutputStyles)
+	}
+}
+
+func TestOutputStyleSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml, style string
+		problems   int
+	}{
+		{"output-style: short-replies\n", "short-replies", 0},
+		{"output-style: false\n", "", 0},
+		{"output-style: true\n", "", 1},
+		{"output-style: nope\n", "", 1},
+		{"output-style: [short-replies]\n", "", 1},
+		{"# none\n", "", 0},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.OutputStyle != tc.style || len(problems) != tc.problems {
+			t.Errorf("parse(%q) = %q, %q; want %q and %d problems", tc.yml, c.OutputStyle, problems, tc.style, tc.problems)
+		}
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -18,10 +19,33 @@ import (
 
 // Config is a repo's settings. Each Check adds its field here, its key to keys and to the schema,
 // and its key, turned on, to template.
-type Config struct{}
+type Config struct {
+	// Root is the root of the repo whose Config this is, or "" where the repo has none (see
+	// Load).
+	Root string
+	// OutputStyle is the plugin's Output style that session start picks where Claude Code's
+	// settings pick none (ADR output-styles), or "" for none.
+	OutputStyle string
+}
+
+// OutputStyles are the plugin's Output styles, the files in its output-styles/.
+var OutputStyles = []string{"short-replies"}
 
 // keys decodes each setting's value into a Config; a key that isn't here is not a setting.
-var keys = map[string]func(c *Config, value *yaml.Node) error{}
+var keys = map[string]func(c *Config, value *yaml.Node) error{
+	"output-style": func(c *Config, value *yaml.Node) error {
+		var off bool
+		if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
+			c.OutputStyle = ""
+			return nil
+		}
+		if value.Tag != "!!str" || !slices.Contains(OutputStyles, value.Value) {
+			return fmt.Errorf("is not false or one of %s", strings.Join(OutputStyles, ", "))
+		}
+		c.OutputStyle = value.Value
+		return nil
+	},
+}
 
 // template is a new Config: it names the schema for editors, and says in plain words how the
 // settings work, for someone who has read neither the schema nor the README.
@@ -29,6 +53,10 @@ const template = "# yaml-language-server: $schema=" + names.Schema + `
 #
 # baloo's settings for this repo. Each check turns on with a key of its own here, and without it
 # is off. A wrong setting is reported at session start, and its default applies.
+
+# The Output style for Claude's replies, picked at session start in the settings file that
+# enables the plugin, where no settings file of Claude Code's picks one; false picks none.
+output-style: short-replies
 `
 
 // repo is the root of the repo `dir` is in, where its Config is: the nearest folder up from `dir`
@@ -65,6 +93,7 @@ func Load(dir string) (c Config, created string, problems []string) {
 		problems = append(problems, fmt.Sprintf("could not create %s: %v", names.Config, err))
 	}
 	c, more := read(root)
+	c.Root = root
 	return c, created, append(problems, more...)
 }
 

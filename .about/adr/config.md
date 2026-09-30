@@ -11,7 +11,7 @@ tells Claude to tell the user; a repo turns a Check off by editing its key. Outs
 the repo is the home folder itself, a dotfiles repo, or when it is Claude Code's own folder,
 `$CLAUDE_CONFIG_DIR` or `~/.claude/`, or inside it, such as a marketplace Claude Code cloned, it
 neither creates nor reads a Config and every setting has its default, so Claude Code's own
-`.claude/` is never taken for one, and nothing is written where Claude Code writes. A new
+`.claude/` is never taken for one, and nothing is written in Claude Code's own folder. A new
 Config's first line names the JSON Schema, `plugins/baloo/schema.json` on `main`, for editors, and
 its comments say how the settings work. A Config that is there is never written to.
 
