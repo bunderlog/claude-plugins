@@ -123,12 +123,6 @@ settled, not at how the work went.
 _Avoid_: session-end review
 _In code_: `src/baloo/internal/review`
 
-## Unresolved
-
-- **Disabling the Hooks** — Claude can turn off every Check a Hook triggers by setting
-  `disableAllHooks` or disabling the plugin in Claude Code's settings; no Check covers it yet.
-  Settled by: deciding it together with asking the user before Claude edits the Config.
-
 ## Retired terms
 
 - **Guard** — the old plugin's one Hook for three unrelated jobs; now three Checks, each with a
