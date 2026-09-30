@@ -44,29 +44,29 @@ func stage(t *testing.T, dir string, files map[string]string) {
 	}
 }
 
-func noSecrets(t *testing.T, dir string) []string {
+func noSecretsInCommits(t *testing.T, dir string) []string {
 	t.Helper()
-	found, err := NoSecrets(dir)
+	found, err := NoSecretsInCommits(dir)
 	if err != nil {
-		t.Fatalf("NoSecrets: %v", err)
+		t.Fatalf("NoSecretsInCommits: %v", err)
 	}
 	return found
 }
 
-func TestNoSecrets_FindsEachKind(t *testing.T) {
+func TestNoSecretsInCommits_FindsEachKind(t *testing.T) {
 	for _, s := range secrets {
 		t.Run(s.what, func(t *testing.T) {
 			dir := testkit.Repo(t)
 			stage(t, dir, map[string]string{"src/a.go": "x := 1\nkey := \"" + s.secret + "\"\n"})
 			want := []string{"src/a.go:2: " + s.what}
-			if got := noSecrets(t, dir); !slices.Equal(got, want) {
-				t.Errorf("NoSecrets = %q, want %q", got, want)
+			if got := noSecretsInCommits(t, dir); !slices.Equal(got, want) {
+				t.Errorf("NoSecretsInCommits = %q, want %q", got, want)
 			}
 		})
 	}
 }
 
-func TestNoSecrets_PassesWhatIsNoSecret(t *testing.T) {
+func TestNoSecretsInCommits_PassesWhatIsNoSecret(t *testing.T) {
 	dir := testkit.Repo(t)
 	stage(t, dir, map[string]string{"a.go": strings.Join([]string{
 		"sk-learn is a library",
@@ -75,30 +75,30 @@ func TestNoSecrets_PassesWhatIsNoSecret(t *testing.T) {
 		"ghp_short",
 		"sk_test_" + strings.Repeat("a1B2", 6),
 	}, "\n")})
-	if got := noSecrets(t, dir); got != nil {
-		t.Errorf("NoSecrets = %q, want none", got)
+	if got := noSecretsInCommits(t, dir); got != nil {
+		t.Errorf("NoSecretsInCommits = %q, want none", got)
 	}
 }
 
-func TestNoSecrets_NeverReportsTheSecret(t *testing.T) {
+func TestNoSecretsInCommits_NeverReportsTheSecret(t *testing.T) {
 	dir := testkit.Repo(t)
 	stage(t, dir, map[string]string{"a.go": aws})
-	if got := strings.Join(noSecrets(t, dir), "\n"); strings.Contains(got, aws) {
-		t.Errorf("NoSecrets = %q, which holds the secret", got)
+	if got := strings.Join(noSecretsInCommits(t, dir), "\n"); strings.Contains(got, aws) {
+		t.Errorf("NoSecretsInCommits = %q, which holds the secret", got)
 	}
 }
 
-func TestNoSecrets_PassesALineMarkedAllowSecret(t *testing.T) {
+func TestNoSecretsInCommits_PassesALineMarkedAllowSecret(t *testing.T) {
 	dir := testkit.Repo(t)
 	stage(t, dir, map[string]string{"a.go": aws + " // baloo:allow-secret\n" + aws + "\n"})
 	want := []string{"a.go:2: an AWS access key"}
-	if got := noSecrets(t, dir); !slices.Equal(got, want) {
-		t.Errorf("NoSecrets = %q, want %q", got, want)
+	if got := noSecretsInCommits(t, dir); !slices.Equal(got, want) {
+		t.Errorf("NoSecretsInCommits = %q, want %q", got, want)
 	}
 }
 
 // Only lines the staged changes add count, by their line in the staged file.
-func TestNoSecrets_FindsOnlyAddedLines(t *testing.T) {
+func TestNoSecretsInCommits_FindsOnlyAddedLines(t *testing.T) {
 	dir := testkit.Repo(t)
 	lines := strings.Split(strings.Repeat("ok\n", 12), "\n")
 	lines[2] = aws
@@ -111,17 +111,17 @@ func TestNoSecrets_FindsOnlyAddedLines(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{"a.go:11: an AWS access key"}
-	if got := noSecrets(t, dir); !slices.Equal(got, want) {
-		t.Errorf("NoSecrets = %q, want %q", got, want)
+	if got := noSecretsInCommits(t, dir); !slices.Equal(got, want) {
+		t.Errorf("NoSecretsInCommits = %q, want %q", got, want)
 	}
 	testkit.Git(t, dir, "commit", "-qm", "y")
 	testkit.Git(t, dir, "rm", "-q", "a.go")
-	if got := noSecrets(t, dir); got != nil {
-		t.Errorf("NoSecrets with the secret deleted = %q, want none", got)
+	if got := noSecretsInCommits(t, dir); got != nil {
+		t.Errorf("NoSecretsInCommits with the secret deleted = %q, want none", got)
 	}
 }
 
-func TestNoSecrets_FindsEnvFilesButNotTheirTemplates(t *testing.T) {
+func TestNoSecretsInCommits_FindsEnvFilesButNotTheirTemplates(t *testing.T) {
 	dir := testkit.Repo(t)
 	files := map[string]string{}
 	for _, path := range []string{".env", "app/.env.local", "prod.env", ".envrc", ".env.example",
@@ -133,30 +133,30 @@ func TestNoSecrets_FindsEnvFilesButNotTheirTemplates(t *testing.T) {
 	for _, path := range []string{".env", ".envrc", "app/.env.local", "prod.env"} {
 		want = append(want, path+": an env file; keep it out of git, or put baloo:allow-secret on its first line")
 	}
-	if got := noSecrets(t, dir); !slices.Equal(got, want) {
-		t.Errorf("NoSecrets = %q, want %q", got, want)
+	if got := noSecretsInCommits(t, dir); !slices.Equal(got, want) {
+		t.Errorf("NoSecretsInCommits = %q, want %q", got, want)
 	}
 }
 
 // An Env file marked on its first line passes, and its lines are still looked through.
-func TestNoSecrets_PassesAnEnvFileMarkedOnItsFirstLine(t *testing.T) {
+func TestNoSecretsInCommits_PassesAnEnvFileMarkedOnItsFirstLine(t *testing.T) {
 	dir := testkit.Repo(t)
 	stage(t, dir, map[string]string{
 		".env":  "# public defaults, baloo:allow-secret\nPORT=3000\n",
 		"b.env": "PORT=3000\n# baloo:allow-secret\n",
 	})
 	want := []string{"b.env: an env file; keep it out of git, or put baloo:allow-secret on its first line"}
-	if got := noSecrets(t, dir); !slices.Equal(got, want) {
-		t.Errorf("NoSecrets = %q, want %q", got, want)
+	if got := noSecretsInCommits(t, dir); !slices.Equal(got, want) {
+		t.Errorf("NoSecretsInCommits = %q, want %q", got, want)
 	}
 	stage(t, dir, map[string]string{".env": "# baloo:allow-secret\nKEY=" + aws + "\n"})
-	if got := noSecrets(t, dir); !slices.Contains(got, ".env:2: an AWS access key") {
-		t.Errorf("NoSecrets = %q, want the secret in .env found", got)
+	if got := noSecretsInCommits(t, dir); !slices.Contains(got, ".env:2: an AWS access key") {
+		t.Errorf("NoSecretsInCommits = %q, want the secret in .env found", got)
 	}
 }
 
 // The Check's own files hold no Secret, so a repo that commits them passes.
-func TestNoSecrets_PassesItsOwnFiles(t *testing.T) {
+func TestNoSecretsInCommits_PassesItsOwnFiles(t *testing.T) {
 	dir := testkit.Repo(t)
 	files := map[string]string{}
 	for _, name := range []string{"secrets.go", "secrets_test.go"} {
@@ -167,14 +167,14 @@ func TestNoSecrets_PassesItsOwnFiles(t *testing.T) {
 		files[name] = string(text)
 	}
 	stage(t, dir, files)
-	if got := noSecrets(t, dir); got != nil {
-		t.Errorf("NoSecrets = %q, want none", got)
+	if got := noSecretsInCommits(t, dir); got != nil {
+		t.Errorf("NoSecretsInCommits = %q, want none", got)
 	}
 }
 
-func TestNoSecrets_FailsOutsideARepo(t *testing.T) {
+func TestNoSecretsInCommits_FailsOutsideARepo(t *testing.T) {
 	testkit.Repo(t) // for its environment
-	if _, err := NoSecrets(t.TempDir()); err == nil {
-		t.Error("NoSecrets outside a repo = no error, want one")
+	if _, err := NoSecretsInCommits(t.TempDir()); err == nil {
+		t.Error("NoSecretsInCommits outside a repo = no error, want one")
 	}
 }

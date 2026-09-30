@@ -13,7 +13,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// AllowSecret marks a false alarm of NoSecrets: on a line, or on an Env file's first line.
+// AllowSecret marks a false alarm of NoSecretsInCommits: on a line, or on an Env file's first line.
 const AllowSecret = names.Plugin + ":allow-secret"
 
 // secretKinds name each kind of Secret; the first that matches names it, so the more specific
@@ -45,11 +45,12 @@ var (
 var staged = []string{"diff", "--cached", "--no-ext-diff", "--no-textconv", "--no-color",
 	"--diff-filter=ACMR"}
 
-// NoSecrets is the Check baloo:no-secrets (pre-commit): the Leaks the staged changes of the repo
-// `dir` would commit, each as `<path>: an env file…` or `<path>:<line>: <what>`, never the Secret
-// itself. A line with AllowSecret on it passes, and an Env file with it on its first line, whose
-// lines are still looked through. It errs where git does, such as outside a repo.
-func NoSecrets(dir string) ([]string, error) {
+// NoSecretsInCommits is the Check baloo:no-secrets-in-commits (pre-commit): the Leaks the staged
+// changes of the repo `dir` would commit, each as `<path>: an env file…` or `<path>:<line>:
+// <what>`, never the Secret itself. A line with AllowSecret on it passes, and an Env file with it
+// on its first line, whose lines are still looked through. It errs where git does, such as
+// outside a repo.
+func NoSecretsInCommits(dir string) ([]string, error) {
 	list, err := git(dir, append(staged, "--name-only", "-z")...)
 	if err != nil {
 		return nil, err

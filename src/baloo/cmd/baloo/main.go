@@ -27,7 +27,7 @@ var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
-	"  check no-secrets | check linear-history < <pushed refs>"
+	"  check no-secrets-in-commits | check linear-history < <pushed refs>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -50,8 +50,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 3 && args[0] == "check" && commitMessage[args[1]] != nil {
 		return checkCommitMessage(args[1], args[2], stderr)
 	}
-	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets" {
-		return noSecrets(stderr)
+	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets-in-commits" {
+		return noSecretsInCommits(stderr)
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
 		return linearHistory(stdin, stderr)
@@ -211,11 +211,12 @@ func checkCommitMessage(name, path string, stderr io.Writer) int {
 	return 1
 }
 
-// noSecrets is the pre-commit hook's Check baloo:no-secrets on the repo git runs it in: it fails
-// with where each Secret the staged changes add is, for git to show, but never the Secret.
-func noSecrets(stderr io.Writer) int {
-	const name = names.Plugin + ":no-secrets"
-	found, err := checks.NoSecrets(".")
+// noSecretsInCommits is the pre-commit hook's Check baloo:no-secrets-in-commits on the repo git
+// runs it in: it fails with where each Secret the staged changes add is, for git to show, but
+// never the Secret.
+func noSecretsInCommits(stderr io.Writer) int {
+	const name = names.Plugin + ":no-secrets-in-commits"
+	found, err := checks.NoSecretsInCommits(".")
 	if err != nil {
 		fmt.Fprintf(stderr, "%s: %v\n", name, err)
 		return 2

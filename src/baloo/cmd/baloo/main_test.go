@@ -230,33 +230,33 @@ func TestCheckCommitMessage(t *testing.T) {
 	}
 }
 
-// The pre-commit Check no-secrets fails with where each Secret is, but not the Secret, in the repo
+// The pre-commit Check no-secrets-in-commits fails with where each Secret is, but not the Secret, in the repo
 // git runs it in.
-func TestCheckNoSecrets(t *testing.T) {
+func TestCheckNoSecretsInCommits(t *testing.T) {
 	dir := testkit.Repo(t)
 	t.Chdir(dir)
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"check", "no-secrets"}, nil, &stdout, &stderr); code != 0 ||
+	if code := run([]string{"check", "no-secrets-in-commits"}, nil, &stdout, &stderr); code != 0 ||
 		stdout.Len() != 0 || stderr.Len() != 0 {
-		t.Errorf("check no-secrets with nothing staged = %d, %q, %q; want 0", code, stdout.String(), stderr.String())
+		t.Errorf("check no-secrets-in-commits with nothing staged = %d, %q, %q; want 0", code, stdout.String(), stderr.String())
 	}
 	secret := "AKIA" + "IOSFODNN7EXAMPLE" // cspell:disable-line
 	if err := os.WriteFile(filepath.Join(dir, "a.go"), []byte(secret), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	testkit.Git(t, dir, "add", "a.go")
-	want := "baloo:no-secrets: remove each secret, or mark a false alarm with baloo:allow-secret:\n" +
+	want := "baloo:no-secrets-in-commits: remove each secret, or mark a false alarm with baloo:allow-secret:\n" +
 		"a.go:1: an AWS access key\n"
-	if code := run([]string{"check", "no-secrets"}, nil, &stdout, &stderr); code != 1 ||
+	if code := run([]string{"check", "no-secrets-in-commits"}, nil, &stdout, &stderr); code != 1 ||
 		stdout.Len() != 0 || stderr.String() != want {
-		t.Errorf("check no-secrets with a secret staged = %d, %q, %q; want 1, \"\", %q",
+		t.Errorf("check no-secrets-in-commits with a secret staged = %d, %q, %q; want 1, \"\", %q",
 			code, stdout.String(), stderr.String(), want)
 	}
 	stderr.Reset()
 	t.Chdir(t.TempDir())
-	if code := run([]string{"check", "no-secrets"}, nil, &stdout, &stderr); code != 2 ||
-		!strings.HasPrefix(stderr.String(), "baloo:no-secrets: git diff: ") {
-		t.Errorf("check no-secrets outside a repo = %d, %q; want 2 and why", code, stderr.String())
+	if code := run([]string{"check", "no-secrets-in-commits"}, nil, &stdout, &stderr); code != 2 ||
+		!strings.HasPrefix(stderr.String(), "baloo:no-secrets-in-commits: git diff: ") {
+		t.Errorf("check no-secrets-in-commits outside a repo = %d, %q; want 2 and why", code, stderr.String())
 	}
 }
 
