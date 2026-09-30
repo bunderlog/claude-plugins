@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bunderlog/claude-plugins/main/plugins/baloo/schema.json
+#
+# baloo's settings for this repo. Each check and each guideline turns on with a key of its own
+# here, and without it is off. A wrong setting is reported at session start, and its default
+# applies.
+
+# The Output style for Claude's replies, picked at session start in the settings file that
+# enables the plugin, where no settings file of Claude Code's picks one; false picks none.
+output-style: short-replies
+
+# Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
+# one on is named to Claude at session start. A stack's is on where the repo had that stack
+# when this file was made.
+guidelines:
+  principles: true
+  design: true
+  testing: true
+  writing-for-agents: true
+  go: true
+  typescript: false
+  vue: false
