@@ -2,6 +2,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
@@ -18,13 +21,13 @@ import (
 // says "dev".
 var version = "dev"
 
-const usage = "usage: baloo version | session-start"
+const usage = "usage: baloo version | session-start | allow-guideline"
 
 func main() {
-	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }
 
-func run(args []string, stdout, stderr io.Writer) int {
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 1 {
 		switch args[0] {
 		case "version":
@@ -32,6 +35,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return 0
 		case "session-start":
 			return sessionStart(stdout, stderr)
+		case "allow-guideline":
+			return allowGuideline(stdin, stdout)
 		}
 	}
 	fmt.Fprintln(stderr, usage)
@@ -51,7 +56,8 @@ func project() (string, error) {
 // repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles). What it prints Claude Code adds to
 // Claude's context, so it prints only what Claude should know: a Config it created, an Output
-// style it picked, and the problems, each on one line.
+// style it picked, and the problems, each on one line; then the Guidelines the Config turns on
+// (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -61,7 +67,8 @@ func sessionStart(stdout, stderr io.Writer) int {
 	c, created, problems := config.Load(dir)
 	var report []string
 	if created != "" {
-		report = append(report, fmt.Sprintf("created %s with every check on: tell the user, "+
+		report = append(report, fmt.Sprintf("created %s with every check on and the guidelines "+
+			"that fit the repo: tell the user, "+
 			"and that the file is theirs to commit and to change", created))
 	}
 	if c.OutputStyle != "" {
@@ -81,12 +88,52 @@ func sessionStart(stdout, stderr io.Writer) int {
 				names.Plugin, c.OutputStyle, err))
 		}
 	}
+	index, err := guidelineIndex(c.Guidelines)
+	if err != nil {
+		problems = append(problems, fmt.Sprintf("could not name the guidelines: %v", err))
+	}
 	if report = append(report, problems...); len(report) > 0 {
 		for i, line := range report {
 			report[i] = oneLine(line)
 		}
 		fmt.Fprintf(stdout, "baloo:\n%s\n", strings.Join(report, "\n"))
 	}
+	if index != "" {
+		fmt.Fprintf(stdout, "%s\n", index)
+	}
+	return 0
+}
+
+// guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude
+// Code gives a hook as CLAUDE_PLUGIN_ROOT.
+func guidelineIndex(on map[string]bool) (string, error) {
+	plugin := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	index, err := guidelines.Index(plugin, on)
+	if index != "" && plugin == "" {
+		return "", errors.New("CLAUDE_PLUGIN_ROOT is not set")
+	}
+	return index, err
+}
+
+// allowGuideline is the Read tool's PreToolUse hook (ADR guidelines): it allows reading a
+// Guideline file of the plugin without asking the user, whose own deny and ask rules still win,
+// and says nothing of any other file. It never stops a Read: whatever goes wrong, it says nothing.
+func allowGuideline(stdin io.Reader, stdout io.Writer) int {
+	var call struct {
+		ToolName  string `json:"tool_name"`
+		ToolInput struct {
+			FilePath string `json:"file_path"`
+		} `json:"tool_input"`
+	}
+	if json.NewDecoder(stdin).Decode(&call) != nil || call.ToolName != "Read" ||
+		!guidelines.Readable(os.Getenv("CLAUDE_PLUGIN_ROOT"), call.ToolInput.FilePath) {
+		return 0
+	}
+	json.NewEncoder(stdout).Encode(map[string]any{"hookSpecificOutput": map[string]string{
+		"hookEventName":            "PreToolUse",
+		"permissionDecision":       "allow",
+		"permissionDecisionReason": names.Plugin + ": one of the plugin's own guidelines",
+	}})
 	return 0
 }
 

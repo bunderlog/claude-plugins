@@ -12,7 +12,8 @@ version in `plugin.json`. It downloads one only when it is missing, or no longer
 was downloaded with, kept beside it and checked once a session: it downloads the GitHub Release's
 `SHA256SUMS` and this machine's binary into `${CLAUDE_PLUGIN_DATA}`, checks the binary's sha256
 against the file, and moves it into place in one step. `loader <args>` runs the binary. A failure
-says why on stderr and exits 2, which a `SessionStart` hook shows to the user.
+says why on stderr and exits 2, which a `SessionStart` hook shows to the user; the Read tool's
+hook, `allow-guideline`, fails silently instead (ADR guidelines).
 
 The Release workflow builds the binary from the tag for macOS and Linux, amd64 and arm64, and
 publishes each platform's, as a bare file named like `baloo_0.1.0_darwin_arm64`, with their

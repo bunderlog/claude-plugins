@@ -12,6 +12,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -80,7 +81,7 @@ func TestParse(t *testing.T) {
 		name, yml string
 		problems  []string
 	}{
-		{"a new config", template, nil},
+		{"a new config", newConfig(guidelines.Names()), nil},
 		{"an empty file", "", nil},
 		{"only comments", "# nothing yet\n", nil},
 		{"an empty map", "{}\n", nil},
@@ -109,10 +110,10 @@ func TestParse(t *testing.T) {
 // A setting whose value doesn't decode is a problem, and the settings around it still apply.
 func TestParseSetting(t *testing.T) {
 	var got []string
-	keys["probe"] = func(c *Config, value *yaml.Node) error {
+	keys["probe"] = func(c *Config, key, value *yaml.Node) []string {
 		var b bool
 		if err := value.Decode(&b); err != nil {
-			return errors.New("is not true or false")
+			return []string{wrong(key.Line, key.Value, "is not true or false")}
 		}
 		got = append(got, value.Value)
 		return nil
@@ -170,7 +171,7 @@ func TestLoad(t *testing.T) {
 	if want := filepath.Join(root, names.Config); created != want || problems != nil {
 		t.Fatalf("Load without a config = %s, %q; want %s created", created, problems, want)
 	}
-	if data, err := os.ReadFile(created); err != nil || string(data) != template {
+	if data, err := os.ReadFile(created); err != nil || string(data) != newConfig(guidelines.Fitting(root)) {
 		t.Errorf("new config = %q, %v; want the template", data, err)
 	}
 	path := created
@@ -317,5 +318,87 @@ func TestOutputStyleSetting(t *testing.T) {
 		if c.OutputStyle != tc.style || len(problems) != tc.problems {
 			t.Errorf("parse(%q) = %q, %q; want %q and %d problems", tc.yml, c.OutputStyle, problems, tc.style, tc.problems)
 		}
+	}
+}
+
+// Each Guideline turns on with its own key under guidelines, and a wrong entry is a problem at its
+// own line while the entries beside it apply.
+func TestGuidelinesSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml      string
+		on       []string
+		problems []string
+	}{
+		{"guidelines:\n  principles: true\n  go: true\n  vue: false\n", []string{"go", "principles"}, nil},
+		{"guidelines:\n", nil, nil},
+		{"guidelines:\n  nope: true\n  go: yes please\n  design: true\n", []string{"design"}, []string{
+			".claude/baloo.yml line 2: guidelines.nope is not a guideline; ignored",
+			".claude/baloo.yml line 3: guidelines.go: is not true or false; its default applies",
+		}},
+		{"guidelines: true\n", nil, []string{
+			".claude/baloo.yml line 1: guidelines: is not a map of guidelines to true or false; its default applies",
+		}},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		var on []string
+		for name, ok := range c.Guidelines {
+			if ok {
+				on = append(on, name)
+			}
+		}
+		slices.Sort(on)
+		if !slices.Equal(on, tc.on) || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %q, %q; want %q, %q", tc.yml, on, problems, tc.on, tc.problems)
+		}
+	}
+}
+
+// A new Config turns on the Guidelines for any project, and a stack's only where the repo has it.
+func TestNewConfigGuidelines(t *testing.T) {
+	root, sub := tempRepo(t)
+	if err := os.WriteFile(filepath.Join(sub, "go.mod"), []byte("module x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, _, problems := Load(root)
+	want := map[string]bool{"principles": true, "design": true, "testing": true, "writing-for-agents": true, "go": true,
+		"typescript": false, "vue": false}
+	if !maps.Equal(c.Guidelines, want) || problems != nil {
+		t.Errorf("new config's guidelines = %v, %q; want %v", c.Guidelines, problems, want)
+	}
+}
+
+// Every Guideline is a file in the plugin's guidelines/, and the schema has a key for each.
+func TestGuidelines(t *testing.T) {
+	entries, err := os.ReadDir("../../../../" + names.PluginDir + "/guidelines")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files []string
+	for _, e := range entries {
+		if name, ok := strings.CutSuffix(e.Name(), ".md"); ok && e.Type().IsRegular() {
+			files = append(files, name)
+		}
+	}
+	want := slices.Sorted(slices.Values(guidelines.Names()))
+	if !slices.Equal(files, want) {
+		t.Errorf("guidelines/ has %q; want %q", files, want)
+	}
+	data, err := os.ReadFile("../../../../" + names.PluginDir + "/schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		Properties map[string]struct {
+			Properties           map[string]json.RawMessage
+			AdditionalProperties *bool
+		}
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		t.Fatal(err)
+	}
+	g := schema.Properties["guidelines"]
+	if got := slices.Sorted(maps.Keys(g.Properties)); !slices.Equal(got, want) ||
+		g.AdditionalProperties == nil || *g.AdditionalProperties {
+		t.Errorf("schema's guidelines has %q, additionalProperties %v; want %q and false", got, g.AdditionalProperties, want)
 	}
 }

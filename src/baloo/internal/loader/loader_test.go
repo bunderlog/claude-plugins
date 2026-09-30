@@ -97,7 +97,14 @@ func (l *loader) withSum(sum string) {
 
 func (l *loader) run(t *testing.T, env []string, args ...string) (stdout, stderr string, code int) {
 	t.Helper()
+	return l.runWith(t, "", env, args...)
+}
+
+// runWith runs the Loader as run does, with `stdin` for its standard input.
+func (l *loader) runWith(t *testing.T, stdin string, env []string, args ...string) (stdout, stderr string, code int) {
+	t.Helper()
 	cmd := exec.Command("sh", append([]string{l.script}, args...)...)
+	cmd.Stdin = strings.NewReader(stdin)
 	cmd.Env = append([]string{
 		"PATH=/usr/bin:/bin",
 		"HOME=" + t.TempDir(),
@@ -324,6 +331,44 @@ func TestLoader(t *testing.T) {
 		_, errs, code := l.run(t, nil, "install")
 		if code != 2 || !strings.Contains(errs, "no binary for "+runtime.GOOS+"/"+runtime.GOARCH) {
 			t.Errorf("install = %d, %q; want 2 and no binary for this platform", code, errs)
+		}
+	})
+
+	t.Run("allow-guideline never stops a Read", func(t *testing.T) {
+		read := `{"tool_name": "Read", "tool_input": {"file_path": "/plugin/guidelines/go.md"}}`
+		l := setup(t, bin)
+		l.withSum(sum)
+		for _, env := range [][]string{nil, {"CLAUDE_PLUGIN_DATA="}} {
+			if out, errs, code := l.runWith(t, read, env, "allow-guideline"); code != 0 || out != "" || errs != "" {
+				t.Errorf("allow-guideline with %q, no binary = %d, %q, %q; want 0 and nothing", env, code, out, errs)
+			}
+		}
+		if n := l.downloads.Load(); n != 0 {
+			t.Errorf("allow-guideline downloaded the binary %d times; want never", n)
+		}
+		if _, errs, code := l.run(t, nil, "install"); code != 0 {
+			t.Fatalf("install = %d, %q", code, errs)
+		}
+		// A binary without allow-guideline, as an older version is, fails: the Loader says nothing.
+		if err := os.WriteFile(filepath.Join(l.data, l.file), []byte("#!/bin/sh\necho usage >&2\nexit 2\n"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if out, errs, code := l.runWith(t, read, nil, "allow-guideline"); code != 0 || out != "" || errs != "" {
+			t.Errorf("allow-guideline with a binary that fails = %d, %q, %q; want 0 and nothing", code, out, errs)
+		}
+		// The binary gets the call as the Loader got it; one of another file never reaches it.
+		stdin := filepath.Join(t.TempDir(), "stdin")
+		script := "#!/bin/sh\ncat >" + stdin + "\n"
+		if err := os.WriteFile(filepath.Join(l.data, l.file), []byte(script), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		l.runWith(t, `{"file_path": "/elsewhere/a.md"}`, nil, "allow-guideline")
+		if _, err := os.Stat(stdin); err == nil {
+			t.Errorf("allow-guideline ran the binary for a Read of another file")
+		}
+		l.runWith(t, read, nil, "allow-guideline")
+		if got, _ := os.ReadFile(stdin); string(got) != read+"\n" {
+			t.Errorf("the binary got %q; want %q", got, read+"\n")
 		}
 	})
 

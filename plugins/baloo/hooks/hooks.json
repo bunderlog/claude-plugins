@@ -11,6 +11,19 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "allow-guideline"],
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

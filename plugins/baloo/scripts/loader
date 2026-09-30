@@ -5,14 +5,30 @@
 # `loader <args>` runs that binary.
 # `loader session-start`, the SessionStart hook, does the same when needed, then runs the binary's
 # session-start.
-# A failure says why on stderr and exits 2, which a SessionStart hook shows to the user.
+# `loader allow-guideline`, the Read tool's PreToolUse hook, runs the binary's allow-guideline when
+# it is downloaded.
+# A failure says why on stderr and exits 2, which a SessionStart hook shows to the user; for
+# allow-guideline it says nothing and exits 0, since exit 2 there would stop the Read, and reading a
+# Guideline then asks the user, as any file outside the project does.
 set -u
+
+quiet=
+if [ "${1:-}" = allow-guideline ]; then
+  quiet=1
+  # Nearly every Read is of another file: it ends here, before any other process starts.
+  call=$(cat)
+  case $call in
+    */guidelines/*) ;;
+    *) exit 0 ;;
+  esac
+fi
 
 here=$(cd "$(dirname "$0")" && pwd)
 # Where the binaries are; a test points it elsewhere.
 releases=${BALOO_RELEASES:-https://github.com/bunderlog/claude-plugins/releases/download}
 
 fail() {
+  [ -z "$quiet" ] || exit 0
   echo "baloo: $*" >&2
   exit 2
 }
@@ -101,6 +117,12 @@ fetch() {
 
 case ${1:-} in
   install) install ;;
+  allow-guideline)
+    # A binary of an older version, without allow-guideline, fails too: that is no failure either.
+    [ -x "$bin" ] || exit 0
+    printf '%s\n' "$call" | "$bin" "$@" 2>/dev/null
+    exit 0
+    ;;
   session-start)
     install
     touch "$bin" "$bin.sha256" 2>/dev/null

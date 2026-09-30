@@ -1,8 +1,8 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, Checks in one Go binary that hooks trigger, and an
-Output style for Claude's replies.
+language, decisions and requirements explicit, Guidelines of working rules, Checks in one Go binary
+that hooks trigger, and an Output style for Claude's replies.
 
 ## Distribution
 
@@ -53,7 +53,7 @@ A file of working rules the plugin ships, for any project (`principles`, `design
 stack (`go`, `vue`), that Claude reads when a task calls for it; one the Config turns on is named
 to Claude at session start.
 _Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
-_Planned_: not built yet
+_In code_: `src/baloo/internal/guidelines`
 
 **Output style**:
 Instructions for how Claude writes its replies, such as `short-replies`, that the plugin ships

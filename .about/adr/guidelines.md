@@ -11,14 +11,17 @@ every task, and those are printed whole. A Guideline that is off puts nothing in
 Claude writes its replies is not a Guideline but an Output style (ADR output-styles).
 
 A new Config turns on the Guidelines for any project, and a stack's only where the repo's files
-name that stack: `go.mod` for `go`, a `package.json` naming `typescript` for `typescript`, one
-naming `vue` for `vue`. The stacks are looked for only then; from then on the Config is the
-user's, like every other setting in it (ADR config).
+name that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`,
+one depending on `vue` for `vue`, at any depth outside hidden folders, other projects' code
+(`node_modules`, `vendor`), test fixtures (`testdata`) and build output (`build`, `dist`, `out`,
+`target`). The stacks are looked for only then; from then on the Config is the user's, like every
+other setting in it (ADR config).
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
 `PreToolUse` for the Read tool, that allows reading a file in the plugin's `guidelines/`, and
-Claude reads one without a prompt. The user's own deny and ask rules still win over it.
+Claude reads one without a prompt. The user's own deny and ask rules still win over it. The Hook
+never stops a Read: where the binary is missing or fails, it says nothing.
 
 A plugin's skill can't be hidden from one project: Claude Code's `skillOverrides` doesn't apply to
 a plugin's skills, and a SessionStart Hook runs after the skill listing is built. So a Guideline
@@ -49,8 +52,8 @@ as a skill would put every stack's description into every session, whatever the 
   turns its key on.
 - Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
   one is a file and a key.
-- The Hook runs the binary on every Read, whatever the file, since a Hook picks its calls by tool
-  name.
+- The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the
+  Loader runs the binary only for a path with `/guidelines/` in it.
 - Reading a Guideline asks the user where the binary isn't there to allow it, and where their
   own ask rule covers the file.
 - The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's

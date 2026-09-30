@@ -1,12 +1,47 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "baloo config",
-  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each check turns on with a key of its own, and without it is off.",
+  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each check and each guideline turns on with a key of its own, and without it is off.",
   "type": "object",
   "properties": {
     "output-style": {
       "description": "The plugin's Output style for Claude's replies, picked at session start in the settings file that enables the plugin (the project's .claude/settings.local.json for the user's settings), where no settings file of Claude Code's picks one; false picks none.",
       "enum": ["short-replies", false]
+    },
+    "guidelines": {
+      "description": "The plugin's Guidelines, files of working rules Claude reads when a task calls for one; each one true is named to Claude at session start.",
+      "type": ["object", "null"],
+      "properties": {
+        "principles": {
+          "description": "Principles for non-trivial work, with the rules for every task, which session start prints whole.",
+          "type": "boolean"
+        },
+        "design": {
+          "description": "Design: what a module shows and hides, and where it is tested from.",
+          "type": "boolean"
+        },
+        "testing": {
+          "description": "Testing: writing tests and building test-first.",
+          "type": "boolean"
+        },
+        "writing-for-agents": {
+          "description": "Writing for agents: skills, CLAUDE.md and AGENTS.md, prompts.",
+          "type": "boolean"
+        },
+        "go": {
+          "description": "Go: the choices where more than one would be reasonable.",
+          "type": "boolean"
+        },
+        "typescript": {
+          "description": "TypeScript: the choices where more than one would be reasonable.",
+          "type": "boolean"
+        },
+        "vue": {
+          "description": "Vue 3 with TypeScript: components, composables, Pinia stores, their tests.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
