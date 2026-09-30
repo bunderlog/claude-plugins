@@ -1,0 +1,60 @@
+# Guidelines are files the Config turns on one by one, not skills
+
+Date: 2026-09-30
+
+A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
+`testing` and `writing-for-agents` for any project, `go`, `typescript` and `vue` for their stacks.
+Each turns on with a key of its own in the Config, under `guidelines`. At session start the binary
+prints, for each Guideline turned on, one line: when to read it and its path. Claude reads the
+file itself when a task calls for it. `principles` also carries the few rules that must hold on
+every task, and those are printed whole. A Guideline that is off puts nothing in the context. How
+Claude writes its replies is not a Guideline but an Output style (ADR output-styles).
+
+A new Config turns on the Guidelines for any project, and a stack's only where the repo's files
+name that stack: `go.mod` for `go`, a `package.json` naming `typescript` for `typescript`, one
+naming `vue` for `vue`. The stacks are looked for only then; from then on the Config is the
+user's, like every other setting in it (ADR config).
+
+The files are in the plugin's folder, outside the project, where the Read tool asks the user
+first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
+`PreToolUse` for the Read tool, that allows reading a file in the plugin's `guidelines/`, and
+Claude reads one without a prompt. The user's own deny and ask rules still win over it.
+
+A plugin's skill can't be hidden from one project: Claude Code's `skillOverrides` doesn't apply to
+a plugin's skills, and a SessionStart Hook runs after the skill listing is built. So a Guideline
+as a skill would put every stack's description into every session, whatever the project.
+
+## Considered options
+
+- A skill per Guideline, with no key (until 2026-09-30) — no hook for them, no stack detection,
+  no permission to read from the plugin's folder, but every session gets every stack's
+  description, and a project can't turn one off.
+- Printing each Guideline turned on whole — simpler, but every session pays for the rules of
+  tasks it never gets to.
+- The rules for every task printed always, with no key — the one part of the plugin in the
+  context that the Config can't turn off.
+- Every Guideline on in a new Config, as the Checks are — every stack in every repo, the context
+  cost this is meant to avoid.
+- A rule allowing `Read` of the folder in `.claude/settings.local.json` — the plugin's folder
+  changes with every version, and that file is Claude Code's to write, not the binary's.
+- Leaving the prompt — the user is asked on every session's first Guideline, for the plugin's
+  own read-only text.
+- Detecting the stacks at every session start, with no keys — a project can't turn off a
+  Guideline for a stack it has, and a repo about to start one can't turn it on.
+
+## Consequences
+
+- Outside a repo, and in Claude Code's own folder, there is no Config, so no Guideline is on.
+- A repo that takes up a stack after its Config was made gets its Guideline only when someone
+  turns its key on.
+- Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
+  one is a file and a key.
+- The Hook runs the binary on every Read, whatever the file, since a Hook picks its calls by tool
+  name.
+- Reading a Guideline asks the user where the binary isn't there to allow it, and where their
+  own ask rule covers the file.
+- The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's
+  own text, and reading one is Claude's step, not the context's cost.
+- Whether a Guideline is read is Claude's call; a rule that must always hold goes among the ones
+  `principles` prints whole.
+- Revisit when Claude Code lets a project hide a plugin's skills.

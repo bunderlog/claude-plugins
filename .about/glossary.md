@@ -36,8 +36,9 @@ _Avoid_: "hook" alone
 
 **Config**:
 A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
-start with every Check on. Each Check turns on with a key of its own there; a wrong setting is
-reported at session start, and its default applies.
+start with every Check on and the Guidelines that fit the repo. Each Check and each Guideline
+turns on with a key of its own there; a wrong setting is reported at session start, and its
+default applies.
 _Avoid_: settings, which are Claude Code's `settings.json`
 _In code_: `src/baloo/internal/config`
 
@@ -45,6 +46,13 @@ _In code_: `src/baloo/internal/config`
 Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets`; none runs
 until the Config turns it on.
 _Avoid_: built-in check
+_Planned_: not built yet
+
+**Guideline**:
+A file of working rules the plugin ships, for any project (`principles`, `design`) or for one
+stack (`go`, `vue`), that Claude reads when a task calls for it; one the Config turns on is named
+to Claude at session start.
+_Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
 _Planned_: not built yet
 
 **Output style**:
