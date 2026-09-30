@@ -43,8 +43,8 @@ _Avoid_: settings, which are Claude Code's `settings.json`
 _In code_: `src/baloo/internal/config`
 
 **Check**:
-Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets`; none runs
-until the Config turns it on.
+Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`; none
+runs until the Config turns it on.
 _Avoid_: built-in check
 _In code_: `src/baloo/internal/checks`
 
@@ -72,3 +72,20 @@ _In code_: `src/baloo/internal/statusline`
 One of the Status line's three bars showing how much is used: the context window, and the 5-hour
 and 7-day rate limits.
 _Avoid_: meter, gauge
+
+## Secrets
+
+**Secret**:
+A value that grants access: an API key, token, password or private key. A placeholder, a
+published example or a key meant to be public (a Stripe publishable key, a Firebase web key)
+isn't one, even where a Check can't tell the difference. An Env file counts as holding Secrets
+unless its first line says it holds none.
+_Avoid_: credential, key (alone)
+
+**Env file**:
+A file of environment settings a program or shell loads: `.env`, `.env.local`, `prod.env`,
+direnv's `.envrc`… A template of one (`.env.example`, `.sample`, `.template`, `.dist`) isn't one.
+
+**Leak**:
+A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
+host.
