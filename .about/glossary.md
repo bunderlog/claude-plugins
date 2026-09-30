@@ -89,3 +89,16 @@ direnv's `.envrc`… A template of one (`.env.example`, `.sample`, `.template`, 
 **Leak**:
 A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
 host.
+
+## Unresolved
+
+- **Disabling the Hooks** — Claude can turn off every Check a Hook triggers by setting
+  `disableAllHooks` or disabling the plugin in Claude Code's settings; no Check covers it yet.
+  Settled by: deciding it together with asking the user before Claude edits the Config.
+
+## Retired terms
+
+- **Guard** — the old plugin's one Hook for three unrelated jobs; now three Checks, each with a
+  key of its own: `baloo:no-destructive-commands` (commands that destroy work beyond undo),
+  `baloo:no-git-hook-bypass` (commands that bypass the Git hooks) and
+  `baloo:no-secrets-in-context` (tool calls that would Leak a Secret into Claude's context).
