@@ -47,9 +47,9 @@ Once code for the feature exists, link each criterion to the test that checks it
 `→ test: <file> "<test name>"`, the file under its repo's name in a tracker's PRD
 (`webui/src/export.test.ts`). A criterion with a link is built; one without is not yet. Check
 every link in the repo you are in: the test exists and checks what the criterion says; list the
-other repos' links as not checked from here. A criterion with no test, a link
-to a test that's gone, or code that does something else is a Finding: name it and ask whether
-the criterion or the code is wrong; don't rewrite a criterion to match the code.
+other repos' links as not checked from here. A criterion with no test, a link to a test that's
+gone, or code that does something else is a Finding: name it and ask whether the criterion or the
+code is wrong; don't rewrite a criterion to match the code.
 
 ## Ask
 

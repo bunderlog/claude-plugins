@@ -30,7 +30,7 @@ not something to reopen.
 
 - Fix what is clearly wrong right away, then re-read the changed lines: a fix can break a line
   wrap, a link or a term.
-- For a judgement call, give a recommendation and ask.
+- For a judgment call, give a recommendation and ask.
 - Don't reopen recorded decisions; don't commit.
 - Report in three short lists: fixed, needs a decision, kept on purpose (and why). If nothing is
   left, say so plainly.

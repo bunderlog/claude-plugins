@@ -27,7 +27,7 @@ For every new or shifting term:
 - What it is *not*: the nearest neighbor concept and where the line is (a free order? an
   empty cart?).
 - Lifecycle: how it's created, its states, who may change it, when it stops being itself
-  (cancelled? deleted?).
+  (canceled? deleted?).
 
 Stress-test it with borderline cases: "An order ships in two parcels — one Order or two?"
 Reach for:

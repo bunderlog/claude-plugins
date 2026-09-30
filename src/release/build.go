@@ -13,7 +13,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// Platforms are the GOOS/GOARCH pairs the binary is built for; the loader picks its own.
+// Platforms are the GOOS/GOARCH pairs the binary is built for; the Loader picks its own.
 var Platforms = [][2]string{
 	{"darwin", "amd64"},
 	{"darwin", "arm64"},

@@ -4,8 +4,10 @@
   "words": [
     "baloo",
     "bunderlog",
+    "cerr",
     "cowork",
     "deepenings",
+    "gitdir",
     "goccy",
     "gofmt",
     "gomod",
@@ -13,6 +15,7 @@
     "minisign",
     "molyuk",
     "shellcheck",
+    "subshell",
     "throughs",
     "toplevel",
     "trimpath",

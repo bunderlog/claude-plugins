@@ -38,7 +38,7 @@ A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at 
 start with every Check on. Each Check turns on with a key of its own there; a wrong setting is
 reported at session start, and its default applies.
 _Avoid_: settings, which are Claude Code's `settings.json`
-_In code_: `internal/config`
+_In code_: `src/baloo/internal/config`
 
 **Check**:
 Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets`; none runs
