@@ -29,7 +29,8 @@ const usage = "usage: baloo version | session-start | allow-guideline | status-l
 	"  pre-tool-use |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
-	"  check linear-history < <pushed refs>"
+	"  check linear-history < <pushed refs> |\n" +
+	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -49,6 +50,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return statusLine(stdin, stdout)
 		case "pre-tool-use":
 			return preToolUse(stdin, stdout)
+		}
+	}
+	if len(args) > 0 && args[0] == "condense" {
+		if code, ok := condenseSessions(args[1:], stdout, stderr); ok {
+			return code
 		}
 	}
 	if len(args) > 1 && args[0] == "check" {

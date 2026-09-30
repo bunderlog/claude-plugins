@@ -577,3 +577,70 @@ func TestAllowGuideline(t *testing.T) {
 		t.Errorf("allow-guideline without CLAUDE_PLUGIN_ROOT = %q; want nothing", stdout.String())
 	}
 }
+
+// condenseProject is a project folder, the folder commands run in until the test ends, whose
+// Transcripts, in Claude Code's config folder, are the sessions "one" and "two", "two" the newer.
+func condenseProject(t *testing.T) (project, transcripts string) {
+	t.Helper()
+	config := t.TempDir()
+	t.Setenv("CLAUDE_CONFIG_DIR", config)
+	project, _ = filepath.EvalSymlinks(t.TempDir())
+	t.Chdir(project)
+	transcripts = filepath.Join(config, "projects", regexp.MustCompile(`[^A-Za-z0-9]`).ReplaceAllString(project, "-"))
+	if err := os.MkdirAll(transcripts, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for i, id := range []string{"one", "two"} {
+		path := filepath.Join(transcripts, id+".jsonl")
+		line := `{"type":"user","message":{"content":"prompt of ` + id + ` with AKIA` + `IOSFODNN7EXAMPLE"}}` + "\n" // cspell:disable-line
+		if err := os.WriteFile(path, []byte(line), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		when := time.Now().Add(time.Duration(i-2) * time.Hour)
+		if err := os.Chtimes(path, when, when); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return project, transcripts
+}
+
+// condense prints the latest session, the latest few with a summary, the sessions named, or the
+// lines around a moment of one, all masked.
+func TestCondense(t *testing.T) {
+	_, transcripts := condenseProject(t)
+	one := "# Session one\n, 0 min, 0 tool calls, 0 failed\nTools: none\n\n[1] prompt: prompt of one with *****\n"
+	two := "# Session two\n, 0 min, 0 tool calls, 0 failed\nTools: none\n\n[1] prompt: prompt of two with *****\n"
+	summary := "\n# Across 2 sessions\n"
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{nil, two},
+		{[]string{"--last", "5"}, two + "\n" + one + summary},
+		{[]string{"one"}, one},
+		{[]string{filepath.Join(transcripts, "one.jsonl"), "two"}, one + "\n" + two + summary},
+		{[]string{"two", "--around", "1"}, "[1] user: prompt of two with *****\n"},
+	} {
+		var stdout, stderr bytes.Buffer
+		code := run(append([]string{"condense"}, tc.args...), nil, &stdout, &stderr)
+		if code != 0 || stdout.String() != tc.want || stderr.Len() != 0 {
+			t.Errorf("condense %q = %d, %q, %q; want 0, %q", tc.args, code, stdout.String(), stderr.String(), tc.want)
+		}
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"condense", "nope"}, nil, &stdout, &stderr); code != 1 ||
+		!strings.HasPrefix(stderr.String(), "baloo condense: ") {
+		t.Errorf("condense of a session not there = %d, %q; want 1 and why", code, stderr.String())
+	}
+}
+
+// Without the project's Transcripts, condense says where it looked.
+func TestCondense_WithoutTranscripts(t *testing.T) {
+	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
+	t.Chdir(t.TempDir())
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"condense"}, nil, &stdout, &stderr); code != 1 ||
+		!strings.HasPrefix(stderr.String(), "baloo condense: no sessions of ") {
+		t.Errorf("condense without Transcripts = %d, %q; want 1 and why", code, stderr.String())
+	}
+}

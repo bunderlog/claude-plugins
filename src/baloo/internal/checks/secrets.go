@@ -76,6 +76,14 @@ func NoSecretsInCommits(dir string) ([]string, error) {
 	return append(found, scan(diff)...), nil
 }
 
+// MaskSecrets is `text` with each Secret of a kind NoSecretsInCommits knows replaced by `mask`.
+func MaskSecrets(text, mask string) string {
+	for _, kind := range secretKinds {
+		text = kind.re.ReplaceAllLiteralString(text, mask)
+	}
+	return text
+}
+
 // isEnvFile says whether the file at `path` is an Env file, not a template of one.
 func isEnvFile(path string) bool {
 	return envFile.MatchString(path) && !template.MatchString(path)
