@@ -3,9 +3,11 @@
 [tools]
 go = "1.27.1"
 shellcheck = "0.11.0"
+node = "24.21.0"
+"npm:cspell" = "10.3.6"
 
 [tasks.check]
-description = "Format, vet and test the binary and the release tool, and lint the Loader"
+description = "Check the Go code's formatting, vet and test it, lint the Loader, and spell-check the repo"
 dir = "src"
 run = [
   'test -z "$(gofmt -l baloo release)" || { gofmt -l baloo release; exit 1; }',
@@ -14,6 +16,7 @@ run = [
   "go -C release vet ./...",
   "go -C release test ./...",
   "shellcheck ../plugins/baloo/scripts/loader",
+  "cd .. && cspell --no-progress $(git ls-files)",
 ]
 
 [tasks.build]

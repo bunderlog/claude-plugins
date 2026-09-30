@@ -161,7 +161,7 @@ func TestSessionStartStatusLineWrongKey(t *testing.T) {
 		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
 	local := filepath.Join(dir, names.LocalSettings)
-	for _, yml := range []string{"status-line: ture\n", "status-line: [\n", "status-line: false\n"} {
+	for _, yml := range []string{"status-line: maybe\n", "status-line: [\n", "status-line: false\n"} {
 		if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(yml), 0o644); err != nil {
 			t.Fatal(err)
 		}
