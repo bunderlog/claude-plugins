@@ -195,6 +195,35 @@ func TestStatusLine(t *testing.T) {
 	}
 }
 
+// A Check fails with what is wrong, for the commit-msg hook to stop the commit and show it.
+func TestCheckNoAICoauthor(t *testing.T) {
+	for message, want := range map[string]struct {
+		code int
+		errs string
+	}{
+		"feat: x\n\nCo-authored-by: Jane Doe <jane@example.com>\n": {0, ""},
+		"feat: x\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n": {1, "baloo:no-ai-coauthor: " +
+			"remove the AI co-author or credit:\nCo-Authored-By: Claude <noreply@anthropic.com>\n"},
+	} {
+		path := filepath.Join(t.TempDir(), "COMMIT_EDITMSG")
+		if err := os.WriteFile(path, []byte(message), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"check", "no-ai-coauthor", path}, nil, &stdout, &stderr)
+		if code != want.code || stdout.Len() != 0 || stderr.String() != want.errs {
+			t.Errorf("check no-ai-coauthor on %q = %d, %q, %q; want %d, \"\", %q",
+				message, code, stdout.String(), stderr.String(), want.code, want.errs)
+		}
+	}
+	var stdout, stderr bytes.Buffer
+	missing := filepath.Join(t.TempDir(), "nope")
+	if code := run([]string{"check", "no-ai-coauthor", missing}, nil, &stdout, &stderr); code != 2 ||
+		!strings.HasPrefix(stderr.String(), "baloo:no-ai-coauthor: ") {
+		t.Errorf("check no-ai-coauthor on a missing file = %d, %q; want 2 and why", code, stderr.String())
+	}
+}
+
 // Outside a repo, such as in the home folder, the session start writes nothing and says nothing.
 func TestSessionStartOutsideRepo(t *testing.T) {
 	dir := t.TempDir()

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
@@ -24,7 +25,8 @@ import (
 // says "dev".
 var version = "dev"
 
-const usage = "usage: baloo version | session-start | allow-guideline | status-line"
+const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
+	"  check no-ai-coauthor <message file>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -43,6 +45,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "status-line":
 			return statusLine(stdin, stdout)
 		}
+	}
+	if len(args) == 3 && args[0] == "check" && args[1] == "no-ai-coauthor" {
+		return noAICoauthor(args[2], stderr)
 	}
 	fmt.Fprintln(stderr, usage)
 	return 2
@@ -169,6 +174,23 @@ func statusLine(stdin io.Reader, stdout io.Writer) int {
 	}
 	fmt.Fprintln(stdout, statusline.Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
 	return 0
+}
+
+// noAICoauthor is the commit-msg hook's Check baloo:no-ai-coauthor on the message in the file
+// `path`: it fails with the lines that make an AI a co-author or credit one, for git to show.
+func noAICoauthor(path string, stderr io.Writer) int {
+	const name = names.Plugin + ":no-ai-coauthor"
+	message, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", name, err)
+		return 2
+	}
+	found := checks.NoAICoauthor(string(message))
+	if len(found) == 0 {
+		return 0
+	}
+	fmt.Fprintf(stderr, "%s: remove the AI co-author or credit:\n%s\n", name, strings.Join(found, "\n"))
+	return 1
 }
 
 // oneLine escapes what isn't printable in `s`, as Go does in a string literal, so a line that

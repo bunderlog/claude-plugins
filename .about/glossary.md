@@ -46,7 +46,7 @@ _In code_: `src/baloo/internal/config`
 Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets`; none runs
 until the Config turns it on.
 _Avoid_: built-in check
-_Planned_: not built yet
+_In code_: `src/baloo/internal/checks`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`) or for one

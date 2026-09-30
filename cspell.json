@@ -2,6 +2,7 @@
   "version": "0.2",
   "language": "en,en-US",
   "words": [
+    "ampcode",
     "baloo",
     "bunderlog",
     "cerr",
@@ -10,6 +11,7 @@
     "commondir",
     "cowork",
     "deepenings",
+    "editmsg",
     "errorf",
     "fatalf",
     "gitdir",
