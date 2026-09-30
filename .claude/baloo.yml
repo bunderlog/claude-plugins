@@ -36,4 +36,5 @@ checks:
   no-ai-coauthor: true
   conventional-commits: true
   no-secrets-in-commits: true
+  no-stale-adr-date: true
   linear-history: true
