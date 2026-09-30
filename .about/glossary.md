@@ -1,8 +1,8 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, Guidelines of working rules, Checks in one Go binary
-that hooks trigger, an Output style for Claude's replies, and a Status line.
+language, decisions and requirements explicit or run a Retro, Guidelines of working rules, Checks
+in one Go binary that hooks trigger, an Output style for Claude's replies, and a Status line.
 
 ## Distribution
 
@@ -89,6 +89,30 @@ direnv's `.envrc`… A template of one (`.env.example`, `.sample`, `.template`, 
 **Leak**:
 A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
 host.
+
+## Retro
+
+**Setup**:
+Everything that shapes how Claude works in a project: its CLAUDE.md, the Config, Claude Code's
+settings, and the skills, hooks and plugins it uses.
+_Avoid_: harness
+
+**Transcript**:
+The record Claude Code keeps of a session: every prompt, reply and tool call, with the call's full
+output, so it can hold a Secret a Check missed.
+_Avoid_: log, history
+
+**Retro**:
+A review the user asks for of how past sessions went: their Stalls, and the change to the Setup
+that would have spared each. It looks at how the work went, not at what it produced.
+_Avoid_: retrospective, post-mortem
+_In code_: the `retro` skill; `src/baloo/internal/condense`
+
+**Stall**:
+A point in a session that cost the user something the Setup could have spared: a failed or
+refused tool call, an interrupt, a correction, a prompt the user types again and again. A red test
+mid-change, a denial that was right, or a call that is the user's to make each time isn't one.
+_Avoid_: issue, incident
 
 ## Unresolved
 
