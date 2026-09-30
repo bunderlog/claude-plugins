@@ -4,7 +4,7 @@ Date: 2026-09-30
 
 The marketplace installs `baloo` from this repo's `main`, and an installed copy updates only to a
 new version, so a change to `plugins/baloo/`, or to the binary's source in `src/baloo/`, reaches
-users only with a Release; their tests need none.
+users only with a Release; their tests and `schema.json`, which editors read from `main`, need none.
 `mise run release` makes one from the commits since the last `v*` tag, which follow Conventional
 Commits: below 1.0 a breaking change or a `feat` raises the minor, anything else the patch; from 1.0
 a breaking change raises the major. It builds that version for every platform, so a version that

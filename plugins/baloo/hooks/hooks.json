@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "install"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "session-start"],
             "timeout": 180
           }
         ]

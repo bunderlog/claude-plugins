@@ -156,6 +156,31 @@ func TestLoader(t *testing.T) {
 		}
 	})
 
+	t.Run("session-start downloads the binary, then runs it", func(t *testing.T) {
+		l := setup(t, bin)
+		l.withSum(sum)
+		project := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(project, ".git"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(project, ".claude"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(project, names.Config), []byte("nope: 1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		out, errs, code := l.run(t, []string{"CLAUDE_PROJECT_DIR=" + project}, "session-start")
+		if code != 0 || !strings.Contains(out, "nope is not a setting") || errs != "" {
+			t.Errorf("session-start = %d, %q, %q; want 0 and the config's problem", code, out, errs)
+		}
+		if n := l.downloads.Load(); n != 1 {
+			t.Errorf("session-start downloaded the binary %d times; want once", n)
+		}
+		if got, want := l.files(), []string{l.file, l.file + ".sha256"}; !slices.Equal(got, want) {
+			t.Errorf("data folder holds %q after session-start; want %q", got, want)
+		}
+	})
+
 	t.Run("deletes other versions a week after their last use", func(t *testing.T) {
 		l := setup(t, bin)
 		l.withSum(sum)

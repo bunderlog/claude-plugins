@@ -3,6 +3,8 @@
 # plugin's version from its GitHub Release into ${CLAUDE_PLUGIN_DATA}, unless it is there and still
 # has the sha256 it was downloaded with, and checks it against the Release's SHA256SUMS;
 # `loader <args>` runs that binary.
+# `loader session-start`, the SessionStart hook, does the same when needed, then runs the binary's
+# session-start.
 # A failure says why on stderr and exits 2, which a SessionStart hook shows to the user.
 set -u
 
@@ -84,6 +86,8 @@ fetch() {
   release=$releases/v$version
   download "$release/SHA256SUMS" "$sums" 15
   sum=$(awk -v f="$file" '$2 == f { print $1; exit }' "$sums")
+  # Gone now, not at exit: `session-start` ends by exec'ing the binary, which runs no EXIT trap.
+  rm -f "$sums"
   [ -n "$sum" ] || fail "no binary for $os/$arch in $release/SHA256SUMS"
   download "$release/$file" "$tmp" 60
   got=$(sha256 "$tmp") || exit 2
@@ -97,6 +101,11 @@ fetch() {
 
 case ${1:-} in
   install) install ;;
+  session-start)
+    install
+    touch "$bin" "$bin.sha256" 2>/dev/null
+    exec "$bin" "$@"
+    ;;
   *)
     [ -x "$bin" ] || fail "$file is not downloaded; it downloads at session start"
     touch "$bin" "$bin.sha256" 2>/dev/null

@@ -16,8 +16,10 @@ import (
 type Commit struct{ SHA, Message string }
 
 // Changes are the paths whose change needs a Release: the plugin and its binary's source, but not
-// their tests, which users don't get from a Release.
-var Changes = []string{names.PluginDir, names.Src, ":!*_test.go"}
+// what users don't get from a Release: tests, and the schema, which editors read from main.
+var Changes = []string{
+	names.PluginDir, names.Src, ":!*_test.go", ":!" + names.PluginDir + "/schema.json",
+}
 
 const changelogHeader = "# Changelog\n\nThe " + names.Plugin + " plugin's Releases, newest first.\n"
 

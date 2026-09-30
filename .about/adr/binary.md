@@ -2,12 +2,13 @@
 
 Date: 2026-09-30
 
-The hooks, the Built-in checks and the Status line are one Go binary, `baloo`, with a subcommand
-each, so a user's machine needs no runtime.
+Claude Code's Hooks and Git hooks are only triggers: each runs one Go binary, `baloo`, which runs
+the Checks the Config turns on (ADR config). The Checks and the Status line are the binary's code,
+so a user's machine needs no runtime.
 
 The Loader, `scripts/loader`, is a POSIX `sh` script. The `SessionStart` hook runs the Loader's
-`install`, which makes sure this machine has the binary of the version in `plugin.json`. It
-downloads one only when it is missing, or no longer has the sha256 it
+`session-start`, which runs the binary's `session-start` once this machine has the binary of the
+version in `plugin.json`. It downloads one only when it is missing, or no longer has the sha256 it
 was downloaded with, kept beside it and checked once a session: it downloads the GitHub Release's
 `SHA256SUMS` and this machine's binary into `${CLAUDE_PLUGIN_DATA}`, checks the binary's sha256
 against the file, and moves it into place in one step. `loader <args>` runs the binary. A failure
@@ -20,8 +21,8 @@ short or damaged.
 
 ## Considered options
 
-- TypeScript run with `bun` — `bun` would have to be on every machine, or every hook would
-  silently do nothing, the Guard too.
+- TypeScript run with `bun` — `bun` would have to be on every machine, or every Check would
+  silently do nothing.
 - The sha256 committed to the repo with each Release, and the Release workflow publishing only
   binaries it rebuilds to the same sha256 (until 2026-09-30) — a replaced GitHub Release would be
   caught, but every Release needed a reproducible build on the releasing machine and in CI, and a
@@ -40,8 +41,8 @@ short or damaged.
 - A user's machine needs `sh`, `curl` or `wget`, and `sha256sum` or `shasum`; macOS and WSL have
   them. There is no Windows binary; Git Bash on Windows gets "no binary" at every session start.
 - The first session after an install or update waits for the download. Offline, or when the
-  download or its check fails, the hooks don't run that session; the parts that must not skip
-  silently, such as the Guard, say so (decided with each part).
+  download or its check fails, no Check runs that session; the Checks that must not skip
+  silently say so (decided with each).
 - `BALOO_RELEASES` points the Loader at another host, which is how the tests serve it a Release.
 - Binaries of other versions are deleted from `${CLAUDE_PLUGIN_DATA}` a week after they were last
   run, so a session still on an older version keeps its binary meanwhile.

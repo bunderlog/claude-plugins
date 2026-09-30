@@ -3,9 +3,9 @@
 Date: 2026-09-30
 
 This repo is the `bunderlog` marketplace, and it holds one plugin, `baloo`: skills, hooks and the Go
-binary the hooks run (ADR binary). The skills always work; each hook, the Guard among them, turns on
-with a key of its own in the config. The binary's source is in `src/baloo/`, outside the plugin, so
-an install doesn't carry it.
+binary the hooks run (ADR binary). The skills always work; each Check turns on with a key of its own
+in the Config. The binary's source is in `src/baloo/`, outside the plugin, so an install doesn't
+carry it.
 
 Every name the Go code, the binary's and the release tool's, uses for the plugin (its name, folders
 and file names) is a constant in `src/baloo/names`, so a rename is one edit in the code, plus the

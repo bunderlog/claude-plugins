@@ -10,6 +10,11 @@ const (
 	Src = "src/" + Plugin
 	// Manifest is the plugin's manifest; its version is the plugin's and the binary's.
 	Manifest = PluginDir + "/.claude-plugin/plugin.json"
+	// Config is a repo's config file, from its root: beside Claude Code's own settings.
+	Config = ".claude/" + Plugin + ".yml"
+	// Schema is where editors find the config's JSON Schema, which a new config names.
+	Schema = "https://raw.githubusercontent.com/bunderlog/claude-plugins/main/" + PluginDir +
+		"/schema.json"
 )
 
 // Binary is the file name of the binary of `version` for one platform, as the Loader looks for it.

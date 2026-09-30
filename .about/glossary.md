@@ -1,7 +1,7 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, and hooks run by one Go binary.
+language, decisions and requirements explicit, and Checks in one Go binary that hooks trigger.
 
 ## Distribution
 
@@ -29,19 +29,21 @@ A command Claude Code runs at an event in a session, such as `SessionStart` or `
 _Avoid_: "hook" for a Git hook
 
 **Git hook**:
-A script git runs at a point in its own workflow (`pre-commit`, `commit-msg`, `pre-push`), for
-every commit or push, whether or not Claude made it.
+A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit
+or push, whether you or Claude made it.
 _Avoid_: "hook" alone
 
-**Guard**:
-The plugin's Hook that stops a tool call before it runs when it would destroy work or leak a
-secret into Claude's context, denying it or asking the user first. A guard against accidents,
-not a security boundary.
-_Planned_: not built yet
+**Config**:
+A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
+start with every Check on. Each Check turns on with a key of its own there; a wrong setting is
+reported at session start, and its default applies.
+_Avoid_: settings, which are Claude Code's `settings.json`
+_In code_: `internal/config`
 
-**Built-in check**:
-A check the binary ships for a Git hook or a project's CI to run, such as `baloo:no-secrets`.
-_Avoid_: "check" for one of the Guard's rules
+**Check**:
+Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets`; none runs
+until the Config turns it on.
+_Avoid_: built-in check
 _Planned_: not built yet
 
 **Status line**:
