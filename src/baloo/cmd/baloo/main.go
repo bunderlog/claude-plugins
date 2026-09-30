@@ -28,7 +28,7 @@ var version = "dev"
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check linear-history < <pushed refs> |\n" +
-	"  check no-git-hook-bypass|no-destructive-commands < <PreToolUse input>"
+	"  check no-git-hook-bypass|no-destructive-commands|no-secrets-in-context < <PreToolUse input>"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
@@ -59,6 +59,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "no-destructive-commands" {
 		return noDestructiveCommands(stdin, stdout)
+	}
+	if len(args) == 2 && args[0] == "check" && args[1] == "no-secrets-in-context" {
+		return noSecretsInContext(stdin, stdout)
 	}
 	if len(args) == 2 && args[0] == "check" && args[1] == "linear-history" {
 		return linearHistory(stdin, stderr)
@@ -260,8 +263,10 @@ func linearHistory(stdin io.Reader, stderr io.Writer) int {
 // noGitHookBypass is the Bash tool's PreToolUse Check baloo:no-git-hook-bypass: it denies a
 // command that would bypass the Git hooks.
 func noGitHookBypass(stdin io.Reader, stdout io.Writer) int {
-	if command, _, ok := bashCall(stdin); ok {
-		decide(stdout, "no-git-hook-bypass", checks.NoGitHookBypass(command), "")
+	if call, ok := toolCall(stdin); ok && call.Tool == "Bash" {
+		if why := checks.NoGitHookBypass(call.Input.Command); why != "" {
+			decide(stdout, "no-git-hook-bypass", "deny", why+runItYourself)
+		}
 	}
 	return 0
 }
@@ -270,43 +275,50 @@ func noGitHookBypass(stdin io.Reader, stdout io.Writer) int {
 // denies a command that would destroy work beyond undo, and asks the user first about one they
 // often ask for by name.
 func noDestructiveCommands(stdin io.Reader, stdout io.Writer) int {
-	if command, cwd, ok := bashCall(stdin); ok {
-		deny, ask := checks.NoDestructiveCommands(command, cwd)
-		decide(stdout, "no-destructive-commands", deny, ask)
+	if call, ok := toolCall(stdin); ok && call.Tool == "Bash" {
+		deny, ask := checks.NoDestructiveCommands(call.Input.Command, call.Cwd)
+		switch {
+		case deny != "":
+			decide(stdout, "no-destructive-commands", "deny", deny+runItYourself)
+		case ask != "":
+			decide(stdout, "no-destructive-commands", "ask", ask)
+		}
 	}
 	return 0
 }
 
-// bashCall is the command of the Bash tool's call that Claude Code gives a PreToolUse hook on
-// `stdin`, with the folder it runs in; not ok for any other tool's call, or input it can't read,
-// which a Check then says nothing of, and Claude Code runs as usual.
-func bashCall(stdin io.Reader) (command, cwd string, ok bool) {
-	var call struct {
-		ToolName  string `json:"tool_name"`
-		Cwd       string `json:"cwd"`
-		ToolInput struct {
-			Command string `json:"command"`
-		} `json:"tool_input"`
+// noSecretsInContext is the PreToolUse Check baloo:no-secrets-in-context: it denies a tool call
+// that would Leak a Secret into Claude's context, or mark an Env file as holding none.
+func noSecretsInContext(stdin io.Reader, stdout io.Writer) int {
+	if call, ok := toolCall(stdin); ok {
+		if why := checks.NoSecretsInContext(call.ToolCall, call.Cwd); why != "" {
+			decide(stdout, "no-secrets-in-context", "deny", why)
+		}
 	}
-	if json.NewDecoder(stdin).Decode(&call) != nil || call.ToolName != "Bash" {
-		return "", "", false
-	}
-	return call.ToolInput.Command, call.Cwd, true
+	return 0
 }
 
-// decide prints the PreToolUse Check `check`'s decision for Claude Code: a denial, which tells
-// Claude to leave the command to the user, when `deny` says why; else a question to the user
-// when `ask` does; else nothing, and the call runs as usual.
-func decide(stdout io.Writer, check, deny, ask string) {
-	decision, reason := "deny", deny+". If it's really needed, ask the user to run it themselves "+
-		"with `! <command>`."
-	switch {
-	case deny != "":
-	case ask != "":
-		decision, reason = "ask", ask
-	default:
-		return
-	}
+// runItYourself ends the reason of a command denied, for Claude to leave it to the user.
+const runItYourself = ". If it's really needed, ask the user to run it themselves with " +
+	"`! <command>`."
+
+// hookCall is the tool call Claude Code gives a PreToolUse hook, with the folder it runs in.
+type hookCall struct {
+	checks.ToolCall
+	Cwd string `json:"cwd"`
+}
+
+// toolCall is the tool call Claude Code gives a PreToolUse hook on `stdin`; not ok for input it
+// can't read, which a Check then says nothing of, and Claude Code runs the call as usual.
+func toolCall(stdin io.Reader) (hookCall, bool) {
+	var call hookCall
+	err := json.NewDecoder(stdin).Decode(&call)
+	return call, err == nil
+}
+
+// decide prints the PreToolUse Check `check`'s `decision`, deny or ask, with its reason, for
+// Claude Code.
+func decide(stdout io.Writer, check, decision, reason string) {
 	out := json.NewEncoder(stdout)
 	out.SetEscapeHTML(false)
 	out.Encode(map[string]any{"hookSpecificOutput": map[string]string{

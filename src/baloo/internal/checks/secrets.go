@@ -57,7 +57,7 @@ func NoSecretsInCommits(dir string) ([]string, error) {
 	}
 	var found []string
 	for _, path := range strings.Split(strings.TrimSuffix(list, "\x00"), "\x00") {
-		if path == "" || !envFile.MatchString(path) || template.MatchString(path) {
+		if !isEnvFile(path) {
 			continue
 		}
 		text, err := git(dir, "cat-file", "blob", ":"+path)
@@ -74,6 +74,11 @@ func NoSecretsInCommits(dir string) ([]string, error) {
 		return nil, err
 	}
 	return append(found, scan(diff)...), nil
+}
+
+// isEnvFile says whether the file at `path` is an Env file, not a template of one.
+func isEnvFile(path string) bool {
+	return envFile.MatchString(path) && !template.MatchString(path)
 }
 
 // scan is `<path>:<line>: <what>` for each Secret on a line the diff `diff` adds.

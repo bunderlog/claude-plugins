@@ -29,10 +29,12 @@ var shells = []string{"sh", "bash", "zsh", "dash"}
 
 // programs are the programs the shell command `command` runs, past wrappers such as sudo and env,
 // and into `eval` and `sh -c`: enough to find each program and its arguments, not a full shell.
+// An env with no program after it runs nothing but prints the environment, so it is one.
 func programs(command string) []program {
 	var found []program
 	for _, words := range split(command) {
 		var env []string
+		bareEnv := false
 		for len(words) > 0 {
 			if assignment.MatchString(words[0]) {
 				env, words = append(env, words[0]), words[1:]
@@ -42,6 +44,7 @@ func programs(command string) []program {
 			if !ok {
 				break
 			}
+			bareEnv = path.Base(words[0]) == "env"
 			for words = words[1:]; len(words) > 0 && strings.HasPrefix(words[0], "-"); words = words[1:] {
 				if slices.Contains(valued, words[0]) && len(words) > 1 {
 					words = words[1:]
@@ -49,6 +52,9 @@ func programs(command string) []program {
 			}
 		}
 		if len(words) == 0 {
+			if bareEnv {
+				found = append(found, program{"env", nil, env})
+			}
 			continue
 		}
 		name, args := path.Base(words[0]), words[1:]

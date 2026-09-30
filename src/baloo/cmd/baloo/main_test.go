@@ -346,6 +346,28 @@ func TestCheckNoDestructiveCommands(t *testing.T) {
 	}
 }
 
+// The PreToolUse Check no-secrets-in-context denies a tool call that would show a Secret, and says
+// nothing of any other.
+func TestCheckNoSecretsInContext(t *testing.T) {
+	cwd := t.TempDir()
+	for in, want := range map[string]string{
+		`{"tool_name": "Read", "cwd": "` + cwd + `", "tool_input": {"file_path": ".env"}}`: `{"hookSpecificOutput":` +
+			`{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":` +
+			`"baloo:no-secrets-in-context: .env is an env file: showing it would put a secret into this ` +
+			"session. If it's really needed, ask the user to look in their own terminal, not with `!`, " +
+			`whose output enters the session."}}` + "\n",
+		`{"tool_name": "Bash", "tool_input": {"command": "cat README.md"}}`: "",
+		`nope`: "",
+	} {
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"check", "no-secrets-in-context"}, strings.NewReader(in), &stdout, &stderr)
+		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
+			t.Errorf("check no-secrets-in-context on %s = %d, %q, %q; want 0, %q",
+				in, code, stdout.String(), stderr.String(), want)
+		}
+	}
+}
+
 // Outside a repo, such as in the home folder, the session start writes nothing and says nothing.
 func TestSessionStartOutsideRepo(t *testing.T) {
 	dir := t.TempDir()
