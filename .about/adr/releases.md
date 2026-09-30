@@ -10,7 +10,7 @@ Commits: below 1.0 a breaking change or a `feat` raises the minor, anything else
 a breaking change raises the major. It builds that version for every platform, so a version that
 doesn't build is never tagged, then writes it to `plugin.json` and a section to
 `CHANGELOG.md`, commits them as `chore(release): <version>` and tags the commit `v<version>`,
-annotated, for `git push --follow-tags`. The tag starts the Release workflow, which builds the
+signed, for `git push --follow-tags`. The tag starts the Release workflow, which builds the
 binaries for every platform and publishes them, their `SHA256SUMS` and the CHANGELOG section as the
 GitHub Release (ADR binary).
 
@@ -31,7 +31,7 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
 ## Consequences
 
 - A commit message is release notes: its subject is what users read.
-- The release commit and tag are signed like any other, so the Release is made where the
-  signing key is.
+- The release commit is signed like any other, and the tag always is (`git tag -s`), so the
+  Release is made where the signing key is.
 - Nothing yet stops a push that changes `plugins/baloo/` or `src/baloo/` without a Release; a
   pre-push check for it comes with the Git hooks.
