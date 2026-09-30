@@ -1,11 +1,11 @@
 # The Config is `.claude/baloo.yml`, created at session start with every Check on
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
 settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
 without running git. Each Check and each Guideline turns on with a key of its own (ADR plugin), and
-without it is off.
+without it is off, but for the Checks on Claude's tool calls, which are on (ADR checks).
 
 At session start the binary creates the Config in a repo that has none, with every Check on and
 the Guidelines that fit the repo (ADR guidelines), and tells Claude to tell the user; a repo turns
@@ -55,7 +55,7 @@ Config it created and the problems.
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
   where the repo has the stack.
 - A new key reaches a Config that exists only when its user adds it, so its default must be what
-  the Check did before it had the key.
+  the Check did before it had the key, unless ADR checks says otherwise.
 - The schema is read from `main`, so an editor can check a Config against settings newer than
   the installed Release.
 - The path says Claude, though the Checks Git hooks run act on every commit, Claude's or not.

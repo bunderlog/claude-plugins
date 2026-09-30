@@ -43,8 +43,8 @@ _Avoid_: settings, which are Claude Code's `settings.json`
 _In code_: `src/baloo/internal/config`
 
 **Check**:
-Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`; none
-runs until the Config turns it on.
+Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`,
+turned on or off by a key of its own in the Config.
 _Avoid_: built-in check
 _In code_: `src/baloo/internal/checks`
 
