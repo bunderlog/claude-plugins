@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bunderlog/claude-plugins/main/plugins/baloo/schema.json
 #
-# baloo's settings for this repo. Each check and each guideline turns on with a key of its own
-# here, and without it is off. A wrong setting is reported at session start, and its default
-# applies.
+# baloo's settings for this repo. Each check and each guideline turns on or off with a key of its
+# own here. A wrong setting is reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
-# enables the plugin, where no settings file of Claude Code's picks one; false picks none.
+# enables the plugin (.claude/settings.local.json for the user's own), where no settings file of
+# Claude Code's picks one; false picks none.
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
@@ -31,7 +31,7 @@ guidelines:
   vue: false
 
 # Checks, each on with true and off with false. Those on Claude's tool calls deny, or ask you
-# about, a command that would destroy work, bypass the Git hooks or show a secret, and are on
+# about, a tool call that would destroy work, bypass the Git hooks or show a secret, and are on
 # without their key too. Those in Git hooks check every commit or push, yours or Claude's.
 # conventional-commits also takes its settings instead of true, such as
 # { types: [feat, fix], max-length: 72 }; types: any takes any type, max-length: 0 any length.

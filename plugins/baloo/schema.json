@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "baloo config",
-  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each check and each guideline turns on with a key of its own, and without it is off.",
+  "description": "baloo's settings for a repo, in .claude/baloo.yml at its root. Each check and each guideline turns on or off with a key of its own.",
   "type": "object",
   "properties": {
     "output-style": {
@@ -64,7 +64,7 @@
           "type": "boolean"
         },
         "no-destructive-commands": {
-          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete.",
+          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete, or git reset --hard with no changes to lose.",
           "type": "boolean"
         },
         "no-secrets-in-context": {

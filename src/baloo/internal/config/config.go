@@ -19,8 +19,9 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// Config is a repo's settings. Each Check adds its field here, its key to keys and to the schema,
-// and its key, turned on, to newConfig.
+// Config is a repo's settings. Each other setting adds its field here, its key to keys and to the
+// schema, and its key, turned on, to newConfig; a Check adds its name to a list in checks and its
+// key to the schema.
 type Config struct {
 	// Root is the root of the repo whose Config this is, or "" where the repo has none (see
 	// Load).
@@ -201,12 +202,12 @@ func newConfig(fit []string) string {
 	}
 	return "# yaml-language-server: $schema=" + names.Schema + `
 #
-# baloo's settings for this repo. Each check and each guideline turns on with a key of its own
-# here, and without it is off. A wrong setting is reported at session start, and its default
-# applies.
+# baloo's settings for this repo. Each check and each guideline turns on or off with a key of its
+# own here. A wrong setting is reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
-# enables the plugin, where no settings file of Claude Code's picks one; false picks none.
+# enables the plugin (.claude/settings.local.json for the user's own), where no settings file of
+# Claude Code's picks one; false picks none.
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
@@ -224,7 +225,7 @@ session-review: true
 guidelines:
 ` + list.String() + `
 # Checks, each on with true and off with false. Those on Claude's tool calls deny, or ask you
-# about, a command that would destroy work, bypass the Git hooks or show a secret, and are on
+# about, a tool call that would destroy work, bypass the Git hooks or show a secret, and are on
 # without their key too. Those in Git hooks check every commit or push, yours or Claude's.
 # conventional-commits also takes its settings instead of true, such as
 # { types: [feat, fix], max-length: 72 }; types: any takes any type, max-length: 0 any length.
