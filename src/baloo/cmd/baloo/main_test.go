@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/review"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/testkit"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
@@ -642,5 +643,60 @@ func TestCondense_WithoutTranscripts(t *testing.T) {
 	if code := run([]string{"condense"}, nil, &stdout, &stderr); code != 1 ||
 		!strings.HasPrefix(stderr.String(), "baloo condense: no sessions of ") {
 		t.Errorf("condense without Transcripts = %d, %q; want 1 and why", code, stderr.String())
+	}
+}
+
+// A session that ends in a repo whose Config turns the Session review on starts one, and the next
+// session start says what it replied.
+func TestSessionEnd(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("session-review: true\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CLAUDE_PLUGIN_DATA", t.TempDir())
+	bin := t.TempDir()
+	if err := os.WriteFile(filepath.Join(bin, "claude"), []byte("#!/bin/sh\ncat >/dev/null\necho 'Added Order to the glossary.'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	transcript := filepath.Join(t.TempDir(), "s.jsonl")
+	if err := os.WriteFile(transcript, []byte(`{"type":"user","message":{"content":"`+strings.Repeat("x", 3000)+`"}}`+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	in := `{"transcript_path":"` + transcript + `","cwd":"` + dir + `"}`
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"session-end"}, strings.NewReader(in), &stdout, &stderr); code != 0 ||
+		stdout.Len() != 0 || stderr.Len() != 0 {
+		t.Fatalf("session-end = %d, %q, %q; want 0 and nothing said", code, stdout.String(), stderr.String())
+	}
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
+		stdout.Reset()
+		if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+			t.Fatalf("session-start = %d, %q", code, stderr.String())
+		}
+		if !strings.Contains(stdout.String(), "still running") || time.Now().After(deadline) {
+			break
+		}
+	}
+	if got := stdout.String(); !strings.Contains(got, "\nthe Session review of the last session (") ||
+		!strings.Contains(got, ") replied as below: tell the user") ||
+		!strings.Contains(got, "\n  Added Order to the glossary.\n") {
+		t.Errorf("session-start after a Session review = %q; want what it replied", got)
+	}
+	// Its own end, and a Config that doesn't turn it on, start none.
+	for _, env := range []string{"1", ""} {
+		t.Setenv(review.Env, env)
+		if env == "" {
+			os.WriteFile(filepath.Join(dir, names.Config), []byte("session-review: false\n"), 0o644)
+		}
+		stdout.Reset()
+		run([]string{"session-end"}, strings.NewReader(in), &stdout, &stderr)
+		run([]string{"session-start"}, nil, &stdout, &stderr)
+		if strings.Contains(stdout.String(), "Session review") {
+			t.Errorf("session-start after a session-end with %s=%q = %q; want no review", review.Env, env, stdout.String())
+		}
 	}
 }

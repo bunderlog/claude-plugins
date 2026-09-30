@@ -151,3 +151,20 @@ func TestAround_ShowsTheLinesAroundAMomentMasked(t *testing.T) {
 		t.Errorf("Around(3, 2) =\n%s\nwant\n%s", got, want)
 	}
 }
+
+// A Session review reads only what the user and Claude wrote, masked: no tool call or result, and
+// nothing Claude Code wrote in the user's turn but a command.
+func TestConversation_IsWhatTheUserAndClaudeWroteMasked(t *testing.T) {
+	leak := `{"type":"assistant","message":{"content":[{"type":"text","text":"Use AKIA` + `IOSFODNN7EXAMPLE."}]}}`
+	got := Conversation(transcript(start, title, reply, failed, passed, meta, skill, remind, stop, cmd, leak), 1000)
+	want := "user: add a retro skill to the plugin\n\n" +
+		"assistant: On it.\n\n" +
+		"user: /baloo:ask port retro\n\n" +
+		"assistant: Use *****."
+	if got != want {
+		t.Errorf("Conversation =\n%s\nwant\n%s", got, want)
+	}
+	if got := Conversation(transcript(start, reply), 10); got != "nt: On it." {
+		t.Errorf("Conversation of at most 10 characters = %q, want its last 10", got)
+	}
+}

@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "session-end"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit",

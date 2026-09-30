@@ -372,6 +372,32 @@ func TestLoader(t *testing.T) {
 		}
 	})
 
+	t.Run("session-end never fails the exit", func(t *testing.T) {
+		end := `{"transcript_path": "/t.jsonl"}`
+		l := setup(t, bin)
+		l.withSum(sum)
+		if out, errs, code := l.runWith(t, end, nil, "session-end"); code != 0 || out != "" || errs != "" {
+			t.Errorf("session-end, no binary = %d, %q, %q; want 0 and nothing", code, out, errs)
+		}
+		if n := l.downloads.Load(); n != 0 {
+			t.Errorf("session-end downloaded the binary %d times; want never", n)
+		}
+		if _, errs, code := l.run(t, nil, "install"); code != 0 {
+			t.Fatalf("install = %d, %q", code, errs)
+		}
+		stdin := filepath.Join(t.TempDir(), "stdin")
+		script := "#!/bin/sh\ncat > " + stdin + "\necho usage >&2\nexit 2\n"
+		if err := os.WriteFile(filepath.Join(l.data, l.file), []byte(script), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if out, errs, code := l.runWith(t, end, nil, "session-end"); code != 0 || out != "" || errs != "" {
+			t.Errorf("session-end with a binary that fails = %d, %q, %q; want 0 and nothing", code, out, errs)
+		}
+		if got, _ := os.ReadFile(stdin); string(got) != end+"\n" {
+			t.Errorf("the binary got %q; want %q", got, end+"\n")
+		}
+	})
+
 	t.Run("pre-tool-use never stops a tool call it can't check", func(t *testing.T) {
 		call := `{"tool_name": "Bash", "tool_input": {"command": "git status"}}`
 		l := setup(t, bin)

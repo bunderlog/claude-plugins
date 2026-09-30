@@ -16,6 +16,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/review"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/statusline"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
@@ -26,7 +27,7 @@ import (
 var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  pre-tool-use |\n" +
+	"  pre-tool-use | session-end |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
 	"  check linear-history < <pushed refs> |\n" +
@@ -50,6 +51,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return statusLine(stdin, stdout)
 		case "pre-tool-use":
 			return preToolUse(stdin, stdout)
+		case "session-end":
+			return sessionEnd(stdin)
 		}
 	}
 	if len(args) > 0 && args[0] == "condense" {
@@ -80,8 +83,9 @@ func project() (string, error) {
 // Claude Code's settings pick none (ADR output-styles), and sets the Status line or takes it out
 // (ADR status-line). What it prints Claude Code adds to Claude's context, so it prints only what
 // Claude should know: a Config it created, an Output style or a Status line it set, a Check on
-// Claude's tool calls it turns off (ADR checks), and the problems, each on one line; then the
-// Guidelines the Config turns on (ADR guidelines).
+// Claude's tool calls it turns off (ADR checks), what the last Session review replied (ADR
+// session-review), and the problems, each on one line; then the Guidelines the Config turns on
+// (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -128,6 +132,9 @@ func sessionStart(stdout, stderr io.Writer) int {
 			report = append(report, fmt.Sprintf("checks.%s: false in %s turns off a check on Claude's "+
 				"tool calls: tell the user", name, names.Config))
 		}
+	}
+	if c.Root != "" {
+		report = append(report, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
 	}
 	index, err := guidelineIndex(c.Guidelines)
 	if err != nil {

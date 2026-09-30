@@ -31,6 +31,9 @@ type Config struct {
 	// StatusLine says whether session start sets the plugin's Status line or takes it out (ADR
 	// status-line), or is nil where the Config doesn't say, and the line is left as it is.
 	StatusLine *bool
+	// SessionReview says whether a Session review starts when a session ends (ADR
+	// session-review).
+	SessionReview bool
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 	// Checks are the Checks the Config turns on or off, by name; see CheckOn for one it doesn't.
@@ -74,6 +77,12 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 			return []string{at(key.Line, key.Value+why)}
 		}
 		c.StatusLine = &on
+		return nil
+	},
+	"session-review": func(c *Config, key, value *yaml.Node) []string {
+		if value.Tag != "!!bool" || value.Decode(&c.SessionReview) != nil {
+			return []string{wrong(key.Line, key.Value, "is not true or false")}
+		}
 		return nil
 	},
 	"checks": func(c *Config, key, value *yaml.Node) []string {
@@ -203,6 +212,11 @@ output-style: short-replies
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
 # settings file of Claude Code's but the user's own sets one; false takes it out.
 status-line: true
+
+# The Session review: when a session ends, a separate Claude session records in .about/glossary.md
+# and .about/adr/ what the conversation settled but nobody wrote down; the next session start
+# says what it changed. It never commits.
+session-review: true
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack

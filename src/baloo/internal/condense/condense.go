@@ -152,6 +152,18 @@ func human(text string) string {
 	return ""
 }
 
+// commandText is the command the user typed, `/name args`, from what Claude Code wrote of it.
+func commandText(text string) string {
+	name, args := "", ""
+	if m := commandName.FindStringSubmatch(text); m != nil {
+		name = m[1]
+	}
+	if m := commandArgs.FindStringSubmatch(text); m != nil {
+		args = m[1]
+	}
+	return strings.TrimSpace(name + " " + args)
+}
+
 // Condense is the session of the Transcript `transcript`, whose id is `id`.
 func Condense(transcript []byte, id string) Session {
 	s := Session{ID: id, Tools: map[string]int{}}
@@ -212,14 +224,7 @@ func Condense(transcript []byte, id string) Session {
 		case "interrupt":
 			s.Events = append(s.Events, Event{At: at, Type: typ})
 		case "command":
-			name, args := "", ""
-			if m := commandName.FindStringSubmatch(text); m != nil {
-				name = m[1]
-			}
-			if m := commandArgs.FindStringSubmatch(text); m != nil {
-				args = m[1]
-			}
-			s.Events = append(s.Events, Event{At: at, Type: typ, Text: strings.TrimSpace(name + " " + args)})
+			s.Events = append(s.Events, Event{At: at, Type: typ, Text: commandText(text)})
 		case "prompt":
 			s.Events = append(s.Events, Event{At: at, Type: typ, Text: text})
 		}
@@ -516,4 +521,31 @@ func Around(transcript []byte, at, radius int) string {
 		return true
 	})
 	return Mask(strings.Join(out, "\n"))
+}
+
+// Conversation is the user's and Claude's text in the Transcript `transcript`, for a Session
+// review, masked, then cut to its last `max` characters: no tool call or result, and of what
+// Claude Code wrote in the user's turn only the commands (ADR session-review).
+func Conversation(transcript []byte, max int) string {
+	var out []string
+	lines(transcript, func(_ int, l line) bool {
+		text := textOf(blocks(l.Message))
+		switch {
+		case l.Type == "assistant" && strings.TrimSpace(text) != "":
+		case l.Type != "user" || l.IsMeta:
+			return true
+		case human(text) == "prompt":
+		case human(text) == "command":
+			text = commandText(text)
+		default:
+			return true
+		}
+		out = append(out, l.Type+": "+text)
+		return true
+	})
+	text := []rune(Mask(strings.Join(out, "\n\n")))
+	if len(text) > max {
+		text = text[len(text)-max:]
+	}
+	return string(text)
 }

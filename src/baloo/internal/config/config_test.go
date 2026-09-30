@@ -349,6 +349,28 @@ func TestStatusLineSetting(t *testing.T) {
 	}
 }
 
+// The Session review is on with its key, off without it, and on in a new Config (ADR
+// session-review).
+func TestSessionReviewSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml      string
+		on       bool
+		problems []string
+	}{
+		{"session-review: true\n", true, nil},
+		{"session-review: false\n", false, nil},
+		{"# none\n", false, nil},
+		{"session-review: yes please\n", false, []string{
+			".claude/baloo.yml line 1: session-review: is not true or false; its default applies"}},
+		{newConfig(nil), true, nil},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.SessionReview != tc.on || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %t, %q; want %t, %q", tc.yml, c.SessionReview, problems, tc.on, tc.problems)
+		}
+	}
+}
+
 // Each Guideline turns on with its own key under guidelines, and a wrong entry is a problem at its
 // own line while the entries beside it apply.
 func TestGuidelinesSetting(t *testing.T) {
