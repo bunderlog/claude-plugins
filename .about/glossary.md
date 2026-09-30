@@ -1,8 +1,9 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit or run a Retro, Guidelines of working rules, Checks
-in one Go binary that hooks trigger, an Output style for Claude's replies, and a Status line.
+language, decisions and requirements explicit or run a Retro, a Session review, Guidelines of
+working rules, Checks in one Go binary that hooks trigger, an Output style for Claude's replies,
+and a Status line.
 
 ## Distribution
 
@@ -90,7 +91,7 @@ direnv's `.envrc`… A template of one (`.env.example`, `.sample`, `.template`, 
 A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
 host.
 
-## Retro
+## Sessions
 
 **Setup**:
 Everything that shapes how Claude works in a project: its CLAUDE.md, the Config, Claude Code's
@@ -113,6 +114,14 @@ A point in a session that cost the user something the Setup could have spared: a
 refused tool call, an interrupt, a correction, a prompt the user types again and again. A red test
 mid-change, a denial that was right, or a call that is the user's to make each time isn't one.
 _Avoid_: issue, incident
+
+**Session review**:
+A review the plugin starts itself when a session ends, where the Config turns it on: a separate
+headless session records in the glossary and the ADRs what the conversation settled but nobody
+wrote down, and the next session start says what it changed. Unlike a Retro, it looks at what was
+settled, not at how the work went.
+_Avoid_: session-end review
+_In code_: `src/baloo/internal/review`
 
 ## Unresolved
 
