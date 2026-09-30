@@ -24,6 +24,7 @@ guidelines:
   principles: true
   design: true
   testing: true
+  debugging: true
   writing-for-agents: true
   go: true
   typescript: false
