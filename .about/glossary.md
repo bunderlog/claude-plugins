@@ -45,9 +45,11 @@ _In code_: `src/baloo/internal/config`
 
 **Check**:
 Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`,
-turned on or off by a key of its own in the Config.
+turned on or off by a key of its own in the Config. Each runs either on Claude's tool calls or in a
+Git hook, called "a Check on Claude's tool calls" and "a Check a Git hook runs" (for short, "a Git
+hook Check").
 _Avoid_: built-in check
-_In code_: `src/baloo/internal/checks`
+_In code_: `src/baloo/internal/checks`; `ToolCallChecks`, `GitHookChecks`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`) or for one
