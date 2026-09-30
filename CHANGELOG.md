@@ -2,6 +2,13 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.8.0 — 2026-10-01
+
+### Features
+
+- guidelines: add debugging, the old diagnose skill as a Guideline (7bf923c)
+- checks: ask before a tool call that may turn the Hooks off (0e1239c)
+
 ## 0.7.0 — 2026-10-01
 
 ### Features
