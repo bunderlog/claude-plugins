@@ -158,6 +158,31 @@ func TestSyncOwn(t *testing.T) {
 	}
 }
 
+// The plugin's own status line gives way to one the project or managed settings set later.
+func TestSyncOwnGivesWay(t *testing.T) {
+	for _, scope := range []string{"project", "managed"} {
+		t.Run(scope, func(t *testing.T) {
+			root, own, data := sandbox(t)
+			local := filepath.Join(root, names.LocalSettings)
+			write(t, local, on)
+			if shown, err := Sync(root, root, data, true); !shown || err != nil {
+				t.Fatalf("Sync = %v, %v; want it shown", shown, err)
+			}
+			path := filepath.Join(root, names.ProjectSettings)
+			if scope == "managed" {
+				path = filepath.Join(own, "managed-settings.json")
+			}
+			write(t, path, theirs)
+			if shown, err := Sync(root, root, data, true); shown || err != nil {
+				t.Errorf("Sync after theirs = %v, %v; want nothing shown", shown, err)
+			}
+			if got := statusLine(t, local); got != "" {
+				t.Errorf("%s has status line %q; want the plugin's taken out", local, got)
+			}
+		})
+	}
+}
+
 // Without the data folder the status line can't be set, which is an error only where it would be.
 func TestSyncNoData(t *testing.T) {
 	root, own, _ := sandbox(t)
