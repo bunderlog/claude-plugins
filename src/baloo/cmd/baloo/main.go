@@ -154,11 +154,13 @@ func allowGuideline(stdin io.Reader, stdout io.Writer) int {
 }
 
 // statusLine is Claude Code's status line command (ADR status-line): it prints the Status line for
-// what Claude Code gives it on stdin, in a terminal as wide as COLUMNS says. Whatever goes wrong,
-// it prints nothing, since Claude Code shows under the prompt whatever it prints.
+// what Claude Code gives it on stdin, in a terminal as wide as COLUMNS says. A field of another
+// type than the plugin's is left out, and the rest shows; whatever else goes wrong, it prints
+// nothing, since Claude Code shows under the prompt whatever it prints.
 func statusLine(stdin io.Reader, stdout io.Writer) int {
 	var in statusline.Input
-	if json.NewDecoder(stdin).Decode(&in) != nil {
+	var typeErr *json.UnmarshalTypeError
+	if err := json.NewDecoder(stdin).Decode(&in); err != nil && !errors.As(err, &typeErr) {
 		return 0
 	}
 	columns, err := strconv.Atoi(os.Getenv("COLUMNS"))

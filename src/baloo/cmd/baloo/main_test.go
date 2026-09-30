@@ -176,13 +176,14 @@ func TestSessionStartStatusLineWrongKey(t *testing.T) {
 	}
 }
 
-// The status-line command prints the Status line for what Claude Code gives it, and nothing for
-// what it can't read.
+// The status-line command prints the Status line for what Claude Code gives it, a field of another
+// type left out, and nothing for what isn't JSON.
 func TestStatusLine(t *testing.T) {
 	// 44 columns leave 40 for the line, which centres the 18 of the bar after 11 spaces.
 	t.Setenv("COLUMNS", "44")
 	for in, want := range map[string]string{
-		`{"context_window": {"used_percentage": 12}}`: strings.Repeat(" ", 11) + "Ctx █░░░░░░░░░ 12%\n",
+		`{"context_window": {"used_percentage": 12}}`:                   strings.Repeat(" ", 11) + "Ctx █░░░░░░░░░ 12%\n",
+		`{"effort": "high", "context_window": {"used_percentage": 12}}`: strings.Repeat(" ", 11) + "Ctx █░░░░░░░░░ 12%\n",
 		`nope`: "",
 	} {
 		var stdout, stderr bytes.Buffer
