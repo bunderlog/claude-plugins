@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.3.0 — 2026-09-30
+
+### Features
+
+- output-style: pick short-replies at session start where no style is set (8443562)
+
 ## 0.2.0 — 2026-09-30
 
 ### Features

@@ -1,6 +1,6 @@
 {
   "name": "baloo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Skills, checks and an output style for Claude's replies, for working with Claude Code across projects; the checks are one Go binary that the hooks run, downloaded at session start.",
   "author": {
     "name": "Andrew Molyuk",
