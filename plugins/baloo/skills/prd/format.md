@@ -39,6 +39,6 @@ Status: proposed
 - {What's undecided, and who or what settles it.}
 ```
 
-- Use the glossary's terms, capitalised as it does.
+- Use the glossary's terms, capitalized as it does.
 - Leave out how it is built: that belongs to ADRs and the code.
 - Drop an empty section, but never Acceptance criteria.

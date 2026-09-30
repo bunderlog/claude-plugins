@@ -16,7 +16,7 @@ Read the request, any spec, the code involved, and the project's glossary and AD
 List the open decisions, each with the decisions it depends on, most consequential first:
 
 1. **Shape** — answers that change the data model, the interfaces or the approach.
-2. **Behaviour** — edge cases, failure modes, defaults, permissions, who can reach what's built.
+2. **Behavior** — edge cases, failure modes, defaults, permissions, who can reach what's built.
 3. **Polish** — names, wording, cosmetics: propose these, don't ask.
 
 A decision is ready once every decision it depends on is settled. Look up the facts a question

@@ -12,7 +12,7 @@ A **module** is anything with an interface: a function, a class, a package, a se
 **interface** is all a caller must know to use it: the types, and also the order of calls, the
 errors, the limits and the config. A **seam** is where that interface sits: the public boundary
 callers and tests go through. A module is **shallow** when its interface is nearly as big as
-the code behind it. A **deepening** puts more behaviour behind fewer, smaller interfaces.
+the code behind it. A **deepening** puts more behavior behind fewer, smaller interfaces.
 
 Read the project's glossary and ADRs (e.g. `.about/`) first. Name modules after the glossary's
 terms ("the Order intake module", not "OrderHandler").
@@ -44,7 +44,7 @@ asking for `file:line` evidence. Signs:
 - Code with no tests, or hard to test through its interface.
 
 Apply the deletion test to each suspect: picture the code without it. If nothing gets harder,
-fold it into its callers or neighbours; if every caller would grow the same logic, it earns its
+fold it into its callers or neighbors; if every caller would grow the same logic, it earns its
 place. Done when each area has its signs with evidence, or "none found".
 
 ## 3. Report

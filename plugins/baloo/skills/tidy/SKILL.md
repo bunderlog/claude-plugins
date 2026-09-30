@@ -21,7 +21,7 @@ not something to reopen.
 - **Duplicates.** A fact stated twice will drift. Keep one source; link or import it elsewhere.
   Keep a repeat only when the copies can't reach each other (units loaded separately, such as
   skills) or serve different readers — and say so.
-- **Wordiness.** Cut what doesn't change meaning or behaviour; merge points that overlap; one
+- **Wordiness.** Cut what doesn't change meaning or behavior; merge points that overlap; one
   example per point.
 - **Mechanics.** Run the project's own checks (validators, linters, line length, trailing
   spaces) — see its CLAUDE.md or README.

@@ -24,7 +24,7 @@ thing, or new?" If the topic touches an item in `## Unresolved`, settle it now.
 For every new or shifting term:
 - Vague or overloaded? Propose one precise word: "account — the Customer or the User?"
 - A one-sentence definition that doesn't use the term itself.
-- What it is *not*: the nearest neighbour concept and where the line is (a free order? an
+- What it is *not*: the nearest neighbor concept and where the line is (a free order? an
   empty cart?).
 - Lifecycle: how it's created, its states, who may change it, when it stops being itself
   (cancelled? deleted?).
