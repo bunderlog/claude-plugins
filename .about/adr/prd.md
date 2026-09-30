@@ -34,6 +34,8 @@ about what to build, and a change nobody saw costs more there than in a term or 
 
 ## Considered options
 
+- A Guideline in place of the skill (ADR guidelines) — one description less in every session, but
+  a Guideline keeps no document, and `/prd` would go for a request nobody mistakes for another.
 - `ask` writing its decision list out as a PRD — one skill fewer, but it gains a second job, and a
   PRD could only follow one.
 - The tracker by default — suits product and QA, but no project could use `prd` before setting

@@ -28,11 +28,18 @@ A plugin's skill can't be hidden from one project: Claude Code's `skillOverrides
 a plugin's skills, and a SessionStart Hook runs after the skill listing is built. So a Guideline
 as a skill would put every stack's description into every session, whatever the project.
 
+So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `prd`)
+or are a conversation with them (`ask`, `architecture`, `retro`, `tidy`); rules for how to do a
+kind of task are a Guideline, `debugging` among them: it writes nothing and is not a
+conversation, and as a Guideline a project can turn it off.
+
 ## Considered options
 
 - A skill per Guideline, with no key (until 2026-09-30) — no hook for them, no stack detection,
   no permission to read from the plugin's folder, but every session gets every stack's
   description, and a project can't turn one off.
+- `debugging` as a skill — `/debugging` calls it by name, but its description is in every
+  session and no project can turn it off.
 - Printing each Guideline turned on whole — simpler, but every session pays for the rules of
   tasks it never gets to.
 - The rules for every task printed always, with no key — the one part of the plugin in the
@@ -61,4 +68,5 @@ as a skill would put every stack's description into every session, whatever the 
   own text, and reading one is Claude's step, not the context's cost.
 - Whether a Guideline is read is Claude's call; a rule that must always hold goes among the ones
   `principles` prints whole.
-- Revisit when Claude Code lets a project hide a plugin's skills.
+- Revisit when Claude Code lets a project hide a plugin's skills, and `debugging` as a skill when
+  Claude doesn't open it on a bug by itself.

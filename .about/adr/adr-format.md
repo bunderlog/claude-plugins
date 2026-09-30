@@ -45,5 +45,7 @@ ADRs have no numbers: the file is named for its subject and cited as "ADR <subje
   does. The Session review never commits.
 - An ADR grows with its subject's decisions. A new one still open is a proposed ADR of its own
   until it settles and is merged into the ADR on its subject.
+- `no-stale-adr-date` doesn't run in CI: it compares the Date with today, so an edit checked on a
+  later day than it was made would fail (ADR checks).
 - Renaming a subject means updating its citations (`git grep "ADR <subject>"`).
 - Revisit when a Status other than proposed comes back, such as a decision reversed but kept.

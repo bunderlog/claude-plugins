@@ -30,6 +30,12 @@ One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the 
 question to the user. Where the binary is missing or fails, it says nothing, and the call runs:
 session start has already said that no Check runs that session (ADR binary).
 
+`baloo check <name>` takes the input its Git hook gets, so a project's CI can run the same Checks
+on commits made where the Git hooks didn't run, as the README's CI section shows; this repo's CI
+does, with the binary built from the checked commit. `no-stale-adr-date` is left out there (ADR
+adr-format). That input follows the Git hooks and is not a promised interface, so a CI pins a
+Release.
+
 ## Considered options
 
 - Guard, one Check for the three jobs, with one key — commands that destroy work, a bypass of
