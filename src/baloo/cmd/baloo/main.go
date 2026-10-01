@@ -259,12 +259,12 @@ func gitHooksReport(r githooks.Report) []string {
 	return lines
 }
 
-// kept ends the date line of an Inbox item the user went through once and kept (ADR inbox).
-var kept = regexp.MustCompile(` · kept \d{4}-\d{2}-\d{2}\s*$`)
+// keptMark ends the date line of an Inbox item the user went through once and kept (ADR inbox).
+var keptMark = regexp.MustCompile(` · kept \d{4}-\d{2}-\d{2}\s*$`)
 
 // inboxItems is how many items the Inbox of the repo at `root` holds, one per `## ` heading
 // outside a fenced code block, and how many of them are kept (ADR inbox); 0 without one.
-func inboxItems(root string) (n, keptN int) {
+func inboxItems(root string) (n, kept int) {
 	text, err := os.ReadFile(filepath.Join(root, names.Inbox))
 	if err != nil {
 		return 0, 0
@@ -281,12 +281,12 @@ func inboxItems(root string) (n, keptN int) {
 		case !dated && strings.TrimSpace(line) != "":
 			// The first line after the heading is the item's date line.
 			dated = true
-			if kept.MatchString(line) {
-				keptN++
+			if keptMark.MatchString(line) {
+				kept++
 			}
 		}
 	}
-	return n, keptN
+	return n, kept
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude
