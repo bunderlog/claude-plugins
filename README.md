@@ -24,8 +24,9 @@ With `stop-check: <command>` in `.claude/baloo.yml`, such as `stop-check: mise r
 plugin runs the command in the repo's root when Claude ends a turn that changed the working tree,
 and hands a failure back to Claude to fix before it stops, once a turn. The command gets the
 HEAD the turn started from in `BALOO_BASE`, empty before the first commit, so it can check only
-what the turn changed, its commits too: `git diff --name-only $BALOO_BASE`, or a linter's
-`--new-from-rev=$BALOO_BASE`.
+what the turn changed, its commits too: the files `git diff --name-only $BALOO_BASE` lists, with
+the new ones `git ls-files --others --exclude-standard` lists, or a linter's
+`--new-from-rev=$BALOO_BASE`. With `BALOO_BASE` empty, check everything.
 
 ## Format on edit
 

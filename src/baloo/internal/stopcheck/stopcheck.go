@@ -20,7 +20,7 @@ import (
 const tail = 4000
 
 // Base is the variable that hands the command the HEAD the turn started from, empty in a repo
-// with no commit yet, so it can check only what changed since: `git diff --name-only $BALOO_BASE`.
+// with no commit yet, so it can check only what changed since, as the README's Stop check shows.
 const Base = "BALOO_BASE"
 
 // session is a session id fit to name a file.
