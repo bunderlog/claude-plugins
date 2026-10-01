@@ -9,6 +9,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -187,13 +188,20 @@ func sessionStart(stdout, stderr io.Writer) int {
 	}
 	if c.Root != "" {
 		report = append(report, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
-		if n := inboxItems(c.Root); n > 0 {
+		if n, kept := inboxItems(c.Root); n > 0 {
 			items := "items"
 			if n == 1 {
 				items = "item"
 			}
-			report = append(report, fmt.Sprintf("%s holds %d %s to consider: tell the user, and that "+
-				"/%s:inbox goes through them", names.Inbox, n, items, names.Plugin))
+			left := ""
+			switch {
+			case kept == n:
+				left = ", each gone through once and kept"
+			case kept > 0:
+				left = fmt.Sprintf(", %d not gone through yet", n-kept)
+			}
+			report = append(report, fmt.Sprintf("%s holds %d %s to consider%s: tell the user, and that "+
+				"/%s:inbox goes through them", names.Inbox, n, items, left, names.Plugin))
 		}
 	}
 	index, err := guidelineIndex(c.Guidelines)
@@ -251,23 +259,34 @@ func gitHooksReport(r githooks.Report) []string {
 	return lines
 }
 
+// kept ends the date line of an Inbox item the user went through once and kept (ADR inbox).
+var kept = regexp.MustCompile(` · kept \d{4}-\d{2}-\d{2}\s*$`)
+
 // inboxItems is how many items the Inbox of the repo at `root` holds, one per `## ` heading
-// outside a fenced code block (ADR inbox); 0 without one.
-func inboxItems(root string) int {
+// outside a fenced code block, and how many of them are kept (ADR inbox); 0 without one.
+func inboxItems(root string) (n, keptN int) {
 	text, err := os.ReadFile(filepath.Join(root, names.Inbox))
 	if err != nil {
-		return 0
+		return 0, 0
 	}
-	n, fenced := 0, false
+	fenced, dated := false, true
 	for _, line := range strings.Split(string(text), "\n") {
 		switch {
 		case strings.HasPrefix(line, "```"):
-			fenced = !fenced
-		case !fenced && strings.HasPrefix(line, "## "):
+			fenced, dated = !fenced, true
+		case fenced:
+		case strings.HasPrefix(line, "## "):
 			n++
+			dated = false
+		case !dated && strings.TrimSpace(line) != "":
+			// The first line after the heading is the item's date line.
+			dated = true
+			if kept.MatchString(line) {
+				keptN++
+			}
 		}
 	}
-	return n
+	return n, keptN
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude

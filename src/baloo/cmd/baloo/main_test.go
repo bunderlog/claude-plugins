@@ -431,6 +431,11 @@ func TestSessionStartInbox(t *testing.T) {
 		{"# Inbox\n\n## One\n\ntext\n### not an item\n\n## Two\n", ".about/inbox.md holds 2 items to consider: tell the user, and that /baloo:inbox goes through them\n"},
 		{"# Inbox\n\n## One\n\n```md\n## not an item\n```\n", ".about/inbox.md holds 1 item to consider: tell the user, and that /baloo:inbox goes through them\n"},
 		{"# Inbox\n", ""},
+		{"# Inbox\n\n## One\n\n2026-10-01 · adr · kept 2026-10-02\n\n## Two\n\n2026-10-01 · adr\n\n" +
+			"text · kept 2026-10-02\n", ".about/inbox.md holds 2 items to consider, 1 not gone through yet: tell " +
+			"the user, and that /baloo:inbox goes through them\n"},
+		{"# Inbox\n\n## One\n\n2026-10-01 · adr · kept 2026-10-02\n", ".about/inbox.md holds 1 item to " +
+			"consider, each gone through once and kept: tell the user, and that /baloo:inbox goes through them\n"},
 	} {
 		if err := os.WriteFile(path, []byte(c.inbox), 0o644); err != nil {
 			t.Fatal(err)

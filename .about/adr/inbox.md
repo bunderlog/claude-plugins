@@ -18,11 +18,18 @@ review's findings among them, rather than to Claude's memory. An item is deleted
 ADR, the glossary or the Guidelines settle it: by the change that settles it, or by the Session
 review where the conversation did; the file goes with its last item, so a project with nothing open
 has none. Session start tells Claude how many items there are, one per `## ` heading outside a code
-block, to tell the user, and that the `inbox` skill goes through them with the user: it drops what
-is already settled, ranks the rest by what waiting costs, and asks of each whether to decide it now,
-fix it now, file an Issue (ADR issues), keep it or drop it. The `interview` skill reads the Inbox
-before its questions, so an item a plan touches becomes one of its open decisions; it writes
-nothing, so the change that settles the item deletes it.
+block, and how many nobody has gone through yet, to tell the user, and that the `inbox` skill goes
+through them with the user. The `interview` skill reads the Inbox before its questions, so an item a
+plan touches becomes one of its open decisions; it writes nothing, so the change that settles the
+item deletes it.
+
+The `inbox` skill ranks every item by its text, by what waiting costs, then goes through a few at a
+time: it drops those the code, an ADR, the glossary or the Guidelines already settle, and asks of
+the rest whether to decide it now, fix it now, file an Issue (ADR issues), keep it or drop it,
+applying each round's answers before the next. So a user with 200 items and time for six can stop,
+and the next run picks up where they left off: a kept item's date line ends in
+`· kept <YYYY-MM-DD>`, and kept items come only after every item nobody has gone through, the oldest mark
+first.
 
 ## Considered options
 
@@ -45,6 +52,14 @@ nothing, so the change that settles the item deletes it.
 - The count in the Status line — always in sight, but one more segment for a number that rarely
   changes.
 - `architecture` reading the Inbox too — it works from decisions taken, not open ones.
+- Each kept item asked again on the next run — with many items, the same ones come back first
+  every time.
+- Marks of what was gone through in the plugin's data folder — the item's format stays, but the
+  marks are one machine's, unseen in the file and by the team.
+- Checking every item against the code before the first question — the costliest step, spent
+  again on each run for items the user won't reach.
+- A kept mark that expires after a set time, or kept items only on request — one more number to
+  tune, or items nobody ever looks at again.
 - The item's format in one shared file the skills cite — the Session review's prompt and the
   Guidelines would still keep copies of their own.
 
@@ -53,6 +68,8 @@ nothing, so the change that settles the item deletes it.
 - The name and the format are in every project that uses the plugin: changing them means
   migrating each one.
 - An item nobody settles stays; the count at each session start keeps it in sight.
+- Only the `inbox` skill writes the kept mark; another text that adds to a kept item leaves it, so
+  what it added waits until the kept items' turn.
 - The item's format is repeated in each text that adds items (`principles`, `adr`, `glossary`,
   `retro`, `inbox`, the Session review's prompt), since each is loaded on its own; changing it
   means changing them all.
