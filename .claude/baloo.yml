@@ -39,6 +39,7 @@ guidelines:
   go: true
   typescript: false
   vue: false
+  tailwind: false
 
 # Checks, each on with true and off with false.
 #
