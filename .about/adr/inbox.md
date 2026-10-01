@@ -19,7 +19,7 @@ an ADR, the glossary or the Guidelines settle it: by the change that settles it,
 review where the conversation did. Session start tells Claude how many items there are, one per
 `## ` heading outside a code block, to tell the user, and that the `inbox` skill goes through them
 with the user: it drops what is already settled, ranks the rest by what waiting costs, and asks
-of each whether to decide it now, fix it now, file a ticket, keep it or drop it. The `interview` skill
+of each whether to decide it now, fix it now, file an Issue (ADR issues), keep it or drop it. The `interview` skill
 reads the Inbox before its questions, so an item a plan touches becomes one of its open decisions;
 it writes nothing, so the change that settles the item deletes it.
 

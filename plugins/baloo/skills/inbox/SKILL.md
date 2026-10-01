@@ -1,6 +1,6 @@
 ---
 name: inbox
-description: Go through the project's Inbox, .about/inbox.md, with the user — when they ask to go through, triage or clear the inbox, or what is still open. Drops the items the code, the ADRs, the glossary or the Guidelines already settle, ranks the rest, asks a few at a time what to do with each (decide now, fix now, file a ticket, keep, drop) with a recommended answer, and applies the answers. Not for adding a single item.
+description: Go through the project's Inbox, .about/inbox.md, with the user — when they ask to go through, triage or clear the inbox, or what is still open. Drops the items the code, the ADRs, the glossary or the Guidelines already settle, ranks the rest, asks a few at a time what to do with each (decide now, fix now, file an issue, keep, drop) with a recommended answer, and applies the answers. Not for adding a single item.
 ---
 
 # Inbox
@@ -27,7 +27,7 @@ recommendation first, marked "(Recommended)".
 
 - **Decide now**: settle it here, with the `adr` skill for a decision or `glossary` for a term.
 - **Fix now**: it becomes this session's work, after the triage.
-- **File a ticket**: write it out for the project's tracker; the item goes once it is filed.
+- **File an issue**: write it as an Issue, with the `issue` skill; the item goes once it is filed.
 - **Keep**: it stays as it is, or with what you learned added.
 - **Drop**: it is not worth doing.
 

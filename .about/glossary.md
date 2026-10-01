@@ -1,9 +1,9 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, go through its Inbox or run a Retro; a Session
-review; Guidelines of working rules; Checks in one Go binary that Hooks and Git hooks trigger; an
-Output style for Claude's replies; and a Status line.
+language, decisions and requirements explicit, write its Issues, go through its Inbox or run a
+Retro; a Session review; Guidelines of working rules; Checks in one Go binary that Hooks and Git
+hooks trigger; an Output style for Claude's replies; and a Status line.
 
 ## Distribution
 
@@ -146,3 +146,10 @@ The file `.about/inbox.md` of what is still to consider: a decision or term stil
 finding left for later. An item stays until something settles it, and is then deleted.
 _Avoid_: todo, backlog, proposed ADR
 _In code_: `names.Inbox`; the `inbox` skill goes through it
+
+**Issue**:
+Work agreed to do, a bug to fix or a task: a page in the tracker the project names, or else
+`.about/issues/<slug>.md`, deleted by the change that does it. Unlike an Inbox item, nothing about
+it is still to decide.
+_Avoid_: ticket, todo
+_In code_: the `issue` skill writes one

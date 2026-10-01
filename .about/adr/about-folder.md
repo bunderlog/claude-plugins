@@ -2,8 +2,8 @@
 
 Date: 2026-10-01
 
-The skills keep a project's glossary, ADRs, PRDs and Inbox in `.about/glossary.md`, `.about/adr/`,
-`.about/prd/` and `.about/inbox.md` (ADR inbox), at the root of the git repo the session is in,
+The skills keep a project's glossary, ADRs, PRDs, Inbox and Issues in `.about/glossary.md`,
+`.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/issues/` (ADR issues), at the root of the git repo the session is in,
 whatever folder it was opened in. It is project knowledge for people and for any agent, so it
 belongs neither in one vendor's config folder nor in a folder other tools already claim; `.about` is
 short, unclaimed, and sorts first. A monorepo has one glossary, with a context per project, and one
