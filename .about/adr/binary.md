@@ -20,6 +20,10 @@ publishes each platform's, as a bare file named like `baloo_0.1.0_darwin_arm64`,
 `SHA256SUMS` on the GitHub Release (ADR releases). The sha256 check catches a download that was cut
 short or damaged.
 
+The repo, `bunderlog/claude-plugins`, is public, since everything a user's machine fetches from it
+must work without a token: the Loader's download, the Config's `$schema` from
+`raw.githubusercontent.com`, and Claude Code installing and updating the plugin in the background.
+
 ## Considered options
 
 - TypeScript run with `bun` — `bun` would have to be on every machine, or every Check would
@@ -34,6 +38,8 @@ short or damaged.
 - A ZIP per platform through a `command` source — the command runs at every session start, in
   effect `curl … | sh`.
 - Binaries committed to git — history that grows by every platform's binary with every Release.
+- A private repo, read with a GitHub token — every user would need a token on every machine, set
+  where the Loader, the editor fetching `$schema` and Claude Code's background update each find it.
 - Archives (`.tar.gz`) — about half the download, for `tar` and one more step in the Loader;
   a binary is under 2 MB.
 
@@ -47,6 +53,8 @@ short or damaged.
 - `BALOO_RELEASES` points the Loader at another host, which is how the tests serve it a Release.
 - Binaries of other versions are deleted from `${CLAUDE_PLUGIN_DATA}` a week after they were last
   run, so a session still on an older version keeps its binary meanwhile.
+- Making the repo private is a one-way door: every installed copy stops downloading its binary
+  and updating at once. Everything committed, `.about/` included, is public.
 - A change to the Go version is a change to every binary: it needs a Release like any other.
 - Revisit when the download fails often enough to matter, a team needs an offline install, or
   the plugin reaches users for whom a replaced GitHub Release is a risk worth the extra steps.
