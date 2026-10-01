@@ -36,7 +36,7 @@ func run(args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("released %s: push it with `git push --follow-tags`\n", version)
+		fmt.Printf("released %s\n", version)
 		return nil
 	case len(args) == 1 && args[0] == "build":
 		version, err := Version(root)

@@ -25,6 +25,6 @@ dir = "src/release"
 run = "go run . build"
 
 [tasks.release]
-description = "Make a Release from the commits since the last one"
+description = "Make a Release from the commits since the last one and push it"
 dir = "src/release"
-run = "go run ."
+run = ["go run .", "git push --follow-tags"]

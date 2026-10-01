@@ -78,4 +78,4 @@ This repo uses its own plugin: `.claude/settings.json` installs `baloo` from Git
 here runs its last Release. To try an edit to a skill, Guideline or Hook before a Release, start a
 session with `claude --plugin-dir plugins/baloo`; the binary is still the last Release's. Its
 source is in `src/baloo/`, and `mise run check` checks its formatting, vets it and tests it. To
-make a Release, run `mise run release` and push it with `git push --follow-tags`.
+make a Release and push it, run `mise run release`.
