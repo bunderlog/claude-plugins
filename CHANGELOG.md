@@ -2,6 +2,19 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.9.0 — 2026-10-01
+
+### Features
+
+- config: group the Checks' keys under claude-hooks and git-hooks, for what runs them (a9a4e5e)
+- checks: name the setting that makes git pull rebase when linear-history fails (779c0fe)
+- git-hooks: write the Git hooks that run the Checks the Config turns on, with husky 9 too (a6d27ba)
+- stop-check: run the Config's command when Claude ends a turn that changed the working tree (1e0ab04)
+
+### Fixes
+
+- config: say that the Checks on Claude's tool calls are on without their key (2932918)
+
 ## 0.8.0 — 2026-10-01
 
 ### Features
