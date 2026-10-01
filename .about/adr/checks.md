@@ -19,13 +19,13 @@ turns one off is named at every session start, so someone who opens a repo whose
 does so knows.
 
 The plugin writes a Git hook where the Config turns at least one of its Checks on, and takes its
-own out where none is; with husky 9 it goes through husky, which it finds by itself. Writing them
-has no key of its own. It never changes git's config: `linear-history`, failing, names
-`git config pull.rebase true` for the user to run.
+own out where none is; with husky 9 it goes through husky, which it finds by itself (ADR
+git-hooks). Writing them has no key of its own. It never changes git's config: `linear-history`,
+failing, names `git config pull.rebase true` for the user to run.
 
-Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the Config: a
-Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command that
-names it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
+Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the
+Config: a Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command
+that names it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
 disabling the plugin, so the Hook also asks before a tool call that may do that: an Edit, Write or
 MultiEdit of a `settings.json` or `settings.local.json` in a `.claude` folder or in
 `$CLAUDE_CONFIG_DIR` whose new text names `disableAllHooks`, `enabledPlugins` or `baloo@`, a Bash

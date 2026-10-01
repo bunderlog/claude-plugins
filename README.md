@@ -10,6 +10,14 @@ claude plugin install baloo@bunderlog
 
 Why things are the way they are is in [.about/adr/](.about/adr/).
 
+## Git hooks
+
+At session start the plugin writes the Git hooks `pre-commit`, `commit-msg` and `pre-push`
+where `.claude/baloo.yml` turns on one of their Checks under `git-hooks`, and takes its own out
+where it turns them all off. A Git hook already there that the plugin didn't write is left alone,
+and session start names the Checks it keeps from running. With husky 9, the plugin's Git hooks go
+into `.git/baloo-hooks/`, and a line first in `.husky/<hook>` runs each: commit that line.
+
 ## CI
 
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git

@@ -1,0 +1,220 @@
+// Package githooks writes the Git hooks that run the Checks the Config turns on, at session start
+// (ADR git-hooks): into the folder git runs them from, or with husky 9 into the git folder, with a
+// line in husky's own Git hook that runs each.
+package githooks
+
+import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"maps"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/binlink"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
+	"github.com/bunderlog/claude-plugins/src/baloo/names"
+)
+
+// Report is what Write did and what it left alone.
+type Report struct {
+	// Dir is the folder the plugin's Git hooks are in.
+	Dir string
+	// Written and Removed are the Git hooks it wrote where none of the plugin's was, and took out.
+	Written, Removed []string
+	// Husky are the files of husky's it changed, from the repo's root, for the user to commit.
+	Husky []string
+	// Theirs are the Git hooks it didn't write and left alone, which keep Checks that are on from
+	// running.
+	Theirs []Blocked
+}
+
+// Blocked is a Git hook of someone else's, at Path, and the Checks it keeps from running.
+type Blocked struct {
+	Path   string
+	Checks []string
+}
+
+// Write brings the Git hooks of the repo at `root` in line with `on`, which says whether a Check is
+// on: it writes each Git hook one of whose Checks is on, running the link in `data`, the plugin's
+// data folder (see binlink), and takes out its own whose Checks are all off.
+func Write(root, data string, on func(check string) bool) (Report, error) {
+	out, err := exec.Command("git", "-C", root, "rev-parse", "--git-path", "hooks",
+		"--git-common-dir").Output()
+	if err != nil {
+		return Report{}, fmt.Errorf("git rev-parse: %w", err)
+	}
+	paths := strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
+	if len(paths) != 2 {
+		return Report{}, fmt.Errorf("git rev-parse printed %q", out)
+	}
+	for i, p := range paths {
+		if !filepath.IsAbs(p) {
+			paths[i] = filepath.Join(root, p)
+		}
+	}
+	hooks, common := paths[0], paths[1]
+	husky := hooks == filepath.Join(root, ".husky", "_") && exists(filepath.Join(hooks, "h"))
+	r := Report{Dir: hooks}
+	if husky {
+		r.Dir = filepath.Join(common, names.Plugin+"-hooks")
+	}
+	inTree := !husky && inside(root, r.Dir)
+	bin := ""
+	for _, hook := range slices.Sorted(maps.Keys(checks.GitHooks)) {
+		var running []string
+		for _, check := range checks.GitHooks[hook] {
+			if on(check) {
+				running = append(running, check)
+			}
+		}
+		path := filepath.Join(r.Dir, hook)
+		current, err := os.ReadFile(path)
+		had := err == nil
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return r, err
+		}
+		if had && !ours(string(current)) {
+			if len(running) > 0 {
+				r.Theirs = append(r.Theirs, Blocked{path, running})
+			}
+			continue
+		}
+		if len(running) == 0 {
+			if had {
+				if err := os.Remove(path); err != nil {
+					return r, err
+				}
+				r.Removed = append(r.Removed, hook)
+			}
+		} else {
+			if bin == "" {
+				if bin, err = binlink.Point(data); err != nil {
+					return r, err
+				}
+			}
+			if want := script(bin, hook); string(current) != want {
+				if err := replace(path, want, 0o755); err != nil {
+					return r, err
+				}
+				if !had {
+					r.Written = append(r.Written, hook)
+				}
+			}
+			if inTree {
+				if err := settings.Exclude(root, path); err != nil {
+					return r, err
+				}
+			}
+		}
+		if husky {
+			changed, err := huskyRuns(filepath.Join(root, ".husky", hook), hook, len(running) > 0)
+			if err != nil {
+				return r, err
+			}
+			if changed {
+				r.Husky = append(r.Husky, ".husky/"+hook)
+			}
+		}
+	}
+	return r, nil
+}
+
+// script is the Git hook `hook` that runs the binary at `bin`, marked as the plugin's on its second
+// line.
+func script(bin, hook string) string {
+	return "#!/bin/sh\n" +
+		names.Marker + ": runs the plugin's Checks, rewritten at each session start\n" +
+		"b=" + quote(bin) + "\n" +
+		`[ ! -x "$b" ] || exec "$b" git-hook ` + hook + ` "$@"` + "\n" +
+		`echo "` + names.Plugin + `: $b is missing, so the plugin's Checks didn't run" >&2` + "\n"
+}
+
+// ours says whether the Git hook `text` is one the plugin wrote.
+func ours(text string) bool {
+	_, rest, _ := strings.Cut(text, "\n")
+	return strings.HasPrefix(rest, names.Marker)
+}
+
+// huskyLine is the line in husky's Git hook `hook` that runs the plugin's, if it is there: the same
+// in every clone, for it is committed.
+func huskyLine(hook string) string {
+	return `baloo_hook="$(git rev-parse --git-common-dir)/` + names.Plugin + `-hooks/` + hook + `"; ` +
+		`[ ! -x "$baloo_hook" ] || "$baloo_hook" "$@" || exit $? ` + names.Marker
+}
+
+// huskyRuns puts the line that runs the plugin's Git hook `hook` first in husky's at `path`, after
+// its #! line if it has one, creating the file when missing; or, not `run`, takes the line out,
+// and the file with it when the line was all of it. It says whether it changed the file.
+func huskyRuns(path, hook string, run bool) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return false, err
+	}
+	var kept []string
+	for _, l := range strings.SplitAfter(string(data), "\n") {
+		if l != "" && !strings.HasSuffix(strings.TrimRight(l, "\n"), names.Marker) {
+			kept = append(kept, l)
+		}
+	}
+	if run {
+		at := 0
+		if len(kept) > 0 && strings.HasPrefix(kept[0], "#!") {
+			at = 1
+		}
+		kept = slices.Insert(kept, at, huskyLine(hook)+"\n")
+	}
+	text := strings.Join(kept, "")
+	if text == string(data) {
+		return false, nil
+	}
+	if strings.TrimSpace(text) == "" {
+		return true, os.Remove(path)
+	}
+	mode := fs.FileMode(0o644)
+	if info, err := os.Stat(path); err == nil {
+		mode = info.Mode().Perm()
+	}
+	return true, replace(path, text, mode)
+}
+
+// replace writes `text` to the file at `path` with the mode `mode` in one step, so git never runs
+// half a Git hook.
+func replace(path, text string, mode fs.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	tmp := path + "." + strconv.Itoa(os.Getpid()) + ".tmp"
+	err := os.WriteFile(tmp, []byte(text), mode)
+	if err == nil {
+		err = os.Chmod(tmp, mode)
+	}
+	if err == nil {
+		err = os.Rename(tmp, path)
+	}
+	if err != nil {
+		os.Remove(tmp)
+	}
+	return err
+}
+
+// quote is `s` quoted for sh.
+func quote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// inside says whether `path` is in the folder `dir`.
+func inside(dir, path string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}

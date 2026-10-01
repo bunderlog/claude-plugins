@@ -42,11 +42,9 @@ func TestRun(t *testing.T) {
 // user and managed settings of its own, none of them there.
 func inRepo(t *testing.T) string {
 	t.Helper()
-	dir, own := t.TempDir(), t.TempDir()
-	if err := os.Mkdir(filepath.Join(dir, ".git"), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	dir, own := testkit.Repo(t), t.TempDir()
 	t.Setenv("CLAUDE_PROJECT_DIR", dir)
+	t.Setenv("CLAUDE_PLUGIN_DATA", t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", own)
 	t.Setenv("BALOO_MANAGED_SETTINGS", filepath.Join(own, "managed-settings.json"))
 	t.Setenv("CLAUDE_PLUGIN_ROOT", plugin(t))
@@ -81,7 +79,9 @@ func TestSessionStart(t *testing.T) {
 	if err := os.WriteFile(path, []byte("nope: 1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	want = "baloo:\n.claude/baloo.yml line 1: nope is not a setting; ignored\n"
+	want = "baloo:\ntook out the Git hooks commit-msg, pre-commit, pre-push in " +
+		filepath.Join(dir, ".git", "hooks") + ", whose checks .claude/baloo.yml turns off: tell the user\n" +
+		".claude/baloo.yml line 1: nope is not a setting; ignored\n"
 	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
 		stdout.String() != want || stderr.Len() != 0 {
 		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)

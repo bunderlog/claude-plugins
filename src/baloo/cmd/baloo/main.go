@@ -14,6 +14,7 @@ import (
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/githooks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/outputstyle"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/review"
@@ -31,6 +32,7 @@ const usage = "usage: baloo version | session-start | allow-guideline | status-l
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
 	"  check linear-history < <pushed refs> |\n" +
+	"  git-hook pre-commit|commit-msg|pre-push <git's arguments> |\n" +
 	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
 
 func main() {
@@ -57,6 +59,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if len(args) > 0 && args[0] == "condense" {
 		if code, ok := condenseSessions(args[1:], stdout, stderr); ok {
+			return code
+		}
+	}
+	if len(args) > 1 && args[0] == "git-hook" {
+		if code, ok := gitHook(args[1], args[2:], stdin, stderr); ok {
 			return code
 		}
 	}
@@ -126,6 +133,13 @@ func sessionStart(stdout, stderr io.Writer) int {
 			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
 		}
 	}
+	if c.Root != "" && os.Getenv(review.Env) == "" {
+		r, err := githooks.Write(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.CheckOn)
+		report = append(report, gitHooksReport(r)...)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("could not write the Git hooks: %v", err))
+		}
+	}
 	for _, name := range checks.HookChecks {
 		if on, ok := c.Checks[name]; ok && !on {
 			report = append(report, fmt.Sprintf("claude-hooks.%s: false in %s turns off a check on Claude's "+
@@ -149,6 +163,31 @@ func sessionStart(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "%s\n", index)
 	}
 	return 0
+}
+
+// gitHooksReport is what Claude is told of the Git hooks session start wrote, took out or left
+// alone (ADR git-hooks).
+func gitHooksReport(r githooks.Report) []string {
+	var lines []string
+	if len(r.Written) > 0 {
+		lines = append(lines, fmt.Sprintf("wrote the Git hooks %s in %s, which run the plugin's checks "+
+			"on every commit and push: tell the user, and that a check's key under git-hooks in %s "+
+			"turns it off", strings.Join(r.Written, ", "), r.Dir, names.Config))
+	}
+	if len(r.Removed) > 0 {
+		lines = append(lines, fmt.Sprintf("took out the Git hooks %s in %s, whose checks %s turns off: "+
+			"tell the user", strings.Join(r.Removed, ", "), r.Dir, names.Config))
+	}
+	if len(r.Husky) > 0 {
+		lines = append(lines, fmt.Sprintf("changed %s, husky's Git hooks, to run the plugin's where their "+
+			"checks are on: tell the user, and that the change is theirs to commit", strings.Join(r.Husky, ", ")))
+	}
+	for _, b := range r.Theirs {
+		lines = append(lines, fmt.Sprintf("%s is not the plugin's Git hook, so %s don't run: tell the user, "+
+			"and that their keys under git-hooks in %s, turned off, end this line",
+			b.Path, strings.Join(b.Checks, ", "), names.Config))
+	}
+	return lines
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude

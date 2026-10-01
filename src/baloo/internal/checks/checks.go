@@ -11,3 +11,11 @@ var GitHookChecks = []string{"no-ai-coauthor", "conventional-commits", "no-secre
 // the Config (ADR checks).
 var HookChecks = []string{"no-git-hook-bypass", "no-destructive-commands",
 	"no-secrets-in-context"}
+
+// GitHooks are the Git hooks the plugin writes (ADR git-hooks), each with its Checks, in the order
+// it runs them.
+var GitHooks = map[string][]string{
+	"pre-commit": {"no-secrets-in-commits", "no-stale-adr-date"},
+	"commit-msg": {"no-ai-coauthor", "conventional-commits"},
+	"pre-push":   {"linear-history"},
+}

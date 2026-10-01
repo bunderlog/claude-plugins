@@ -51,6 +51,28 @@ func check(name string, args []string, stdin io.Reader, stderr io.Writer) (code 
 	return run(), true
 }
 
+// gitHook is the plugin's Git hook `hook` (ADR git-hooks), with the arguments `args` git gives it:
+// it runs each of its Checks the Config turns on, all of them, and returns the worst of their exit
+// codes; not ok when the plugin writes no such Git hook, or git gives commit-msg no message file.
+func gitHook(hook string, args []string, stdin io.Reader, stderr io.Writer) (code int, ok bool) {
+	run, ok := checks.GitHooks[hook]
+	switch {
+	case !ok:
+		return 0, false
+	case hook != "commit-msg":
+		args = nil // pre-push's remote, which its Check doesn't need
+	case len(args) == 0:
+		return 0, false
+	default:
+		args = args[:1]
+	}
+	for _, name := range run {
+		c, _ := check(name, args, stdin, stderr)
+		code = max(code, c)
+	}
+	return code, true
+}
+
 // checkCommitMessage runs the commit-msg Check `name` on the message in the file `path`: it fails
 // with what is wrong, for git to show.
 func checkCommitMessage(name, path string, stderr io.Writer) int {
