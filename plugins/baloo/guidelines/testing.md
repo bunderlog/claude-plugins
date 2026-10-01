@@ -1,6 +1,7 @@
 # Testing
 
-For writing tests and building test-first: tests that pin what the code does, not how.
+For writing tests and building test-first: tests that pin what the code does, not how. In an
+existing codebase, its documented test conventions (where tests live, what they may mock) win.
 
 ## 1. Red first
 

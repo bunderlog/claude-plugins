@@ -1,6 +1,8 @@
 # TypeScript
 
-For writing TypeScript: the choices where more than one would be reasonable.
+For writing TypeScript: the choices where more than one would be reasonable. These are defaults
+for new code: in an existing codebase, its documented conventions and the pattern its code
+already follows win.
 
 ## 1. Types at the edge, not casts inside
 
@@ -22,12 +24,24 @@ For writing TypeScript: the choices where more than one would be reasonable.
 - Return an expected failure as data (`string | null` for a reason, a list of problems) and let
   the caller decide; throw only what the caller can't handle. Catch at the entry point, not in
   every function.
+- Every caller branches on an outcome returned as data. Make one hard to ignore: a named field
+  (`{ confirmed: boolean }`) or a union, not a bare `boolean` a caller can drop.
 - Fixed module-level values in UPPER_CASE (`THRESHOLDS`, `MARKER`), types in PascalCase,
   everything else in camelCase.
 
 **Test:** a function's return type shows every outcome the caller must handle.
 
-## 3. Few dependencies
+## 3. Async
+
+- Every promise is awaited or returned: one left floating loses its error and its ordering. Lint
+  it with the type-aware `no-floating-promises` and `no-misused-promises`.
+- A flag set before an `await` (a loader, `busy`, a disabled button) is cleared in `finally`.
+- A load that can start again before the last one ends keeps only the latest result: a guard
+  that skips the new call, or a request id that drops the stale answer.
+
+**Test:** every promise is awaited or returned, and no flag stays set when its call throws.
+
+## 4. Few dependencies
 
 - Built-ins first, imported with their prefix (`node:fs`). Add a package only for what would
   take more than a page to write well.
@@ -36,7 +50,7 @@ For writing TypeScript: the choices where more than one would be reasonable.
 
 **Test:** each dependency does something a page of code couldn't.
 
-## 4. Comments and tests
+## 5. Comments and tests
 
 - A file opens with a comment: what it does, why, and the ADR it follows, if any. A function's
   comment gives what it returns and its edge cases ("or null outside a repo"), not how.

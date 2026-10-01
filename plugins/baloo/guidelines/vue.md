@@ -1,14 +1,16 @@
 # Vue
 
 For writing Vue 3 with TypeScript: the choices where more than one would be reasonable.
-`typescript.md` covers the TypeScript.
+`typescript.md` covers the TypeScript. These are defaults for a new app: in an existing one, its
+documented conventions and the pattern its code already follows win, the layout, data layer and
+tests' too.
 
 ## 1. Layout by feature
 
 - A new app is feature-first: `src/app/` (entry, router, layouts), `src/shared/` (UI kit,
   cross-cutting composables, services, stores, types), `src/features/<feature>/` (its own
   components, composables, services, stores, views, `routes.ts`, and `index.ts` as its public
-  API), and `src/views/` for pages no feature owns. An existing app keeps the layout it has.
+  API), and `src/views/` for pages no feature owns.
 - A feature imports only from `shared/` and itself; `shared/` never imports a feature. Others
   reach a feature through its `index.ts`, never a deep path. Relative imports inside a feature,
   the `@/` alias across layers.
@@ -49,15 +51,22 @@ For writing Vue 3 with TypeScript: the choices where more than one would be reas
   module-level `ref` or `createGlobalState` beside it.
 - A store used by more than one feature is a shared interface: add to it freely; rename or
   remove a member only together with every caller.
+- Pass a ref, a computed or a getter to anything that outlives setup (a composable, a watcher, a
+  store), never its `.value`: a `.value` read in setup is a snapshot that never updates. Derive
+  with `computed`, or `watch` the source; don't copy reactive state into another ref.
+- After a write, invalidate or refetch what it changed, and write from the loaded record, not
+  from a list row's partial copy of it.
 
-**Test:** no store keeps a copy of data the server owns, and no module outside a store holds
-state at its top level.
+**Test:** no store keeps a copy of data the server owns, no module outside a store holds state at
+its top level, and every view shows the server's data after a write.
 
 ## 5. Tests
 
 - Vitest with `@vue/test-utils`: mount a component with its props, then check what it renders
   and emits.
 - Each test gets a fresh Pinia: `setActivePinia(createPinia())` in `beforeEach`.
+- A test that starts timers uses fake ones and restores real timers in `afterEach`: an interval
+  left running fires into the next test.
 - After mounting, or calling a composable that fetches as it starts, `await flushPromises()`
   before checking.
 - `vi.hoisted()` runs before the file's imports, so it can't use them; import inside it:

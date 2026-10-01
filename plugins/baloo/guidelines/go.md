@@ -1,6 +1,8 @@
 # Go
 
-For writing Go: the choices where more than one would be reasonable.
+For writing Go: the choices where more than one would be reasonable. These are defaults for
+new code: in an existing codebase, its documented conventions and the pattern its code already
+follows win.
 
 ## 1. Layout and dependencies
 
