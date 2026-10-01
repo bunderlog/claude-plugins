@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -27,12 +29,10 @@ import (
 // says "dev".
 var version = "dev"
 
-const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  pre-tool-use | session-end | user-prompt-submit | stop |\n" +
-	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
-	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
-	"  check linear-history < <pushed refs> |\n" +
-	"  git-hook pre-commit|commit-msg|pre-push <git's arguments> |\n" +
+var usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
+	"  pre-tool-use | session-end | user-prompt-submit | stop |\n  " +
+	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
+	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
 	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
 
 func main() {
@@ -67,12 +67,14 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 	}
 	if len(args) > 1 && args[0] == "git-hook" {
-		if code, ok := gitHook(args[1], args[2:], stdin, stderr); ok {
+		in, on := gitHookInput(stdin)
+		if code, ok := checks.RunHook(args[1], args[2:], in, on, stderr); ok {
 			return code
 		}
 	}
 	if len(args) > 1 && args[0] == "check" {
-		if code, ok := check(args[1], args[2:], stdin, stderr); ok {
+		in, on := gitHookInput(stdin)
+		if code, ok := checks.Run(args[1], args[2:], in, on, stderr); ok {
 			return code
 		}
 	}

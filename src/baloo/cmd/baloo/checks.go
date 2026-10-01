@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,138 +13,15 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// commitMessage are the commit-msg Git hook's Checks, by name: each says what is wrong with a
-// commit message under the Config `c`, or "" when nothing is.
-var commitMessage = map[string]func(message string, c config.Config) string{
-	"no-ai-coauthor": func(message string, _ config.Config) string {
-		if found := checks.NoAICoauthor(message); len(found) > 0 {
-			return "remove the AI co-author or credit:\n" + strings.Join(found, "\n")
-		}
-		return ""
-	},
-	"conventional-commits": func(message string, c config.Config) string {
-		return checks.ConventionalCommit(message, c.CommitRules)
-	},
-}
-
-// check runs a Git hook's Check `name` with the arguments `args`, in the repo git runs it in, and
-// returns its exit code for git; not ok when there is no such Check or it takes other arguments.
-// A Check the repo's Config turns off passes everything (ADR checks).
-func check(name string, args []string, stdin io.Reader, stderr io.Writer) (code int, ok bool) {
-	run := map[string]func() int{
-		"no-secrets-in-commits": func() int { return noSecretsInCommits(stderr) },
-		"no-stale-adr-date":     func() int { return noStaleADRDate(stderr) },
-		"linear-history":        func() int { return linearHistory(stdin, stderr) },
-	}[name]
-	if commitMessage[name] != nil && len(args) == 1 {
-		run = func() int { return checkCommitMessage(name, args[0], stderr) }
-	} else if len(args) != 0 {
-		run = nil
+// gitHookInput is what the Checks Git hooks run read in the repo git runs them in, with the
+// Checks its Config turns on; a Check passes everything where the Config can't be read.
+func gitHookInput(stdin io.Reader) (checks.Input, func(name string) bool) {
+	var c config.Config
+	if dir, err := os.Getwd(); err == nil {
+		c = config.Read(dir)
 	}
-	if run == nil {
-		return 0, false
-	}
-	if dir, err := os.Getwd(); err != nil || !config.Read(dir).CheckOn(name) {
-		return 0, true
-	}
-	return run(), true
-}
-
-// gitHook is the plugin's Git hook `hook` (ADR git-hooks), with the arguments `args` git gives it:
-// it runs each of its Checks the Config turns on, all of them, and returns the worst of their exit
-// codes; not ok when the plugin writes no such Git hook, or git gives commit-msg no message file.
-func gitHook(hook string, args []string, stdin io.Reader, stderr io.Writer) (code int, ok bool) {
-	run, ok := checks.GitHooks[hook]
-	switch {
-	case !ok:
-		return 0, false
-	case hook != "commit-msg":
-		args = nil // pre-push's remote, which its Check doesn't need
-	case len(args) == 0:
-		return 0, false
-	default:
-		args = args[:1]
-	}
-	for _, name := range run {
-		c, _ := check(name, args, stdin, stderr)
-		code = max(code, c)
-	}
-	return code, true
-}
-
-// checkCommitMessage runs the commit-msg Check `name` on the message in the file `path`: it fails
-// with what is wrong, for git to show.
-func checkCommitMessage(name, path string, stderr io.Writer) int {
-	message, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Fprintf(stderr, "%s:%s: %v\n", names.Plugin, name, err)
-		return 2
-	}
-	dir, _ := os.Getwd()
-	why := commitMessage[name](string(message), config.Read(dir))
-	if why == "" {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s:%s: %s\n", names.Plugin, name, why)
-	return 1
-}
-
-// noSecretsInCommits is the pre-commit Git hook's Check baloo:no-secrets-in-commits on the repo git
-// runs it in: it fails with where each Secret the staged changes add is, for git to show, but
-// never the Secret.
-func noSecretsInCommits(stderr io.Writer) int {
-	const name = names.Plugin + ":no-secrets-in-commits"
-	found, err := checks.NoSecretsInCommits(".")
-	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
-		return 2
-	}
-	if len(found) == 0 {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s: remove each secret, or mark a false alarm with %s:\n%s\n",
-		name, checks.AllowSecret, strings.Join(found, "\n"))
-	return 1
-}
-
-// noStaleADRDate is the pre-commit Git hook's Check baloo:no-stale-adr-date on the repo git runs it
-// in: it fails with each accepted ADR the staged changes change without dating it today.
-func noStaleADRDate(stderr io.Writer) int {
-	const name = names.Plugin + ":no-stale-adr-date"
-	found, err := checks.NoStaleADRDate(".", time.Now().Format(time.DateOnly))
-	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
-		return 2
-	}
-	if len(found) == 0 {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s: an ADR's Date is when it last changed:\n%s\n", name,
-		strings.Join(found, "\n"))
-	return 1
-}
-
-// linearHistory is the pre-push Git hook's Check baloo:linear-history on the repo git runs it in:
-// it fails with the merge commits the push sends, from the refs git gives it on stdin, and names the
-// setting that makes git pull rebase, which the plugin leaves to the user (ADR checks).
-func linearHistory(stdin io.Reader, stderr io.Writer) int {
-	const name = names.Plugin + ":linear-history"
-	pushed, err := io.ReadAll(stdin)
-	var found []string
-	if err == nil {
-		found, err = checks.LinearHistory(".", string(pushed))
-	}
-	if err != nil {
-		fmt.Fprintf(stderr, "%s: %v\n", name, err)
-		return 2
-	}
-	if len(found) == 0 {
-		return 0
-	}
-	fmt.Fprintf(stderr, "%s: rebase instead of merging, then push the rebased branch with "+
-		"--force-with-lease; git config pull.rebase true makes git pull rebase; merge commits:\n%s\n",
-		name, strings.Join(found, "\n"))
-	return 1
+	return checks.Input{Dir: ".", Stdin: stdin, Today: time.Now().Format(time.DateOnly),
+		Rules: c.CommitRules}, c.CheckOn
 }
 
 // runItYourself ends the reason of a command denied, for Claude to leave it to the user.
