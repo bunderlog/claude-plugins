@@ -19,7 +19,9 @@ an ADR, the glossary or the Guidelines settle it: by the change that settles it,
 review where the conversation did. Session start tells Claude how many items there are, one per
 `## ` heading outside a code block, to tell the user, and that the `inbox` skill goes through them
 with the user: it drops what is already settled, ranks the rest by what waiting costs, and asks
-of each whether to decide it now, fix it now, file a ticket, keep it or drop it.
+of each whether to decide it now, fix it now, file a ticket, keep it or drop it. The `interview` skill
+reads the Inbox before its questions, so an item a plan touches becomes one of its open decisions;
+it writes nothing, so the change that settles the item deletes it.
 
 ## Considered options
 
@@ -41,11 +43,17 @@ of each whether to decide it now, fix it now, file a ticket, keep it or drop it.
   the user.
 - The count in the Status line — always in sight, but one more segment for a number that rarely
   changes.
+- `architecture` reading the Inbox too — it works from decisions taken, not open ones.
+- The item's format in one shared file the skills cite — the Session review's prompt and the
+  Guidelines would still keep copies of their own.
 
 ## Consequences
 
 - The name and the format are in every project that uses the plugin: changing them means
   migrating each one.
 - An item nobody settles stays; the count at each session start keeps it in sight.
+- The item's format is repeated in each text that adds items (`principles`, `adr`, `glossary`,
+  `retro`, `inbox`, the Session review's prompt), since each is loaded on its own; changing it
+  means changing them all.
 - A project with a tracker has a second list; moving an item there is the user's call.
 - Revisit when items pile up unread, or a project wants them in its tracker instead.
