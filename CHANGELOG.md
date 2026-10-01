@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.14.3 — 2026-10-01
+
+### Fixes
+
+- checks: don't ask before a Bash command that only reads the Config (6b3db33)
+
 ## 0.14.2 — 2026-10-01
 
 ### Fixes
