@@ -2,6 +2,14 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.14.1 — 2026-10-01
+
+### Fixes
+
+- retro: charge a call by its text, an image by an estimate; skip Claude Code's own messages (15af2d6)
+- session-review: let the review delete .about/inbox.md with its last item (1f8a810)
+- issue: write an Inbox item in the Inbox's format; allow the tracker's command-line client (df89942)
+
 ## 0.14.0 — 2026-10-01
 
 ### Features
