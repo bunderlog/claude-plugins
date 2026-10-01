@@ -24,7 +24,7 @@ const (
 	skill  = `{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Base directory for this skill: /x\n\n# Retro"}]}}`
 	remind = `{"type":"user","message":{"role":"user","content":"<system-reminder>be brief</system-reminder>"}}`
 	stop   = `{"type":"user","timestamp":"2026-10-01T09:10:00.000Z","message":{"role":"user","content":[{"type":"text","text":"[Request interrupted by user]"}]}}`
-	cmd    = `{"type":"user","message":{"role":"user","content":"<command-name>/baloo:ask</command-name>\n<command-message>baloo:ask</command-message>\n<command-args>port retro</command-args>"}}`
+	cmd    = `{"type":"user","message":{"role":"user","content":"<command-name>/baloo:interview</command-name>\n<command-message>baloo:interview</command-message>\n<command-args>port retro</command-args>"}}`
 )
 
 func TestReport_ShowsTheSessionsPromptsCommandsInterruptsAndFailures(t *testing.T) {
@@ -36,7 +36,7 @@ func TestReport_ShowsTheSessionsPromptsCommandsInterruptsAndFailures(t *testing.
 		"[1] prompt: add a retro skill to the plugin\n" +
 		"[4] error exit Bash(go test ./...): Exit code 1: --- FAIL: TestX FAIL pkg\n" +
 		"[9] interrupt\n" +
-		"[10] command: /baloo:ask port retro"
+		"[10] command: /baloo:interview port retro"
 	if got := s.Report(); got != want {
 		t.Errorf("Report =\n%s\nwant\n%s", got, want)
 	}
@@ -159,7 +159,7 @@ func TestConversation_IsWhatTheUserAndClaudeWroteMasked(t *testing.T) {
 	got := Conversation(transcript(start, title, reply, failed, passed, meta, skill, remind, stop, cmd, leak), 1000)
 	want := "user: add a retro skill to the plugin\n\n" +
 		"assistant: On it.\n\n" +
-		"user: /baloo:ask port retro\n\n" +
+		"user: /baloo:interview port retro\n\n" +
 		"assistant: Use *****."
 	if got != want {
 		t.Errorf("Conversation =\n%s\nwant\n%s", got, want)
