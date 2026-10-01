@@ -39,7 +39,7 @@ would, with `$BASE` the commit the checked commits start from:
 
 ```sh
 set -e
-version=0.11.0
+version=0.12.0
 file=baloo_${version}_linux_amd64
 dir=$(mktemp -d)
 for f in "$file" SHA256SUMS; do

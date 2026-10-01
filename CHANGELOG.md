@@ -2,6 +2,17 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.12.0 — 2026-10-01
+
+### Features
+
+- retro: look for missing information and unchecked projects, and enforce fixed-pattern mistakes (e928915)
+- inbox: keep what is still open in .about/inbox.md, and go through it with the inbox skill (05eb3fd)
+
+### Fixes
+
+- checks: read an ADR's Date in a file with CRLF line endings (03dcf96)
+
 ## 0.11.0 — 2026-10-01
 
 ### Features
