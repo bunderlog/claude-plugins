@@ -12,6 +12,8 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
   asked for.
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
+- Stop a process by its id (`kill $!`) or with `pkill -f '[w]eb-server'`: a plain
+  `pkill -f web-server` matches the shell running it too, and kills it.
 
 ## In zsh
 
@@ -51,6 +53,8 @@ silently:
   someone's account of it.
 - Say "none", "all" or a number only from a count that covered everything; otherwise say what
   you looked at.
+- When the user corrects one instance of a mistake, find the others of its kind before you
+  report, and say how many there were.
 
 **Test:** a reviewer can point at each assumption and confirm "yes, we agreed on that."
 
@@ -114,6 +118,11 @@ Acceptance criteria cover:
 - **Functional** — tests pass, edge cases handled.
 - **User-facing** — a real user flow completes end to end.
 - **Operational** — it's observable in production (logs, errors, analytics).
+
+Check with what the project itself runs: its CI, Git hooks and scripts, not every tool with a
+config in the repo. A failure that was there before your change: name it, don't chase it. A
+script you commit runs from a clean checkout, on dependencies the repo declares, not on your
+scratch folder or a global install.
 
 For multi-step work, state the plan as numbered steps, each with its check:
 
