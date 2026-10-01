@@ -2,6 +2,23 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.10.0 — 2026-10-01
+
+### Features
+
+- guidelines: defer to the codebase's conventions; rules for async, reactivity, stale data (5f346cc)
+- guidelines: add a tailwind Guideline, on where the repo depends on tailwindcss (30bec04)
+- retro: move workarounds kept in auto-memory into the skills and settings they patch (e3858c4)
+- guidelines: tell Claude the rules zsh needs where the Bash tool runs zsh (d956864)
+- format-on-edit: run the project's formatter on each file Claude edits (4bc1678)
+
+### Fixes
+
+- loader: never block a prompt or the end of a turn when the binary is missing or fails (ffd6c2e)
+- loader: keep a session's binary while only its quiet hooks run it (dab1b0c)
+- checks: let no-secrets-in-context pass env piped into a filter that keeps only the names (06b8900)
+- checks: read a here-document's body as text, not commands, unless a shell runs it (e9da588)
+
 ## 0.9.0 — 2026-10-01
 
 ### Features
