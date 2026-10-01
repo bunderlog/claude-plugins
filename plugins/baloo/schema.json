@@ -17,7 +17,7 @@
       "type": "boolean"
     },
     "stop-check": {
-      "description": "The command the Stop check runs, with sh in the repo's root, when Claude ends a turn that changed the working tree; a failure goes back to Claude to fix. Off without it, or with false.",
+      "description": "The command the Stop check runs, with sh in the repo's root, when Claude ends a turn that changed the working tree; a failure goes back to Claude to fix. It gets the HEAD the turn started from in BALOO_BASE, to check only what changed since. Off without it, or with false.",
       "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
     },
     "format-on-edit": {

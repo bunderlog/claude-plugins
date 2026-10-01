@@ -15,6 +15,10 @@ work doesn't send Claude off to fix it, and an edit made through Bash counts as 
 with Edit. It blocks at most once a turn: Claude Code marks the Stop after a block, and that one
 passes, so a check that can't pass never traps Claude. A Session review's session runs none.
 
+The command checks the whole repo unless it chooses otherwise: it gets the HEAD the turn started
+from in `BALOO_BASE`, empty before the first commit, so a project whose lint backlog never passes
+can check only what changed since, the turn's commits too, which a diff against `HEAD` misses.
+
 The Stop check is not a Check: it runs the project's command, not the binary's code, so its key is
 at the top of the Config, not under `claude-hooks`, and a new Config has it only as a comment.
 
@@ -31,6 +35,10 @@ at the top of the Config, not under `claude-hooks`, and a new Config has it only
   edits, such as a Session review's, would not count, but neither would Claude's own made with
   Bash.
 - Under `claude-hooks` — that group's keys are `true` or `false` and on without one.
+- Only what changed, left to the project's command with a diff against `HEAD` — a commit made in
+  the turn leaves that diff empty, and the check passes without checking.
+- The files the turn changed, in a variable — leaves out the user's own uncommitted work, but
+  only by file: a project with a lint backlog has old errors in the files it touches too.
 
 ## Consequences
 
@@ -39,5 +47,6 @@ at the top of the Config, not under `claude-hooks`, and a new Config has it only
 - The command runs after every turn that changes a file, so a slow one delays each such turn;
   Claude Code stops it at the Hook's 600 seconds, and the turn ends unchecked.
 - Each prompt in a repo with the key runs `git status` and reads the changed files.
+- A diff from `BALOO_BASE` takes in the user's own uncommitted work as well as the turn's.
 - Revisit when such false blocks become common, or when the checks are too slow to run each
   turn.

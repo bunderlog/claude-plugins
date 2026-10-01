@@ -74,6 +74,42 @@ func TestCheck_RunsTheCommandAfterAChange(t *testing.T) {
 	}
 }
 
+// The command gets the HEAD the turn started from, so it can check what the turn changed, its
+// commits too; before the repo's first commit, nothing.
+func TestCheck_HandsTheCommandTheTurnsBase(t *testing.T) {
+	root, data := testkit.Repo(t), t.TempDir()
+	record := filepath.Join(t.TempDir(), "base")
+	command := "printf %s \"$" + Base + "\" > '" + record + "'"
+	check := func(change func()) string {
+		t.Helper()
+		if err := Mark(root, data, "s1"); err != nil {
+			t.Fatal(err)
+		}
+		change()
+		if _, err := Check(root, data, "s1", command); err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(got)
+	}
+	if got := check(func() { write(t, filepath.Join(root, "a"), "a\n") }); got != "" {
+		t.Errorf("%s before the first commit = %q; want empty", Base, got)
+	}
+	testkit.Git(t, root, "add", ".")
+	testkit.Git(t, root, "commit", "-qm", "init")
+	start := strings.TrimSpace(testkit.Git(t, root, "rev-parse", "HEAD"))
+	got := check(func() {
+		write(t, filepath.Join(root, "a"), "a2\n")
+		testkit.Git(t, root, "commit", "-qam", "in the turn")
+	})
+	if got != start {
+		t.Errorf("%s after a commit in the turn = %q; want the turn's start %q", Base, got, start)
+	}
+}
+
 // A command that passes hands nothing back, and a Stop without a mark from the turn's prompt runs
 // nothing: each mark serves one Stop.
 func TestCheck_PassesAndOnlyOnce(t *testing.T) {

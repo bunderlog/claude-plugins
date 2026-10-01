@@ -13,35 +13,40 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 // tail is how much of the command's output, from its end, a failure hands back.
 const tail = 4000
 
+// Base is the variable that hands the command the HEAD the turn started from, empty in a repo
+// with no commit yet, so it can check only what changed since: `git diff --name-only $BALOO_BASE`.
+const Base = "BALOO_BASE"
+
 // session is a session id fit to name a file.
 var session = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 // Mark records the state of the working tree of the repo at `root` for the session `id`, in `data`,
-// the plugin's data folder, for its next Stop.
+// the plugin's data folder, for its next Stop: its HEAD, then its digest.
 func Mark(root, data, id string) error {
 	path, err := markPath(data, id)
 	if err != nil {
 		return err
 	}
-	snap, err := snapshot(root)
+	head, snap, err := snapshot(root)
 	if err != nil {
 		return err
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(path, []byte(snap), 0o644)
+	return os.WriteFile(path, []byte(head+"\n"+snap), 0o644)
 }
 
 // Check runs `command` with sh in the repo at `root` when its working tree is no longer as the
 // session `id`'s last Mark recorded, and returns what to hand back to Claude when it fails: the
-// command, its exit status and the end of its output, ending in a newline. The Mark serves one
-// Stop: without one, it runs nothing.
+// command, its exit status and the end of its output, ending in a newline. The command gets the
+// HEAD the Mark recorded in Base. The Mark serves one Stop: without one, it runs nothing.
 func Check(root, data, id, command string) (failure string, err error) {
 	path, err := markPath(data, id)
 	if err != nil {
@@ -57,12 +62,14 @@ func Check(root, data, id, command string) (failure string, err error) {
 	if err := os.Remove(path); err != nil {
 		return "", err
 	}
-	snap, err := snapshot(root)
-	if err != nil || snap == string(marked) {
+	base, digest, _ := strings.Cut(string(marked), "\n")
+	_, snap, err := snapshot(root)
+	if err != nil || snap == digest {
 		return "", err
 	}
 	cmd := exec.Command("sh", "-c", command)
 	cmd.Dir = root
+	cmd.Env = append(os.Environ(), Base+"="+base)
 	out, err := cmd.CombinedOutput()
 	if err == nil {
 		return "", nil
@@ -89,17 +96,19 @@ func markPath(data, id string) (string, error) {
 	return filepath.Join(data, "stop-check", id), nil
 }
 
-// snapshot is a digest of the working tree of the repo at `root`: its HEAD, its `git status`, and
-// the content of each file the status lists; ignored files are not in it.
-func snapshot(root string) (string, error) {
-	head, _ := exec.Command("git", "-C", root, "rev-parse", "-q", "--verify", "HEAD").Output()
+// snapshot is the HEAD of the repo at `root`, "" before its first commit, and a digest of its
+// working tree: its HEAD, its `git status`, and the content of each file the status lists; ignored
+// files are not in it.
+func snapshot(root string) (head, digest string, err error) {
+	out, _ := exec.Command("git", "-C", root, "rev-parse", "-q", "--verify", "HEAD").Output()
+	head = strings.TrimSpace(string(out))
 	status, err := exec.Command("git", "-C", root, "status", "--porcelain=v1", "-z",
 		"--untracked-files=all").Output()
 	if err != nil {
-		return "", fmt.Errorf("git status: %w", err)
+		return "", "", fmt.Errorf("git status: %w", err)
 	}
 	h := sha256.New()
-	h.Write(head)
+	h.Write([]byte(head))
 	h.Write(status)
 	entries := bytes.Split(bytes.TrimSuffix(status, []byte{0}), []byte{0})
 	for i := 0; i < len(entries); i++ {
@@ -116,5 +125,5 @@ func snapshot(root string) (string, error) {
 			h.Write(sum[:])
 		}
 	}
-	return hex.EncodeToString(h.Sum(nil)), nil
+	return head, hex.EncodeToString(h.Sum(nil)), nil
 }
