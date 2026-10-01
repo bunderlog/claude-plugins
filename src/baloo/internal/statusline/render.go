@@ -115,17 +115,17 @@ func middle(in Input, width int, showReset bool) string {
 	return strings.Join(parts, " ")
 }
 
-var colour = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+var colorCodes = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
-// visible is how many columns `s` takes, its colours left out.
-func visible(s string) int { return utf8.RuneCountInString(colour.ReplaceAllString(s, "")) }
+// visible is how many columns `s` takes, its colors left out.
+func visible(s string) int { return utf8.RuneCountInString(colorCodes.ReplaceAllString(s, "")) }
 
 // margin is the columns Claude Code keeps free beside the status line, two on each side; it cuts
 // a longer one short.
 const margin = 4
 
 // Render is the Status line for a terminal `columns` wide: the branch on the left, the Usage bars
-// centred, and the model with its effort flush with the right edge. When the line is too narrow
+// centered, and the model with its effort flush with the right edge. When the line is too narrow
 // it shrinks the bars, then drops the 5-hour reset time, then the model.
 func Render(in Input, branch string, columns int) string {
 	width := max(40, columns-margin)

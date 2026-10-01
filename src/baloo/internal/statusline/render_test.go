@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// plain is `s` without its colours.
-func plain(s string) string { return colour.ReplaceAllString(s, "") }
+// plain is `s` without its colors.
+func plain(s string) string { return colorCodes.ReplaceAllString(s, "") }
 
 // input is the Input Claude Code gives as the JSON `text`.
 func input(t *testing.T, text string) Input {
@@ -44,21 +44,21 @@ func TestBar(t *testing.T) {
 			t.Errorf("bar(%v, %d) = %q; want %q", tc.percent, tc.width, got, tc.want)
 		}
 	}
-	for percent, colour := range map[float64]string{49: "\x1b[2;32m", 50: "\x1b[2;33m", 80: "\x1b[2;31m"} {
-		if got := bar(percent, 10, th); !strings.HasPrefix(got, colour) {
-			t.Errorf("bar(%v) = %q; want it to start %q", percent, got, colour)
+	for percent, color := range map[float64]string{49: "\x1b[2;32m", 50: "\x1b[2;33m", 80: "\x1b[2;31m"} {
+		if got := bar(percent, 10, th); !strings.HasPrefix(got, color) {
+			t.Errorf("bar(%v) = %q; want it to start %q", percent, got, color)
 		}
 	}
 }
 
 // The context bar is yellow from 15% and red from 20%.
-func TestRender_ContextColours(t *testing.T) {
-	for used, colour := range map[string]string{
+func TestRender_ContextColors(t *testing.T) {
+	for used, color := range map[string]string{
 		"14.4": "\x1b[2;32m", "15": "\x1b[2;33m", "19.4": "\x1b[2;33m", "20": "\x1b[2;31m",
 	} {
 		got := Render(input(t, `{"context_window": {"used_percentage": `+used+`}}`), "", 120)
-		if !strings.Contains(got, colour) {
-			t.Errorf("context at %s%% = %q; want %q in it", used, got, colour)
+		if !strings.Contains(got, color) {
+			t.Errorf("context at %s%% = %q; want %q in it", used, got, color)
 		}
 	}
 }
@@ -91,17 +91,17 @@ func TestRender_Layout(t *testing.T) {
 	}
 	mid := len([]rune(line)) - strings.Index(line, "Ctx")
 	if got, want := len([]rune(line[:strings.Index(line, "Ctx")])), (196-mid)/2; got != want {
-		t.Errorf("bars start at %d; want %d, centred", got, want)
+		t.Errorf("bars start at %d; want %d, centered", got, want)
 	}
 
-	coloured := Render(usage(t, model), "main", 200)
-	line = plain(coloured)
+	colored := Render(usage(t, model), "main", 200)
+	line = plain(colored)
 	if !regexp.MustCompile(`81% {2,}Opus 5\.5 \(high\)$`).MatchString(line) || len([]rune(line)) != 196 {
 		t.Errorf("line = %q (%d wide); want the model flush right in 196", line, len([]rune(line)))
 	}
-	// The effort shares the model's colour.
-	if !strings.HasSuffix(coloured, "\x1b[2;37mOpus 5.5 (high)\x1b[00m") {
-		t.Errorf("line = %q; want the model and effort in one colour", coloured)
+	// The effort shares the model's color.
+	if !strings.HasSuffix(colored, "\x1b[2;37mOpus 5.5 (high)\x1b[00m") {
+		t.Errorf("line = %q; want the model and effort in one color", colored)
 	}
 	if got := plain(Render(input(t, `{"model": {"display_name": "Opus 5.5"}}`), "", 120)); !strings.HasSuffix(got, " Opus 5.5") {
 		t.Errorf("model alone = %q; want it on the right", got)
