@@ -24,8 +24,9 @@ var everything = []string{"/", "/*", "~", "~/", "~/*", "$HOME", "${HOME}", "$HOM
 // NoDestructiveCommands is the Check baloo:no-destructive-commands (PreToolUse on Bash): why the
 // shell command `command`, run in the folder `dir`, would destroy work beyond undo, for Claude
 // Code to deny it; or else why the user should say first, for it to ask them; or neither. It asks
-// where the user often asks for the command by name (`git push --delete`), and before reset --hard
-// on a tree with no changes to lose, which only moves the branch.
+// where the user often asks for the command by name (`git push --delete` of a branch the remote's
+// default branch doesn't hold), and before reset --hard on a tree with no changes to lose, which
+// only moves the branch.
 func NoDestructiveCommands(command, dir string) (deny, ask string) {
 	switch {
 	case forkBomb.MatchString(command):
@@ -103,8 +104,9 @@ func gitDestroys(args []string, dir string) (why string, ask bool) {
 			slices.ContainsFunc(paths, func(a string) bool { return strings.HasPrefix(a, "+") }) {
 			return "git push --force rewrites remote history; --force-with-lease is allowed", false
 		}
-		if hasFlag(rest, "--delete", "-d") ||
-			slices.ContainsFunc(paths, func(a string) bool { return strings.HasPrefix(a, ":") }) {
+		remote, branches := deletes(rest, paths)
+		if (hasFlag(rest, "--delete", "-d") || branches != nil) &&
+			!merged(gitFolder(dir, options), remote, branches) {
 			return "git push --delete removes a remote branch", true
 		}
 	case "reset":
@@ -167,6 +169,43 @@ func gitDestroys(args []string, dir string) (why string, ask bool) {
 		return "git " + sub + " rewrites the whole history", false
 	}
 	return "", false
+}
+
+// deletes is the remote and the branches there that git push with the arguments `rest`, of
+// which `paths` are the ones not flags, deletes; no branches where it deletes none, and no remote
+// where the command names none.
+func deletes(rest, paths []string) (remote string, branches []string) {
+	if hasFlag(rest, "--delete", "-d") {
+		if len(paths) == 0 {
+			return "", nil
+		}
+		return paths[0], paths[1:]
+	}
+	for _, a := range paths {
+		if branch, ok := strings.CutPrefix(a, ":"); ok {
+			branches = append(branches, branch)
+		}
+	}
+	if len(paths) > 0 && !strings.HasPrefix(paths[0], ":") {
+		remote = paths[0]
+	}
+	return remote, branches
+}
+
+// merged says whether the default branch of `remote`, as the repo at `dir` last fetched it,
+// holds each of its `branches` whole; false where it can't say.
+func merged(dir, remote string, branches []string) bool {
+	head, err := git(dir, "symbolic-ref", "--quiet", "refs/remotes/"+remote+"/HEAD")
+	if remote == "" || err != nil {
+		return false
+	}
+	for _, branch := range branches {
+		ref := "refs/remotes/" + remote + "/" + strings.TrimPrefix(branch, "refs/heads/")
+		if _, err := git(dir, "merge-base", "--is-ancestor", ref, strings.TrimSpace(head)); err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // gitFolder is the folder git started in `dir` runs in, after the -C of its options `options`.

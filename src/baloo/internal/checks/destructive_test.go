@@ -130,6 +130,39 @@ func TestNoDestructiveCommands_AsksBeforeDeletingARemoteBranch(t *testing.T) {
 	}
 }
 
+// A remote branch whose commits the remote's default branch already holds loses nothing when
+// deleted: it passes. One with commits of its own, one with no tracking ref, or a remote with no
+// default branch known, asks.
+func TestNoDestructiveCommands_PassesDeletingAMergedRemoteBranch(t *testing.T) {
+	dir := testkit.Repo(t)
+	bare := t.TempDir()
+	testkit.Git(t, bare, "init", "-q", "--bare")
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "x")
+	testkit.Git(t, dir, "remote", "add", "origin", bare)
+	testkit.Git(t, dir, "branch", "merged")
+	testkit.Git(t, dir, "switch", "-q", "-c", "ahead")
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "y")
+	testkit.Git(t, dir, "push", "-q", "origin", "main", "merged", "ahead")
+	testkit.Git(t, dir, "remote", "set-head", "origin", "main")
+	for _, command := range []string{"git push --delete origin merged", "git push origin :merged",
+		"git push -d origin refs/heads/merged"} {
+		if deny, ask := NoDestructiveCommands(command, dir); deny != "" || ask != "" {
+			t.Errorf("NoDestructiveCommands(%q) = %q, %q; want it allowed", command, deny, ask)
+		}
+	}
+	want := "git push --delete removes a remote branch"
+	for _, command := range []string{"git push --delete origin ahead", "git push -d origin merged ahead",
+		"git push --delete origin gone"} {
+		if deny, ask := NoDestructiveCommands(command, dir); deny != "" || ask != want {
+			t.Errorf("NoDestructiveCommands(%q) = %q, %q; want it to ask %q", command, deny, ask, want)
+		}
+	}
+	testkit.Git(t, dir, "remote", "set-head", "origin", "-d")
+	if _, ask := NoDestructiveCommands("git push --delete origin merged", dir); ask != want {
+		t.Errorf("a delete with no default branch known = %q; want it to ask %q", ask, want)
+	}
+}
+
 // On a tree with no changes to lose, reset --hard only moves the branch, and its commits stay in
 // the reflog: it asks. With changes, or where git can't say, it denies.
 func TestNoDestructiveCommands_AsksBeforeResetHardOnACleanTree(t *testing.T) {

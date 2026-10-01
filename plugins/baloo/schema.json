@@ -76,7 +76,7 @@
           "type": "boolean"
         },
         "no-destructive-commands": {
-          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete, or git reset --hard with no changes to lose.",
+          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete of a branch the remote's default branch doesn't hold, or git reset --hard with no changes to lose.",
           "type": "boolean"
         },
         "no-secrets-in-context": {
