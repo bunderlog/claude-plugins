@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -210,6 +211,23 @@ func TestUsage(t *testing.T) {
 		"check linear-history < <pushed refs>"} {
 		if !strings.Contains(got+"\n", want) {
 			t.Errorf("Usage() = %q; want it to have %q", got, want)
+		}
+	}
+}
+
+// Each Check a Git hook runs has a name of its own and a Git hook git calls.
+func TestGitHookChecks(t *testing.T) {
+	gits := []string{"applypatch-msg", "pre-applypatch", "post-applypatch", "pre-commit",
+		"pre-merge-commit", "prepare-commit-msg", "commit-msg", "post-commit", "pre-rebase",
+		"post-checkout", "post-merge", "pre-push", "pre-auto-gc", "post-rewrite"}
+	seen := map[string]bool{}
+	for _, c := range gitHookChecks {
+		if seen[c.name] {
+			t.Errorf("%s is in the registry twice", c.name)
+		}
+		seen[c.name] = true
+		if !slices.Contains(gits, c.hook) {
+			t.Errorf("%s runs in %q, which git never calls", c.name, c.hook)
 		}
 	}
 }

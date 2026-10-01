@@ -21,7 +21,7 @@ import (
 )
 
 // Config is a repo's settings. What a new key needs is in ADR config's Consequences; a Check also
-// needs its name in a list in checks, and a Git hook's Check its runner in cmd/baloo.
+// needs its name in HookChecks, or a Git hook's Check its entry in the checks package's registry.
 type Config struct {
 	// Root is the root of the repo whose Config this is, or "" where the repo has none (see
 	// Load).

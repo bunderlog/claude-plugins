@@ -39,10 +39,13 @@ var gitHookChecks = []gitHookCheck{
 	{name: "conventional-commits", hook: "commit-msg", arg: "<message file>",
 		find: func(in Input, path string) ([]string, error) {
 			message, err := os.ReadFile(path)
-			if why := ConventionalCommit(string(message), in.Rules); err == nil && why != "" {
+			if err != nil {
+				return nil, err
+			}
+			if why := ConventionalCommit(string(message), in.Rules); why != "" {
 				return []string{why}, nil
 			}
-			return nil, err
+			return nil, nil
 		}},
 	{name: "no-secrets-in-commits", hook: "pre-commit",
 		advice: "remove each secret, or mark a false alarm with " + AllowSecret,
@@ -99,21 +102,32 @@ func Run(name string, args []string, in Input, on func(name string) bool, stderr
 }
 
 // RunHook runs the Checks of the Git hook `hook` (ADR git-hooks) that `on` turns on, all of them,
-// with the arguments git gives it, and returns the worst of their exit codes. Not ok when the
-// plugin writes no such Git hook, or git gives commit-msg no message file.
+// each with the first of git's arguments `args` if it takes one, and returns the worst of their exit
+// codes. Not ok when the plugin writes no such Git hook, or git gives none of the arguments one of
+// its Checks takes.
 func RunHook(hook string, args []string, in Input, on func(name string) bool, stderr io.Writer) (code int, ok bool) {
-	switch _, ok := GitHooks[hook]; {
-	case !ok:
+	if _, ok := GitHooks[hook]; !ok {
 		return 0, false
-	case hook != "commit-msg":
-		args = nil // pre-push's remote, which its Check doesn't need
-	case len(args) == 0:
-		return 0, false
-	default:
-		args = args[:1]
 	}
-	for _, name := range GitHooks[hook] {
-		c, _ := Run(name, args, in, on, stderr)
+	var own [][]string
+	for _, c := range gitHookChecks {
+		switch {
+		case c.hook != hook:
+			continue
+		case c.arg == "":
+			own = append(own, nil)
+		case len(args) == 0:
+			return 0, false
+		default:
+			own = append(own, args[:1])
+		}
+	}
+	for i, name := range GitHooks[hook] {
+		c, ok := Run(name, own[i], in, on, stderr)
+		if !ok { // the registry and Run disagree: fail rather than skip the Check
+			fmt.Fprintf(stderr, "%s:%s: could not run it\n", names.Plugin, name)
+			c = 2
+		}
 		code = max(code, c)
 	}
 	return code, true
