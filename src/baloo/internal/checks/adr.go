@@ -7,8 +7,9 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// adrDate is an ADR's Date line, with `Status: proposed` on the line above it for a draft.
-var adrDate = regexp.MustCompile(`(?m)^(Status: proposed\n)?Date: *(.*?) *$`)
+// adrDate is an ADR's Date line, ending in LF or CRLF, with `Status: proposed` on the line above it
+// for a draft.
+var adrDate = regexp.MustCompile(`(?m)^(Status: proposed\n)?Date: *(.*?) *\r?$`)
 
 // NoStaleADRDate is the Check baloo:no-stale-adr-date (pre-commit): `<path>: <why>` for each
 // accepted ADR the staged changes of the repo `dir` change without setting its Date to `today`,

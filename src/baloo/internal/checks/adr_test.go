@@ -49,6 +49,15 @@ func TestNoStaleADRDate_FindsAnADRChangedUnderAnOldDate(t *testing.T) {
 	}
 }
 
+// An ADR with CRLF line endings is read as with LF.
+func TestNoStaleADRDate_ReadsCRLF(t *testing.T) {
+	dir := adrRepo(t)
+	stage(t, dir, map[string]string{".about/adr/billing.md": "# Billing\r\n\r\nDate: " + today + "\r\n\r\nWeekly.\r\n"})
+	if got := noStaleADRDate(t, dir); got != nil {
+		t.Errorf("NoStaleADRDate = %q, want none", got)
+	}
+}
+
 // An ADR changed again on the day of its Date passes as well.
 func TestNoStaleADRDate_PassesAnADRDatedToday(t *testing.T) {
 	dir := adrRepo(t)
