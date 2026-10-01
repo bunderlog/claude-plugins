@@ -59,9 +59,26 @@ func TestFitting(t *testing.T) {
 	}
 }
 
+// In zsh, session start adds the rules zsh needs after the rules for every task.
+func TestIndex_Zsh(t *testing.T) {
+	plugin := t.TempDir()
+	write(t, plugin, map[string]string{"guidelines/principles.md": "# P\n\n" + everyTask + "\n\n- one\n\n" +
+		inZsh + "\n\n- quote globs\n\n## Next\n"})
+	on := map[string]bool{"principles": true}
+	for shell, want := range map[string]bool{"zsh": true, "bash": false, "": false} {
+		text, err := Index(plugin, on, shell)
+		if got := strings.Contains(text, "- one\nIn zsh:\n- quote globs\n"); got != want || err != nil {
+			t.Errorf("Index in %q = %q, %v; want the zsh rules %v", shell, text, err, want)
+		}
+	}
+	if text, _ := Index(plugin, map[string]bool{"go": true}, "zsh"); strings.Contains(text, "zsh") {
+		t.Errorf("Index without principles = %q; want no zsh rules", text)
+	}
+}
+
 func TestIndex(t *testing.T) {
 	plugin := t.TempDir()
-	if text, err := Index(plugin, map[string]bool{"go": false}); text != "" || err != nil {
+	if text, err := Index(plugin, map[string]bool{"go": false}, ""); text != "" || err != nil {
 		t.Errorf("Index with none on = %q, %v; want nothing", text, err)
 	}
 	// Without the rules for every task, the lines are still there.
@@ -69,11 +86,11 @@ func TestIndex(t *testing.T) {
 		"- " + All[0].When + ": " + filepath.Join(plugin, "guidelines", "principles.md") + "\n" +
 		"- " + All[7].When + ": " + filepath.Join(plugin, "guidelines", "vue.md")
 	on := map[string]bool{"principles": true, "vue": true}
-	if text, err := Index(plugin, on); err == nil || !strings.HasSuffix(text, lines) {
+	if text, err := Index(plugin, on, ""); err == nil || !strings.HasSuffix(text, lines) {
 		t.Errorf("Index without principles.md = %q, %v; want the lines and an error", text, err)
 	}
 	write(t, plugin, map[string]string{"guidelines/principles.md": "# P\n\n## Other\n\nx\n"})
-	if text, err := Index(plugin, on); err == nil || !strings.HasSuffix(text, lines) ||
+	if text, err := Index(plugin, on, ""); err == nil || !strings.HasSuffix(text, lines) ||
 		strings.Contains(text, "On every task") {
 		t.Errorf("Index of a principles.md without %q = %q, %v; want the lines and an error", everyTask, text, err)
 	}
@@ -87,7 +104,7 @@ func TestIndex(t *testing.T) {
 		{"the heading first", everyTask + "\n- one\n", "- one\n"},
 	} {
 		write(t, plugin, map[string]string{"guidelines/principles.md": tc.file})
-		if got, err := Index(plugin, on); got != head+tc.rules+lines || err != nil {
+		if got, err := Index(plugin, on, ""); got != head+tc.rules+lines || err != nil {
 			t.Errorf("Index, %s = %q, %v; want %q", tc.name, got, err, head+tc.rules+lines)
 		}
 	}

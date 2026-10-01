@@ -34,10 +34,12 @@
     "molyuk",
     "nohup",
     "nosystem",
+    "nullglob",
     "outputstyle",
     "pinia",
     "rdap",
     "reflog",
+    "setopt",
     "shellcheck",
     "sqlc",
     "statusline",
@@ -50,8 +52,8 @@
     "throughs",
     "toplevel",
     "trimpath",
-    "webui",
     "wcag",
+    "webui",
     "worktrees"
   ],
   "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]

@@ -7,9 +7,10 @@ A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principl
 `tailwind` for their stacks. Each turns on with a key of its own in the Config, under `guidelines`.
 At session start the binary prints, for each Guideline turned on, one line: when to read it and its
 path. Claude reads the file itself when a task calls for it. `principles` also carries the few rules
-that must hold on every task, and those are printed whole. A Guideline that is off puts nothing in
-the context. How Claude writes its replies is not a Guideline but an Output style (ADR
-output-styles).
+that must hold on every task, and those are printed whole, with the rules zsh needs where the Bash
+tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
+`=` fails the whole command there. A Guideline that is off puts nothing in the context. How Claude
+writes its replies is not a Guideline but an Output style (ADR output-styles).
 
 A new Config turns on the Guidelines for any project, and a stack's only where the repo's files name
 that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`, one

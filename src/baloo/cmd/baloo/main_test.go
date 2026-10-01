@@ -342,6 +342,8 @@ func TestSessionStartOutsideRepo(t *testing.T) {
 // none that is off.
 func TestSessionStartGuidelines(t *testing.T) {
 	dir := inRepo(t)
+	t.Setenv("CLAUDE_CODE_SHELL", "")
+	t.Setenv("SHELL", "/bin/bash")
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -354,6 +356,9 @@ func TestSessionStartGuidelines(t *testing.T) {
 		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
 	out := stdout.String()
+	if strings.Contains(out, "In zsh:") {
+		t.Errorf("session-start in bash = %q; want no zsh rules", out)
+	}
 	guidelines := filepath.Join(plugin(t), "guidelines")
 	for _, want := range []string{
 		"On every task:\nFor a trivial change",
@@ -367,6 +372,13 @@ func TestSessionStartGuidelines(t *testing.T) {
 	}
 	if strings.Contains(out, "vue.md") || strings.Contains(out, "design.md") || strings.Contains(out, "## ") {
 		t.Errorf("session-start = %q; want no Guideline that is off, and no heading", out)
+	}
+	// Where the Bash tool runs zsh, the rules zsh needs follow them.
+	t.Setenv("CLAUDE_CODE_SHELL", "/usr/bin/zsh")
+	stdout.Reset()
+	run([]string{"session-start"}, nil, &stdout, &stderr)
+	if out := stdout.String(); !strings.Contains(out, "In zsh:\n- ") {
+		t.Errorf("session-start in zsh = %q; want the zsh rules", out)
 	}
 	// Without principles, the rules for every task aren't printed.
 	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("guidelines:\n  go: true\n"), 0o644); err != nil {

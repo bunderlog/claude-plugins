@@ -13,6 +13,13 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
 
+## In zsh
+
+- Quote a glob that may match nothing, or start the command with `setopt nullglob;`: zsh fails
+  the whole command on a glob with no match (`--include=*.ts` too).
+- Never start a word with `=` (`echo ====`): zsh expands it to a command's path. Use `echo ---`.
+- Don't name a variable `status`, `path` or `argv`: zsh reserves them.
+
 ## Before starting
 
 Answer these before writing code. If an answer is missing, say so rather than proceeding

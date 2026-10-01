@@ -124,10 +124,15 @@ func dependencies(path string) []string {
 // rules that must hold on every task.
 const everyTask = "## On every task"
 
+// inZsh is the heading of the section of principles.md that session start prints after it where
+// the Bash tool's shell is zsh: the rules zsh needs.
+const inZsh = "## In zsh"
+
 // Index is what session start tells Claude of the Guidelines `on` in the plugin at `plugin`: a
 // line for each, when to read it and its path, after the rules for every task when principles is
-// on. With none on it is "". When the rules can't be read, it is the lines without them, and why.
-func Index(plugin string, on map[string]bool) (string, error) {
+// on, and the rules zsh needs where `shell`, the Bash tool's, is zsh. With none on it is "". When
+// the rules can't be read, it is the lines without them, and why.
+func Index(plugin string, on map[string]bool, shell string) (string, error) {
 	var lines []string
 	for _, g := range All {
 		if on[g.Name] {
@@ -144,6 +149,11 @@ func Index(plugin string, on map[string]bool) (string, error) {
 		var rules string
 		if rules, err = section(path(plugin, "principles"), everyTask); err == nil {
 			text += "On every task:\n" + rules + "\n"
+		}
+		if rules, zshErr := section(path(plugin, "principles"), inZsh); shell == "zsh" && err == nil {
+			if err = zshErr; err == nil {
+				text += "In zsh:\n" + rules + "\n"
+			}
 		}
 	}
 	return text + "Read a file when its task comes up:\n" + strings.Join(lines, "\n"), err

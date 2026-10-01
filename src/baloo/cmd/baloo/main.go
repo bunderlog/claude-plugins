@@ -197,10 +197,14 @@ func gitHooksReport(r githooks.Report) []string {
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude
-// Code gives a hook as CLAUDE_PLUGIN_ROOT.
+// Code gives a hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's shell: CLAUDE_CODE_SHELL, or the
+// user's SHELL.
 func guidelineIndex(on map[string]bool) (string, error) {
-	plugin := os.Getenv("CLAUDE_PLUGIN_ROOT")
-	index, err := guidelines.Index(plugin, on)
+	plugin, shell := os.Getenv("CLAUDE_PLUGIN_ROOT"), os.Getenv("CLAUDE_CODE_SHELL")
+	if shell == "" {
+		shell = os.Getenv("SHELL")
+	}
+	index, err := guidelines.Index(plugin, on, filepath.Base(shell))
 	if index != "" && plugin == "" {
 		return "", errors.New("CLAUDE_PLUGIN_ROOT is not set")
 	}
