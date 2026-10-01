@@ -12,9 +12,9 @@ import (
 
 // sessionEnd is the SessionEnd hook's part (ADR session-review): where the repo's Config turns the
 // Session review on, it starts one of the session that ended and returns at once. It says nothing
-// and never fails the exit: without the Transcript, `claude`, or the plugin's folder or data folder, and in
-// a Session review's own session, it does nothing. A problem with the Config is left to the next
-// session start, as there is no one to tell now.
+// and never fails the exit: without the Transcript, `claude`, or the plugin's folder or data
+// folder, and in a Session review's own session, it does nothing. A problem with the Config is left
+// to the next session start, as there is no one to tell now.
 func sessionEnd(stdin io.Reader) int {
 	var end struct {
 		Transcript string `json:"transcript_path"`

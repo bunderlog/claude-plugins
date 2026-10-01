@@ -49,8 +49,8 @@ func husky9(t *testing.T, dir string) {
 	testkit.Git(t, dir, "config", "core.hooksPath", ".husky/_")
 }
 
-// Session start writes the Git hooks, and git runs the Checks the Config turns on through them, with
-// husky 9 too; once the binary is gone, a Git hook passes and says so.
+// Session start writes the Git hooks, and git runs the Checks the Config turns on through them,
+// with husky 9 too; once the binary is gone, a Git hook passes and says so.
 func TestGitHooks_RunTheChecks(t *testing.T) {
 	bin := binary(t)
 	for _, husky := range []bool{false, true} {

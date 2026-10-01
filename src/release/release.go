@@ -134,8 +134,8 @@ func git(root string, args ...string) (string, error) {
 
 // Release makes a Release in the repo at `root` from the commits since the last `v*` tag: it
 // builds the next version for every platform, to check that it builds, writes it to the manifest
-// and the README's CI recipe and a section to CHANGELOG.md, commits these and tags the commit, whose push has CI build and
-// publish the binaries. It returns the version.
+// and the README's CI recipe and a section to CHANGELOG.md, commits these and tags the commit,
+// whose push has CI build and publish the binaries. It returns the version.
 func Release(root, date string) (string, error) {
 	if status, err := git(root, "status", "--porcelain"); err != nil || status != "" {
 		return "", fmt.Errorf("commit or stash your changes first")

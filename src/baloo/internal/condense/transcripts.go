@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-// notLetterOrDigit is what Claude Code turns into `-` in the name of a project's folder of Transcripts.
+// notLetterOrDigit is what Claude Code turns into `-` in the name of a project's folder of
+// Transcripts.
 var notLetterOrDigit = regexp.MustCompile(`[^A-Za-z0-9]`)
 
 // Dir is the folder of the Transcripts of the project at `cwd`, or of the nearest folder above it

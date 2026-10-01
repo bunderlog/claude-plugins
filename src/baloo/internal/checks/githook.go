@@ -102,9 +102,9 @@ func Run(name string, args []string, in Input, on func(name string) bool, stderr
 }
 
 // RunHook runs the Checks of the Git hook `hook` (ADR git-hooks) that `on` turns on, all of them,
-// each with the first of git's arguments `args` if it takes one, and returns the worst of their exit
-// codes. Not ok when the plugin writes no such Git hook, or git gives none of the arguments one of
-// its Checks takes.
+// each with the first of git's arguments `args` if it takes one, and returns the worst of their
+// exit codes. Not ok when the plugin writes no such Git hook, or git gives none of the arguments
+// one of its Checks takes.
 func RunHook(hook string, args []string, in Input, on func(name string) bool, stderr io.Writer) (code int, ok bool) {
 	if _, ok := GitHooks[hook]; !ok {
 		return 0, false
