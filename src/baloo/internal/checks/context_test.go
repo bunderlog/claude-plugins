@@ -68,6 +68,10 @@ func TestNoSecretsInContext_DeniesACommandThatShowsASecret(t *testing.T) {
 		"env | grep -o '^.*'":                     "env prints every environment variable",
 		"env | sed 's/=.*/&/'":                    "env prints every environment variable",
 		"env | awk -F= '{print $2}'":              "env prints every environment variable",
+		"cat <<EOF\nx\nEOF\nenv":                  "env prints every environment variable", // cspell:disable-line
+		"bash <<EOF\nenv\nEOF":                    "env prints every environment variable", // cspell:disable-line
+		"sudo sh -s <<'EOF'\nprintenv\nEOF":       "printenv prints every environment variable",
+		"cat <<-'EOF' >f\n\tset\n\tEOF\nprintenv": "printenv prints every environment variable",
 		"printenv":                                "printenv prints every environment variable",
 		"printenv GITHUB_TOKEN":                   "printenv GITHUB_TOKEN prints a secret",
 		"export":                                  "export prints every exported variable",
@@ -96,6 +100,9 @@ func TestNoSecretsInContext_AllowsACommandThatShowsNone(t *testing.T) {
 	for _, command := range []string{
 		`grep -n '"prod.env", ".env.example"' src/a.go`,
 		"env | cut -d= -f1",
+		"python3 - <<'EOF'\nprint(sorted(set(words)))\nenv = 1\nEOF", // cspell:disable-line
+		"cat <<EOF > notes.txt\nset\nenv\nEOF\necho done",            // cspell:disable-line
+		"cat <<< 'here-string' | wc -c",
 		"env | sort | cut -d '=' -f 1",
 		"env | grep -oE '^(BITBUCKET|JIRA)[A-Z_]*'",
 		"env | grep TOKEN | sed 's/=.*/=<set>/'",
