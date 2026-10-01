@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/condense"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -30,13 +31,9 @@ func condenseSessions(args []string, stdout, stderr io.Writer) (code int, ok boo
 	if err != nil {
 		return fail(err)
 	}
-	config := os.Getenv("CLAUDE_CONFIG_DIR")
+	config := settings.Own()
 	if config == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return fail(err)
-		}
-		config = filepath.Join(home, ".claude")
+		return fail(errors.New("found neither CLAUDE_CONFIG_DIR nor a home folder"))
 	}
 	dir := condense.Dir(config, cwd)
 	file := func(session string) string {

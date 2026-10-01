@@ -43,16 +43,23 @@ const (
 // all of them.
 var Scopes = []Scope{Local, Project, User, Managed}
 
+// Own is Claude Code's own folder, $CLAUDE_CONFIG_DIR or ~/.claude, or "" where neither is known.
+func Own() string {
+	if own := os.Getenv("CLAUDE_CONFIG_DIR"); own != "" {
+		return own
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".claude")
+	}
+	return ""
+}
+
 // Files are Claude Code's settings files for the project at `project`, by Scope; one Claude Code
 // doesn't have is "".
 func Files(project string) map[Scope]string {
-	own := os.Getenv("CLAUDE_CONFIG_DIR")
-	if home, err := os.UserHomeDir(); own == "" && err == nil {
-		own = filepath.Join(home, ".claude")
-	}
 	user := ""
-	if own != "" {
-		user = filepath.Join(own, "settings.json")
+	if own := Own(); own != "" {
+		user = filepath.Join(own, filepath.Base(names.ProjectSettings))
 	}
 	return map[Scope]string{
 		Local:   filepath.Join(project, names.LocalSettings),

@@ -16,6 +16,7 @@ import (
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -393,12 +394,9 @@ func claudeCodes(root string) bool {
 	if err == nil && resolve(root) == resolve(home) {
 		return true
 	}
-	own := os.Getenv("CLAUDE_CONFIG_DIR")
+	own := settings.Own()
 	if own == "" {
-		if err != nil {
-			return false
-		}
-		own = filepath.Join(home, ".claude")
+		return false
 	}
 	rel, err := filepath.Rel(resolve(own), resolve(root))
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))

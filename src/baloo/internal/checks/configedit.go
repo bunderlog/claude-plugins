@@ -77,7 +77,9 @@ func TurnsHooksOff(call ToolCall, dir, claudeDir string) bool {
 func plugin(w string) bool { return w == names.Plugin || strings.HasPrefix(w, names.Plugin+"@") }
 
 // settingsName says whether `name` is the name of a settings file of Claude Code's.
-func settingsName(name string) bool { return name == "settings.json" || name == "settings.local.json" }
+func settingsName(name string) bool {
+	return name == filepath.Base(names.ProjectSettings) || name == filepath.Base(names.LocalSettings)
+}
 
 // settingsFile says whether `path` is a settings file of Claude Code's: one in a .claude folder,
 // or in `claudeDir`.
