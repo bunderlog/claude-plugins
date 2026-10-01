@@ -24,7 +24,8 @@ project's own template or conventions win.
   follows or would change. An Issue against an ADR is a decision first: send it to the `adr`
   skill rather than filing it.
 - What is still to decide (whether to fix it, which way) is an Inbox item, not an Issue: say so
-  and add it to `.about/inbox.md` instead.
+  and add it to `.about/inbox.md` instead: a `## <title>`, a line `<YYYY-MM-DD> · issue`, then
+  what it is and what would settle it; create the file, `# Inbox` first, with its first item.
 
 ## Write
 

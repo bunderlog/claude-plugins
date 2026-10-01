@@ -9,10 +9,10 @@ criteria; the cause and the options for a fix go in comments, so the description
 the guess about the cause changes. The project's own template wins.
 
 Where it goes follows ADR prd: a tracker the project's `CLAUDE.md` or `AGENTS.md` names, written
-through that tool's connector, the skill text naming no tool; without that connector, stop and
-say which to set up. Without a tracker named, each Issue is `.about/issues/<slug>.md` (ADR
-about-folder), its comments a section of the file, and the change that does the work deletes it,
-as an Inbox item's settling change does; git keeps it.
+through that tool's connector or command-line client (`gh`), the skill text naming no tool; without
+access through either, stop and say what to set up. Without a tracker named, each Issue is
+`.about/issues/<slug>.md` (ADR about-folder), its comments a section of the file, and the change
+that does the work deletes it, as an Inbox item's settling change does; git keeps it.
 
 An Issue is work already agreed; the Inbox holds what is still to decide, a bug found among it
 (ADR inbox). So nothing writes an Issue unattended: the Session review and `principles` still send
