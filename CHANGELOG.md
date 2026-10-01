@@ -2,6 +2,14 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.13.0 — 2026-10-01
+
+### Features
+
+- guidelines: keep a seam inside a module out of its interface (823dc82)
+- interview: rename the ask skill to interview (a5ae77c)
+- architecture: flag callers relying on what a module doesn't promise; name what's behind a seam (244b5c8)
+
 ## 0.12.0 — 2026-10-01
 
 ### Features
