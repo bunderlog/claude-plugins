@@ -121,7 +121,7 @@ func (l *loader) runWith(t *testing.T, stdin string, env []string, args ...strin
 	return out.String(), errs.String(), code
 }
 
-// binary builds cmd/baloo for this machine as the given version.
+// binary builds cmd/baloo for this machine as `version`.
 func binary(t *testing.T) []byte {
 	t.Helper()
 	out := filepath.Join(t.TempDir(), "baloo")

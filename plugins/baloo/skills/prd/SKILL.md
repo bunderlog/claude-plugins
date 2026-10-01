@@ -39,7 +39,7 @@ Challenge each part until it holds:
 
 Test the criteria with borderline cases: nothing, too much, a failure halfway, someone who may
 not do this. A word the glossary lacks or uses differently, or a criterion that contradicts an
-ADR, is a Finding: name both sides and ask which holds.
+ADR, is a finding: name both sides and ask which holds.
 
 ## Built
 
@@ -48,7 +48,7 @@ Once code for the feature exists, link each criterion to the test that checks it
 (`webui/src/export.test.ts`). A criterion with a link is built; one without is not yet. Check
 every link in the repo you are in: the test exists and checks what the criterion says; list the
 other repos' links as not checked from here. A criterion with no test, a link to a test that's
-gone, or code that does something else is a Finding: name it and ask whether the criterion or the
+gone, or code that does something else is a finding: name it and ask whether the criterion or the
 code is wrong; don't rewrite a criterion to match the code.
 
 ## Ask

@@ -1,9 +1,9 @@
 # The Status line is the binary's, set by session start in the project's local settings
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 The plugin ships a Status line: the branch on the left, the context, 5-hour and 7-day Usage bars
-centred, and the model with its effort on the right. The binary draws it, `baloo status-line`, from
+centered, and the model with its effort on the right. The binary draws it, `baloo status-line`, from
 what Claude Code gives a status line command on stdin; a line too narrow shrinks the bars, then
 drops the 5-hour reset time, then the model. Each bar turns yellow and red at fixed percentages:
 the context at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.

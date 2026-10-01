@@ -12,7 +12,7 @@ import (
 )
 
 // plain is `s` without its colours.
-func plain(s string) string { return regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(s, "") }
+func plain(s string) string { return colour.ReplaceAllString(s, "") }
 
 // input is the Input Claude Code gives as the JSON `text`.
 func input(t *testing.T, text string) Input {

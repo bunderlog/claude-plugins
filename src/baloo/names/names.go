@@ -22,8 +22,8 @@ const (
 	LocalSettings   = ".claude/settings.local.json"
 	// ADRs is a repo's folder of ADRs, from its root.
 	ADRs = ".about/adr/"
-	// Marker ends a command the plugin wrote into a file it shares, such as Claude Code's
-	// statusLine, so it knows the command for its own.
+	// Marker marks what the plugin wrote into a file it shares, so it knows it for its own: the
+	// statusLine command, a Git hook, husky's line.
 	Marker = "# managed by " + Plugin
 	// Schema is where editors find the Config's JSON Schema, which a new Config names.
 	Schema = "https://raw.githubusercontent.com/bunderlog/claude-plugins/main/" + PluginDir +

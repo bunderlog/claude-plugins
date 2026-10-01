@@ -129,7 +129,7 @@ reconsider building it.
 
 **Test:** on day N after launch, "did this work?" has an answer from data, not opinion.
 
-## Scaling the rigour
+## Scaling the rigor
 
 | Change                                        | Apply                           |
 | --------------------------------------------- | ------------------------------- |

@@ -20,9 +20,8 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
-// Config is a repo's settings. Each other setting adds its field here, its key to keys and to the
-// schema, and its key, turned on, to newConfig; a Check adds its name to a list in checks and its
-// key to the schema under the group that runs it.
+// Config is a repo's settings. What a new key needs is in ADR config's Consequences; a Check also
+// needs its name in a list in checks, and a Git hook's Check its runner in cmd/baloo.
 type Config struct {
 	// Root is the root of the repo whose Config this is, or "" where the repo has none (see
 	// Load).
@@ -230,8 +229,8 @@ func newConfig(fit []string) string {
 # own here. A wrong setting is reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
-# enables the plugin (.claude/settings.local.json for the user's own), where no settings file of
-# Claude Code's picks one; false picks none.
+# enables the plugin (the project's .claude/settings.local.json for the user's settings), where no
+# settings file of Claude Code's picks one; false picks none.
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
@@ -244,7 +243,8 @@ status-line: true
 session-review: true
 
 # The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
-# the repo's root and hands a failure back to Claude to fix before it stops. Off without it.
+# the repo's root and hands a failure back to Claude to fix before it stops. Off without it, or
+# with false.
 # stop-check: mise run check
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each

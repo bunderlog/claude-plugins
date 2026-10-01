@@ -8,7 +8,7 @@ plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a 
 the Checks Git hooks run, `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
 `no-stale-adr-date` and `linear-history`. A key is `true` or `false`; `conventional-commits` also
 takes a map of its settings, `types` (a list, or `any`) and `max-length` (0 for none), which turns
-it on. The two groups have opposite defaults, and a Stop check would run in a Hook too, not on a
+it on. The two groups have opposite defaults, and the Stop check runs in a Hook too, not on a
 tool call, so they are named for what runs them.
 
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
@@ -45,7 +45,7 @@ Release.
 
 ## Considered options
 
-- Guard, one Check for the three jobs, with one key — commands that destroy work, a bypass of
+- One Check for the three jobs, with one key — commands that destroy work, a bypass of
   the Git hooks and a Leak into Claude's context are unrelated, and one can't be turned off alone.
 - Every Check off without its key, the Checks a Hook runs too (until 2026-10-01) —
   one rule for all, but no protection outside a repo or in a Config made before the keys.

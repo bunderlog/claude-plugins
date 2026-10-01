@@ -423,8 +423,9 @@ func commonest(counts []*seen) []*seen {
 }
 
 // Summary is the sessions `sessions` together, for a Retro, masked: their failures by kind, with
-// the commonest of each (a failed command, a call rejected or refused by the classifier, by its tool; the rest by
-// their error), then the prompts typed more than once, which a skill or a hook could take over.
+// the commonest of each (a failed command, a call rejected or refused by the classifier, by its
+// tool; the rest by their error), then the prompts typed more than once, which a skill or a hook
+// could take over.
 func Summary(sessions []Session) string {
 	var order []string
 	byKind := map[string][]*seen{}
@@ -481,7 +482,7 @@ func Summary(sessions []Session) string {
 const aroundChars = 2000
 
 // Around is the lines of the Transcript `transcript` within `radius` of its line `at`, numbered
-// as in a Report: their text, tool calls and results, each cut to 2000 characters, masked. It is
+// as in a Report: their text, tool calls and results, each cut to `aroundChars`, masked. It is
 // what a Retro reads instead of the raw Transcript, so a Secret an earlier session printed
 // doesn't reach one more context (ADR transcripts).
 func Around(transcript []byte, at, radius int) string {

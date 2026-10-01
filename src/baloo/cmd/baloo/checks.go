@@ -34,9 +34,9 @@ type hookCall struct {
 	Cwd string `json:"cwd"`
 }
 
-// preToolUse is the PreToolUse Hook on Claude's tool calls (ADR checks): it runs the Checks on
-// them that the Config turns on, and denies the call when one would, else asks the user first
-// when one would, and asks too before a change to the Config or one that may turn its Hooks off.
+// preToolUse is the PreToolUse Hook of the Checks a Hook runs (ADR checks): it runs the ones the
+// Config turns on, and denies the call when one would, else asks the user first when one would,
+// and asks too before a change to the Config or one that may turn its Hooks off.
 // It says nothing of input it can't read, and Claude Code runs the call as usual.
 func preToolUse(stdin io.Reader, stdout io.Writer) int {
 	var call hookCall

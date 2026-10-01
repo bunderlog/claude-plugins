@@ -313,8 +313,8 @@ func TestSessionStartChecksOff(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	want := "baloo:\nclaude-hooks.no-secrets-in-context: false in .claude/baloo.yml turns off a check on Claude's " +
-		"tool calls: tell the user\n"
+	want := "baloo:\nclaude-hooks.no-secrets-in-context: false in .claude/baloo.yml turns off a check " +
+		"in Claude Code's hooks: tell the user\n"
 	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.String() != want {
 		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)
 	}

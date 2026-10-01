@@ -22,7 +22,7 @@ const tail = 4000
 var session = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 // Mark records the state of the working tree of the repo at `root` for the session `id`, in `data`,
-// the plugin's data folder, for its next Check.
+// the plugin's data folder, for its next Stop.
 func Mark(root, data, id string) error {
 	path, err := markPath(data, id)
 	if err != nil {
@@ -40,8 +40,8 @@ func Mark(root, data, id string) error {
 
 // Check runs `command` with sh in the repo at `root` when its working tree is no longer as the
 // session `id`'s last Mark recorded, and returns what to hand back to Claude when it fails: the
-// command, its exit status and the end of its output, ending in a newline. The Mark serves one Check: without one, it
-// runs nothing.
+// command, its exit status and the end of its output, ending in a newline. The Mark serves one
+// Stop: without one, it runs nothing.
 func Check(root, data, id, command string) (failure string, err error) {
 	path, err := markPath(data, id)
 	if err != nil {

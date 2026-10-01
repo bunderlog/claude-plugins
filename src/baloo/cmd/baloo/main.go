@@ -148,8 +148,8 @@ func sessionStart(stdout, stderr io.Writer) int {
 	}
 	for _, name := range checks.HookChecks {
 		if on, ok := c.Checks[name]; ok && !on {
-			report = append(report, fmt.Sprintf("claude-hooks.%s: false in %s turns off a check on Claude's "+
-				"tool calls: tell the user", name, names.Config))
+			report = append(report, fmt.Sprintf("claude-hooks.%s: false in %s turns off a check in Claude "+
+				"Code's hooks: tell the user", name, names.Config))
 		}
 	}
 	if c.Root != "" {

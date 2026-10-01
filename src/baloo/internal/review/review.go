@@ -109,8 +109,8 @@ func Start(claude, plugin, root, data string, transcript []byte) (bool, error) {
 }
 
 // Last is what the last Session review at `root` changed, for Claude to tell the user, once: a
-// line naming it, then up to 20 lines of its reply; or that it is still running; nil when there
-// was none, or it changed nothing it said.
+// line naming it, then up to `reported` lines of its reply; or that it is still running; nil when
+// there was none, or it changed nothing it said.
 func Last(root, data string) []string {
 	reply, pid := files(root, data)
 	text, err := os.ReadFile(reply)

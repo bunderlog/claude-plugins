@@ -4,7 +4,7 @@ import "testing"
 
 func TestNext(t *testing.T) {
 	fix := Commit{"a1", "fix: a fix"}
-	feat := Commit{"b2", "feat(guard): a feature"}
+	feat := Commit{"b2", "feat(status-line): a feature"}
 	bang := Commit{"c3", "refactor!: a breaking change"}
 	footer := Commit{"d4", "chore: tidy\n\nBREAKING CHANGE: the config moved"}
 	docs := Commit{"e5", "docs: words"}
@@ -37,7 +37,7 @@ func TestNext(t *testing.T) {
 func TestSection(t *testing.T) {
 	commits := []Commit{
 		{"a1", "fix: a fix"},
-		{"b2", "feat(guard): a feature\n\nwith a body"},
+		{"b2", "feat(status-line): a feature\n\nwith a body"},
 		{"c3", "docs: words"},
 		{"d4", "feat!: a breaking feature"},
 	}
@@ -49,7 +49,7 @@ func TestSection(t *testing.T) {
 
 ### Features
 
-- guard: a feature (b2)
+- status-line: a feature (b2)
 
 ### Fixes
 

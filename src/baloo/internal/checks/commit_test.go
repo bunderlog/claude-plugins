@@ -7,10 +7,10 @@ import (
 
 func TestConventionalCommit_Accepts(t *testing.T) {
 	for _, message := range []string{
-		"feat: add guard",
+		"feat: add login",
 		"fix(adr): correct a date",
 		"feat!: drop node",
-		"refactor(hooks/guard)!: split parse\n\nBody.",
+		"refactor(api/auth)!: split parse\n\nBody.",
 		"feat: x\n\nBreaking change: a body line, not a footer.\n\nRefs: #1",
 		"feat(multi word): a scope with spaces",
 		"fix(ZrOpticsTab): a scope in any case",
@@ -22,12 +22,12 @@ func TestConventionalCommit_Accepts(t *testing.T) {
 		"feat: x\n# ------------------------ >8 ------------------------\n" + strings.Repeat("z", 200),
 		"# Please enter the commit message\n\ndocs: explain config",
 		"Merge branch 'main' into feature",
-		`Revert "feat: add guard"`,
-		`Reapply "feat: add guard"`,
+		`Revert "feat: add login"`,
+		`Reapply "feat: add login"`,
 		"Merge pull request #7 from a/b",
 		"Merge remote-tracking branch 'origin/main'",
-		"fixup! feat: add guard",
-		"squash! feat: add guard",
+		"fixup! feat: add login",
+		"squash! feat: add login",
 		"feat: x\n# a comment\n\nBody.",
 		"feat: x\n# ------------------------ >8 ------------------------\ndiff --git a b",
 		"feat: x\n\nBody.\n\nBREAKING CHANGE: drops node",
@@ -70,7 +70,7 @@ func TestConventionalCommit_AcceptsTheSpecsExamples(t *testing.T) {
 }
 
 func TestConventionalCommit_RejectsASubjectOfAnotherShape(t *testing.T) {
-	for _, message := range []string{"add guard", "fix bug: x", "feat:add guard", "feat:  x",
+	for _, message := range []string{"add login", "fix bug: x", "feat:add login", "feat:  x",
 		"feat(): x", "feat( ): x", "feat (a): x", "feat: ", "Merge sort for the index"} {
 		want := `"` + message + `" is not ` + "`type(scope): description`"
 		if got := ConventionalCommit(message, CommitRules{}); got != want {

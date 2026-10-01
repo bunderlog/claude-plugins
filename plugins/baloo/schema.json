@@ -60,7 +60,7 @@
       "additionalProperties": false
     },
     "claude-hooks": {
-      "description": "The Checks in Claude Code's hooks, on Claude's tool calls, each on with true and off with false; on without their key too.",
+      "description": "The Checks in Claude Code's hooks, each on with true and off with false; on without their key too.",
       "type": ["object", "null"],
       "properties": {
         "no-git-hook-bypass": {

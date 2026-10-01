@@ -4,8 +4,8 @@
 # own here. A wrong setting is reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
-# enables the plugin (.claude/settings.local.json for the user's own), where no settings file of
-# Claude Code's picks one; false picks none.
+# enables the plugin (the project's .claude/settings.local.json for the user's settings), where no
+# settings file of Claude Code's picks one; false picks none.
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
@@ -18,7 +18,8 @@ status-line: true
 session-review: true
 
 # The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
-# the repo's root and hands a failure back to Claude to fix before it stops. Off without it.
+# the repo's root and hands a failure back to Claude to fix before it stops. Off without it, or
+# with false.
 stop-check: mise run check
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
