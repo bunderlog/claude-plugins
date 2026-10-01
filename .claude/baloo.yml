@@ -17,6 +17,10 @@ status-line: true
 # says what it changed. It never commits.
 session-review: true
 
+# The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
+# the repo's root and hands a failure back to Claude to fix before it stops. Off without it.
+stop-check: mise run check
+
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made.
