@@ -46,7 +46,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stdout, version)
 			return 0
 		case "session-start":
-			return sessionStart(stdout, stderr)
+			var context strings.Builder
+			code := sessionStart(&context, stderr)
+			if code == 0 {
+				started(stdout, context.String())
+			}
+			return code
 		case "allow-guideline":
 			return allowGuideline(stdin, stdout)
 		case "status-line":
@@ -205,6 +210,20 @@ func sessionStart(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "%s\n", index)
 	}
 	return 0
+}
+
+// started writes the SessionStart Hook's JSON: what session start tells Claude, `context`, which
+// Claude Code adds to Claude's context, and the plugin's version, which it shows the user, so
+// they can see which Release runs.
+func started(stdout io.Writer, context string) {
+	out := map[string]any{"systemMessage": names.Plugin + " " + version}
+	if context != "" {
+		out["hookSpecificOutput"] = map[string]string{
+			"hookEventName":     "SessionStart",
+			"additionalContext": context,
+		}
+	}
+	json.NewEncoder(stdout).Encode(out)
 }
 
 // gitHooksReport is what Claude is told of the Git hooks session start wrote, took out or left

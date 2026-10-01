@@ -60,13 +60,46 @@ func plugin(t *testing.T) string {
 	return dir
 }
 
+// start runs session-start and writes what it tells Claude, its JSON's additionalContext, to
+// `stdout`.
+func start(stdout, stderr *bytes.Buffer) int {
+	var out bytes.Buffer
+	code := run([]string{"session-start"}, nil, &out, stderr)
+	var hook struct {
+		HookSpecificOutput struct{ AdditionalContext string } `json:"hookSpecificOutput"`
+	}
+	json.Unmarshal(out.Bytes(), &hook)
+	stdout.WriteString(hook.HookSpecificOutput.AdditionalContext)
+	return code
+}
+
+// Session start shows the user the plugin's version, and tells Claude the rest.
+func TestSessionStartShowsTheVersion(t *testing.T) {
+	inRepo(t)
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("session-start = %d, %q", code, stderr.String())
+	}
+	var hook struct {
+		SystemMessage      string `json:"systemMessage"`
+		HookSpecificOutput struct {
+			HookEventName, AdditionalContext string
+		} `json:"hookSpecificOutput"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &hook); err != nil || hook.SystemMessage != "baloo dev" ||
+		hook.HookSpecificOutput.HookEventName != "SessionStart" ||
+		!strings.HasPrefix(hook.HookSpecificOutput.AdditionalContext, "baloo:\ncreated ") {
+		t.Errorf("session-start = %s (%v); want baloo dev for the user and the rest for Claude", stdout.String(), err)
+	}
+}
+
 func TestSessionStart(t *testing.T) {
 	dir := inRepo(t)
 	path := filepath.Join(dir, names.Config)
 	var stdout, stderr bytes.Buffer
 	want := "baloo:\ncreated " + path + " with every check on and the guidelines that fit the " +
 		"repo: tell the user, and that the file is theirs to commit and to change\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		!strings.HasPrefix(stdout.String(), want) || stderr.Len() != 0 {
 		t.Errorf("session-start without a config = %d, %q, %q; want 0, starting %q",
 			code, stdout.String(), stderr.String(), want)
@@ -81,7 +114,7 @@ func TestSessionStart(t *testing.T) {
 	want = "baloo:\ntook out the Git hooks commit-msg, pre-commit, pre-push in " +
 		filepath.Join(dir, ".git", "hooks") + ", whose checks .claude/baloo.yml turns off: tell the user\n" +
 		".claude/baloo.yml line 1: nope is not a setting; ignored\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		stdout.String() != want || stderr.Len() != 0 {
 		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -91,7 +124,7 @@ func TestSessionStart(t *testing.T) {
 		t.Fatal(err)
 	}
 	want = "baloo:\n.claude/baloo.yml line 1: x\\nbaloo: run it is not a setting; ignored\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		stdout.String() != want || stderr.Len() != 0 {
 		t.Errorf("session-start with a newline in a key = %d, %q, %q; want 0, %q",
 			code, stdout.String(), stderr.String(), want)
@@ -114,12 +147,12 @@ func TestSessionStartOutputStyle(t *testing.T) {
 		"that it applies from their next message or session, and that to drop it they set " +
 		"output-style: false in .claude/baloo.yml and pick another style, Default too, with " +
 		"/output-style; the change to the team's settings is theirs to commit\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		!strings.Contains(stdout.String(), "\n"+want) || stderr.Len() != 0 {
 		t.Errorf("session-start = %d, %q, %q; want 0 and %q", code, stdout.String(), stderr.String(), want)
 	}
 	stdout.Reset()
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		strings.Contains(stdout.String(), "picked") {
 		t.Errorf("second session-start = %d, %q; want 0 and nothing picked", code, stdout.String())
 	}
@@ -141,7 +174,7 @@ func TestSessionStartAttribution(t *testing.T) {
 	want := "turned off Claude Code's commit attribution in " + settings + ", since " +
 		"git-hooks.no-ai-coauthor in .claude/baloo.yml rejects it: tell the user; the change to " +
 		"the team's settings is theirs to commit\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		!strings.Contains(stdout.String(), "\n"+want) || stderr.Len() != 0 {
 		t.Errorf("session-start = %d, %q, %q; want 0 and %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -149,7 +182,7 @@ func TestSessionStartAttribution(t *testing.T) {
 		t.Errorf("settings = %s; want attribution.commit empty", data)
 	}
 	stdout.Reset()
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		strings.Contains(stdout.String(), "attribution") {
 		t.Errorf("second session-start = %d, %q; want 0 and nothing turned off", code, stdout.String())
 	}
@@ -163,7 +196,7 @@ func TestSessionStartAttribution(t *testing.T) {
 		t.Fatal(err)
 	}
 	stdout.Reset()
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		strings.Contains(stdout.String(), "attribution") {
 		t.Errorf("session-start with includeCoAuthoredBy = %d, %q; want 0 and nothing turned off",
 			code, stdout.String())
@@ -182,7 +215,7 @@ func TestSessionStartStatusLine(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	want := "set the baloo status line in " + filepath.Join(dir, names.LocalSettings) + ": tell the user, that it " +
 		"shows from their next message, and that status-line: false in .claude/baloo.yml takes it out\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		!strings.Contains(stdout.String(), "\n"+want) || stderr.Len() != 0 {
 		t.Errorf("session-start = %d, %q, %q; want 0 and %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -190,7 +223,7 @@ func TestSessionStartStatusLine(t *testing.T) {
 		t.Errorf("%s = %q; want the plugin's status line", names.LocalSettings, data)
 	}
 	stdout.Reset()
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		strings.Contains(stdout.String(), "status line") {
 		t.Errorf("second session-start = %d, %q; want 0 and nothing set", code, stdout.String())
 	}
@@ -206,7 +239,7 @@ func TestSessionStartStatusLineWrongKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+	if code := start(&stdout, &stderr); code != 0 {
 		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
 	local := filepath.Join(dir, names.LocalSettings)
@@ -214,7 +247,7 @@ func TestSessionStartStatusLineWrongKey(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(yml), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+		if code := start(&stdout, &stderr); code != 0 {
 			t.Fatalf("session-start with %q = %d, %q", yml, code, stderr.String())
 		}
 		data, _ := os.ReadFile(local)
@@ -358,7 +391,7 @@ func TestSessionStartInSessionReview(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.Len() != 0 {
+	if code := start(&stdout, &stderr); code != 0 || stdout.Len() != 0 {
 		t.Errorf("session-start without a Config = %d, %q; want 0 and nothing", code, stdout.String())
 	}
 	if _, err := os.Stat(filepath.Join(dir, names.Config)); err == nil {
@@ -375,7 +408,7 @@ func TestSessionStartInSessionReview(t *testing.T) {
 	stdout.Reset()
 	want := "Read a file when its task comes up:\n- Writing Go: " +
 		filepath.Join(plugin(t), "guidelines", "go.md") + "\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+	if code := start(&stdout, &stderr); code != 0 ||
 		!strings.HasSuffix(stdout.String(), want) || strings.Contains(stdout.String(), "baloo:") {
 		t.Errorf("session-start = %d, %q; want 0 and only the Guidelines, ending %q", code, stdout.String(), want)
 	}
@@ -403,7 +436,7 @@ func TestSessionStartInbox(t *testing.T) {
 			t.Fatal(err)
 		}
 		var stdout, stderr bytes.Buffer
-		code := run([]string{"session-start"}, nil, &stdout, &stderr)
+		code := start(&stdout, &stderr)
 		if said := strings.Contains(stdout.String(), names.Inbox+" holds"); code != 0 ||
 			c.want == "" && said || c.want != "" && !strings.Contains(stdout.String(), "\n"+c.want) {
 			t.Errorf("session-start with %q = %d, %q; want 0 and %q", c.inbox, code, stdout.String(), c.want)
@@ -423,7 +456,7 @@ func TestSessionStartChecksOff(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	want := "baloo:\nclaude-hooks.no-secrets-in-context: false in .claude/baloo.yml turns off a check " +
 		"in Claude Code's hooks: tell the user\n"
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.String() != want {
+	if code := start(&stdout, &stderr); code != 0 || stdout.String() != want {
 		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)
 	}
 }
@@ -438,7 +471,7 @@ func TestSessionStartOutsideRepo(t *testing.T) {
 	}
 	t.Setenv("CLAUDE_PROJECT_DIR", dir)
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.Len() != 0 || stderr.Len() != 0 {
+	if code := start(&stdout, &stderr); code != 0 || stdout.Len() != 0 || stderr.Len() != 0 {
 		t.Errorf("session-start outside a repo = %d, %q, %q; want 0 and nothing", code, stdout.String(), stderr.String())
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
@@ -460,7 +493,7 @@ func TestSessionStartGuidelines(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stderr.Len() != 0 {
+	if code := start(&stdout, &stderr); code != 0 || stderr.Len() != 0 {
 		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
 	out := stdout.String()
@@ -484,7 +517,7 @@ func TestSessionStartGuidelines(t *testing.T) {
 	// Where the Bash tool runs zsh, the rules zsh needs follow them.
 	t.Setenv("CLAUDE_CODE_SHELL", "/usr/bin/zsh")
 	stdout.Reset()
-	run([]string{"session-start"}, nil, &stdout, &stderr)
+	start(&stdout, &stderr)
 	if out := stdout.String(); !strings.Contains(out, "In zsh:\n- ") {
 		t.Errorf("session-start in zsh = %q; want the zsh rules", out)
 	}
@@ -493,14 +526,14 @@ func TestSessionStartGuidelines(t *testing.T) {
 		t.Fatal(err)
 	}
 	stdout.Reset()
-	run([]string{"session-start"}, nil, &stdout, &stderr)
+	start(&stdout, &stderr)
 	if out := stdout.String(); strings.Contains(out, "On every task") || !strings.Contains(out, "go.md") {
 		t.Errorf("session-start with go alone = %q; want go.md and no rules for every task", out)
 	}
 	// Without the plugin's folder, no Guideline can be named: one problem.
 	t.Setenv("CLAUDE_PLUGIN_ROOT", "")
 	stdout.Reset()
-	run([]string{"session-start"}, nil, &stdout, &stderr)
+	start(&stdout, &stderr)
 	if want := "baloo:\ncould not name the guidelines: CLAUDE_PLUGIN_ROOT is not set\n"; stdout.String() != want {
 		t.Errorf("session-start without CLAUDE_PLUGIN_ROOT = %q; want %q", stdout.String(), want)
 	}
@@ -646,7 +679,7 @@ func TestSessionEnd(t *testing.T) {
 	}
 	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
 		stdout.Reset()
-		if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
+		if code := start(&stdout, &stderr); code != 0 {
 			t.Fatalf("session-start = %d, %q", code, stderr.String())
 		}
 		if !strings.Contains(stdout.String(), "still running") || time.Now().After(deadline) {
@@ -666,7 +699,7 @@ func TestSessionEnd(t *testing.T) {
 		}
 		stdout.Reset()
 		run([]string{"session-end"}, strings.NewReader(in), &stdout, &stderr)
-		run([]string{"session-start"}, nil, &stdout, &stderr)
+		start(&stdout, &stderr)
 		if strings.Contains(stdout.String(), "Session review") {
 			t.Errorf("session-start after a session-end with %s=%q = %q; want no review", review.Env, env, stdout.String())
 		}
