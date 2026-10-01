@@ -38,6 +38,8 @@ asking for `file:line` evidence. Signs:
 - A shallow module, such as a pass-through.
 - Modules that change in the same commits.
 - The same logic repeated in each caller of one module.
+- A caller that relies on what a module doesn't promise: its internal format, a field, the
+  order it does things in.
 - Logic split into small pure functions to test it, while the bugs sit in how they're called.
 - An interface in front of a dependency with only one implementation, counting a test fake.
 - A test that reaches past the interface: private state, a fake of the project's own module.
@@ -54,6 +56,8 @@ For each candidate:
 - **Modules** — the files involved.
 - **Friction** — what it costs now, with evidence (`file:line`, commits).
 - **Deepening** — in plain words, what moves behind which interface; no interface design yet.
+- **Behind the seam** — pure logic, a store with a local stand-in, your own service over the
+  network, or a third party; it decides how the new interface is tested.
 - **Gain** — what callers no longer need to know, where changes and bugs would concentrate,
   which tests move to the new interface and which go.
 - **Cost** — the callers and tests to change; anything that can't change cheaply (a public
