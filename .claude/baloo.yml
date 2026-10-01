@@ -22,6 +22,11 @@ session-review: true
 # with false.
 stop-check: mise run check
 
+# Format on edit: after each of Claude's edits to a file in the repo, it runs this command in the
+# repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
+# with false.
+# format-on-edit: npx prettier --write
+
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made.
