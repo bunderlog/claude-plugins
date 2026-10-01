@@ -38,6 +38,13 @@ as it picks an Output style (ADR output-styles): where the plugin is enabled, in
 that enables it, and only where none of Claude Code's settings files sets `attribution` or
 `includeCoAuthoredBy`, to any value. It never takes it out.
 
+`no-destructive-commands` asks before `git push --delete` (or `git push <remote> :<branch>`), but
+lets it pass where the remote's default branch, `<remote>/HEAD` as the repo last fetched it, holds
+each branch it deletes whole: deleting a branch after it is merged is a step the user asks for by
+name, and a question on each is one to say yes to unread. It looks at the last fetch and doesn't
+fetch, so it asks where the branch is ahead, missing from the remote-tracking refs, or the remote's
+HEAD is unknown.
+
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the binary's
 `pre-tool-use`, which reads the Config once and runs the Checks it turns on; a denial wins over a
 question to the user. Where the binary is missing or fails, it says nothing, and the call runs:
@@ -91,6 +98,7 @@ Release.
   so, but doesn't stop it.
 - Claude asks the user before every change to the Config, a harmless one too.
 - Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
+- A commit pushed to a merged branch since the last fetch is deleted with it, unasked.
 - A tool call that turns the Hooks off in a way the rules don't name, such as a script that
   writes the key, goes unasked; they guard against accidents, not against Claude.
 - Managed settings and the `/plugin` menu are out of reach: one needs an administrator, the other
