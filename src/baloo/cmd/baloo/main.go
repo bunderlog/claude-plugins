@@ -94,12 +94,14 @@ func project() (string, error) {
 }
 
 // sessionStart is the SessionStart hook's part, run once the Loader has the binary: it creates the
-// repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
-// Claude Code's settings pick none (ADR output-styles), and sets the Status line or takes it out
-// (ADR status-line). What it prints Claude Code adds to Claude's context, so it prints only what
-// Claude should know: a Config it created, an Output style or a Status line it set, a Hook Check it
-// turns off (ADR checks), what the last Session review replied (ADR session-review), and the
-// problems, each on one line; then the Guidelines the Config turns on (ADR guidelines).
+// repo's Config when it has none (ADR config), reads it, picks the Output style it names where
+// Claude Code's settings pick none (ADR output-styles), sets the Status line or takes it out (ADR
+// status-line), and writes the Git hooks or takes them out, but not in a Session review's own
+// session (ADR git-hooks). What it prints Claude Code adds to Claude's context, so it prints only
+// what Claude should know: a Config it created, an Output style or a Status line it set, the Git
+// hooks it wrote, took out, changed in husky or left alone, a Hook Check it turns off (ADR
+// checks), what the last Session review replied (ADR session-review), and the problems, each on
+// one line; then the Guidelines the Config turns on (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
