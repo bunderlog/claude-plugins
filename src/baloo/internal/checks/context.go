@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// ToolCall is what the Checks read of the tool call Claude Code gives a PreToolUse hook: the
+// ToolCall is what the Checks read of the tool call Claude Code gives a PreToolUse Hook: the
 // tool, and the parts of its input that name a command, a file or what is written to one.
 type ToolCall struct {
 	Tool  string `json:"tool_name"`

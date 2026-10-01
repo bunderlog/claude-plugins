@@ -10,7 +10,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/review"
 )
 
-// sessionEnd is the SessionEnd hook's part (ADR session-review): where the repo's Config turns the
+// sessionEnd is the SessionEnd Hook's part (ADR session-review): where the repo's Config turns the
 // Session review on, it starts one of the session that ended and returns at once. It says nothing
 // and never fails the exit: without the Transcript, `claude`, or the plugin's folder or data
 // folder, and in a Session review's own session, it does nothing. A problem with the Config is left

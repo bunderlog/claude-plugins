@@ -3,14 +3,14 @@
 # plugin's version from its GitHub Release into ${CLAUDE_PLUGIN_DATA}, unless it is there and still
 # has the sha256 it was downloaded with, and checks it against the Release's SHA256SUMS;
 # `loader <args>` runs that binary.
-# `loader session-start`, the SessionStart hook, does the same when needed, then runs the binary's
+# `loader session-start`, the SessionStart Hook, does the same when needed, then runs the binary's
 # session-start.
-# `loader allow-guideline`, the Read tool's PreToolUse hook, runs the binary's allow-guideline when
-# it is downloaded, `loader pre-tool-use`, the PreToolUse hook of the Checks a Hook runs, its
-# pre-tool-use, `loader post-tool-use`, the PostToolUse hook of format-on-edit, its
-# post-tool-use, `loader session-end`, the SessionEnd hook, its session-end, and
-# `loader user-prompt-submit` and `loader stop`, the Stop check's hooks, theirs.
-# A failure says why on stderr and exits 2, which a SessionStart hook shows to the user; for the
+# `loader allow-guideline`, the Read tool's PreToolUse Hook, runs the binary's allow-guideline when
+# it is downloaded, `loader pre-tool-use`, the PreToolUse Hook of the Checks a Hook runs, its
+# pre-tool-use, `loader post-tool-use`, the PostToolUse Hook of format-on-edit, its
+# post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end, and
+# `loader user-prompt-submit` and `loader stop`, the Stop check's Hooks, theirs.
+# A failure says why on stderr and exits 2, which a SessionStart Hook shows to the user; for the
 # others it says nothing and exits 0, since exit 2 there would stop the tool call, the prompt or
 # the turn's end: reading a Guideline then asks the user, as any file outside the project does,
 # the Checks, the Stop check and format-on-edit don't run, as session start has said, and no
@@ -61,8 +61,8 @@ file=baloo_${version}_${os}_${arch}
 bin=$CLAUDE_PLUGIN_DATA/$file
 
 # download fetches $1 into $2 in two tries. With curl each gets at most $3 seconds, so both
-# downloads together stay under the SessionStart hook's timeout and a slow network gets this
-# script's message; wget only limits how long a read may stall, so a slow one can outlast the hook.
+# downloads together stay under the SessionStart Hook's timeout and a slow network gets this
+# script's message; wget only limits how long a read may stall, so a slow one can outlast the Hook.
 download() {
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL --retry 1 --connect-timeout 10 --max-time "$3" -o "$2" "$1" ||

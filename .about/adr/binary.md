@@ -6,13 +6,13 @@ Claude Code's Hooks and Git hooks are only triggers: each runs one Go binary, `b
 the Checks the Config turns on (ADR config). The Checks and the Status line are the binary's code,
 so a user's machine needs no runtime.
 
-The Loader, `scripts/loader`, is a POSIX `sh` script. The `SessionStart` hook runs the Loader's
+The Loader, `scripts/loader`, is a POSIX `sh` script. The `SessionStart` Hook runs the Loader's
 `session-start`, which runs the binary's `session-start` once this machine has the binary of the
 version in `plugin.json`. It downloads one only when it is missing, or no longer has the sha256 it
 was downloaded with, kept beside it and checked once a session: it downloads the GitHub Release's
 `SHA256SUMS` and this machine's binary into `${CLAUDE_PLUGIN_DATA}`, checks the binary's sha256
 against the file, and moves it into place in one step. `loader <args>` runs the binary. A failure
-says why on stderr and exits 2, which a `SessionStart` hook shows to the user; every other Hook
+says why on stderr and exits 2, which a `SessionStart` Hook shows to the user; every other Hook
 fails silently instead, since exit 2 there would stop a tool call, a prompt or a turn's end (ADR
 guidelines, ADR checks, ADR stop-check).
 

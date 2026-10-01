@@ -20,7 +20,7 @@ at the top of the Config, not under `claude-hooks`, and a new Config has it only
 
 ## Considered options
 
-- No Stop check, the project's own Stop hook in `.claude/settings.json` — no code here, but it
+- No Stop check, the project's own Stop Hook in `.claude/settings.json` — no code here, but it
   runs after every answer, questions too, and each project writes its own.
 - A reminder, handed to Claude instead of or beside a failure — nothing tells whether Claude acted
   on it, and it is one more ceremony after each edit.

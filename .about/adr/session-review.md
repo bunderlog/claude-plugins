@@ -3,7 +3,7 @@
 Date: 2026-10-01
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
-closes. Where the Config has `session-review: true`, the `SessionEnd` hook runs the binary's
+closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the binary's
 `session-end`, which starts a Session review and returns at once: a separate headless `claude -p`,
 detached so that Claude Code's exit never waits for it, run at the repo's root with the
 `glossary` and `adr` skills. It loads the plugin from its own folder too, since the review's

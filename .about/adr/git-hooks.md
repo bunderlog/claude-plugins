@@ -7,8 +7,8 @@ At session start the binary writes `pre-commit`, `commit-msg` and `pre-push` int
 (ADR checks), and takes out its own where none is. A Git hook it wrote is a short `sh` script
 marked `# managed by baloo` that runs `baloo git-hook <hook>` by the absolute path of a link in the
 plugin's data folder, which session start points at the running binary: the path stays the same
-from one version to the next, and git clients that run hooks with a minimal PATH find it. The
-binary reads the Config at each run and runs the hook's Checks it turns on, all of them, failing
+from one version to the next, and git clients that run Git hooks with a minimal PATH find it. The
+binary reads the Config at each run and runs the Git hook's Checks it turns on, all of them, failing
 when one fails; where the link is gone, the Git hook says so and passes.
 
 A Git hook already there that the plugin didn't write is left alone, and every session start
@@ -29,7 +29,7 @@ A Session review's session writes no Git hook: the repo's are the user's session
   set of Checks, rewritten at each change to the Config.
 - A path into one version's binary — the Git hooks break with each update until the next session
   start.
-- The binary found on PATH — git GUI clients run hooks with a minimal one.
+- The binary found on PATH — git GUI clients run Git hooks with a minimal one.
 - Overwriting a Git hook of someone else's, or chaining to it — another tool's, or a person's,
   file changed behind their back.
 - With husky: writing into `.husky/_`, which husky rewrites at every install; the Checks'

@@ -28,7 +28,9 @@ _Avoid_: installer, bootstrap
 
 **Hook**:
 A command Claude Code runs at an event in a session, such as `SessionStart` or `PreToolUse`.
-_Avoid_: "hook" for a Git hook
+_Avoid_: "hook" for a Git hook; lowercase "hook", but in text for users who don't know these terms
+(the schema, the Config's comments, messages) and in the Guidelines and skills, written for any
+project
 
 **Git hook**:
 A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit

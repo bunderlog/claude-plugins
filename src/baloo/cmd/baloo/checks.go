@@ -28,7 +28,7 @@ func gitHookInput(stdin io.Reader) (checks.Input, func(name string) bool) {
 const runItYourself = ". If it's really needed, ask the user to run it themselves with " +
 	"`! <command>`."
 
-// hookCall is the tool call Claude Code gives a PreToolUse hook, with the folder it runs in.
+// hookCall is the tool call Claude Code gives a PreToolUse Hook, with the folder it runs in.
 type hookCall struct {
 	checks.ToolCall
 	Cwd string `json:"cwd"`

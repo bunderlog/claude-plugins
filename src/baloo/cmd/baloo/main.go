@@ -84,7 +84,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	return 2
 }
 
-// project is the folder Claude Code runs in: a hook gets it as CLAUDE_PROJECT_DIR, and the
+// project is the folder Claude Code runs in: a Hook gets it as CLAUDE_PROJECT_DIR, and the
 // binary run by hand gets its working folder.
 func project() (string, error) {
 	if dir := os.Getenv("CLAUDE_PROJECT_DIR"); dir != "" {
@@ -93,7 +93,7 @@ func project() (string, error) {
 	return os.Getwd()
 }
 
-// sessionStart is the SessionStart hook's part, run once the Loader has the binary: it creates the
+// sessionStart is the SessionStart Hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), sets the Status line or takes it out (ADR
 // status-line), and writes the Git hooks or takes them out, but not in a Session review's own
@@ -201,7 +201,7 @@ func gitHooksReport(r githooks.Report) []string {
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude
-// Code gives a hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's shell: CLAUDE_CODE_SHELL, or the
+// Code gives a Hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's shell: CLAUDE_CODE_SHELL, or the
 // user's SHELL.
 func guidelineIndex(on map[string]bool) (string, error) {
 	plugin, shell := os.Getenv("CLAUDE_PLUGIN_ROOT"), os.Getenv("CLAUDE_CODE_SHELL")
@@ -215,7 +215,7 @@ func guidelineIndex(on map[string]bool) (string, error) {
 	return index, err
 }
 
-// allowGuideline is the Read tool's PreToolUse hook (ADR guidelines): it allows reading a
+// allowGuideline is the Read tool's PreToolUse Hook (ADR guidelines): it allows reading a
 // Guideline file of the plugin without asking the user, whose own deny and ask rules still win,
 // and says nothing of any other file. It never stops a Read: whatever goes wrong, it says nothing.
 func allowGuideline(stdin io.Reader, stdout io.Writer) int {

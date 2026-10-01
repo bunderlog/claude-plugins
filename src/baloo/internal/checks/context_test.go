@@ -25,7 +25,7 @@ func project(t *testing.T) string {
 	return dir
 }
 
-// call is the tool call Claude Code gives a PreToolUse hook as `in`, a JSON object.
+// call is the tool call Claude Code gives a PreToolUse Hook as `in`, a JSON object.
 func call(t *testing.T, in string) ToolCall {
 	t.Helper()
 	var c ToolCall

@@ -37,7 +37,7 @@ func TestRun(t *testing.T) {
 	}
 }
 
-// inRepo makes a temporary repo the folder that Claude Code runs a hook in, with Claude Code's
+// inRepo makes a temporary repo the folder that Claude Code runs a Hook in, with Claude Code's
 // user and managed settings of its own, none of them there.
 func inRepo(t *testing.T) string {
 	t.Helper()
@@ -398,7 +398,7 @@ func TestSessionStartGuidelines(t *testing.T) {
 	}
 }
 
-// The Read hook allows a Guideline file, and says nothing of any other file or call.
+// The Read Hook allows a Guideline file, and says nothing of any other file or call.
 func TestAllowGuideline(t *testing.T) {
 	root := plugin(t)
 	t.Setenv("CLAUDE_PLUGIN_ROOT", root)

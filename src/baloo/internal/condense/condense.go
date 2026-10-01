@@ -424,7 +424,7 @@ func commonest(counts []*seen) []*seen {
 
 // Summary is the sessions `sessions` together, for a Retro, masked: their failures by kind, with
 // the commonest of each (a failed command, a call rejected or refused by the classifier, by its
-// tool; the rest by their error), then the prompts typed more than once, which a skill or a hook
+// tool; the rest by their error), then the prompts typed more than once, which a skill or a Hook
 // could take over.
 func Summary(sessions []Session) string {
 	var order []string

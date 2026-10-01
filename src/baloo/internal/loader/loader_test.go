@@ -1,4 +1,4 @@
-// Package loader_test runs the plugin's Loader, scripts/loader, as a hook would: a process with an
+// Package loader_test runs the plugin's Loader, scripts/loader, as a Hook would: a process with an
 // explicit environment, downloading from a local server in place of the GitHub Release.
 package loader_test
 
@@ -223,7 +223,7 @@ func TestLoader(t *testing.T) {
 			t.Fatalf("install = %d, %q", code, errs)
 		}
 		path := filepath.Join(l.data, l.file)
-		// The hooks that never fail count too: a session longer than a week runs only them.
+		// The Hooks that never fail count too: a session longer than a week runs only them.
 		for _, sub := range []string{"version", "pre-tool-use", "post-tool-use", "session-end", "user-prompt-submit", "stop"} {
 			then := time.Now().Add(-30 * 24 * time.Hour)
 			if err := os.Chtimes(path, then, then); err != nil {
