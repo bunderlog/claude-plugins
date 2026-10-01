@@ -25,7 +25,8 @@ failing, names `git config pull.rebase true` for the user to run.
 
 Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the
 Config: a Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command
-that names it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
+that names it, unless a program that only reads files, such as `cat`, `grep`, `sed` without `-i`
+or `git diff`, reads it with no redirect into it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
 disabling the plugin, so the Hook also asks before a tool call that may do that: an Edit, Write or
 MultiEdit of a `settings.json` or `settings.local.json` in a `.claude` folder or in
 `$CLAUDE_CONFIG_DIR` whose new text names `disableAllHooks`, `enabledPlugins` or `baloo@`, a Bash
@@ -87,6 +88,8 @@ Release.
 - Asking before every change to Claude Code's settings — also covers a key missed here, but
   permissions and env are edited often, and a question on each teaches the user to say yes
   unread.
+- Asking about every Bash command that names the Config — it asked on every `cat` and `grep` of
+  it, and a question on each read teaches the user to say yes unread.
 - Leaving it to Claude Code, which treats `.claude/` as a protected folder — its docs don't say
   it asks in every permission mode, and a Bash edit goes around a rule on Edit and Write.
 
@@ -97,6 +100,8 @@ Release.
 - A repo's committed Config can turn a Check off for everyone who opens it; session start says
   so, but doesn't stop it.
 - Claude asks the user before every change to the Config, a harmless one too.
+- A Bash command that writes the Config through a program not known to write, such as
+  `git diff --output`, goes unasked.
 - Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
 - A commit pushed to a merged branch since the last fetch is deleted with it, unasked.
 - A tool call that turns the Hooks off in a way the rules don't name, such as a script that

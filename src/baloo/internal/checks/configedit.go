@@ -1,3 +1,5 @@
+// cspell:ignore fgrep
+
 package checks
 
 import (
@@ -10,7 +12,7 @@ import (
 
 // ChangesConfig says whether the tool call `call`, run in the folder `dir`, may change the Config
 // at the path `config`, for Claude to ask the user first (ADR checks): an Edit, Write or MultiEdit
-// of it, or a Bash command that names a file of its name.
+// of it, or a Bash command that names a file of its name, unless only a program of readOnly reads it.
 func ChangesConfig(call ToolCall, dir, config string) bool {
 	switch call.Tool {
 	case "Edit", "Write", "MultiEdit":
@@ -20,15 +22,40 @@ func ChangesConfig(call ToolCall, dir, config string) bool {
 		}
 		return filepath.Clean(path) == filepath.Clean(config)
 	case "Bash":
-		for _, words := range split(call.Input.Command) {
-			for _, w := range words {
-				if filepath.Base(strings.TrimLeft(w, "<>")) == filepath.Base(config) {
+		for _, p := range programs(call.Input.Command) {
+			for i, w := range p.args {
+				if filepath.Base(strings.TrimLeft(w, "<>")) != filepath.Base(config) {
+					continue
+				}
+				redirected := strings.Contains(w, ">") || i > 0 && strings.HasSuffix(p.args[i-1], ">")
+				if redirected || !reads(p) {
 					return true
 				}
 			}
 		}
 	}
 	return false
+}
+
+// readOnly are programs that only read the files they name; sed is one without -i.
+var readOnly = []string{"cat", "head", "tail", "less", "more", "grep", "egrep", "fgrep", "rg", "wc",
+	"diff", "ls", "stat", "file", "jq", "sed"}
+
+// gitReaders are git's subcommands that only read the files they name.
+var gitReaders = []string{"diff", "log", "show", "blame", "ls-files", "status", "grep"}
+
+// reads says whether the program `p` only reads the files it names.
+func reads(p program) bool {
+	switch p.name {
+	case "git":
+		_, sub, _ := splitGit(p.args)
+		return slices.Contains(gitReaders, sub)
+	case "sed":
+		return !hasFlag(p.args, "-i") && !slices.ContainsFunc(p.args, func(a string) bool {
+			return strings.HasPrefix(a, "--in-place")
+		})
+	}
+	return slices.Contains(readOnly, p.name)
 }
 
 // hookKeys are what a change to Claude Code's settings names to turn the plugin's Hooks off:

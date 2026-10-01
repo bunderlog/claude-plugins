@@ -21,10 +21,21 @@ func TestChangesConfig(t *testing.T) {
 		}
 	}
 	for command, want := range map[string]bool{
-		"sed -i 's/true/false/' .claude/baloo.yml":       true,
-		"cd .claude && echo 'git-hooks: {}' > baloo.yml": true,
-		"rm .claude/baloo.yml":                           true,
-		"git status":                                     false,
+		"sed -i 's/true/false/' .claude/baloo.yml":                     true,
+		"cd .claude && echo 'git-hooks: {}' > baloo.yml":               true,
+		"rm .claude/baloo.yml":                                         true,
+		"sed --in-place=.bak 's/a/b/' .claude/baloo.yml":               true,
+		"cat x > .claude/baloo.yml":                                    true,
+		"cat x >>.claude/baloo.yml":                                    true,
+		"cat .claude/baloo.yml | tee .claude/baloo.yml":                true,
+		"git checkout .claude/baloo.yml":                               true,
+		"sudo cp x .claude/baloo.yml":                                  true,
+		"grep -n x CLAUDE.md .claude/baloo.yml 2>/dev/null | head -20": false,
+		"cat .claude/baloo.yml":                                        false,
+		"cat < .claude/baloo.yml":                                      false,
+		"sed -n 1,20p .claude/baloo.yml":                               false,
+		"git diff .claude/baloo.yml":                                   false,
+		"git status":                                                   false,
 	} {
 		if got := ChangesConfig(bash(t, command), dir, config); got != want {
 			t.Errorf("ChangesConfig(%q) = %v, want %v", command, got, want)
