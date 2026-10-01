@@ -224,7 +224,7 @@ func TestLoader(t *testing.T) {
 		}
 		path := filepath.Join(l.data, l.file)
 		// The hooks that never fail count too: a session longer than a week runs only them.
-		for _, sub := range []string{"version", "pre-tool-use", "session-end", "user-prompt-submit", "stop"} {
+		for _, sub := range []string{"version", "pre-tool-use", "post-tool-use", "session-end", "user-prompt-submit", "stop"} {
 			then := time.Now().Add(-30 * 24 * time.Hour)
 			if err := os.Chtimes(path, then, then); err != nil {
 				t.Fatal(err)
@@ -429,9 +429,9 @@ func TestLoader(t *testing.T) {
 		}
 	})
 
-	t.Run("user-prompt-submit and stop never block a turn", func(t *testing.T) {
+	t.Run("the hooks after a prompt, an edit and a turn never block", func(t *testing.T) {
 		turn := `{"session_id": "s1"}`
-		for _, hook := range []string{"user-prompt-submit", "stop"} {
+		for _, hook := range []string{"user-prompt-submit", "stop", "post-tool-use"} {
 			l := setup(t, bin)
 			l.withSum(sum)
 			if out, errs, code := l.runWith(t, turn, nil, hook); code != 0 || out != "" || errs != "" {

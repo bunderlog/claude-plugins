@@ -59,6 +59,12 @@ which is the binary's code.
 _Avoid_: "check" alone; a Check
 _In code_: `src/baloo/internal/stopcheck`
 
+**Format on edit**:
+The plugin's run of the project's own formatter, named in the Config, on each file Claude edits,
+saying nothing of how it went; not a Check.
+_Avoid_: "lint on edit"; a Check
+_In code_: `format-on-edit`, `cmd/baloo/format.go`
+
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`) or for one
 stack (`go`, `vue`), that Claude reads when a task calls for it; one the Config turns on is named

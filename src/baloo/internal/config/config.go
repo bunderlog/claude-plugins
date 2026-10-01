@@ -37,6 +37,9 @@ type Config struct {
 	SessionReview bool
 	// StopCheck is the command the Stop check runs, or "" where it is off (ADR stop-check).
 	StopCheck string
+	// FormatOnEdit is the command run on each file Claude edits, or "" where it is off (ADR
+	// format-on-edit).
+	FormatOnEdit string
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 	// Checks are the Checks the Config turns on or off, by name; see CheckOn for one it doesn't.
@@ -88,19 +91,10 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		}
 		return nil
 	},
-	"stop-check": func(c *Config, key, value *yaml.Node) []string {
-		var off bool
-		if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
-			return nil
-		}
-		if value.Tag != "!!str" || strings.TrimSpace(value.Value) == "" {
-			return []string{wrong(key.Line, key.Value, "is not a command or false")}
-		}
-		c.StopCheck = value.Value
-		return nil
-	},
-	"claude-hooks": checkKeys(checks.HookChecks),
-	"git-hooks":    checkKeys(checks.GitHookChecks),
+	"stop-check":     command(func(c *Config) *string { return &c.StopCheck }),
+	"format-on-edit": command(func(c *Config) *string { return &c.FormatOnEdit }),
+	"claude-hooks":   checkKeys(checks.HookChecks),
+	"git-hooks":      checkKeys(checks.GitHookChecks),
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {
 		if value.Tag == "!!null" {
 			return nil
@@ -247,6 +241,11 @@ session-review: true
 # with false.
 # stop-check: mise run check
 
+# Format on edit: after each of Claude's edits to a file in the repo, it runs this command in the
+# repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
+# with false.
+# format-on-edit: npx prettier --write
+
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made.
@@ -264,6 +263,22 @@ claude-hooks:
 # max-length: 0 any length.
 git-hooks:
 ` + gitHookList.String()
+}
+
+// command decodes a setting that names a command, into the field `field` gives, or turns it off
+// with false.
+func command(field func(c *Config) *string) func(c *Config, key, value *yaml.Node) []string {
+	return func(c *Config, key, value *yaml.Node) []string {
+		var off bool
+		if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
+			return nil
+		}
+		if value.Tag != "!!str" || strings.TrimSpace(value.Value) == "" {
+			return []string{wrong(key.Line, key.Value, "is not a command or false")}
+		}
+		*field(c) = value.Value
+		return nil
+	}
 }
 
 // repo is the root of the repo `dir` is in, where its Config is: the nearest folder up from `dir`

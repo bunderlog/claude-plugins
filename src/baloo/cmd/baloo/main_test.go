@@ -607,3 +607,49 @@ func TestStopCheck(t *testing.T) {
 		t.Errorf("stop in a Session review = %q, %q; want nothing", got, errs)
 	}
 }
+
+// Format on edit runs the Config's command on a file Claude edited in the repo, with its path, and
+// says nothing of how it went; a file outside the repo, or a Session review's edit, runs nothing.
+func TestFormatOnEdit(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude", "src"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config := "format-on-edit: printf formatted >\n"
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	edit := func(path string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte("edited"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		in, _ := json.Marshal(map[string]any{"tool_name": "Edit", "tool_input": map[string]string{"file_path": path}})
+		var stdout, stderr bytes.Buffer
+		if code := run([]string{"post-tool-use"}, bytes.NewReader(in), &stdout, &stderr); code != 0 ||
+			stdout.Len() != 0 || stderr.Len() != 0 {
+			t.Errorf("post-tool-use on %s = %d, %q, %q; want 0 and nothing said", path, code, stdout.String(), stderr.String())
+		}
+	}
+	content := func(path string) string {
+		t.Helper()
+		got, _ := os.ReadFile(path)
+		return string(got)
+	}
+	inside, outside := filepath.Join(dir, ".claude", "src", "a.vue"), filepath.Join(t.TempDir(), "b.vue")
+	edit(inside)
+	edit(outside)
+	if content(inside) != "formatted" || content(outside) != "edited" {
+		t.Errorf("after the edits, %q and %q; want the repo's file formatted, the other not", content(inside), content(outside))
+	}
+	t.Setenv(review.Env, "1")
+	edit(inside)
+	if content(inside) != "edited" {
+		t.Errorf("after a Session review's edit, %q; want it left as edited", content(inside))
+	}
+	t.Setenv(review.Env, "")
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("format-on-edit: exit 3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	edit(inside) // a failing command is said nothing of, too
+}

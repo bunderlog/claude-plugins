@@ -24,6 +24,12 @@ With `stop-check: <command>` in `.claude/baloo.yml`, such as `stop-check: mise r
 plugin runs the command in the repo's root when Claude ends a turn that changed the working tree,
 and hands a failure back to Claude to fix before it stops, once a turn.
 
+## Format on edit
+
+With `format-on-edit: <command>` in `.claude/baloo.yml`, such as `format-on-edit: npx prettier
+--write`, the plugin runs the command in the repo's root with the path of each file Claude edits,
+and says nothing of how it went; the Stop check reports what still fails at the turn's end.
+
 ## CI
 
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git

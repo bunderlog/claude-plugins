@@ -30,7 +30,7 @@ import (
 var version = "dev"
 
 var usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  pre-tool-use | session-end | user-prompt-submit | stop |\n  " +
+	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
 	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
@@ -53,6 +53,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return statusLine(stdin, stdout)
 		case "pre-tool-use":
 			return preToolUse(stdin, stdout)
+		case "post-tool-use":
+			return postToolUse(stdin)
 		case "session-end":
 			return sessionEnd(stdin)
 		case "user-prompt-submit":
