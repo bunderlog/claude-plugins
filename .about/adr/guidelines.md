@@ -30,7 +30,7 @@ a plugin's skills, and a SessionStart Hook runs after the skill listing is built
 as a skill would put every stack's description into every session, whatever the project.
 
 So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `prd`)
-or are a conversation with them (`ask`, `architecture`, `inbox`, `retro`, `tidy`); rules for how
+or are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`); rules for how
 to do a kind of task are a Guideline, `debugging` among them: it writes nothing and is not a
 conversation, and as a Guideline a project can turn it off.
 

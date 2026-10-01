@@ -1,9 +1,9 @@
 ---
-name: ask
+name: interview
 description: Interview the user about a plan or design before building it — when the user asks to be interviewed, grilled or questioned, to stress-test a plan, or to settle what's still open before starting a feature or change. Maps the decisions the plan depends on, asks the ready ones a few at a time as multiple-choice questions with a recommended answer, looks facts up instead of asking, and ends with the decision list the user confirms. Not for a single term or decision, or for work that's already settled.
 ---
 
-# Ask
+# Interview
 
 Question the user about a plan until every decision it depends on is settled, before anything
 is built. The decisions are the user's; finding facts is your job.
