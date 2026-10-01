@@ -22,6 +22,9 @@ const (
 	LocalSettings   = ".claude/settings.local.json"
 	// ADRs is a repo's folder of ADRs, from its root.
 	ADRs = ".about/adr/"
+	// Inbox is a repo's file of what is still to consider, one `## ` heading per item, from its
+	// root.
+	Inbox = ".about/inbox.md"
 	// Marker marks what the plugin wrote into a file it shares, so it knows it for its own: the
 	// statusLine command, a Git hook, husky's line.
 	Marker = "# managed by " + Plugin

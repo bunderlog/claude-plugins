@@ -60,7 +60,7 @@ For each candidate:
   API, stored data).
 - **Strength** — Strong, Worth exploring or Speculative.
 
-Drop a candidate an accepted ADR rules out, unless the friction is real enough to reopen it:
+Drop a candidate an ADR rules out, unless the friction is real enough to reopen it:
 then name the ADR and why. Rank by gain against cost; end with the one you'd do first and why,
 and ask which to explore. If nothing is worth its cost, say so plainly.
 

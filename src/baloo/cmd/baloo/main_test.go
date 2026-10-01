@@ -386,6 +386,31 @@ func TestSessionStartInSessionReview(t *testing.T) {
 	}
 }
 
+// Session start says how many items the Inbox holds, one per `## ` heading outside a code block,
+// and nothing of an empty one.
+func TestSessionStartInbox(t *testing.T) {
+	dir := inRepo(t)
+	path := filepath.Join(dir, names.Inbox)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct{ inbox, want string }{
+		{"# Inbox\n\n## One\n\ntext\n### not an item\n\n## Two\n", ".about/inbox.md holds 2 items to consider: tell the user, and that /baloo:inbox goes through them\n"},
+		{"# Inbox\n\n## One\n\n```md\n## not an item\n```\n", ".about/inbox.md holds 1 item to consider: tell the user, and that /baloo:inbox goes through them\n"},
+		{"# Inbox\n", ""},
+	} {
+		if err := os.WriteFile(path, []byte(c.inbox), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"session-start"}, nil, &stdout, &stderr)
+		if said := strings.Contains(stdout.String(), names.Inbox+" holds"); code != 0 ||
+			c.want == "" && said || c.want != "" && !strings.Contains(stdout.String(), "\n"+c.want) {
+			t.Errorf("session-start with %q = %d, %q; want 0 and %q", c.inbox, code, stdout.String(), c.want)
+		}
+	}
+}
+
 // Session start names a Check a Hook runs that the Config turns off, for the user.
 func TestSessionStartChecksOff(t *testing.T) {
 	dir := inRepo(t)
@@ -453,7 +478,7 @@ func TestSessionStartGuidelines(t *testing.T) {
 			t.Errorf("session-start = %q; want it to hold %q", out, want)
 		}
 	}
-	if strings.Contains(out, "vue.md") || strings.Contains(out, "design.md") || strings.Contains(out, "## ") {
+	if strings.Contains(out, "vue.md") || strings.Contains(out, "design.md") || strings.Contains(out, "\n## ") {
 		t.Errorf("session-start = %q; want no Guideline that is off, and no heading", out)
 	}
 	// Where the Bash tool runs zsh, the rules zsh needs follow them.

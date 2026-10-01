@@ -13,7 +13,7 @@
       "type": "boolean"
     },
     "session-review": {
-      "description": "The Session review: when a session ends, a separate Claude session records in .about/glossary.md and .about/adr/ what the conversation settled but nobody wrote down; the next session start says what it changed. It never commits.",
+      "description": "The Session review: when a session ends, a separate Claude session records in .about/glossary.md, .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote down; the next session start says what it changed. It never commits.",
       "type": "boolean"
     },
     "stop-check": {
@@ -123,7 +123,7 @@
           "type": "boolean"
         },
         "no-stale-adr-date": {
-          "description": "pre-commit: an accepted ADR the staged changes change has today's Date.",
+          "description": "pre-commit: an ADR the staged changes change has today's Date.",
           "type": "boolean"
         },
         "linear-history": {

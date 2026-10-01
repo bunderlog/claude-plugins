@@ -8,8 +8,9 @@ description: Interview the user about a plan or design before building it — wh
 Question the user about a plan until every decision it depends on is settled, before anything
 is built. The decisions are the user's; finding facts is your job.
 
-Read the request, any spec, the code involved, and the project's glossary and ADRs (e.g.
-`.about/`). Don't ask what they already answer.
+Read the request, any spec, the code involved, and the project's glossary, ADRs and Inbox (e.g.
+`.about/`). Don't ask what they already answer; an Inbox item the plan touches is one of its open
+decisions.
 
 ## 1. Map
 
@@ -37,7 +38,7 @@ Without the tool, write each as:
 
 Then wait for the answers. "You decide" is an answer: your recommendation stands, marked as
 yours. After each round, update the map: settled decisions make others ready, and an answer can
-open new ones. An answer that contradicts an earlier one, an accepted ADR or the code is a
+open new ones. An answer that contradicts an earlier one, an ADR or the code is a
 finding: name both sides and ask which holds; never silently take the newest. Every few rounds,
 restate what's settled as one short list.
 

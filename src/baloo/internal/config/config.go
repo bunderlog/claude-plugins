@@ -231,9 +231,9 @@ output-style: short-replies
 # settings file of Claude Code's but the user's own sets one; false takes it out.
 status-line: true
 
-# The Session review: when a session ends, a separate Claude session records in .about/glossary.md
-# and .about/adr/ what the conversation settled but nobody wrote down; the next session start
-# says what it changed. It never commits.
+# The Session review: when a session ends, a separate Claude session records in .about/glossary.md,
+# .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote
+# down; the next session start says what it changed. It never commits.
 session-review: true
 
 # The Stop check: when Claude ends a turn that changed the working tree, it runs this command in

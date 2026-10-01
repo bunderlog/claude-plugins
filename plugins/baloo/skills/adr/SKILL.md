@@ -11,15 +11,15 @@ and justified; don't just agree.
 ## Files
 
 `.about/adr/<subject>.md` at the git repo's root — one subject per file, its decisions as they
-stand now ([format](format.md)). Read the existing titles and drafts before you start; create
-the folder with the first ADR. The project's own conventions (numbered files, another path, an
-ADR template or skill) win.
+stand now ([format](format.md)). Read the existing titles and the items in `.about/inbox.md`
+before you start; create the folder with the first ADR. The project's own conventions (numbered
+files, another path, an ADR template or skill) win.
 
 ## Check
 
 Before accepting a proposal, look for an ADR it contradicts and call it out: "ADR ordering says
 Ordering talks to Billing by events — this adds a direct call. Follow it, or change it?"
-Never contradict an accepted ADR silently.
+Never contradict an ADR silently. If the topic touches an item in the inbox, settle it now.
 
 ## Surface
 
@@ -47,9 +47,8 @@ paid or not?" Reach for:
 Check the code as well: a decision the code already contradicts is the most valuable finding —
 "You said Ordering calls Billing only through events, but `OrderService` calls
 `BillingClient.charge()` directly. Is the decision wrong, or is the code?" A case with no answer
-is a finding — don't paper over it: record it in a `proposed` ADR if the decision is worth one,
-otherwise raise it as an open question. Ask a few pointed questions at a time, not a
-questionnaire.
+is a finding — don't paper over it: raise it, and if it stays open, record it in the inbox.
+Ask a few pointed questions at a time, not a questionnaire.
 
 ## Record
 
@@ -59,10 +58,11 @@ Write an ADR only when all three hold — otherwise the conversation is the reco
    "why this way?" or take it for a mistake and "fix" it.
 3. **A real trade-off** — genuine alternatives existed and one won for stated reasons.
 
-- A decision goes into the ADR on its subject, a new file only for a new subject. Decided → no
-  Status line. Still open → a `Status: proposed` ADR of its own with the options, a draft to
-  edit freely; once settled, rewrite it as the decision taken ("we won't do X" is a decision
-  too) and merge it into the ADR on its subject, or drop its Status line.
+- A decision goes into the ADR on its subject, a new file only for a new subject. Still open →
+  an item in `.about/inbox.md` with the options: a `## <title>`, a line `<YYYY-MM-DD> · adr`,
+  then what it is and what would settle it; create the file, `# Inbox` first, with its first
+  item. Once settled, write the decision taken ("we won't do X" is a decision too) into the ADR
+  on its subject and delete the item.
 - An ADR says what holds now. When a decision changes, edit it in place and update the Date;
   git keeps the earlier text. The choice it drops moves to Considered options, marked
   `(until <date>)` with why, so nobody proposes it again unwarned.

@@ -18,11 +18,6 @@ A correction to a confirmed Order; the Order itself never changes.
 _Avoid_: order edit
 _In code_: `OrderPatch`
 
-## Unresolved
-
-- **Refund vs Credit** — support says refund, billing code says credit. Settled by: finance
-  deciding whether credits can be cashed out.
-
 ## Retired terms
 
 - **Basket** — never a separate concept; it is the Cart.
@@ -33,13 +28,13 @@ _In code_: `OrderPatch`
 - **Domain terms only.** Nothing a general programmer already knows (cache, retry, timeout),
   however heavily the project uses it.
 - **No implementation detail.** A glossary, not a spec or a scratchpad. Code appears only in
-  `_In code_` and `## Unresolved`.
+  `_In code_`.
 - **Topics.** While terms are few, keep one flat list. Once they fall into topics (orders,
   payments…), group them under a subheading per topic.
 - Optional trailers, sparingly: `_Planned_:` agreed but not built yet — what's missing;
   `_In code_:` the code's name for it.
 - `## Retired terms`: words dropped because the concept doesn't exist, so a reader meeting
-  them in old code knows they mean nothing. It and `## Unresolved` stay at the end of the file.
+  them in old code knows they mean nothing. It stays at the end of the file.
 
 ## Several contexts
 

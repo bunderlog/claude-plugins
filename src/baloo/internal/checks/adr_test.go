@@ -9,23 +9,17 @@ import (
 
 const today = "2026-10-01"
 
-// adr is an ADR dated `date`, a draft when `proposed`, with the decision `decision`.
-func adr(date string, proposed bool, decision string) string {
-	status := ""
-	if proposed {
-		status = "Status: proposed\n"
-	}
-	return "# Billing\n\n" + status + "Date: " + date + "\n\n" + decision + "\n"
+// adr is an ADR dated `date` with the decision `decision`.
+func adr(date, decision string) string {
+	return "# Billing\n\nDate: " + date + "\n\n" + decision + "\n"
 }
 
-// adrRepo is a repo with the accepted ADR billing.md dated 2026-09-30, and the draft draft.md,
-// committed.
+// adrRepo is a repo with the ADR billing.md dated 2026-09-30, committed.
 func adrRepo(t *testing.T) string {
 	t.Helper()
 	dir := testkit.Repo(t)
 	stage(t, dir, map[string]string{
-		".about/adr/billing.md": adr("2026-09-30", false, "Invoices are monthly."),
-		".about/adr/draft.md":   adr("2026-09-30", true, "Invoices may be weekly."),
+		".about/adr/billing.md": adr("2026-09-30", "Invoices are monthly."),
 	})
 	testkit.Git(t, dir, "commit", "-q", "-m", "docs: adr")
 	return dir
@@ -42,7 +36,7 @@ func noStaleADRDate(t *testing.T, dir string) []string {
 
 func TestNoStaleADRDate_FindsAnADRChangedUnderAnOldDate(t *testing.T) {
 	dir := adrRepo(t)
-	stage(t, dir, map[string]string{".about/adr/billing.md": adr("2026-09-30", false, "Invoices are weekly.")})
+	stage(t, dir, map[string]string{".about/adr/billing.md": adr("2026-09-30", "Invoices are weekly.")})
 	want := []string{".about/adr/billing.md: changed, but its Date is 2026-09-30; set it to " + today}
 	if got := noStaleADRDate(t, dir); !slices.Equal(got, want) {
 		t.Errorf("NoStaleADRDate = %q, want %q", got, want)
@@ -61,24 +55,14 @@ func TestNoStaleADRDate_ReadsCRLF(t *testing.T) {
 // An ADR changed again on the day of its Date passes as well.
 func TestNoStaleADRDate_PassesAnADRDatedToday(t *testing.T) {
 	dir := adrRepo(t)
-	stage(t, dir, map[string]string{".about/adr/billing.md": adr(today, false, "Invoices are weekly.")})
+	stage(t, dir, map[string]string{".about/adr/billing.md": adr(today, "Invoices are weekly.")})
 	if got := noStaleADRDate(t, dir); got != nil {
 		t.Errorf("NoStaleADRDate = %q, want none", got)
 	}
 	testkit.Git(t, dir, "commit", "-q", "-m", "docs: weekly")
-	stage(t, dir, map[string]string{".about/adr/billing.md": adr(today, false, "Invoices are daily.")})
+	stage(t, dir, map[string]string{".about/adr/billing.md": adr(today, "Invoices are daily.")})
 	if got := noStaleADRDate(t, dir); got != nil {
 		t.Errorf("NoStaleADRDate changed again today = %q, want none", got)
-	}
-}
-
-// Accepting a draft changes it: it takes today's Date.
-func TestNoStaleADRDate_FindsADraftAcceptedUnderAnOldDate(t *testing.T) {
-	dir := adrRepo(t)
-	stage(t, dir, map[string]string{".about/adr/draft.md": adr("2026-09-30", false, "Invoices may be weekly.")})
-	want := []string{".about/adr/draft.md: changed, but its Date is 2026-09-30; set it to " + today}
-	if got := noStaleADRDate(t, dir); !slices.Equal(got, want) {
-		t.Errorf("NoStaleADRDate = %q, want %q", got, want)
 	}
 }
 
@@ -91,15 +75,14 @@ func TestNoStaleADRDate_FindsAnADRWithoutADate(t *testing.T) {
 	}
 }
 
-// A draft, a new ADR, a deleted or renamed one, and a file beside the ADRs pass.
+// A new ADR, a deleted or renamed one, and a file beside the ADRs pass.
 func TestNoStaleADRDate_PassesWhatIsNotAChangedADR(t *testing.T) {
 	dir := adrRepo(t)
 	stage(t, dir, map[string]string{
-		".about/adr/draft.md":  adr("2026-09-30", true, "Invoices may be daily."),
-		".about/adr/tax.md":    adr("2026-09-30", false, "Prices include tax."),
+		".about/adr/tax.md":    adr("2026-09-30", "Prices include tax."),
 		".about/adr/notes.txt": "Date: 2026-09-30\n",
 		".about/glossary.md":   "Date: 2026-09-30\n",
-		"docs/adr/billing.md":  adr("2026-09-30", false, "Elsewhere."),
+		"docs/adr/billing.md":  adr("2026-09-30", "Elsewhere."),
 	})
 	if got := noStaleADRDate(t, dir); got != nil {
 		t.Errorf("NoStaleADRDate = %q, want none", got)

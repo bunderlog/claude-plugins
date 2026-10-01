@@ -14,6 +14,10 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Done is verifiable: say how someone else can check it without asking you.
 - Stop a process by its id (`kill $!`) or with `pkill -f '[w]eb-server'`: a plain
   `pkill -f web-server` matches the shell running it too, and kills it.
+- Something found and left for later (a bug, a code review's finding, a decision still open)
+  goes into `.about/inbox.md`, not Claude's memory: a `## <title>`, a line
+  `<YYYY-MM-DD> · <source>`, then what it is and what would settle it. Delete an item once your
+  change settles it.
 
 ## In zsh
 

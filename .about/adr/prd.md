@@ -17,10 +17,10 @@ stops and says which to set up, rather than writing a repo copy meant to move la
 issues; stories link to the PRD's criteria. When a project moves to a tracker, `prd` offers to
 publish each repo PRD there and delete its file.
 
-A PRD is edited in place, as an ADR is (ADR adr-format): `Status: proposed` while a part is open, no
-Status once agreed, and git or the tracker's page history keeps the earlier text. It stays after
-the feature ships, as the record of what the feature is for and of the criteria it is tested
-against.
+A PRD is edited in place, as an ADR is (ADR adr-format), with `Status: proposed` while a part is
+open and no Status once agreed, and git or the tracker's page history keeps the earlier text. It
+stays after the feature ships, as the record of what the feature is for and of the criteria it is
+tested against.
 
 Nothing marks a PRD as built. Each acceptance criterion, once built, names the test that checks
 it (`→ test: <file> "<test name>"`), so a criterion without one is not built yet, and the links

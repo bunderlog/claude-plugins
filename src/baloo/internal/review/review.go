@@ -32,8 +32,10 @@ const (
 var prompt = `The conversation that just ended is on stdin. Use the ` + names.Plugin + `:glossary
 and ` + names.Plugin + `:adr skills to record in .about/ what it settled that .about/ doesn't say
 yet. Nobody can answer questions: record only what the conversation clearly agreed, and only about
-this repo; put anything contested or unanswered in the glossary's ## Unresolved or in a proposed
-ADR. Change nothing else, and end with one line per change.`
+this repo. Anything contested or left open, and a bug or problem it found but didn't fix, is an
+item in ` + names.Inbox + `: a "## <title>", a line "<YYYY-MM-DD> · session review", then what it
+is and what would settle it; create the file, "# Inbox" first, with its first item. Delete an
+item there that the conversation settled. Change nothing else, and end with one line per change.`
 
 // files are where the Session review at `root` keeps its reply, after a line with when it
 // started, and its process id while it runs, in the plugin's data folder `data`.
@@ -87,14 +89,14 @@ func Start(claude, plugin, root, data string, transcript []byte) (bool, error) {
 	}
 	defer log.Close()
 	fmt.Fprintf(log, "--- %s %s\n", time.Now().UTC().Format(time.RFC3339), root)
-	// Only reading and editing, and anything not allowed denied rather than asked: the glossary
-	// and the ADRs only, never a PRD. An Edit rule covers writing a file too.
+	// Only reading and editing, and anything not allowed denied rather than asked: the glossary,
+	// the ADRs and the Inbox only, never a PRD. An Edit rule covers writing a file too.
 	// The plugin is loaded from its folder too, since the session that ended may have had it
 	// from somewhere the review's doesn't, such as --plugin-dir.
 	cmd := exec.Command(claude, "-p", prompt, "--plugin-dir", plugin,
 		"--tools", "Read,Glob,Grep,Edit,Write,Skill", "--permission-mode", "dontAsk",
 		"--allowedTools", "Read", "Glob", "Grep", "Skill",
-		"Edit(./.about/glossary.md)", "Edit(./.about/adr/**)")
+		"Edit(./.about/glossary.md)", "Edit(./"+names.ADRs+"**)", "Edit(./"+names.Inbox+")")
 	cmd.Dir = root
 	cmd.Env = append(os.Environ(), Env+"=1")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = in, out, log

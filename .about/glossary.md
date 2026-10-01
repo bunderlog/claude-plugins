@@ -1,9 +1,9 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit or run a Retro; a Session review; Guidelines of
-working rules; Checks in one Go binary that Hooks and Git hooks trigger; an Output style for
-Claude's replies; and a Status line.
+language, decisions and requirements explicit, go through its Inbox or run a Retro; a Session
+review; Guidelines of working rules; Checks in one Go binary that Hooks and Git hooks trigger; an
+Output style for Claude's replies; and a Status line.
 
 ## Distribution
 
@@ -84,7 +84,7 @@ _Avoid_: "style" alone; tone
 The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars and
 the model, is drawn by the binary, and set in the project's local settings where the Config turns
 it on.
-_Avoid_: "status" alone, which is an ADR's or a PRD's Status
+_Avoid_: "status" alone, which is a PRD's Status
 _In code_: `src/baloo/internal/statusline`
 
 **Usage bar**:
@@ -135,8 +135,14 @@ _Avoid_: issue, incident
 
 **Session review**:
 A review the plugin starts itself when a session ends, where the Config turns it on: a separate
-headless session records in the glossary and the ADRs what the conversation settled but nobody
-wrote down, and the next session start says what it changed. Unlike a Retro, it looks at what was
-settled, not at how the work went.
+headless session records in the glossary, the ADRs and the Inbox what the conversation settled or
+left open but nobody wrote down, and the next session start says what it changed. Unlike a Retro, it
+looks at what was settled, not at how the work went.
 _Avoid_: session-end review
 _In code_: `src/baloo/internal/review`
+
+**Inbox**:
+The file `.about/inbox.md` of what is still to consider: a decision or term still open, a bug or a
+finding left for later. An item stays until something settles it, and is then deleted.
+_Avoid_: todo, backlog, proposed ADR
+_In code_: `names.Inbox`; the `inbox` skill goes through it

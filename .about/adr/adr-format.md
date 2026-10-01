@@ -1,4 +1,4 @@
-# ADRs are edited in place, one per subject; only a draft has a Status
+# ADRs are edited in place, one per subject, and hold only decisions taken
 
 Date: 2026-10-01
 
@@ -6,11 +6,12 @@ An ADR, `.about/adr/<subject>.md` (ADR about-folder), holds the decisions on one
 stand now. When one changes, the ADR is edited in place and its Date set to today; the choice it
 drops moves to Considered options, marked `(until <date>)` with why, so the file still warns
 against it. Git keeps every earlier version. The Check `no-stale-adr-date` (pre-commit) fails when
-a staged edit changes an accepted ADR but not its Date, unless that Date is already today's, so an
+a staged edit changes an ADR but not its Date, unless that Date is already today's, so an
 unattended edit, such as the Session review's, shows as a change (ADR checks).
 
-An ADR has a Status line only while it is a draft: `Status: proposed`. Without one it is accepted.
-ADRs have no numbers: the file is named for its subject and cited as "ADR <subject>".
+An ADR holds only decisions taken, and has no Status line: a decision still open is an item of the
+Inbox until it settles (ADR inbox). ADRs have no numbers: the file is named for its subject and
+cited as "ADR <subject>".
 
 ## Considered options
 
@@ -33,8 +34,8 @@ ADRs have no numbers: the file is named for its subject and cited as "ADR <subje
   ADRs edited in place nothing points at a number, a file's number no longer dates its decisions,
   and "ADR 0005" says less than "ADR checks".
 - `Status: proposed | accepted` on every ADR — the line almost always says accepted.
-- No Status at all — the simplest file, but a decision still open would have nowhere to wait as a
-  draft that `no-stale-adr-date` and the next session leave alone.
+- A draft ADR, `Status: proposed`, for a decision still open (until 2026-10-01) — it read like a
+  decision, and drafts spread over files nobody counted; the Inbox keeps them in one place.
 
 ## Consequences
 
@@ -43,9 +44,8 @@ ADRs have no numbers: the file is named for its subject and cited as "ADR <subje
   still shows it.
 - Nothing stops an edit that rewrites a decision's reasoning; reading the diff before a commit
   does. The Session review never commits.
-- An ADR grows with its subject's decisions. A new one still open is a proposed ADR of its own
-  until it settles and is merged into the ADR on its subject.
+- An ADR grows with its subject's decisions.
 - `no-stale-adr-date` doesn't run in CI: it compares the Date with today, so an edit checked on a
   later day than it was made would fail (ADR checks).
 - Renaming a subject means updating its citations (`git grep "ADR <subject>"`).
-- Revisit when a Status other than proposed comes back, such as a decision reversed but kept.
+- Revisit when a Status comes back, such as for a decision reversed but kept.

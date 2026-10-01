@@ -17,7 +17,7 @@ project's own conventions win over these defaults.
 ## Check
 
 Call out a clash with the glossary at once: "The glossary says Filter — you said rule. Same
-thing, or new?" If the topic touches an item in `## Unresolved`, settle it now.
+thing, or new?" If the topic touches an item in `.about/inbox.md`, settle it now.
 
 ## Probe
 
@@ -37,16 +37,17 @@ Reach for:
 
 Check the code as well: a term the code uses differently, or one concept named differently
 across modules, is the most valuable finding. A case the glossary can't answer is a finding too:
-put it in `## Unresolved`, don't paper over it. Ask a few pointed questions at a time, not a
-questionnaire.
+make it an item in `.about/inbox.md`, don't paper over it: a `## <title>`, a line
+`<YYYY-MM-DD> · glossary`, then what it is and what would settle it; create the file, `# Inbox`
+first, with its first item. Ask a few pointed questions at a time, not a questionnaire.
 
 ## Name
 
 - The users' word beats the code's word. If the code calls the concept something else, don't
   rename the code right away: record the term as users say it and note the code's name in
   `_In code_`.
-- Never silently pick a winner: two words genuinely in play go to `## Unresolved`; once
-  settled, the loser moves to `_Avoid_`.
+- Never silently pick a winner: two words genuinely in play are an item in the inbox; once
+  settled, the loser moves to `_Avoid_` and the item is deleted.
 - Price a rename first. Names in contracts the project doesn't own or can't cheaply change
   (external APIs and schemas, stored data, public URLs, events) stay — map them at the edge.
   If a term is wrong in one layer only, fix that layer.

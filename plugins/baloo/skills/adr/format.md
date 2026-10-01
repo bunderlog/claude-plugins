@@ -11,9 +11,8 @@ Date: YYYY-MM-DD
 {Per decision, 1–3 sentences: the context, what was decided, and why.}
 ```
 
-`Date` is when the ADR last changed. A draft still open has `Status: proposed` on the line above
-it; an ADR without one is accepted. That is often enough. Add a section only when it earns its
-place:
+`Date` is when the ADR last changed. An ADR holds only decisions taken; one still open is an
+item in `.about/inbox.md`. That is often enough. Add a section only when it earns its place:
 
 - **Considered options** — rejected alternatives worth remembering, only ones actually
   discussed, and each choice a changed decision dropped, marked `(until YYYY-MM-DD)` with why.

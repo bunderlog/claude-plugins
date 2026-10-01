@@ -101,9 +101,10 @@ func project() (string, error) {
 // Claude Code adds to Claude's context, so it prints only what Claude should know: a Config it
 // created, an Output style, an attribution or a Status line it set, the Git hooks it wrote, took
 // out, changed in husky or left alone, a Hook Check it turns off (ADR checks), what the last
-// Session review replied (ADR session-review), and the problems, each on one line; then the
-// Guidelines the Config turns on (ADR guidelines). In a Session review's session it only names the
-// Guidelines: that session changes nothing but the glossary and the ADRs (ADR session-review).
+// Session review replied (ADR session-review), how many items the Inbox holds (ADR inbox), and
+// the problems, each on one line; then the Guidelines the Config turns on (ADR guidelines). In a
+// Session review's session it only names the Guidelines: that session changes nothing but
+// .about/'s glossary, ADRs and Inbox (ADR session-review).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -181,6 +182,14 @@ func sessionStart(stdout, stderr io.Writer) int {
 	}
 	if c.Root != "" {
 		report = append(report, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
+		if n := inboxItems(c.Root); n > 0 {
+			items := "items"
+			if n == 1 {
+				items = "item"
+			}
+			report = append(report, fmt.Sprintf("%s holds %d %s to consider: tell the user, and that "+
+				"/%s:inbox goes through them", names.Inbox, n, items, names.Plugin))
+		}
 	}
 	index, err := guidelineIndex(c.Guidelines)
 	if err != nil {
@@ -221,6 +230,25 @@ func gitHooksReport(r githooks.Report) []string {
 			b.Path, strings.Join(b.Checks, ", "), names.Config))
 	}
 	return lines
+}
+
+// inboxItems is how many items the Inbox of the repo at `root` holds, one per `## ` heading
+// outside a fenced code block (ADR inbox); 0 without one.
+func inboxItems(root string) int {
+	text, err := os.ReadFile(filepath.Join(root, names.Inbox))
+	if err != nil {
+		return 0
+	}
+	n, fenced := 0, false
+	for _, line := range strings.Split(string(text), "\n") {
+		switch {
+		case strings.HasPrefix(line, "```"):
+			fenced = !fenced
+		case !fenced && strings.HasPrefix(line, "## "):
+			n++
+		}
+	}
+	return n
 }
 
 // guidelineIndex is what Claude is told of the Guidelines `on`, in the plugin's folder that Claude

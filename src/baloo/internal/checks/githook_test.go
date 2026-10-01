@@ -95,7 +95,7 @@ func TestRun_NoSecretsInCommits(t *testing.T) {
 	}
 }
 
-// The pre-commit Check no-stale-adr-date fails with each accepted ADR changed without today's Date.
+// The pre-commit Check no-stale-adr-date fails with each ADR changed without today's Date.
 func TestRun_NoStaleADRDate(t *testing.T) {
 	dir := testkit.Repo(t)
 	path := filepath.Join(dir, ".about", "adr", "billing.md")

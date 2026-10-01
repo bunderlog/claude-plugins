@@ -13,11 +13,12 @@ Config turns it on; without the key it is off, since it didn't exist before the 
 The review reads only the user's and Claude's text, masked as a Retro's is (ADR transcripts),
 and at most the last 200,000 characters of it: no tool call or result. It skips a session shorter
 than 2,000 characters, which can't have settled much, and a headless one, its own or another
-tool's, and a review never starts another. It may edit only `.about/glossary.md` and
-`.about/adr/`: its tools are limited to reading and editing, anything not allowed is denied
-rather than asked, and it never commits. Only what the conversation clearly agreed, and only about
-the repo it runs in, is recorded; anything contested or unanswered goes to the glossary's
-`## Unresolved` or a proposed ADR. It never edits a PRD, an agreement with the user about what to
+tool's, and a review never starts another. It may edit only `.about/glossary.md`, `.about/adr/`
+and `.about/inbox.md`: its tools are limited to reading and editing, anything not allowed is
+denied rather than asked, and it never commits. Only what the conversation clearly agreed, and
+only about the repo it runs in, is recorded. Anything contested or left open, and a bug or a
+problem the session found but didn't fix, is an item of the Inbox, and an item the conversation
+settled is deleted (ADR inbox). It never edits a PRD, an agreement with the user about what to
 build.
 
 Its session changes nothing else either: there session start creates no Config, picks no Output
@@ -32,6 +33,8 @@ It runs with the user's default model.
 
 ## Considered options
 
+- Only the glossary and the ADRs (until 2026-10-01) — a bug the session found and didn't fix was
+  lost with it.
 - Dropping it, since most reviews change nothing — the few that do record what would otherwise
   be lost, and that is what it is for.
 - Session start as in any other session but for the Git hooks (until 2026-10-01) — nothing
@@ -53,6 +56,7 @@ It runs with the user's default model.
   nothing.
 - Its edits appear in the working tree unannounced until the next session start; they are the
   user's to review and commit.
-- It can edit the glossary or an ADR while the next session in the repo is already running.
+- It can edit the glossary, an ADR or the Inbox while the next session in the repo is already
+  running.
 - A decision the conversation masked (a long id) can't be recorded exactly.
 - Revisit when a review records something wrong or about another repo, or its cost shows.
