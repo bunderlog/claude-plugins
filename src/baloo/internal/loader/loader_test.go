@@ -428,6 +428,37 @@ func TestLoader(t *testing.T) {
 		}
 	})
 
+	t.Run("user-prompt-submit and stop never block a turn", func(t *testing.T) {
+		turn := `{"session_id": "s1"}`
+		for _, hook := range []string{"user-prompt-submit", "stop"} {
+			l := setup(t, bin)
+			l.withSum(sum)
+			if out, errs, code := l.runWith(t, turn, nil, hook); code != 0 || out != "" || errs != "" {
+				t.Errorf("%s, no binary = %d, %q, %q; want 0 and nothing", hook, code, out, errs)
+			}
+			if n := l.downloads.Load(); n != 0 {
+				t.Errorf("%s downloaded the binary %d times; want never", hook, n)
+			}
+			if _, errs, code := l.run(t, nil, "install"); code != 0 {
+				t.Fatalf("install = %d, %q", code, errs)
+			}
+			// A binary of an older version, without the subcommand, fails: the Loader says nothing.
+			if err := os.WriteFile(filepath.Join(l.data, l.file), []byte("#!/bin/sh\necho usage >&2\nexit 2\n"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if out, errs, code := l.runWith(t, turn, nil, hook); code != 0 || out != "" || errs != "" {
+				t.Errorf("%s with a binary that fails = %d, %q, %q; want 0 and nothing", hook, code, out, errs)
+			}
+			// What the binary prints, such as the Stop check's block, reaches Claude Code.
+			if err := os.WriteFile(filepath.Join(l.data, l.file), []byte("#!/bin/sh\ncat\n"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if out, _, code := l.runWith(t, turn, nil, hook); code != 0 || out != turn+"\n" {
+				t.Errorf("%s = %d, %q; want 0 and the binary's %q", hook, code, out, turn+"\n")
+			}
+		}
+	})
+
 	t.Run("needs the plugin data folder", func(t *testing.T) {
 		l := setup(t, bin)
 		l.withSum(sum)
