@@ -20,8 +20,9 @@ in full, masked. Read transcripts only through it: a raw one can hold a secret a
 session printed.
 
 Then read what a fix would touch: CLAUDE.md, the Config (`.claude/baloo.yml`),
-`.claude/settings.json`, the hooks and skills involved. A fix that already exists but is off,
-not wired up or broken is the thing to report, not a new one.
+`.claude/settings.json`, the hooks and skills involved, and the project's auto-memory
+(`MEMORY.md` and its files, in the project's folder under `~/.claude/projects/`). A fix that
+already exists but is off, not wired up or broken is the thing to report, not a new one.
 
 ## Look for
 
@@ -35,6 +36,9 @@ not wired up or broken is the thing to report, not a new one.
   would have told it beforehand.
 - **Repeated prompts**: work the user keeps asking for by hand — a skill, a hook or a Git hook.
 - **Repeated calls**: Claude hunting for the same thing — a pointer in CLAUDE.md.
+- **Workarounds in memory**: an entry that patches a skill, a CLAUDE.md line or a setting (a tool
+  that fails, and what to do instead). Move the fix into what it patches and drop the entry: a
+  teammate's session never sees this memory, and the broken skill stays broken.
 
 A failure that is part of the work (a red test mid-change), a denial that was right, or a prompt
 that is the user's own call each time ("commit it") is not a stall. Rank stalls by cost: how
