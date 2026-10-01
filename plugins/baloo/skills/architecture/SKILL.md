@@ -10,9 +10,9 @@ one change with the user. You propose; change code only when the user asks.
 
 A **module** is anything with an interface: a function, a class, a package, a service. Its
 **interface** is all a caller must know to use it: the types, and also the order of calls, the
-errors, the limits and the config. A **seam** is where that interface sits: the public boundary
-callers and tests go through. A module is **shallow** when its interface is nearly as big as
-the code behind it. A **deepening** puts more behavior behind fewer, smaller interfaces.
+errors, the limits and the config. A **seam** is where that interface sits: the boundary callers
+and tests go through; a part inside a module can have one of its own, out of the module's
+interface. A module is **shallow** when its interface is nearly as big as the code behind it. A **deepening** puts more behavior behind fewer, smaller interfaces.
 
 Read the project's glossary and ADRs (e.g. `.about/`) first. Name modules after the glossary's
 terms ("the Order intake module", not "OrderHandler").
@@ -38,11 +38,11 @@ asking for `file:line` evidence. Signs:
 - A shallow module, such as a pass-through.
 - Modules that change in the same commits.
 - The same logic repeated in each caller of one module.
-- A caller that relies on what a module doesn't promise: its internal format, a field, the
-  order it does things in.
+- A caller, tests included, that relies on what a module doesn't promise: its internal format,
+  a field, private state, the order it does things in.
 - Logic split into small pure functions to test it, while the bugs sit in how they're called.
 - An interface in front of a dependency with only one implementation, counting a test fake.
-- A test that reaches past the interface: private state, a fake of the project's own module.
+- A test that fakes the project's own module.
 - Code with no tests, or hard to test through its interface.
 
 Apply the deletion test to each suspect: picture the code without it. If nothing gets harder,
@@ -56,10 +56,12 @@ For each candidate:
 - **Modules** — the files involved.
 - **Friction** — what it costs now, with evidence (`file:line`, commits).
 - **Deepening** — in plain words, what moves behind which interface; no interface design yet.
-- **Behind the seam** — pure logic, a store with a local stand-in, your own service over the
-  network, or a third party; it decides how the new interface is tested.
+- **Behind the seam** — what the deepened module would depend on, which decides how it is
+  tested: pure logic (call it), a store with a local stand-in (run the stand-in), your own
+  service over the network (an in-memory implementation), or a third party (a fake at the
+  boundary). Recheck it once step 4 picks the interface.
 - **Gain** — what callers no longer need to know, where changes and bugs would concentrate,
-  which tests move to the new interface and which go.
+  which tests move to the new interface, which go, and which stay at a part's own seam.
 - **Cost** — the callers and tests to change; anything that can't change cheaply (a public
   API, stored data).
 - **Strength** — Strong, Worth exploring or Speculative.

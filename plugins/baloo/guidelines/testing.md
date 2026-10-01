@@ -16,13 +16,14 @@ existing codebase, its documented test conventions (where tests live, what they 
 
 ## 2. Test what callers see
 
-- Go through the public interface. Name the interfaces you'll test at before the first test;
-  for new behavior, agree them with the user.
+- Go through the interface callers use; a part inside a module with a seam of its own is tested
+  through that seam, never past it. Name the interfaces you'll test at before the first test; for
+  new behavior, agree them with the user.
 - Name a test after the behavior ("rejects an expired token"), not the function.
 - Check results through the interface: read the user back rather than query its table.
 - Spend tests where bugs are likely and costly: the main path and the tricky logic.
 
-**Test:** reworking the implementation breaks no test.
+**Test:** reworking what's behind the interface a test goes through breaks no test.
 
 ## 3. Take expected values from outside the code
 

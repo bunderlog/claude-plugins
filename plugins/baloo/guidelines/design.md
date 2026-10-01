@@ -4,8 +4,9 @@ For the shape of code: what a module shows, what it hides, and where its interfa
 
 A **module** is anything with an interface: a function, a class, a package, a service. Its
 **interface** is all a caller must know to use it: the types, and also the order of calls, the
-errors, the limits and the config. A **seam** is where that interface sits: the public boundary
-that callers and tests go through.
+errors, the limits and the config. A **seam** is where that interface sits: the boundary that
+callers and tests go through. A part inside a module can be a module too, with a seam of its own
+that the outer module's callers never see.
 
 ## 1. Hide more than you show
 
@@ -38,13 +39,15 @@ that callers and tests go through.
 
 - Tests use the seam callers use. A test that needs private state says the module has the wrong
   shape: change the module, not the test.
-- A part inside a module may have a seam and tests of its own; keep that seam out of the
-  module's interface, which grows only for callers.
+- A part inside a module may have a seam and tests of its own when its cases are many and
+  costly to reach from outside (a parser, a pricing rule); keep that seam out of the module's
+  interface, which grows only for callers.
 - What sits behind the seam decides the test:
   - pure logic: call it;
   - a store with a local stand-in (SQLite, a temp folder): run the stand-in;
   - your own service over the network: an in-memory implementation of its interface;
   - a third party: a fake at the boundary.
-- After merging modules, move their tests to the new interface and delete the old ones.
+- After merging modules, move their tests to the new interface and delete the old ones, unless
+  a merged module stays a part worth a seam of its own.
 
-**Test:** reworking what's behind the interface breaks no test.
+**Test:** reworking what's behind a seam breaks no test that goes through it.
