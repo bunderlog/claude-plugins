@@ -4,10 +4,10 @@ Date: 2026-10-01
 
 The `prd` skill writes and keeps a PRD per feature in `.about/prd/<feature>.md`, beside the
 glossary and ADRs it is checked against (ADR about-folder). It probes the problem, the success
-signal, the scope and the acceptance criteria itself rather than extending the `interview` skill, which
-settles how a plan is built, not what it is for. When the conversation already holds a confirmed
-decision list, `prd` takes its answers as settled; skills are independent, so neither calls the
-other.
+signal, the scope and the acceptance criteria itself rather than extending the `interview` skill,
+which settles how a plan is built, not what it is for. When the conversation already holds a
+confirmed decision list, `prd` takes its answers as settled; skills are independent, so neither
+calls the other.
 
 A project can keep its PRDs in a tracker instead, named in its `CLAUDE.md` or `AGENTS.md` (a
 Confluence space, Notion, a Jira epic). `prd` then writes each as a page there through that
@@ -36,8 +36,8 @@ about what to build, and a change nobody saw costs more there than in a term or 
 
 - A Guideline in place of the skill (ADR guidelines) — one description less in every session, but
   a Guideline keeps no document, and `/prd` would go for a request nobody mistakes for another.
-- `interview` writing its decision list out as a PRD — one skill fewer, but it gains a second job, and a
-  PRD could only follow one.
+- `interview` writing its decision list out as a PRD — one skill fewer, but it gains a second job,
+  and a PRD could only follow one.
 - The tracker by default — suits product and QA, but no project could use `prd` before setting
   up a connector.
 - A Config key naming the tracker — checked by the schema, but the Config holds the plugin's

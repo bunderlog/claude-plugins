@@ -19,7 +19,7 @@ files, another path, an ADR template or skill) win.
 
 Before accepting a proposal, look for an ADR it contradicts and call it out: "ADR ordering says
 Ordering talks to Billing by events — this adds a direct call. Follow it, or change it?"
-Never contradict an ADR silently. If the topic touches an item in the inbox, settle it now.
+Never contradict an ADR silently. If the topic touches an item in the Inbox, settle it now.
 
 ## Surface
 
@@ -47,7 +47,7 @@ paid or not?" Reach for:
 Check the code as well: a decision the code already contradicts is the most valuable finding —
 "You said Ordering calls Billing only through events, but `OrderService` calls
 `BillingClient.charge()` directly. Is the decision wrong, or is the code?" A case with no answer
-is a finding — don't paper over it: raise it, and if it stays open, record it in the inbox.
+is a finding — don't paper over it: raise it, and if it stays open, record it in the Inbox.
 Ask a few pointed questions at a time, not a questionnaire.
 
 ## Record

@@ -12,7 +12,8 @@ A **module** is anything with an interface: a function, a class, a package, a se
 **interface** is all a caller must know to use it: the types, and also the order of calls, the
 errors, the limits and the config. A **seam** is where that interface sits: the boundary callers
 and tests go through; a part inside a module can have one of its own, out of the module's
-interface. A module is **shallow** when its interface is nearly as big as the code behind it. A **deepening** puts more behavior behind fewer, smaller interfaces.
+interface. A module is **shallow** when its interface is nearly as big as the code behind it. A
+**deepening** puts more behavior behind fewer, smaller interfaces.
 
 Read the project's glossary and ADRs (e.g. `.about/`) first. Name modules after the glossary's
 terms ("the Order intake module", not "OrderHandler").

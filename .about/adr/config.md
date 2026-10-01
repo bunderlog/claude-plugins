@@ -21,8 +21,8 @@ The binary reads it with `go.yaml.in/yaml/v3`, the YAML organization's maintaine
 `gopkg.in/yaml.v3`, and goes through its top-level keys itself. A key that isn't a setting, or a
 value that doesn't decode, is a problem, one line with its line number, and that setting keeps
 its default while the others apply; a file that isn't YAML or isn't a map of settings is one
-problem, and none of it applies. At session start the SessionStart hook prints, for Claude, a Config
-it created and the problems.
+problem, and none of it applies. At session start the binary prints, for Claude, a Config it
+created and the problems.
 
 ## Considered options
 

@@ -33,7 +33,7 @@ line; the options are the ones below that fit it, your recommendation first, mar
 
 - **Decide now**: settle it here, with the `adr` skill for a decision or `glossary` for a term.
 - **Fix now**: it becomes this session's work, after the triage.
-- **File an issue**: write it as an Issue, with the `issue` skill; the item goes once it is filed.
+- **File an issue**: write it as an Issue, with the `issue` skill.
 - **Keep**: it stays, with what you learned added, and its date line ends in `· kept <today>`,
   replacing an older mark.
 - **Drop**: it is not worth doing.
