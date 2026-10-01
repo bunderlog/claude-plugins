@@ -14,7 +14,8 @@ The review reads only the user's and Claude's text, masked as a Retro's is (ADR 
 and at most the last 200,000 characters of it: no tool call or result. It skips a session shorter
 than 2,000 characters, which can't have settled much, and a headless one, its own or another
 tool's, and a review never starts another. It may edit only `.about/glossary.md`, `.about/adr/`
-and `.about/inbox.md`: its tools are limited to reading and editing, anything not allowed is
+and `.about/inbox.md`: its tools are limited to reading and editing, and to one command,
+`rm ./.about/inbox.md`, which deletes the Inbox with its last item; anything not allowed is
 denied rather than asked, and it never commits. Only what the conversation clearly agreed, and
 only about the repo it runs in, is recorded. Anything contested or left open, and a bug or a
 problem the session found but didn't fix, is an item of the Inbox, and an item the conversation

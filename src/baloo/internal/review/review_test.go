@@ -77,8 +77,9 @@ func TestStart_RunsAHeadlessReviewAtTheRootAndLastSaysWhatItChanged(t *testing.T
 		t.Errorf("the review read %.40q…, want the conversation masked", got)
 	}
 	args := read("args")
-	for _, want := range []string{"-p", "--plugin-dir\n/plugins/baloo\n", "--tools\nRead,Glob,Grep,Edit,Write,Skill\n", "--permission-mode\ndontAsk\n",
-		"Edit(./.about/glossary.md)\n", "Edit(./.about/adr/**)\n", "Edit(./.about/inbox.md)\n"} {
+	for _, want := range []string{"-p", "--plugin-dir\n/plugins/baloo\n", "--tools\nRead,Glob,Grep,Edit,Write,Bash,Skill\n", "--permission-mode\ndontAsk\n",
+		"Edit(./.about/glossary.md)\n", "Edit(./.about/adr/**)\n", "Edit(./.about/inbox.md)\n",
+		"Bash(rm ./.about/inbox.md)\n"} {
 		if !strings.Contains(args, want) {
 			t.Errorf("the review's arguments =\n%s\nwant %q among them", args, want)
 		}
