@@ -25,6 +25,9 @@ var secrets = []struct{ what, secret string }{
 	{"an Anthropic API key", "sk-ant-" + strings.Repeat("api03-", 4)},
 	{"an OpenAI API key", "sk-proj-" + strings.Repeat("a1B2", 6)},
 	{"a Google API key", "AIza" + strings.Repeat("Sy", 17) + "x"},
+	{"a JWT", "eyJ" + "hbGciOiJIUzI1NiJ9.eyJ" + "zdWIiOiIxMjM0NTY3ODkwIn0." + strings.Repeat("Sf", 20)},
+	{"a password in a URL", "ftp://dm:" + "hunter2-Pass" + "@10.0.0.1/devices"},
+	{"a password in a URL", "redis://:" + "hunter2" + "@cache:6379"},
 }
 
 var aws = secrets[2].secret
@@ -74,6 +77,14 @@ func TestNoSecretsInCommits_PassesWhatIsNoSecret(t *testing.T) {
 		"-----BEGIN PUBLIC KEY-----",
 		"ghp_short",
 		"sk_test_" + strings.Repeat("a1B2", 6),
+		"eyJhbGciOiJIUzI1NiJ9 alone",
+		"postgres://user:${DB_PASSWORD}@db/app",
+		"https://x:$TOKEN@github.com/org/repo",
+		"https://<user>:<password>@host",
+		"https://user:****@host",
+		"https://user@host:8080/path",
+		"http://localhost:8080/a@b",
+		"git@github.com:org/repo.git",
 	}, "\n")})
 	if got := noSecretsInCommits(t, dir); got != nil {
 		t.Errorf("NoSecretsInCommits = %q, want none", got)

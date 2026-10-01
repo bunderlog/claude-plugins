@@ -61,6 +61,9 @@ func destroys(p program, dir string) (why string, ask bool) {
 		if hasFlag(args, "-r", "-R", "--recursive") && slices.ContainsFunc(args, isEverything) {
 			return "rm -r on /, ~, . or * deletes everything below it", false
 		}
+		if hasFlag(args, "-r", "-R", "--recursive") && slices.ContainsFunc(args, isGitFolder) {
+			return "rm -r on .git deletes the repo's history", false
+		}
 	case "dd":
 		if slices.ContainsFunc(args, func(a string) bool { return strings.HasPrefix(a, "of=/dev/") }) {
 			return "dd onto a device erases a disk", false
@@ -81,6 +84,9 @@ func destroys(p program, dir string) (why string, ask bool) {
 }
 
 func isEverything(a string) bool { return slices.Contains(everything, a) }
+
+// isGitFolder says whether the path `a` is a repo's .git folder.
+func isGitFolder(a string) bool { return filepath.Base(a) == ".git" }
 
 // gitDestroys is destroys for git with the arguments `args`.
 func gitDestroys(args []string, dir string) (why string, ask bool) {
@@ -143,6 +149,19 @@ func gitDestroys(args []string, dir string) (why string, ask bool) {
 	case "reflog":
 		if len(rest) > 0 && (rest[0] == "expire" || rest[0] == "delete") {
 			return "git reflog expire loses history", false
+		}
+	case "gc":
+		if hasFlag(rest, "--prune=now", "--prune=all") {
+			return "git gc --prune=now deletes unreachable commits at once", false
+		}
+	case "prune":
+		if !hasFlag(rest, "--dry-run", "-n") &&
+			!slices.ContainsFunc(rest, func(a string) bool { return strings.HasPrefix(a, "--expire") }) {
+			return "git prune deletes unreachable commits at once", false
+		}
+	case "update-ref":
+		if hasFlag(rest, "-d") {
+			return "git update-ref -d deletes a branch, merged or not", false
 		}
 	case "filter-branch", "filter-repo":
 		return "git " + sub + " rewrites the whole history", false

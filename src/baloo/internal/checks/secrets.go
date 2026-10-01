@@ -30,6 +30,10 @@ var secretKinds = []struct {
 	{"an Anthropic API key", regexp.MustCompile(`\bsk-ant-[A-Za-z0-9_-]{20,}`)},
 	{"an OpenAI API key", regexp.MustCompile(`\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}`)},
 	{"a Google API key", regexp.MustCompile(`\bAIza[0-9A-Za-z_-]{35}`)},
+	{"a JWT", regexp.MustCompile(`\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}`)},
+	// The password in a URL, between `://user:` and `@`, unless it is a placeholder: `$VAR`,
+	// `${VAR}`, `<password>`, `****`.
+	{"a password in a URL", regexp.MustCompile(`\b[A-Za-z][A-Za-z0-9+.-]*://[^\s:/@]*:[^\s/@$<{*][^\s/@]*@`)},
 }
 
 var (
