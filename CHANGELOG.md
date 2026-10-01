@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.14.2 — 2026-10-01
+
+### Fixes
+
+- retro: say that --around cuts each block at 2,000 characters (05ee900)
+
 ## 0.14.1 — 2026-10-01
 
 ### Fixes
