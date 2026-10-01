@@ -115,6 +115,18 @@ func Section(version, date string, commits []Commit) string {
 	return fmt.Sprintf("## %s — %s\n\n%s", version, date, body.String())
 }
 
+// pinned is the line of the README's CI recipe that names the Release it pins.
+var pinned = regexp.MustCompile(`(?m)^version=\S+$`)
+
+// Pin is the README `readme` with its CI recipe pinning `version`; an error unless it has exactly
+// one line to pin.
+func Pin(readme []byte, version string) ([]byte, error) {
+	if n := len(pinned.FindAll(readme, -1)); n != 1 {
+		return nil, fmt.Errorf("README.md has %d lines `version=<version>` for its CI recipe; want one", n)
+	}
+	return pinned.ReplaceAll(readme, []byte("version="+version)), nil
+}
+
 func git(root string, args ...string) (string, error) {
 	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
 	return strings.TrimSpace(string(out)), err
@@ -122,7 +134,7 @@ func git(root string, args ...string) (string, error) {
 
 // Release makes a Release in the repo at `root` from the commits since the last `v*` tag: it
 // builds the next version for every platform, to check that it builds, writes it to the manifest
-// and a section to CHANGELOG.md, commits these and tags the commit, whose push has CI build and
+// and the README's CI recipe and a section to CHANGELOG.md, commits these and tags the commit, whose push has CI build and
 // publish the binaries. It returns the version.
 func Release(root, date string) (string, error) {
 	if status, err := git(root, "status", "--porcelain"); err != nil || status != "" {
@@ -175,15 +187,22 @@ func Release(root, date string) (string, error) {
 		return "", err
 	}
 
+	// Every file is read and checked before any is written, so a failure leaves none half done.
+	readme := filepath.Join(root, "README.md")
+	text, err := os.ReadFile(readme)
+	if err != nil {
+		return "", err
+	}
+	pinnedReadme, err := Pin(text, version)
+	if err != nil {
+		return "", err
+	}
 	manifest := filepath.Join(root, names.Manifest)
-	text, err := os.ReadFile(manifest)
+	text, err = os.ReadFile(manifest)
 	if err != nil {
 		return "", err
 	}
 	bumped := regexp.MustCompile(`("version":\s*")[^"]*"`).ReplaceAll(text, []byte(`${1}`+version+`"`))
-	if err := os.WriteFile(manifest, bumped, 0o644); err != nil {
-		return "", err
-	}
 	file := filepath.Join(root, "CHANGELOG.md")
 	old, err := os.ReadFile(file)
 	if os.IsNotExist(err) {
@@ -197,11 +216,13 @@ func Release(root, date string) (string, error) {
 	if at := strings.Index(string(old), "\n## "); at >= 0 {
 		changelog = string(old[:at]) + entry + string(old[at:])
 	}
-	if err := os.WriteFile(file, []byte(changelog), 0o644); err != nil {
-		return "", err
+	for path, text := range map[string][]byte{manifest: bumped, file: []byte(changelog), readme: pinnedReadme} {
+		if err := os.WriteFile(path, text, 0o644); err != nil {
+			return "", err
+		}
 	}
 
-	if _, err := git(root, "add", names.Manifest, "CHANGELOG.md"); err != nil {
+	if _, err := git(root, "add", names.Manifest, "CHANGELOG.md", "README.md"); err != nil {
 		return "", err
 	}
 	msg := "chore(release): " + version

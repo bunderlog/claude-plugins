@@ -10,10 +10,11 @@ Release, so a commit only to the release tool, a test or the schema is never in 
 version or notes. The commits follow Conventional Commits: below 1.0 a breaking change or a `feat`
 raises the minor, anything else the patch; from 1.0 a breaking change raises the major. It builds
 that version for every platform, so a version that doesn't build is never tagged, then writes it
-to `plugin.json` and a section to `CHANGELOG.md`, commits them as `chore(release): <version>` and
-tags the commit `v<version>`, signed, for `git push --follow-tags`. The tag starts the Release
-workflow, which builds the binaries for every platform and publishes them, their `SHA256SUMS` and
-the CHANGELOG section as the GitHub Release (ADR binary).
+to `plugin.json` and to the line the README's CI recipe pins (ADR checks), and a section to
+`CHANGELOG.md`, commits them as `chore(release): <version>` and tags the commit `v<version>`,
+signed, for `git push --follow-tags`. The tag starts the Release workflow, which builds the
+binaries for every platform and publishes them, their `SHA256SUMS` and the CHANGELOG section as
+the GitHub Release (ADR binary).
 
 The release tool is a Go module of its own, `src/release/`, outside the plugin and the binary's
 module, so a change to it needs no Release; it takes the plugin's names from `src/baloo/names`.
@@ -30,6 +31,10 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   showed in the users' notes, and a `feat` to it raised the plugin's minor.
 - A pre-push check that a push changing the plugin carries a Release — a Release is made when
   someone decides to make one, not with every push.
+- A placeholder for the version in the README's CI recipe — nothing to keep up, but the recipe
+  no longer runs as copied.
+- A test failing when the README's version lags `plugin.json` — nothing forgotten, but an edit by
+  hand at every Release.
 - CI making the Release on every push to `main` — no local step, but the release commit would be
   CI's, unsigned, and CI would push to `main`.
 

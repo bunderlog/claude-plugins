@@ -63,3 +63,23 @@ func TestSection(t *testing.T) {
 		t.Errorf("Section(docs only) = %q; want %q", got, want)
 	}
 }
+
+// The README's CI recipe pins the new version; nothing else in it changes.
+func TestPin(t *testing.T) {
+	readme := "Pin it:\n\n```sh\nset -e\nversion=0.9.0\nfile=baloo_${version}_linux_amd64\n```\n\nversion=0.9.0 in prose.\n"
+	want := "Pin it:\n\n```sh\nset -e\nversion=0.10.0\nfile=baloo_${version}_linux_amd64\n```\n\nversion=0.9.0 in prose.\n"
+	if got, err := Pin([]byte(readme), "0.10.0"); string(got) != want || err != nil {
+		t.Errorf("Pin = %q, %v; want %q", got, err, want)
+	}
+}
+
+// A README with no line to pin, or more than one, is an error rather than a Release that leaves
+// the recipe behind.
+func TestPin_NotOneLine(t *testing.T) {
+	for _, readme := range []string{"no recipe\n", "  version=0.9.0\n", "version=0.9.0\r\n",
+		"version=0.9.0\nversion=0.9.0\n"} {
+		if _, err := Pin([]byte(readme), "0.10.0"); err == nil {
+			t.Errorf("Pin(%q) = nil error; want one", readme)
+		}
+	}
+}
