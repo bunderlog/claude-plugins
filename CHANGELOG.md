@@ -2,6 +2,20 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.11.0 — 2026-10-01
+
+### Features
+
+- checks: deny pruning unreachable commits and deleting .git; find JWTs and URL passwords (ae9f83a)
+- guidelines: rules for stale builds, measured claims and removing what has consumers (85a996b)
+- guidelines: rules for pkill -f, fixing every instance, and the project's own checks (02ab671)
+- checks: let git push --delete pass for a branch the remote's default branch holds (795cfa2)
+- session-start: turn off Claude Code's commit attribution where no-ai-coauthor is on (efbe90d)
+
+### Fixes
+
+- session-review: change nothing but the glossary and ADRs in the review's own session (2d88127)
+
 ## 0.10.0 — 2026-10-01
 
 ### Features
