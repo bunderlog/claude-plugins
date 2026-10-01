@@ -30,6 +30,10 @@ type Session struct {
 	Events []Event
 	// Repeats are the calls made at least three times, commonest first.
 	Repeats []Repeat
+	// Costs are the calls that added the most to the context, costliest first.
+	Costs []Cost
+	// Tokens is how many tokens each tool's calls added to the context.
+	Tokens map[string]int
 }
 
 // Event is a moment of a session a Retro looks at, by the Transcript's line `At`, from 1.
@@ -50,11 +54,20 @@ type Repeat struct {
 	N    int
 }
 
+// Cost is a tool call, by its result's line `At`, that added `Tokens` tokens to the context.
+type Cost struct {
+	At     int
+	Call   string
+	Tokens int
+}
+
 const (
 	promptChars = 300
 	errorChars  = 200
 	callChars   = 120
 	repeatMin   = 3
+	costMin     = 5000 // a call adding fewer tokens isn't worth a Retro's look
+	topCosts    = 5
 )
 
 // repeated are the tools whose repeated calls show Claude hunting for the same thing.
@@ -68,6 +81,15 @@ type line struct {
 	Cwd        string          `json:"cwd"`
 	AITitle    string          `json:"aiTitle"`
 	Message    json.RawMessage `json:"message"`
+	Attachment json.RawMessage `json:"attachment"`
+}
+
+// result is a tool call's result, at the Transcript's line `at`, waiting for the next response's
+// usage to tell what it cost.
+type result struct {
+	at         int
+	call, tool string
+	chars      int
 }
 
 type block struct {
@@ -164,11 +186,59 @@ func commandText(text string) string {
 	return strings.TrimSpace(name + " " + args)
 }
 
+// response is the id of the assistant's message `message`, the tokens of the context it was
+// given and the tokens it wrote, from the usage Claude Code records; ok is false without one.
+func response(message json.RawMessage) (id string, context, output int, ok bool) {
+	var m struct {
+		ID    string `json:"id"`
+		Usage *struct {
+			Input         int `json:"input_tokens"`
+			CacheCreation int `json:"cache_creation_input_tokens"`
+			CacheRead     int `json:"cache_read_input_tokens"`
+			Output        int `json:"output_tokens"`
+		} `json:"usage"`
+	}
+	if json.Unmarshal(message, &m) != nil || m.Usage == nil || m.ID == "" {
+		return "", 0, 0, false
+	}
+	u := m.Usage
+	return m.ID, u.Input + u.CacheCreation + u.CacheRead, u.Output, true
+}
+
+// charge spreads `tokens`, what the context grew by after the results `rs` and `other`
+// characters of what else came (a prompt, Claude Code's attachments), over them by length: calls
+// made in parallel come back to one response, and a call is charged only its own result's part.
+func (s *Session) charge(rs []result, other, tokens int) {
+	if len(rs) == 0 || tokens <= 0 {
+		return
+	}
+	chars := other
+	for _, r := range rs {
+		chars += r.chars
+	}
+	for _, r := range rs {
+		n := tokens / len(rs)
+		if chars > 0 {
+			n = tokens * r.chars / chars
+		}
+		if n <= 0 {
+			continue
+		}
+		s.Tokens[r.tool] += n
+		if n >= costMin {
+			s.Costs = append(s.Costs, Cost{r.at, r.call, n})
+		}
+	}
+}
+
 // Condense is the session of the Transcript `transcript`, whose id is `id`.
 func Condense(transcript []byte, id string) Session {
-	s := Session{ID: id, Tools: map[string]int{}}
-	calls := map[string]string{}
+	s := Session{ID: id, Tools: map[string]int{}, Tokens: map[string]int{}}
+	calls, tools := map[string]string{}, map[string]string{}
 	counts := map[string]int{}
+	// The last response's id, context and output, and the results given to the next one.
+	prev, context, output, other := "", 0, 0, 0
+	var pending []result
 	var first, last time.Time
 	cwd := ""
 	lines(transcript, func(at int, l line) bool {
@@ -191,29 +261,54 @@ func Condense(transcript []byte, id string) Session {
 		}
 		bs := blocks(l.Message)
 		if l.Type == "assistant" {
+			if id, c, o, ok := response(l.Message); ok {
+				if id != prev {
+					// The context grew by the last response's output and what came after it.
+					if prev != "" {
+						s.charge(pending, other, c-context-output)
+					}
+					prev, pending, other = id, nil, 0
+				}
+				context, output = c, o
+			}
 			for _, b := range bs {
 				if b.Type != "tool_use" || b.Name == "" {
 					continue
 				}
 				s.Tools[b.Name]++
 				c := call(b.Name, b.Input, cwd)
-				calls[b.ID] = c
+				calls[b.ID], tools[b.ID] = c, b.Name
 				if slices.Contains(repeated, b.Name) {
 					counts[c]++
 				}
 			}
 		}
+		results := slices.ContainsFunc(bs, func(b block) bool { return b.Type == "tool_result" })
+		switch {
+		case l.Type == "attachment":
+			other += len(l.Attachment)
+		case l.Type == "user" && !results:
+			other += len(l.Message)
+		}
 		if l.Type != "user" || l.IsMeta {
 			return true
 		}
-		if slices.ContainsFunc(bs, func(b block) bool { return b.Type == "tool_result" }) {
+		if results {
 			for _, b := range bs {
-				if b.Type == "tool_result" && b.IsError {
-					text := textOf(content(b.Content))
-					c, ok := calls[b.ToolUseID]
-					if !ok {
-						c = "?"
-					}
+				if b.Type != "tool_result" {
+					continue
+				}
+				text := textOf(content(b.Content))
+				c, ok := calls[b.ToolUseID]
+				if !ok {
+					c = "?"
+				}
+				tool, ok := tools[b.ToolUseID]
+				if !ok {
+					tool = "?"
+				}
+				pending = append(pending, result{at, c, tool, len(text)})
+				if b.IsError {
 					s.Events = append(s.Events, Event{At: at, Type: "error", Kind: kind(text), Call: c, Text: text})
 				}
 			}
@@ -245,7 +340,14 @@ func Condense(transcript []byte, id string) Session {
 		}
 		return strings.Compare(a.Call, b.Call)
 	})
+	slices.SortStableFunc(s.Costs, func(a, b Cost) int { return b.Tokens - a.Tokens })
+	s.Costs = s.Costs[:min(len(s.Costs), topCosts)]
 	return s
+}
+
+// kilo is `n` tokens in thousands, `12k`.
+func kilo(n int) string {
+	return fmt.Sprintf("%dk", (n+500)/1000)
 }
 
 // kinds are the kinds of a failed tool call, by its error; the first that matches names it.
@@ -364,6 +466,12 @@ func (s Session) Report() string {
 			out = append(out, fmt.Sprintf("%d× %s", r.N, clip(r.Call, callChars)))
 		}
 	}
+	if len(s.Costs) > 0 {
+		out = append(out, "", "Expensive calls, by the tokens they added to the context:")
+		for _, c := range s.Costs {
+			out = append(out, fmt.Sprintf("[%d] %s %s", c.At, kilo(c.Tokens), clip(c.Call, callChars)))
+		}
+	}
 	return Mask(strings.Join(out, "\n"))
 }
 
@@ -425,12 +533,17 @@ func commonest(counts []*seen) []*seen {
 // Summary is the sessions `sessions` together, for a Retro, masked: their failures by kind, with
 // the commonest of each (a failed command, a call rejected or refused by the classifier, by its
 // tool; the rest by their error), then the prompts typed more than once, which a skill or a Hook
-// could take over.
+// could take over, then the tools whose calls added the most tokens to the context.
 func Summary(sessions []Session) string {
 	var order []string
 	byKind := map[string][]*seen{}
 	var prompts []*seen
+	tokens, in := map[string]int{}, map[string]int{}
 	for _, s := range sessions {
+		for tool, n := range s.Tokens {
+			tokens[tool] += n
+			in[tool]++
+		}
 		for _, e := range s.Events {
 			switch e.Type {
 			case "error":
@@ -474,6 +587,18 @@ func Summary(sessions []Session) string {
 	}
 	if len(repeats) > 0 {
 		out = append(append(out, "repeated prompts:"), repeats...)
+	}
+	costliest := slices.SortedFunc(maps.Keys(tokens), func(a, b string) int {
+		if tokens[a] != tokens[b] {
+			return tokens[b] - tokens[a]
+		}
+		return strings.Compare(a, b)
+	})
+	if len(costliest) > 0 {
+		out = append(out, "tokens added to the context, by tool:")
+		for _, tool := range costliest[:min(len(costliest), top)] {
+			out = append(out, fmt.Sprintf("  %s %s in %d session(s)", tool, kilo(tokens[tool]), in[tool]))
+		}
 	}
 	return Mask(strings.Join(out, "\n"))
 }

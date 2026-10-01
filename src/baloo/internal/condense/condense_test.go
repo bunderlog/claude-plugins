@@ -113,6 +113,70 @@ func TestReport_ShowsRepeatedCalls(t *testing.T) {
 	}
 }
 
+// costly is a Transcript where a Read of 30,000 characters and a Bash of 10,000, made in
+// parallel, and an attachment of `attached` characters grow the next response's context by
+// `grown` tokens; the first response is written as two lines, as Claude Code does.
+func costly(grown, attached int) []byte {
+	usage := func(id string, context int) string {
+		return fmt.Sprintf(`"id":%q,"usage":{"input_tokens":1,"cache_creation_input_tokens":%d,"cache_read_input_tokens":0,"output_tokens":100}`, id, context-1)
+	}
+	result := func(id string, chars int) string {
+		return fmt.Sprintf(`{"type":"tool_result","tool_use_id":%q,"content":%q}`, id, strings.Repeat("x", chars))
+	}
+	return transcript(
+		`{"type":"assistant","cwd":"/repo","message":{`+usage("m1", 1000)+`,"content":[{"type":"text","text":"Reading."}]}}`,
+		`{"type":"assistant","cwd":"/repo","message":{`+usage("m1", 1000)+`,"content":[{"type":"tool_use","id":"r1","name":"Read","input":{"file_path":"/repo/big.go"}},{"type":"tool_use","id":"b1","name":"Bash","input":{"command":"ls"}}]}}`,
+		`{"type":"user","message":{"role":"user","content":[`+result("r1", 30000)+`,`+result("b1", 10000)+`]}}`,
+		attachment(attached),
+		`{"type":"assistant","message":{`+usage("m2", 1000+100+grown)+`,"content":[{"type":"text","text":"Done."}]}}`,
+	)
+}
+
+// attachment is a line of Claude Code's own whose attachment is `n` characters long, or none.
+func attachment(n int) string {
+	if n == 0 {
+		return ""
+	}
+	return `{"type":"attachment","attachment":"` + strings.Repeat("a", n-2) + `"}`
+}
+
+// A call's cost is what the next response's context grew by, beyond the last response's
+// output; calls made in parallel share it by the length of their results.
+func TestReport_ShowsExpensiveCalls(t *testing.T) {
+	got := Condense(costly(20000, 0), "abc").Report()
+	want := "\n\nExpensive calls, by the tokens they added to the context:\n[3] 15k Read(big.go)\n[3] 5k Bash(ls)"
+	if !strings.HasSuffix(got, want) {
+		t.Errorf("Report =\n%s\nwant it to end with%s", got, want)
+	}
+}
+
+// A context that shrinks, after a compaction, charges nothing; a call under 5,000 tokens isn't
+// listed.
+func TestCondense_ChargesNoShrinkAndListsNoCheapCall(t *testing.T) {
+	if s := Condense(costly(-500, 0), "abc"); len(s.Costs) > 0 || len(s.Tokens) > 0 {
+		t.Errorf("Costs = %v, Tokens = %v, want none", s.Costs, s.Tokens)
+	}
+	if s := Condense(costly(4000, 0), "abc"); len(s.Costs) > 0 || s.Tokens["Read"] != 3000 {
+		t.Errorf("Costs = %v, Tokens = %v, want no Costs and Read 3000", s.Costs, s.Tokens)
+	}
+}
+
+// What came with the results, Claude Code's attachments, takes its share by length.
+func TestCondense_ChargesACallOnlyItsOwnResultsPart(t *testing.T) {
+	s := Condense(costly(20000, 40000), "abc")
+	if s.Tokens["Read"] != 7500 || s.Tokens["Bash"] != 2500 || len(s.Costs) != 1 {
+		t.Errorf("Costs = %v, Tokens = %v, want Read 7500 listed and Bash 2500", s.Costs, s.Tokens)
+	}
+}
+
+func TestSummary_ShowsTokensByTool(t *testing.T) {
+	got := Summary([]Session{Condense(costly(20000, 0), "one"), Condense(costly(20000, 0), "two")})
+	want := "\ntokens added to the context, by tool:\n  Read 30k in 2 session(s)\n  Bash 10k in 2 session(s)"
+	if !strings.HasSuffix(got, want) {
+		t.Errorf("Summary =\n%s\nwant it to end with%s", got, want)
+	}
+}
+
 // Across sessions: failures by kind, the commonest kind first, each with its commonest failures
 // (a failed command by its tool, others by their error), then the prompts typed more than once.
 func TestSummary_CountsFailuresByKindAndRepeatedPrompts(t *testing.T) {

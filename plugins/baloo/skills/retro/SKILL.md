@@ -13,11 +13,11 @@ fix belongs in the setup, so the next session doesn't pay it.
 From the project folder, run
 `CLAUDE_PLUGIN_DATA='${CLAUDE_PLUGIN_DATA}' sh '${CLAUDE_PLUGIN_ROOT}/scripts/loader' condense`: no
 argument for the latest session (the current one, if it is running), `--last <n>` for more,
-or session ids. Read its output in full: prompts, commands, interrupts and failed tool calls
-with their `[line]`, repeated calls, and for several sessions a summary of failures by kind and
-repeated prompts. To check one moment, run it with `<id> --around <line>`: the lines around it
-in full, masked. Read transcripts only through it: a raw one can hold a secret an earlier
-session printed.
+or session ids. Read its output in full: prompts, commands, interrupts and failed tool calls with
+their `[line]`, repeated calls, expensive calls, and for several sessions a summary of failures by
+kind, repeated prompts and the tokens each tool added to the context. To check one moment, run it
+with `<id> --around <line>`: the lines around it in full, masked. Read transcripts only through it:
+a raw one can hold a secret an earlier session printed.
 
 Then read what a fix would touch: CLAUDE.md, the Config (`.claude/baloo.yml`),
 `.claude/settings.json`, the hooks and skills involved, and the project's auto-memory
@@ -38,6 +38,9 @@ stalls such a check would have caught.
   would have told it beforehand.
 - **Repeated prompts**: work the user keeps asking for by hand — a skill, a hook or a Git hook.
 - **Repeated calls**: Claude hunting for the same thing — a pointer in CLAUDE.md.
+- **Expensive calls**: a call that filled the context — a whole file read where a part would do,
+  a command's full output, an MCP server whose calls spend many tokens — a narrower command in
+  CLAUDE.md, an output cut by a flag or a pipe, or an MCP server turned off where it isn't used.
 - **Missing information**: Claude guessing, or asking the user for a log or a state it couldn't
   read — a server log teed to a file, read-only access to the service, or an MCP server.
 - **Workarounds in memory**: an entry that patches a skill, a CLAUDE.md line or a setting (a tool
