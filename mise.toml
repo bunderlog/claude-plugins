@@ -16,7 +16,7 @@ run = [
   "go -C release vet ./...",
   "go -C release test ./...",
   "shellcheck ../plugins/baloo/scripts/loader",
-  "cd .. && cspell --no-progress $(git ls-files)",
+  "cd .. && cspell --no-progress $(git ls-files -co --exclude-standard)",
 ]
 
 [tasks.build]
