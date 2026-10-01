@@ -22,7 +22,9 @@ session printed.
 Then read what a fix would touch: CLAUDE.md, the Config (`.claude/baloo.yml`),
 `.claude/settings.json`, the hooks and skills involved, and the project's auto-memory
 (`MEMORY.md` and its files, in the project's folder under `~/.claude/projects/`). A fix that
-already exists but is off, not wired up or broken is the thing to report, not a new one.
+already exists but is off, not wired up or broken is the thing to report, not a new one. A
+project where no Git hook or CI job runs its lint and tests is a finding too: report it with the
+stalls such a check would have caught.
 
 ## Look for
 
@@ -36,6 +38,8 @@ already exists but is off, not wired up or broken is the thing to report, not a 
   would have told it beforehand.
 - **Repeated prompts**: work the user keeps asking for by hand — a skill, a hook or a Git hook.
 - **Repeated calls**: Claude hunting for the same thing — a pointer in CLAUDE.md.
+- **Missing information**: Claude guessing, or asking the user for a log or a state it couldn't
+  read — a server log teed to a file, read-only access to the service, or an MCP server.
 - **Workarounds in memory**: an entry that patches a skill, a CLAUDE.md line or a setting (a tool
   that fails, and what to do instead). Move the fix into what it patches and drop the entry: a
   teammate's session never sees this memory, and the broken skill stays broken.
@@ -49,6 +53,8 @@ one-off only if it was severe.
 
 Prefer the fix that works without Claude remembering it:
 1. **Enforced**: a Check turned on in the Config, a test, or a lint or Git hook the project owns.
+   A mistake with a fixed pattern (a banned API, an import shape, a file in the wrong place)
+   always gets one, never a written line.
 2. **Configured**: a permission rule or a setting of Claude Code.
 3. **Written**: the shortest line that changes behavior — in CLAUDE.md for this project,
    `~/.claude/CLAUDE.md` for every project, or a skill. Cut an instruction the transcripts show
