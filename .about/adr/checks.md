@@ -32,6 +32,12 @@ MultiEdit of a `settings.json` or `settings.local.json` in a `.claude` folder or
 command that names such a file and such a key, or `claude plugin disable` or `uninstall` of the
 plugin. These rules have no key.
 
+Where `no-ai-coauthor` is on, session start also sets Claude Code's `attribution` to
+`{"commit": ""}`, so Claude writes no co-author trailer the Check would then reject. It writes it
+as it picks an Output style (ADR output-styles): where the plugin is enabled, in the settings file
+that enables it, and only where none of Claude Code's settings files sets `attribution` or
+`includeCoAuthoredBy`, to any value. It never takes it out.
+
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the binary's
 `pre-tool-use`, which reads the Config once and runs the Checks it turns on; a denial wins over a
 question to the user. Where the binary is missing or fails, it says nothing, and the call runs:
@@ -65,6 +71,11 @@ Release.
   setting, and git since 2.33 won't merge on a pull anyway until `pull.rebase` or `pull.ff` is
   set.
 - A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
+- Leaving `no-ai-coauthor` alone to catch the trailer — Claude Code adds it by default, so each
+  commit fails once and is written again.
+- `attribution.pr` too — the Check reads commits, not pull requests.
+- Taking the attribution out where `no-ai-coauthor` goes off — the binary can't tell its value
+  from one the user wrote.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
 - Asking before every change to Claude Code's settings — also covers a key missed here, but
   permissions and env are edited often, and a question on each teaches the user to say yes
@@ -79,6 +90,7 @@ Release.
 - A repo's committed Config can turn a Check off for everyone who opens it; session start says
   so, but doesn't stop it.
 - Claude asks the user before every change to the Config, a harmless one too.
+- Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
 - A tool call that turns the Hooks off in a way the rules don't name, such as a script that
   writes the key, goes unasked; they guard against accidents, not against Claude.
 - Managed settings and the `/plugin` menu are out of reach: one needs an administrator, the other

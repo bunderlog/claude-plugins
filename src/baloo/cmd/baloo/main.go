@@ -95,14 +95,15 @@ func project() (string, error) {
 
 // sessionStart is the SessionStart Hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, picks the Output style it names where
-// Claude Code's settings pick none (ADR output-styles), sets the Status line or takes it out (ADR
-// status-line), and writes the Git hooks or takes them out (ADR git-hooks). What it prints Claude
-// Code adds to Claude's context, so it prints only what Claude should know: a Config it created,
-// an Output style or a Status line it set, the Git hooks it wrote, took out, changed in husky or
-// left alone, a Hook Check it turns off (ADR checks), what the last Session review replied (ADR
-// session-review), and the problems, each on one line; then the Guidelines the Config turns on
-// (ADR guidelines). In a Session review's session it only names the Guidelines: that session
-// changes nothing but the glossary and the ADRs (ADR session-review).
+// Claude Code's settings pick none (ADR output-styles), turns off Claude Code's commit attribution
+// where no-ai-coauthor is on and they set none (ADR checks), sets the Status line or takes it
+// out (ADR status-line), and writes the Git hooks or takes them out (ADR git-hooks). What it prints
+// Claude Code adds to Claude's context, so it prints only what Claude should know: a Config it
+// created, an Output style, an attribution or a Status line it set, the Git hooks it wrote, took
+// out, changed in husky or left alone, a Hook Check it turns off (ADR checks), what the last
+// Session review replied (ADR session-review), and the problems, each on one line; then the
+// Guidelines the Config turns on (ADR guidelines). In a Session review's session it only names the
+// Guidelines: that session changes nothing but the glossary and the ADRs (ADR session-review).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -137,6 +138,21 @@ func sessionStart(stdout, stderr io.Writer) int {
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("could not pick the %s:%s output style: %v",
 				names.Plugin, c.OutputStyle, err))
+		}
+	}
+	if c.Root != "" && c.CheckOn("no-ai-coauthor") {
+		path, enabled, err := settings.SetUnset(dir, c.Root,
+			[]string{"attribution", "includeCoAuthoredBy"}, "attribution", map[string]string{"commit": ""})
+		if path != "" {
+			line := fmt.Sprintf("turned off Claude Code's commit attribution in %s, since "+
+				"git-hooks.no-ai-coauthor in %s rejects it: tell the user", path, names.Config)
+			if enabled == settings.Project {
+				line += "; the change to the team's settings is theirs to commit"
+			}
+			report = append(report, line)
+		}
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("could not turn off the commit attribution: %v", err))
 		}
 	}
 	if c.Root != "" && c.StatusLine != nil {

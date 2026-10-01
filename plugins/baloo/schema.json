@@ -91,7 +91,7 @@
       "type": ["object", "null"],
       "properties": {
         "no-ai-coauthor": {
-          "description": "commit-msg: no AI as a commit's co-author, and no line crediting one; a person's Co-Authored-By passes.",
+          "description": "commit-msg: no AI as a commit's co-author, and no line crediting one; a person's Co-Authored-By passes. Session start also turns off Claude Code's commit attribution where no settings file sets it.",
           "type": "boolean"
         },
         "conventional-commits": {

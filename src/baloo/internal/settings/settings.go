@@ -126,6 +126,44 @@ func Enabling(fields map[Scope]map[string]json.RawMessage) Scope {
 	return ""
 }
 
+// SetUnset sets the top-level field `key` to `value` for the project at `project`, in the repo at
+// `root`, where the plugin is enabled in its local, project or user settings and none of Claude
+// Code's settings files sets any of `keys`, to any value. It writes the file that enables the
+// plugin: the project's settings.json or settings.local.json, or for the user's settings the
+// project's settings.local.json. It returns the file it wrote and the Scope that enables the
+// plugin, or "" for both where it wrote nothing. A file it creates goes into the repo's
+// info/exclude, as Claude Code does with its own.
+func SetUnset(project, root string, keys []string, key string, value any) (string, Scope, error) {
+	files := Files(project)
+	fields, err := ReadAll(files)
+	if err != nil {
+		return "", "", err
+	}
+	for _, f := range fields {
+		for _, k := range keys {
+			if _, ok := f[k]; ok {
+				return "", "", nil
+			}
+		}
+	}
+	enabled := Enabling(fields)
+	if enabled == "" {
+		return "", "", nil
+	}
+	path := files[Local]
+	if enabled == Project {
+		path = files[Project]
+	}
+	created, err := Set(path, key, value)
+	if err != nil {
+		return "", "", err
+	}
+	if created {
+		return path, enabled, Exclude(root, path)
+	}
+	return path, enabled, nil
+}
+
 // Set sets the top-level field `key` of the settings file at `path` to `value`, the rest of the
 // file's text as it was, and says whether it created the file, which then goes into the repo's
 // info/exclude (see Exclude).

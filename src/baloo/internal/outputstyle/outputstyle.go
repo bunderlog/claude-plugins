@@ -21,31 +21,7 @@ type Picked struct {
 // project's settings.local.json. It returns what it wrote, a zero Picked when it wrote nothing. A
 // file it creates goes into the repo's info/exclude, as Claude Code does with its own.
 func Pick(project, root, style string) (Picked, error) {
-	files := settings.Files(project)
-	fields, err := settings.ReadAll(files)
-	if err != nil {
-		return Picked{}, err
-	}
-	for _, f := range fields {
-		if _, ok := f["outputStyle"]; ok {
-			return Picked{}, nil
-		}
-	}
-	enabled := settings.Enabling(fields)
-	if enabled == "" {
-		return Picked{}, nil
-	}
-	path := files[settings.Local]
-	if enabled == settings.Project {
-		path = files[settings.Project]
-	}
-	created, err := settings.Set(path, "outputStyle", names.Plugin+":"+style)
-	if err != nil {
-		return Picked{}, err
-	}
-	picked := Picked{path, enabled}
-	if created {
-		return picked, settings.Exclude(root, path)
-	}
-	return picked, nil
+	path, enabled, err := settings.SetUnset(project, root, []string{"outputStyle"}, "outputStyle",
+		names.Plugin+":"+style)
+	return Picked{path, enabled}, err
 }

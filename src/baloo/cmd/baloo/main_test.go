@@ -125,6 +125,51 @@ func TestSessionStartOutputStyle(t *testing.T) {
 	}
 }
 
+// Where the project's settings enable the plugin and no-ai-coauthor is on, session start turns off
+// Claude Code's commit attribution there, once; a settings file that sets it already keeps it.
+func TestSessionStartAttribution(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	settings := filepath.Join(dir, names.ProjectSettings)
+	enable := `{"enabledPlugins": {"` + names.PluginID + `": true}}`
+	if err := os.WriteFile(settings, []byte(enable), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	want := "turned off Claude Code's commit attribution in " + settings + ", since " +
+		"git-hooks.no-ai-coauthor in .claude/baloo.yml rejects it: tell the user; the change to " +
+		"the team's settings is theirs to commit\n"
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		!strings.Contains(stdout.String(), "\n"+want) || stderr.Len() != 0 {
+		t.Errorf("session-start = %d, %q, %q; want 0 and %q", code, stdout.String(), stderr.String(), want)
+	}
+	if data, _ := os.ReadFile(settings); !strings.Contains(string(data), `"attribution": {"commit":""}`) {
+		t.Errorf("settings = %s; want attribution.commit empty", data)
+	}
+	stdout.Reset()
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		strings.Contains(stdout.String(), "attribution") {
+		t.Errorf("second session-start = %d, %q; want 0 and nothing turned off", code, stdout.String())
+	}
+
+	dir = inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	own := `{"enabledPlugins": {"` + names.PluginID + `": true}, "includeCoAuthoredBy": true}`
+	if err := os.WriteFile(filepath.Join(dir, names.ProjectSettings), []byte(own), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stdout.Reset()
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		strings.Contains(stdout.String(), "attribution") {
+		t.Errorf("session-start with includeCoAuthoredBy = %d, %q; want 0 and nothing turned off",
+			code, stdout.String())
+	}
+}
+
 // Where the plugin is enabled, a new Config sets the Status line in the project's
 // settings.local.json, once.
 func TestSessionStartStatusLine(t *testing.T) {
