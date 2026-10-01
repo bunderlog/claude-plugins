@@ -117,7 +117,7 @@ func sessionStart(stdout, stderr io.Writer) int {
 		}
 	}
 	if c.Root != "" && c.StatusLine != nil {
-		shown, err := statusline.Sync(dir, c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), *c.StatusLine)
+		shown, err := statusline.Set(dir, c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), *c.StatusLine)
 		if shown {
 			report = append(report, fmt.Sprintf("set the %s status line in %s: tell the user, that "+
 				"it shows from their next message, and that status-line: false in %s takes it out",

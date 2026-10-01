@@ -32,16 +32,16 @@ func ours(raw json.RawMessage) bool {
 	return json.Unmarshal(raw, &l) == nil && strings.HasSuffix(l.Command, " "+names.Marker)
 }
 
-// Sync brings the status line of the project at `project`, in the repo at `root`, in line with
-// `on`, the Config's key. On, it sets the plugin's in the project's settings.local.json, where the
-// plugin is enabled in its local, project or user settings and none of its local, project or
-// managed settings has a status line the plugin didn't write; the user's own gives way. Off, or
+// Set sets the status line of the project at `project`, in the repo at `root`, or takes it out, as
+// `on`, the Config's key, says. On, it sets the plugin's in the project's settings.local.json,
+// where the plugin is enabled in its local, project or user settings and none of its local, project
+// or managed settings has a status line the plugin didn't write; the user's own gives way. Off, or
 // where one of those has a status line of its own, it takes the plugin's out. It says whether it
 // set one where the plugin's wasn't.
 //
-// The command runs the binary through a link in `data`, the plugin's data folder, which Sync
+// The command runs the binary through a link in `data`, the plugin's data folder, which Set
 // points at the binary running it, so the command stays the same from one version to the next.
-func Sync(project, root, data string, on bool) (shown bool, err error) {
+func Set(project, root, data string, on bool) (shown bool, err error) {
 	files := settings.Files(project)
 	fields, err := settings.ReadAll(files)
 	if err != nil {

@@ -60,7 +60,7 @@ func statusLine(t *testing.T, path string) string {
 const on = `{"enabledPlugins": {"` + names.PluginID + `": true}}`
 const theirs = `{"statusLine": {"type": "command", "command": "their-line"}}`
 
-func TestSync(t *testing.T) {
+func TestSet(t *testing.T) {
 	for _, tc := range []struct {
 		name                         string
 		local, project, user, manage string
@@ -89,9 +89,9 @@ func TestSync(t *testing.T) {
 				}
 			}
 			before := contents(t, local)
-			shown, err := Sync(root, root, data, true)
+			shown, err := Set(root, root, data, true)
 			if err != nil || shown != tc.shown {
-				t.Fatalf("Sync = %v, %v; want %v", shown, err, tc.shown)
+				t.Fatalf("Set = %v, %v; want %v", shown, err, tc.shown)
 			}
 			want := "'" + filepath.Join(data, "baloo") + "' status-line # managed by baloo"
 			if got := statusLine(t, local); tc.shown && got != want {
@@ -106,10 +106,10 @@ func TestSync(t *testing.T) {
 
 // The command runs the binary through a link in the data folder, and a second session start
 // changes nothing.
-func TestSyncLinks(t *testing.T) {
+func TestSetLinks(t *testing.T) {
 	root, own, data := sandbox(t)
 	write(t, filepath.Join(own, "settings.json"), on)
-	if _, err := Sync(root, root, data, true); err != nil {
+	if _, err := Set(root, root, data, true); err != nil {
 		t.Fatal(err)
 	}
 	exe, _ := os.Executable()
@@ -118,8 +118,8 @@ func TestSyncLinks(t *testing.T) {
 	}
 	local := filepath.Join(root, names.LocalSettings)
 	before := contents(t, local)
-	if shown, err := Sync(root, root, data, true); shown || err != nil || contents(t, local) != before {
-		t.Errorf("second Sync = %v, %v, %q; want nothing shown or changed", shown, err, contents(t, local))
+	if shown, err := Set(root, root, data, true); shown || err != nil || contents(t, local) != before {
+		t.Errorf("second Set = %v, %v, %q; want nothing shown or changed", shown, err, contents(t, local))
 	}
 	if got := contents(t, filepath.Join(root, ".git", "info", "exclude")); got != "/"+names.LocalSettings+"\n" {
 		t.Errorf("info/exclude = %q; want the settings file it created", got)
@@ -131,7 +131,7 @@ func TestSyncLinks(t *testing.T) {
 
 // The plugin's own status line, from another data folder, is set again in place, and turned off
 // it is taken out, the rest of the file kept; another's is left alone.
-func TestSyncOwn(t *testing.T) {
+func TestSetOwn(t *testing.T) {
 	root, _, data := sandbox(t)
 	local := filepath.Join(root, names.LocalSettings)
 	old := `{
@@ -140,41 +140,41 @@ func TestSyncOwn(t *testing.T) {
 }
 `
 	write(t, local, old)
-	if shown, err := Sync(root, root, data, true); shown || err != nil {
-		t.Errorf("Sync over its own = %v, %v; want it set again, not shown", shown, err)
+	if shown, err := Set(root, root, data, true); shown || err != nil {
+		t.Errorf("Set over its own = %v, %v; want it set again, not shown", shown, err)
 	}
 	if got, want := statusLine(t, local), "'"+filepath.Join(data, "baloo")+"' status-line # managed by baloo"; got != want {
 		t.Errorf("status line = %q; want %q", got, want)
 	}
-	if _, err := Sync(root, root, data, false); err != nil {
+	if _, err := Set(root, root, data, false); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := contents(t, local), "{\n  \"enabledPlugins\": {\""+names.PluginID+"\": true}\n}\n"; got != want {
 		t.Errorf("turned off, %s = %q; want %q", local, got, want)
 	}
 	write(t, local, theirs)
-	if _, err := Sync(root, root, data, false); err != nil || contents(t, local) != theirs {
+	if _, err := Set(root, root, data, false); err != nil || contents(t, local) != theirs {
 		t.Errorf("turned off with another's, %s = %q, %v; want it as it was", local, contents(t, local), err)
 	}
 }
 
 // The plugin's own status line gives way to one the project or managed settings set later.
-func TestSyncOwnGivesWay(t *testing.T) {
+func TestSetOwnGivesWay(t *testing.T) {
 	for _, scope := range []string{"project", "managed"} {
 		t.Run(scope, func(t *testing.T) {
 			root, own, data := sandbox(t)
 			local := filepath.Join(root, names.LocalSettings)
 			write(t, local, on)
-			if shown, err := Sync(root, root, data, true); !shown || err != nil {
-				t.Fatalf("Sync = %v, %v; want it shown", shown, err)
+			if shown, err := Set(root, root, data, true); !shown || err != nil {
+				t.Fatalf("Set = %v, %v; want it shown", shown, err)
 			}
 			path := filepath.Join(root, names.ProjectSettings)
 			if scope == "managed" {
 				path = filepath.Join(own, "managed-settings.json")
 			}
 			write(t, path, theirs)
-			if shown, err := Sync(root, root, data, true); shown || err != nil {
-				t.Errorf("Sync after theirs = %v, %v; want nothing shown", shown, err)
+			if shown, err := Set(root, root, data, true); shown || err != nil {
+				t.Errorf("Set after theirs = %v, %v; want nothing shown", shown, err)
 			}
 			if got := statusLine(t, local); got != "" {
 				t.Errorf("%s has status line %q; want the plugin's taken out", local, got)
@@ -184,13 +184,13 @@ func TestSyncOwnGivesWay(t *testing.T) {
 }
 
 // Without the data folder the status line can't be set, which is an error only where it would be.
-func TestSyncNoData(t *testing.T) {
+func TestSetNoData(t *testing.T) {
 	root, own, _ := sandbox(t)
-	if _, err := Sync(root, root, "", true); err != nil {
-		t.Errorf("Sync not enabled = %v; want no error", err)
+	if _, err := Set(root, root, "", true); err != nil {
+		t.Errorf("Set not enabled = %v; want no error", err)
 	}
 	write(t, filepath.Join(own, "settings.json"), on)
-	if shown, err := Sync(root, root, "", true); shown || err == nil {
-		t.Errorf("Sync enabled = %v, %v; want an error", shown, err)
+	if shown, err := Set(root, root, "", true); shown || err == nil {
+		t.Errorf("Set enabled = %v, %v; want an error", shown, err)
 	}
 }

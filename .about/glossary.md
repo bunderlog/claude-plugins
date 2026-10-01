@@ -34,6 +34,8 @@ _Avoid_: "hook" for a Git hook
 A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit
 or push, whether you or Claude made it.
 _Avoid_: "hook" alone
+_Planned_: the plugin writing, at session start, the Git hooks that the Git hook Checks the Config
+turns on run in
 
 **Config**:
 A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
