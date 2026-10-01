@@ -16,8 +16,8 @@ argument for the latest session (the current one, if it is running), `--last <n>
 or session ids. Read its output in full: prompts, commands, interrupts and failed tool calls with
 their `[line]`, repeated calls, expensive calls, and for several sessions a summary of failures by
 kind, repeated prompts and the tokens each tool added to the context. To check one moment, run it
-with `<id> --around <line>`: the lines around it in full, masked. Read transcripts only through it:
-a raw one can hold a secret an earlier session printed.
+with `<id> --around <line>`: the lines around it, up to 2,000 characters a block, masked. Read
+transcripts only through it: a raw one can hold a secret an earlier session printed.
 
 Then read what a fix would touch: CLAUDE.md, the Config (`.claude/baloo.yml`),
 `.claude/settings.json`, the hooks and skills involved, and the project's auto-memory
