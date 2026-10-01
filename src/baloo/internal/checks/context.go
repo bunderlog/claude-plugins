@@ -66,10 +66,12 @@ func NoSecretsInContext(call ToolCall, dir string) string {
 		if marks(in.Command) {
 			return markAdvice
 		}
-		for _, p := range programs(in.Command) {
-			if why = shows(p, dir); why != "" {
+		found := programs(in.Command)
+		for i, p := range found {
+			if why = shows(p, dir); why != "" && !(dumpsEnv(p) && keepsNames(found[i:])) {
 				break
 			}
+			why = ""
 		}
 	case "Read":
 		why = secretFile(in.FilePath, dir)
@@ -182,7 +184,7 @@ func shows(p program, dir string) string {
 	}
 	switch p.name {
 	case "env", "printenv":
-		if len(named) == 0 {
+		if dumpsEnv(p) {
 			return p.name + " prints every environment variable"
 		}
 		if s := secret(named); p.name == "printenv" && s != "" {
@@ -234,6 +236,56 @@ func shows(p program, dir string) string {
 		}
 	}
 	return ""
+}
+
+// dumpsEnv says whether the program `p` prints every environment variable: env or printenv
+// without a name.
+func dumpsEnv(p program) bool {
+	return (p.name == "env" || p.name == "printenv") &&
+		!slices.ContainsFunc(p.args, func(a string) bool { return !strings.HasPrefix(a, "-") })
+}
+
+// keepsNames says whether a later program of the pipeline that starts at `p[0]` keeps only the
+// variables' names of what it is given, as `cut -d= -f1` does.
+func keepsNames(p []program) bool {
+	for i := 0; i+1 < len(p) && p[i].piped; i++ {
+		if namesOnly(p[i+1]) {
+			return true
+		}
+	}
+	return false
+}
+
+// nameMatch is a grep -o pattern that can match only the start of a line, and no `=`.
+var nameMatch = regexp.MustCompile(`^\^[\w()|\[\]*+?{},-]*$`)
+
+// namesOnly says whether the program `p` prints only what comes before each line's first `=`.
+func namesOnly(p program) bool {
+	args := strings.Join(p.args, " ")
+	switch p.name {
+	case "cut":
+		return regexp.MustCompile(`^-d ?= -f ?1$|^-f ?1 -d ?=$`).MatchString(args)
+	case "awk":
+		return regexp.MustCompile(`^-F ?= \{ ?print \$1 ?\}$`).MatchString(args)
+	case "sed":
+		script := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(args, "-E "), "-e "))
+		if len(script) < 2 || script[0] != 's' {
+			return false
+		}
+		parts := strings.Split(script[2:], script[1:2])
+		return len(parts) == 3 && parts[0] == "=.*" && !strings.ContainsAny(parts[1], "&\\") &&
+			(parts[2] == "" || parts[2] == "g")
+	case "grep":
+		var patterns []string
+		for _, a := range p.args {
+			if !strings.HasPrefix(a, "-") {
+				patterns = append(patterns, a)
+			}
+		}
+		return (hasFlag(p.args, "-o") || slices.Contains(p.args, "--only-matching")) &&
+			len(patterns) == 1 && nameMatch.MatchString(patterns[0])
+	}
+	return false
 }
 
 // secretName says whether the variable's name `name` says it holds a Secret.

@@ -10,9 +10,10 @@ import (
 // program is one program a shell command runs: its name without its folder, its arguments, and
 // the variables assigned for it (`HUSKY=0 git …`).
 type program struct {
-	name string
-	args []string
-	env  []string
+	name  string
+	args  []string
+	env   []string
+	piped bool // its output goes into the next program, through a |
 }
 
 var assignment = regexp.MustCompile(`^[A-Za-z_]\w*=`)
@@ -32,7 +33,8 @@ var shells = []string{"sh", "bash", "zsh", "dash"}
 // An env with no program after it runs nothing but prints the environment, so it is one.
 func programs(command string) []program {
 	var found []program
-	for _, words := range split(command) {
+	cmds, piped := segments(command)
+	for i, words := range cmds {
 		var env []string
 		bareEnv := false
 		for len(words) > 0 {
@@ -53,7 +55,7 @@ func programs(command string) []program {
 		}
 		if len(words) == 0 {
 			if bareEnv {
-				found = append(found, program{"env", nil, env})
+				found = append(found, program{"env", nil, env, piped[i]})
 			}
 			continue
 		}
@@ -67,7 +69,7 @@ func programs(command string) []program {
 				found = append(found, programs(args[i+1])...)
 			}
 		default:
-			found = append(found, program{name, args, env})
+			found = append(found, program{name, args, env, piped[i]})
 		}
 	}
 	return found
@@ -76,7 +78,13 @@ func programs(command string) []program {
 // split is the words of each simple command in `command`, split on ; & | ( ) ` and newlines,
 // with quotes and backslashes taken off.
 func split(command string) [][]string {
-	cmds := [][]string{nil}
+	cmds, _ := segments(command)
+	return cmds
+}
+
+// segments is split's commands, each with whether a single | pipes its output into the next.
+func segments(command string) (cmds [][]string, piped []bool) {
+	cmds, piped = [][]string{nil}, []bool{false}
 	var word strings.Builder
 	inWord := false
 	flush := func() {
@@ -111,7 +119,9 @@ func split(command string) [][]string {
 			}
 		case strings.ContainsRune(";&|()`\n", c):
 			flush()
-			cmds = append(cmds, nil)
+			piped[len(piped)-1] = c == '|' && (i+1 == len(runes) || runes[i+1] != '|') &&
+				(i == 0 || runes[i-1] != '|')
+			cmds, piped = append(cmds, nil), append(piped, false)
 		case c == ' ' || c == '\t':
 			flush()
 		default:
@@ -120,7 +130,12 @@ func split(command string) [][]string {
 		}
 	}
 	flush()
-	return slices.DeleteFunc(cmds, func(c []string) bool { return len(c) == 0 })
+	for i := len(cmds) - 1; i >= 0; i-- {
+		if len(cmds[i]) == 0 {
+			cmds, piped = slices.Delete(cmds, i, i+1), slices.Delete(piped, i, i+1)
+		}
+	}
+	return cmds, piped
 }
 
 // shortFlag says whether the argument `a` is the short flag -`f`, alone or among others (`-nm`).
