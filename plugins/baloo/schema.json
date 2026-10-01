@@ -16,6 +16,10 @@
       "description": "The Session review: when a session ends, a separate Claude session records in .about/glossary.md and .about/adr/ what the conversation settled but nobody wrote down; the next session start says what it changed. It never commits.",
       "type": "boolean"
     },
+    "stop-check": {
+      "description": "The command the Stop check runs, with sh in the repo's root, when Claude ends a turn that changed the working tree; a failure goes back to Claude to fix. Off without it, or with false.",
+      "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
+    },
     "guidelines": {
       "description": "The plugin's Guidelines, files of working rules Claude reads when a task calls for one; each one true is named to Claude at session start.",
       "type": ["object", "null"],

@@ -35,6 +35,8 @@ type Config struct {
 	// SessionReview says whether a Session review starts when a session ends (ADR
 	// session-review).
 	SessionReview bool
+	// StopCheck is the command the Stop check runs, or "" where it is off (ADR stop-check).
+	StopCheck string
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 	// Checks are the Checks the Config turns on or off, by name; see CheckOn for one it doesn't.
@@ -84,6 +86,17 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		if value.Tag != "!!bool" || value.Decode(&c.SessionReview) != nil {
 			return []string{wrong(key.Line, key.Value, "is not true or false")}
 		}
+		return nil
+	},
+	"stop-check": func(c *Config, key, value *yaml.Node) []string {
+		var off bool
+		if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
+			return nil
+		}
+		if value.Tag != "!!str" || strings.TrimSpace(value.Value) == "" {
+			return []string{wrong(key.Line, key.Value, "is not a command or false")}
+		}
+		c.StopCheck = value.Value
 		return nil
 	},
 	"claude-hooks": checkKeys(checks.HookChecks),
@@ -228,6 +241,10 @@ status-line: true
 # and .about/adr/ what the conversation settled but nobody wrote down; the next session start
 # says what it changed. It never commits.
 session-review: true
+
+# The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
+# the repo's root and hands a failure back to Claude to fix before it stops. Off without it.
+# stop-check: mise run check
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack

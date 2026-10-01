@@ -39,6 +39,7 @@
     "reflog",
     "shellcheck",
     "statusline",
+    "stopcheck",
     "sqlc",
     "subshell",
     "subtests",

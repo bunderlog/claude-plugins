@@ -703,3 +703,46 @@ func TestSessionEnd(t *testing.T) {
 		}
 	}
 }
+
+// The Stop check hands a failure of the Config's command back to Claude, once a turn, after a
+// prompt and a change; in a Session review's session it runs nothing.
+func TestStopCheck(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("stop-check: echo broken; exit 1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	turn := func(env string, stopActive bool) (string, string) {
+		t.Helper()
+		t.Setenv(review.Env, env)
+		var stdout, stderr bytes.Buffer
+		if code := run([]string{"user-prompt-submit"}, strings.NewReader(`{"session_id":"s1"}`), &stdout, &stderr); code != 0 ||
+			stdout.Len() != 0 {
+			t.Fatalf("user-prompt-submit = %d, %q, %q; want 0 and nothing said", code, stdout.String(), stderr.String())
+		}
+		if err := os.WriteFile(filepath.Join(dir, "a"), []byte(time.Now().String()), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		stdout.Reset()
+		in := `{"session_id":"s1","stop_hook_active":` + strconv.FormatBool(stopActive) + `}`
+		if code := run([]string{"stop"}, strings.NewReader(in), &stdout, &stderr); code != 0 {
+			t.Fatalf("stop = %d, %q", code, stderr.String())
+		}
+		return stdout.String(), stderr.String()
+	}
+	var out struct{ Decision, Reason string }
+	got, _ := turn("", false)
+	if err := json.Unmarshal([]byte(got), &out); err != nil || out.Decision != "block" ||
+		out.Reason != "baloo:stop-check: `echo broken; exit 1` failed with exit status 1:\nbroken\n"+
+			"Fix it before you finish, or tell the user why it can't pass." {
+		t.Errorf("stop after a change = %q; want it blocked with the failure", got)
+	}
+	if got, errs := turn("", true); got != "" || errs != "" {
+		t.Errorf("stop after a block = %q, %q; want nothing", got, errs)
+	}
+	if got, errs := turn("1", false); got != "" || errs != "" {
+		t.Errorf("stop in a Session review = %q, %q; want nothing", got, errs)
+	}
+}

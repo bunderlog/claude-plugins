@@ -28,7 +28,7 @@ import (
 var version = "dev"
 
 const usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
-	"  pre-tool-use | session-end |\n" +
+	"  pre-tool-use | session-end | user-prompt-submit | stop |\n" +
 	"  check no-ai-coauthor|conventional-commits <message file> |\n" +
 	"  check no-secrets-in-commits | check no-stale-adr-date |\n" +
 	"  check linear-history < <pushed refs> |\n" +
@@ -55,6 +55,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return preToolUse(stdin, stdout)
 		case "session-end":
 			return sessionEnd(stdin)
+		case "user-prompt-submit":
+			return userPromptSubmit(stdin)
+		case "stop":
+			return stop(stdin, stdout)
 		}
 	}
 	if len(args) > 0 && args[0] == "condense" {

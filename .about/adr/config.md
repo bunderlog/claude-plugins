@@ -54,7 +54,8 @@ it created and the problems.
   its key off, not by deleting the file.
 - Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
-  where the repo has the stack.
+  where the repo has the stack, and `stop-check`, whose command the template can't know, is a
+  comment there (ADR stop-check).
 - A new key reaches a Config that exists only when its user adds it, so its default must be what
   the Check did before it had the key, unless ADR checks says otherwise.
 - The schema is read from `main`, so an editor can check a Config against settings newer than

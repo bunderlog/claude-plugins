@@ -454,6 +454,32 @@ func TestGuidelines(t *testing.T) {
 	}
 }
 
+// stop-check names the command the Stop check runs; without it, or false, it is off, and a new
+// Config has it only as a comment (ADR stop-check).
+func TestStopCheckSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml, command string
+		problems     []string
+	}{
+		{"stop-check: mise run check\n", "mise run check", nil},
+		{"stop-check: false\n", "", nil},
+		{"# none\n", "", nil},
+		{"stop-check: \"\"\n", "", []string{
+			".claude/baloo.yml line 1: stop-check: is not a command or false; its default applies"}},
+		{"stop-check: [make, test]\n", "", []string{
+			".claude/baloo.yml line 1: stop-check: is not a command or false; its default applies"}},
+		{newConfig(nil), "", nil},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.StopCheck != tc.command || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %q, %q; want %q, %q", tc.yml, c.StopCheck, problems, tc.command, tc.problems)
+		}
+	}
+	if !strings.Contains(newConfig(nil), "\n# stop-check: mise run check\n") {
+		t.Error("a new Config has no stop-check example")
+	}
+}
+
 // Each Check turns on or off with its own key under the group that runs it, and a wrong entry is a
 // problem at its own line while the entries beside it apply. Without its key, a Check a Hook runs
 // is on and a Git hook's is off (ADR checks).
