@@ -36,10 +36,10 @@ func ChangesConfig(call ToolCall, dir, config string) bool {
 var hookKeys = []string{"disableAllHooks", "enabledPlugins", names.Plugin + "@"}
 
 // TurnsHooksOff says whether the tool call `call`, run in the folder `dir`, may turn off the Hooks
-// that run the Checks on Claude's tool calls, for Claude to ask the user first (ADR checks): an
-// Edit, Write or MultiEdit of a settings file of Claude Code's whose new text names a key of
-// hookKeys, a Bash command that names such a file and such a key, or `claude plugin disable` or
-// `uninstall` of the plugin. Claude Code's own folder is `claudeDir`, or a .claude folder when "".
+// that run the Hook Checks, for Claude to ask the user first (ADR checks): an Edit, Write or
+// MultiEdit of a settings file of Claude Code's whose new text names a key of hookKeys, a Bash
+// command that names such a file and such a key, or `claude plugin disable` or `uninstall` of the
+// plugin. Claude Code's own folder is `claudeDir`, or a .claude folder when "".
 func TurnsHooksOff(call ToolCall, dir, claudeDir string) bool {
 	namesKey := func(text string) bool {
 		return slices.ContainsFunc(hookKeys, func(k string) bool { return strings.Contains(text, k) })

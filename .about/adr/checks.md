@@ -1,22 +1,28 @@
-# Each Check has a key under `checks`, and the Checks on Claude's tool calls are on without one
+# Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
 Date: 2026-10-01
 
-Each Check turns on or off with a key of its own under `checks` in the Config, named as the Check
-without the plugin's prefix: `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
-`no-stale-adr-date` and `linear-history`, which Git hooks run, and `no-git-hook-bypass`,
-`no-destructive-commands` and `no-secrets-in-context`, which a Hook runs on Claude's tool calls. A
-key is `true` or `false`; `conventional-commits` also takes a map of its settings, `types` (a
-list, or `any`) and `max-length` (0 for none), which turns it on.
+Each Check turns on or off with a key of its own in the Config, named as the Check without the
+plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
+`no-git-hook-bypass`, `no-destructive-commands` and `no-secrets-in-context`; under `git-hooks`,
+the Checks Git hooks run, `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
+`no-stale-adr-date` and `linear-history`. A key is `true` or `false`; `conventional-commits` also
+takes a map of its settings, `types` (a list, or `any`) and `max-length` (0 for none), which turns
+it on. The two groups have opposite defaults, and a Stop check would run in a Hook too, not on a
+tool call, so they are named for what runs them.
 
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
 the repo, Claude's or not, so it waits to be asked, and a new Config asks for all of them. The
-three Checks on Claude's tool calls are on without their key, outside a repo too, where no Config
-is read, and `false` turns one off: they guard against accidents where nobody set anything up. A
-Config that turns one off is named at every session start, so someone who opens a repo whose
-committed Config does so knows.
+Checks a Hook runs are on without their key, outside a repo too, where no Config is read, and
+`false` turns one off: they guard against accidents where nobody set anything up. A Config that
+turns one off is named at every session start, so someone who opens a repo whose committed Config
+does so knows.
 
-Since a Config can turn those Checks off, Claude asks the user before it changes the Config: a
+The plugin writes a Git hook where the Config turns at least one of its Checks on, and takes its
+own out where none is; with husky 9 it goes through husky, which it finds by itself. Writing them
+has no key of its own.
+
+Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the Config: a
 Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command that
 names it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
 disabling the plugin, so the Hook also asks before a tool call that may do that: an Edit, Write or
@@ -40,11 +46,19 @@ Release.
 
 - Guard, one Check for the three jobs, with one key — commands that destroy work, a bypass of
   the Git hooks and a Leak into Claude's context are unrelated, and one can't be turned off alone.
-- Every Check off without its key, the Checks on Claude's tool calls too (until 2026-10-01) —
+- Every Check off without its key, the Checks a Hook runs too (until 2026-10-01) —
   one rule for all, but no protection outside a repo or in a Config made before the keys.
 - `no-secrets-in-context` always on, with no key — no repo could turn it off, but a false alarm
   would have no way around it.
-- The keys at the top of the Config — shorter, but eight keys mixed with the other settings.
+- Every key under `checks` (until 2026-10-01) — one list for two kinds of Check with opposite
+  defaults, which only a comment told apart.
+- `tool-calls` and `git-hooks` under `checks` — a level that tells nothing apart, and a Stop
+  check runs in a Hook but not on a tool call.
+- Each key at the top of the Config — eight keys mixed with the other settings.
+- A key to turn writing the Git hooks off, or to pick husky over plain Git hooks — where husky 9
+  holds `core.hooksPath`, git runs only husky's, and without husky there is nothing to pick; a
+  Check on with no Git hook would run only in CI, which calls `baloo check` whatever the key
+  says.
 - A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
 - Asking before every change to Claude Code's settings — also covers a key missed here, but
@@ -55,8 +69,8 @@ Release.
 
 ## Consequences
 
-- A Config made before the keys gets the Checks on Claude's tool calls, and the Git hooks' only
-  once its user adds their keys.
+- A Config made before the keys, or with them under `checks`, gets the Checks a Hook runs, and
+  the Git hooks' only once its user adds their keys; `checks` is reported as not a setting.
 - A repo's committed Config can turn a Check off for everyone who opens it; session start says
   so, but doesn't stop it.
 - Claude asks the user before every change to the Config, a harmless one too.
@@ -64,6 +78,6 @@ Release.
   writes the key, goes unasked; they guard against accidents, not against Claude.
 - Managed settings and the `/plugin` menu are out of reach: one needs an administrator, the other
   is the user's own.
-- Revisit when a false alarm makes people turn a Check on Claude's tool calls off wholesale, or a
+- Revisit when a false alarm makes people turn a Check a Hook runs off wholesale, or a
   committed Config that turns one off leads to a Leak, and when Claude Code asks before every
   change to its own settings.

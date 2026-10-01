@@ -21,10 +21,10 @@ func TestChangesConfig(t *testing.T) {
 		}
 	}
 	for command, want := range map[string]bool{
-		"sed -i 's/true/false/' .claude/baloo.yml":    true,
-		"cd .claude && echo 'checks: {}' > baloo.yml": true,
-		"rm .claude/baloo.yml":                        true,
-		"git status":                                  false,
+		"sed -i 's/true/false/' .claude/baloo.yml":       true,
+		"cd .claude && echo 'git-hooks: {}' > baloo.yml": true,
+		"rm .claude/baloo.yml":                           true,
+		"git status":                                     false,
 	} {
 		if got := ChangesConfig(bash(t, command), dir, config); got != want {
 			t.Errorf("ChangesConfig(%q) = %v, want %v", command, got, want)

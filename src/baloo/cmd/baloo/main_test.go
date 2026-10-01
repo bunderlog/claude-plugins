@@ -207,7 +207,7 @@ func hookRepo(t *testing.T) string {
 	dir := testkit.Repo(t)
 	t.Chdir(dir)
 	var config strings.Builder
-	config.WriteString("checks:\n")
+	config.WriteString("git-hooks:\n")
 	for _, name := range checks.GitHookChecks {
 		config.WriteString("  " + name + ": true\n")
 	}
@@ -376,7 +376,7 @@ func bashCall(command string) string {
 	return string(in)
 }
 
-// pre-tool-use runs the Checks on Claude's tool calls that the Config turns on, which are all of
+// pre-tool-use runs the Checks a Hook runs that the Config turns on, which are all of
 // them without a key; a denial wins over a question to the user.
 func TestPreToolUse(t *testing.T) {
 	dir := inRepo(t)
@@ -411,7 +411,7 @@ func TestPreToolUse(t *testing.T) {
 // A Check the Config turns off doesn't run.
 func TestPreToolUseChecksOff(t *testing.T) {
 	dir := inRepo(t)
-	config := "checks:\n  no-git-hook-bypass: false\n  no-destructive-commands: false\n  no-secrets-in-context: false\n"
+	config := "claude-hooks:\n  no-git-hook-bypass: false\n  no-destructive-commands: false\n  no-secrets-in-context: false\n"
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -436,9 +436,9 @@ func TestCheckTakesTheConfig(t *testing.T) {
 	}
 	for config, want := range map[string]int{
 		"": 0, // off without its key
-		"checks:\n  conventional-commits: true\n":              1,
-		"checks:\n  conventional-commits:\n    types: [wip]\n": 0,
-		"checks:\n  conventional-commits: false\n":             0,
+		"git-hooks:\n  conventional-commits: true\n":              1,
+		"git-hooks:\n  conventional-commits:\n    types: [wip]\n": 0,
+		"git-hooks:\n  conventional-commits: false\n":             0,
 	} {
 		if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 			t.Fatal(err)
@@ -453,17 +453,17 @@ func TestCheckTakesTheConfig(t *testing.T) {
 	}
 }
 
-// Session start names a Check on Claude's tool calls that the Config turns off, for the user.
+// Session start names a Check a Hook runs that the Config turns off, for the user.
 func TestSessionStartChecksOff(t *testing.T) {
 	dir := inRepo(t)
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("checks:\n  no-secrets-in-context: false\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("claude-hooks:\n  no-secrets-in-context: false\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	want := "baloo:\nchecks.no-secrets-in-context: false in .claude/baloo.yml turns off a check on Claude's " +
+	want := "baloo:\nclaude-hooks.no-secrets-in-context: false in .claude/baloo.yml turns off a check on Claude's " +
 		"tool calls: tell the user\n"
 	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.String() != want {
 		t.Errorf("session-start = %d, %q, %q; want 0, %q", code, stdout.String(), stderr.String(), want)

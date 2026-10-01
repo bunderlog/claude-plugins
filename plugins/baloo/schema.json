@@ -55,8 +55,8 @@
       },
       "additionalProperties": false
     },
-    "checks": {
-      "description": "The plugin's Checks, each on with true and off with false. Those on Claude's tool calls are on without their key too; those in Git hooks are off.",
+    "claude-hooks": {
+      "description": "The Checks in Claude Code's hooks, on Claude's tool calls, each on with true and off with false; on without their key too.",
       "type": ["object", "null"],
       "properties": {
         "no-git-hook-bypass": {
@@ -70,7 +70,14 @@
         "no-secrets-in-context": {
           "description": "Denies a tool call that would show a secret to Claude, such as reading an env file or printing the environment, or mark an env file as holding none.",
           "type": "boolean"
-        },
+        }
+      },
+      "additionalProperties": false
+    },
+    "git-hooks": {
+      "description": "The Checks in Git hooks, on every commit or push, each on with true and off with false; off without their key. The Git hooks are written where at least one of their Checks is on.",
+      "type": ["object", "null"],
+      "properties": {
         "no-ai-coauthor": {
           "description": "commit-msg: no AI as a commit's co-author, and no line crediting one; a person's Co-Authored-By passes.",
           "type": "boolean"

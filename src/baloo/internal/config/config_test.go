@@ -454,29 +454,35 @@ func TestGuidelines(t *testing.T) {
 	}
 }
 
-// Each Check turns on or off with its own key under checks, and a wrong entry is a problem at its
-// own line while the entries beside it apply. Without its key, a Check on Claude's tool calls is
-// on and a Git hook's is off (ADR checks).
+// Each Check turns on or off with its own key under the group that runs it, and a wrong entry is a
+// problem at its own line while the entries beside it apply. Without its key, a Check a Hook runs
+// is on and a Git hook's is off (ADR checks).
 func TestChecksSetting(t *testing.T) {
-	all := append(slices.Clone(checks.GitHookChecks), checks.ToolCallChecks...)
+	all := append(slices.Clone(checks.GitHookChecks), checks.HookChecks...)
 	for _, tc := range []struct {
 		yml      string
 		on       []string
 		problems []string
 	}{
-		{"checks:\n  no-ai-coauthor: true\n  no-secrets-in-context: false\n",
+		{"git-hooks:\n  no-ai-coauthor: true\nclaude-hooks:\n  no-secrets-in-context: false\n",
 			[]string{"no-ai-coauthor", "no-destructive-commands", "no-git-hook-bypass"}, nil},
-		{"", checks.ToolCallChecks, nil},
-		{"checks:\n", checks.ToolCallChecks, nil},
-		{"checks:\n  nope: true\n  linear-history: yes please\n  no-destructive-commands: false\n",
+		{"", checks.HookChecks, nil},
+		{"claude-hooks:\ngit-hooks:\n", checks.HookChecks, nil},
+		{"git-hooks:\n  nope: true\n  linear-history: yes please\n  no-secrets-in-context: false\n" +
+			"claude-hooks:\n  no-destructive-commands: false\n  no-ai-coauthor: true\n",
 			[]string{"no-git-hook-bypass", "no-secrets-in-context"}, []string{
-				".claude/baloo.yml line 2: checks.nope is not a check; ignored",
-				".claude/baloo.yml line 3: checks.linear-history: is not true or false; its default applies",
+				".claude/baloo.yml line 2: git-hooks.nope is not a check; ignored",
+				".claude/baloo.yml line 3: git-hooks.linear-history: is not true or false; its default applies",
+				".claude/baloo.yml line 4: git-hooks.no-secrets-in-context is not a check; ignored",
+				".claude/baloo.yml line 7: claude-hooks.no-ai-coauthor is not a check; ignored",
 			}},
-		{"checks: true\n", checks.ToolCallChecks, []string{
-			".claude/baloo.yml line 1: checks: is not a map of checks to true or false; its default applies",
+		{"git-hooks: true\n", checks.HookChecks, []string{
+			".claude/baloo.yml line 1: git-hooks: is not a map of checks to true or false; its default applies",
 		}},
-		{"checks:\n  conventional-commits:\n    types: any\n", []string{"conventional-commits",
+		{"checks:\n  no-ai-coauthor: true\n", checks.HookChecks, []string{
+			".claude/baloo.yml line 1: checks is not a setting; ignored",
+		}},
+		{"git-hooks:\n  conventional-commits:\n    types: any\n", []string{"conventional-commits",
 			"no-destructive-commands", "no-git-hook-bypass", "no-secrets-in-context"}, nil},
 	} {
 		c, problems := parse([]byte(tc.yml))
@@ -503,16 +509,16 @@ func TestConventionalCommitsSetting(t *testing.T) {
 		rules    checks.CommitRules
 		problems []string
 	}{
-		{"checks:\n  conventional-commits: true\n", checks.CommitRules{}, nil},
-		{"checks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 72\n",
+		{"git-hooks:\n  conventional-commits: true\n", checks.CommitRules{}, nil},
+		{"git-hooks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 72\n",
 			checks.CommitRules{Types: []string{"feat", "fix"}, MaxLength: &max72}, nil},
-		{"checks:\n  conventional-commits:\n    types: any\n    max-length: 0\n",
+		{"git-hooks:\n  conventional-commits:\n    types: any\n    max-length: 0\n",
 			checks.CommitRules{AnyType: true, MaxLength: &none}, nil},
-		{"checks:\n  conventional-commits:\n    types: some\n    max-length: -1\n    nope: 1\n",
+		{"git-hooks:\n  conventional-commits:\n    types: some\n    max-length: -1\n    nope: 1\n",
 			checks.CommitRules{}, []string{
-				".claude/baloo.yml line 3: checks.conventional-commits.types: is not a list of types or any; its default applies",
-				".claude/baloo.yml line 4: checks.conventional-commits.max-length: is not a length of 0 or more; its default applies",
-				".claude/baloo.yml line 5: checks.conventional-commits.nope is not a setting of conventional-commits; ignored",
+				".claude/baloo.yml line 3: git-hooks.conventional-commits.types: is not a list of types or any; its default applies",
+				".claude/baloo.yml line 4: git-hooks.conventional-commits.max-length: is not a length of 0 or more; its default applies",
+				".claude/baloo.yml line 5: git-hooks.conventional-commits.nope is not a setting of conventional-commits; ignored",
 			}},
 	} {
 		c, problems := parse([]byte(tc.yml))
@@ -526,14 +532,15 @@ func TestConventionalCommitsSetting(t *testing.T) {
 	}
 }
 
-// A new Config turns every Check on, and the schema has a key for each.
+// A new Config turns every Check on, and the schema has a key for each under the group that runs
+// it.
 func TestChecks(t *testing.T) {
 	root, _ := tempRepo(t)
 	c, _, problems := Load(root)
-	all := append(slices.Clone(checks.GitHookChecks), checks.ToolCallChecks...)
+	all := append(slices.Clone(checks.GitHookChecks), checks.HookChecks...)
 	for _, name := range all {
 		if on, ok := c.Checks[name]; !ok || !on {
-			t.Errorf("new config's checks.%s = %v, %v; want true", name, on, ok)
+			t.Errorf("new config's %s = %v, %v; want true", name, on, ok)
 		}
 	}
 	if problems != nil {
@@ -551,9 +558,12 @@ func TestChecks(t *testing.T) {
 	if err := json.Unmarshal(data, &schema); err != nil {
 		t.Fatal(err)
 	}
-	got := slices.Sorted(maps.Keys(schema.Properties["checks"].Properties))
-	if want := slices.Sorted(slices.Values(all)); !slices.Equal(got, want) {
-		t.Errorf("schema's checks = %q; want %q", got, want)
+	for group, want := range map[string][]string{"claude-hooks": checks.HookChecks,
+		"git-hooks": checks.GitHookChecks} {
+		got := slices.Sorted(maps.Keys(schema.Properties[group].Properties))
+		if want := slices.Sorted(slices.Values(want)); !slices.Equal(got, want) {
+			t.Errorf("schema's %s = %q; want %q", group, got, want)
+		}
 	}
 }
 
@@ -566,7 +576,7 @@ func TestRead(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, names.Config)); err == nil {
 		t.Error("Read created a config")
 	}
-	writeConfig(t, root, "checks:\n  no-secrets-in-context: false\n")
+	writeConfig(t, root, "claude-hooks:\n  no-secrets-in-context: false\n")
 	if c := Read(sub); c.CheckOn("no-secrets-in-context") {
 		t.Error("Read = no-secrets-in-context on; want the config's false")
 	}

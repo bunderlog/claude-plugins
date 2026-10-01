@@ -21,7 +21,7 @@ import (
 
 // Config is a repo's settings. Each other setting adds its field here, its key to keys and to the
 // schema, and its key, turned on, to newConfig; a Check adds its name to a list in checks and its
-// key to the schema.
+// key to the schema under the group that runs it.
 type Config struct {
 	// Root is the root of the repo whose Config this is, or "" where the repo has none (see
 	// Load).
@@ -43,13 +43,13 @@ type Config struct {
 	CommitRules checks.CommitRules
 }
 
-// CheckOn says whether the Check `name` is on: as the Config says, and else on for a Check on
-// Claude's tool calls, off for a Git hook's (ADR checks).
+// CheckOn says whether the Check `name` is on: as the Config says, and else on for a Check a Hook
+// runs, off for a Git hook's (ADR checks).
 func (c Config) CheckOn(name string) bool {
 	if on, ok := c.Checks[name]; ok {
 		return on
 	}
-	return slices.Contains(checks.ToolCallChecks, name)
+	return slices.Contains(checks.HookChecks, name)
 }
 
 // OutputStyles are the plugin's Output styles, the files in its output-styles/.
@@ -86,37 +86,8 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		}
 		return nil
 	},
-	"checks": func(c *Config, key, value *yaml.Node) []string {
-		if value.Tag == "!!null" {
-			return nil
-		}
-		if value.Kind != yaml.MappingNode {
-			return []string{wrong(key.Line, key.Value, "is not a map of checks to true or false")}
-		}
-		c.Checks = map[string]bool{}
-		var problems []string
-		for i := 0; i+1 < len(value.Content); i += 2 {
-			name, on := value.Content[i], value.Content[i+1]
-			entry := key.Value + "." + name.Value
-			if !slices.Contains(checks.GitHookChecks, name.Value) &&
-				!slices.Contains(checks.ToolCallChecks, name.Value) {
-				problems = append(problems, at(name.Line, entry+" is not a check; ignored"))
-				continue
-			}
-			if name.Value == "conventional-commits" && on.Kind == yaml.MappingNode {
-				c.Checks[name.Value] = true
-				problems = append(problems, commitRules(&c.CommitRules, entry, on)...)
-				continue
-			}
-			var b bool
-			if on.Tag != "!!bool" || on.Decode(&b) != nil {
-				problems = append(problems, wrong(name.Line, entry, "is not true or false"))
-				continue
-			}
-			c.Checks[name.Value] = b
-		}
-		return problems
-	},
+	"claude-hooks": checkKeys(checks.HookChecks),
+	"git-hooks":    checkKeys(checks.GitHookChecks),
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {
 		if value.Tag == "!!null" {
 			return nil
@@ -143,6 +114,42 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		}
 		return problems
 	},
+}
+
+// checkKeys decodes a group of Checks' keys, those of the Checks `group`, into a Config.
+func checkKeys(group []string) func(c *Config, key, value *yaml.Node) []string {
+	return func(c *Config, key, value *yaml.Node) []string {
+		if value.Tag == "!!null" {
+			return nil
+		}
+		if value.Kind != yaml.MappingNode {
+			return []string{wrong(key.Line, key.Value, "is not a map of checks to true or false")}
+		}
+		if c.Checks == nil {
+			c.Checks = map[string]bool{}
+		}
+		var problems []string
+		for i := 0; i+1 < len(value.Content); i += 2 {
+			name, on := value.Content[i], value.Content[i+1]
+			entry := key.Value + "." + name.Value
+			if !slices.Contains(group, name.Value) {
+				problems = append(problems, at(name.Line, entry+" is not a check; ignored"))
+				continue
+			}
+			if name.Value == "conventional-commits" && on.Kind == yaml.MappingNode {
+				c.Checks[name.Value] = true
+				problems = append(problems, commitRules(&c.CommitRules, entry, on)...)
+				continue
+			}
+			var b bool
+			if on.Tag != "!!bool" || on.Decode(&b) != nil {
+				problems = append(problems, wrong(name.Line, entry, "is not true or false"))
+				continue
+			}
+			c.Checks[name.Value] = b
+		}
+		return problems
+	}
 }
 
 // commitRules decodes conventional-commits' settings, the map `value` at `entry`, into `rules`, and
@@ -193,12 +200,15 @@ func wrong(line int, name, why string) string {
 // says in plain words how the settings work, for someone who has read neither the schema nor the
 // README.
 func newConfig(fit []string) string {
-	var list, checkList strings.Builder
+	var list, hookList, gitHookList strings.Builder
 	for _, name := range guidelines.Names() {
 		fmt.Fprintf(&list, "  %s: %t\n", name, slices.Contains(fit, name))
 	}
-	for _, name := range append(slices.Clone(checks.ToolCallChecks), checks.GitHookChecks...) {
-		fmt.Fprintf(&checkList, "  %s: true\n", name)
+	for _, name := range checks.HookChecks {
+		fmt.Fprintf(&hookList, "  %s: true\n", name)
+	}
+	for _, name := range checks.GitHookChecks {
+		fmt.Fprintf(&gitHookList, "  %s: true\n", name)
 	}
 	return "# yaml-language-server: $schema=" + names.Schema + `
 #
@@ -224,13 +234,18 @@ session-review: true
 # when this file was made.
 guidelines:
 ` + list.String() + `
-# Checks, each on with true and off with false. Those on Claude's tool calls deny, or ask you
-# about, a tool call that would destroy work, bypass the Git hooks or show a secret, and are on
-# without their key too. Those in Git hooks check every commit or push, yours or Claude's.
-# conventional-commits also takes its settings instead of true, such as
-# { types: [feat, fix], max-length: 72 }; types: any takes any type, max-length: 0 any length.
-checks:
-` + checkList.String()
+# Checks, each on with true and off with false.
+#
+# Checks in Claude Code's hooks deny, or ask you about, a tool call of Claude's that would destroy
+# work, bypass the Git hooks or show a secret. They are on without their key too.
+claude-hooks:
+` + hookList.String() + `
+# Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
+# where at least one of their Checks is on. conventional-commits also takes its settings instead
+# of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
+# max-length: 0 any length.
+git-hooks:
+` + gitHookList.String()
 }
 
 // repo is the root of the repo `dir` is in, where its Config is: the nearest folder up from `dir`

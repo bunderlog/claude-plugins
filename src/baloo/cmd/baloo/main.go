@@ -82,10 +82,9 @@ func project() (string, error) {
 // repo's Config when it has none (ADR config), reads it, and picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), and sets the Status line or takes it out
 // (ADR status-line). What it prints Claude Code adds to Claude's context, so it prints only what
-// Claude should know: a Config it created, an Output style or a Status line it set, a Check on
-// Claude's tool calls it turns off (ADR checks), what the last Session review replied (ADR
-// session-review), and the problems, each on one line; then the Guidelines the Config turns on
-// (ADR guidelines).
+// Claude should know: a Config it created, an Output style or a Status line it set, a Hook Check it
+// turns off (ADR checks), what the last Session review replied (ADR session-review), and the
+// problems, each on one line; then the Guidelines the Config turns on (ADR guidelines).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
@@ -127,9 +126,9 @@ func sessionStart(stdout, stderr io.Writer) int {
 			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
 		}
 	}
-	for _, name := range checks.ToolCallChecks {
+	for _, name := range checks.HookChecks {
 		if on, ok := c.Checks[name]; ok && !on {
-			report = append(report, fmt.Sprintf("checks.%s: false in %s turns off a check on Claude's "+
+			report = append(report, fmt.Sprintf("claude-hooks.%s: false in %s turns off a check on Claude's "+
 				"tool calls: tell the user", name, names.Config))
 		}
 	}
