@@ -187,10 +187,12 @@ func commandText(text string) string {
 }
 
 // response is the id of the assistant's message `message`, the tokens of the context it was
-// given and the tokens it wrote, from the usage Claude Code records; ok is false without one.
+// given and the tokens it wrote, from the usage Claude Code records; ok is false without one, and
+// for a message Claude Code wrote itself, such as "No response requested.", whose usage is zeros.
 func response(message json.RawMessage) (id string, context, output int, ok bool) {
 	var m struct {
 		ID    string `json:"id"`
+		Model string `json:"model"`
 		Usage *struct {
 			Input         int `json:"input_tokens"`
 			CacheCreation int `json:"cache_creation_input_tokens"`
@@ -198,11 +200,48 @@ func response(message json.RawMessage) (id string, context, output int, ok bool)
 			Output        int `json:"output_tokens"`
 		} `json:"usage"`
 	}
-	if json.Unmarshal(message, &m) != nil || m.Usage == nil || m.ID == "" {
+	if json.Unmarshal(message, &m) != nil || m.Usage == nil || m.ID == "" || m.Model == "<synthetic>" {
 		return "", 0, 0, false
 	}
 	u := m.Usage
 	return m.ID, u.Input + u.CacheCreation + u.CacheRead, u.Output, true
+}
+
+// imageChars is what an image or a document counts as, in characters of text, whatever the size
+// of its data: about 1,500 tokens, an estimate for a screenshot.
+const imageChars = 6000
+
+// size is how many characters of text the JSON `raw` holds, so that a result, a prompt and an
+// attachment are measured alike: the length of its strings, but for the names of types, with an
+// image or a document counted as imageChars.
+func size(raw json.RawMessage) int {
+	var v any
+	if json.Unmarshal(raw, &v) != nil {
+		return 0
+	}
+	var walk func(v any) int
+	walk = func(v any) int {
+		n := 0
+		switch v := v.(type) {
+		case string:
+			n = len([]rune(v))
+		case []any:
+			for _, e := range v {
+				n += walk(e)
+			}
+		case map[string]any:
+			if v["type"] == "image" || v["type"] == "document" {
+				return imageChars
+			}
+			for k, e := range v {
+				if k != "type" {
+					n += walk(e)
+				}
+			}
+		}
+		return n
+	}
+	return walk(v)
 }
 
 // charge spreads `tokens`, what the context grew by after the results `rs` and `other`
@@ -234,7 +273,8 @@ func (s *Session) charge(rs []result, other, tokens int) {
 // Condense is the session of the Transcript `transcript`, whose id is `id`.
 func Condense(transcript []byte, id string) Session {
 	s := Session{ID: id, Tools: map[string]int{}, Tokens: map[string]int{}}
-	calls, tools := map[string]string{}, map[string]string{}
+	// The tool calls by id: each by what it acts on, and its tool.
+	calls := map[string]struct{ call, tool string }{}
 	counts := map[string]int{}
 	// The last response's id, context and output, and the results given to the next one.
 	prev, context, output, other := "", 0, 0, 0
@@ -277,7 +317,7 @@ func Condense(transcript []byte, id string) Session {
 				}
 				s.Tools[b.Name]++
 				c := call(b.Name, b.Input, cwd)
-				calls[b.ID], tools[b.ID] = c, b.Name
+				calls[b.ID] = struct{ call, tool string }{c, b.Name}
 				if slices.Contains(repeated, b.Name) {
 					counts[c]++
 				}
@@ -286,9 +326,9 @@ func Condense(transcript []byte, id string) Session {
 		results := slices.ContainsFunc(bs, func(b block) bool { return b.Type == "tool_result" })
 		switch {
 		case l.Type == "attachment":
-			other += len(l.Attachment)
+			other += size(l.Attachment)
 		case l.Type == "user" && !results:
-			other += len(l.Message)
+			other += size(l.Message)
 		}
 		if l.Type != "user" || l.IsMeta {
 			return true
@@ -298,18 +338,14 @@ func Condense(transcript []byte, id string) Session {
 				if b.Type != "tool_result" {
 					continue
 				}
-				text := textOf(content(b.Content))
 				c, ok := calls[b.ToolUseID]
 				if !ok {
-					c = "?"
+					c.call, c.tool = "?", "?"
 				}
-				tool, ok := tools[b.ToolUseID]
-				if !ok {
-					tool = "?"
-				}
-				pending = append(pending, result{at, c, tool, len(text)})
+				pending = append(pending, result{at, c.call, c.tool, size(b.Content)})
 				if b.IsError {
-					s.Events = append(s.Events, Event{At: at, Type: "error", Kind: kind(text), Call: c, Text: text})
+					text := textOf(content(b.Content))
+					s.Events = append(s.Events, Event{At: at, Type: "error", Kind: kind(text), Call: c.call, Text: text})
 				}
 			}
 			return true

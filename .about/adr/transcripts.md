@@ -8,14 +8,15 @@ Retro doesn't Leak that Secret into one more context and Transcript. `condense` 
 needs: the user's prompts and commands, failed and refused tool calls, interrupts, repeated
 calls and expensive ones; a denial by a Check is known by its `baloo:<check>:` prefix.
 
-A call's cost is the tokens it added to the context, read from the `usage` Claude Code records
-with the next response: what Anthropic counted, in tokens, not dollars. A session's report names
-its largest calls, and a summary of several sessions the tokens per tool, so an MCP server that
-spends a lot in small calls shows too. What came back before that response, the results of
-calls made in parallel and Claude Code's own attachments, shares its growth by length, so a call
-is charged only its own result's part. To look at one moment, the
-skill asks it for the lines around it, in full but masked. Headless sessions, sessions where only
-`/clear` was typed and subagents' Transcripts are left out.
+A call's cost is the tokens it added to the context, read from the `usage` Claude Code records with
+the next response: what Anthropic counted, in tokens, not dollars. A session's report names its
+largest calls, and a summary of several sessions the tokens per tool, so an MCP server that spends a
+lot in small calls shows too. What came back before that response, the results of calls made in
+parallel and Claude Code's own attachments, shares its growth by the length of its text, so a call
+is charged only its own result's part; an image or a document counts as 6,000 characters, about
+1,500 tokens, whatever the size of its data. To look at one moment, the skill asks it for the lines
+around it, in full but masked. Headless sessions, sessions where only `/clear` was typed and
+subagents' Transcripts are left out.
 
 `condense` masks in two passes: first each kind of Secret `no-secrets-in-commits` knows, then
 anything shaped like one: a long run of letters and digits mixed, or a private key block. The

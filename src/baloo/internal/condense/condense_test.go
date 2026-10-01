@@ -113,31 +113,40 @@ func TestReport_ShowsRepeatedCalls(t *testing.T) {
 	}
 }
 
+// usage is the id and usage of a response `id` given a context of `context` tokens, which wrote
+// 100.
+func usage(id string, context int) string {
+	return fmt.Sprintf(`"id":%q,"usage":{"input_tokens":1,"cache_creation_input_tokens":%d,"cache_read_input_tokens":0,"output_tokens":100}`, id, context-1)
+}
+
 // costly is a Transcript where a Read of 30,000 characters and a Bash of 10,000, made in
 // parallel, and an attachment of `attached` characters grow the next response's context by
 // `grown` tokens; the first response is written as two lines, as Claude Code does.
 func costly(grown, attached int) []byte {
-	usage := func(id string, context int) string {
-		return fmt.Sprintf(`"id":%q,"usage":{"input_tokens":1,"cache_creation_input_tokens":%d,"cache_read_input_tokens":0,"output_tokens":100}`, id, context-1)
-	}
+	return costlyWith(grown, attachment(attached))
+}
+
+// costlyWith is costly with the lines `after` between the results and the next response.
+func costlyWith(grown int, after ...string) []byte {
 	result := func(id string, chars int) string {
 		return fmt.Sprintf(`{"type":"tool_result","tool_use_id":%q,"content":%q}`, id, strings.Repeat("x", chars))
 	}
-	return transcript(
-		`{"type":"assistant","cwd":"/repo","message":{`+usage("m1", 1000)+`,"content":[{"type":"text","text":"Reading."}]}}`,
-		`{"type":"assistant","cwd":"/repo","message":{`+usage("m1", 1000)+`,"content":[{"type":"tool_use","id":"r1","name":"Read","input":{"file_path":"/repo/big.go"}},{"type":"tool_use","id":"b1","name":"Bash","input":{"command":"ls"}}]}}`,
-		`{"type":"user","message":{"role":"user","content":[`+result("r1", 30000)+`,`+result("b1", 10000)+`]}}`,
-		attachment(attached),
-		`{"type":"assistant","message":{`+usage("m2", 1000+100+grown)+`,"content":[{"type":"text","text":"Done."}]}}`,
-	)
+	lines := []string{
+		`{"type":"assistant","cwd":"/repo","message":{` + usage("m1", 1000) + `,"content":[{"type":"text","text":"Reading."}]}}`,
+		`{"type":"assistant","cwd":"/repo","message":{` + usage("m1", 1000) + `,"content":[{"type":"tool_use","id":"r1","name":"Read","input":{"file_path":"/repo/big.go"}},{"type":"tool_use","id":"b1","name":"Bash","input":{"command":"ls"}}]}}`,
+		`{"type":"user","message":{"role":"user","content":[` + result("r1", 30000) + `,` + result("b1", 10000) + `]}}`,
+	}
+	lines = append(lines, after...)
+	return transcript(append(lines,
+		`{"type":"assistant","message":{`+usage("m2", 1000+100+grown)+`,"content":[{"type":"text","text":"Done."}]}}`)...)
 }
 
-// attachment is a line of Claude Code's own whose attachment is `n` characters long, or none.
+// attachment is a line of Claude Code's own whose attachment is `n` characters of text, or none.
 func attachment(n int) string {
 	if n == 0 {
 		return ""
 	}
-	return `{"type":"attachment","attachment":"` + strings.Repeat("a", n-2) + `"}`
+	return `{"type":"attachment","attachment":{"type":"total_tokens_reminder","text":"` + strings.Repeat("a", n) + `"}}`
 }
 
 // A call's cost is what the next response's context grew by, beyond the last response's
@@ -166,6 +175,43 @@ func TestCondense_ChargesACallOnlyItsOwnResultsPart(t *testing.T) {
 	s := Condense(costly(20000, 40000), "abc")
 	if s.Tokens["Read"] != 7500 || s.Tokens["Bash"] != 2500 || len(s.Costs) != 1 {
 		t.Errorf("Costs = %v, Tokens = %v, want Read 7500 listed and Bash 2500", s.Costs, s.Tokens)
+	}
+}
+
+// What came with the results is measured by its text, as the results are, not by its JSON: an
+// attachment of 40,000 escaped quotes is 40,000 characters.
+func TestCondense_MeasuresAnAttachmentByItsText(t *testing.T) {
+	quotes := `{"type":"attachment","attachment":{"type":"hook_success","stdout":"` +
+		strings.Repeat(`\"`, 40000) + `","exitCode":0}}`
+	s := Condense(costlyWith(20000, quotes), "abc")
+	if s.Tokens["Read"] != 7500 || s.Tokens["Bash"] != 2500 {
+		t.Errorf("Tokens = %v, want Read 7500 and Bash 2500", s.Tokens)
+	}
+}
+
+// Claude Code's own messages, such as "No response requested.", carry no usage of their own:
+// the calls before one are charged by the next response.
+func TestCondense_SkipsClaudeCodesOwnMessages(t *testing.T) {
+	own := `{"type":"assistant","message":{"id":"s1","model":"<synthetic>","usage":{"input_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":0},"content":[{"type":"text","text":"No response requested."}]}}`
+	s := Condense(costlyWith(20000, own), "abc")
+	if s.Tokens["Read"] != 15000 || s.Tokens["Bash"] != 5000 {
+		t.Errorf("Tokens = %v, want Read 15000 and Bash 5000", s.Tokens)
+	}
+}
+
+// An image counts as about 1,500 tokens of text, however long its data: here as much as the
+// 6,000 characters of text beside it.
+func TestCondense_ChargesAnImageByAnEstimate(t *testing.T) {
+	image := `{"type":"image","source":{"type":"base64","media_type":"image/png","data":"` +
+		strings.Repeat("A", 190000) + `"}}`
+	s := Condense(transcript(
+		`{"type":"assistant","cwd":"/repo","message":{`+usage("m1", 1000)+`,"content":[{"type":"tool_use","id":"r1","name":"Read","input":{"file_path":"/repo/shot.png"}}]}}`,
+		`{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"r1","content":[`+image+`]}]}}`,
+		attachment(6000),
+		`{"type":"assistant","message":{`+usage("m2", 1000+100+3000)+`,"content":[{"type":"text","text":"Done."}]}}`,
+	), "abc")
+	if s.Tokens["Read"] != 1500 {
+		t.Errorf("Tokens = %v, want Read 1500", s.Tokens)
 	}
 }
 
