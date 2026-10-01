@@ -49,6 +49,8 @@ silently:
 - Stop on confusion: name what's unclear and ask.
 - Validate against the source that owns the fact (the official docs, the code, the spec), not
   someone's account of it.
+- Say "none", "all" or a number only from a count that covered everything; otherwise say what
+  you looked at.
 
 **Test:** a reviewer can point at each assumption and confirm "yes, we agreed on that."
 
@@ -87,6 +89,11 @@ silently:
 - Don't refactor or "improve" adjacent code, comments or formatting that isn't broken.
 - Remove the orphans _your_ change created (unused imports, variables, functions).
 - Leave pre-existing dead code alone: mention it, don't delete it.
+- Before removing code or config, find every consumer: runtime, build, CI, deploy scripts.
+  Where config is layered per context, compare what each context renders before and after.
+- After a bulk mechanical change (an autofix, a rename, added declarations), compare the checks'
+  findings before and after by name, not count: one fixed can hide one made. Commit pure
+  formatting on its own, and list it in `.git-blame-ignore-revs` where the repo keeps one.
 - Resolve a merge conflict by each side's intent, read from its commits or PR: keep both where
   they fit, then run the checks. Picking `--ours` or `--theirs` to clear the markers drops work.
 

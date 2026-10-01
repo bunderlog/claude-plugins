@@ -6,6 +6,9 @@ before you fix anything.
 
 ## 1. Build a feedback loop
 
+- First check that what fails runs the code you're reading: find the reported message in the
+  source, and ask which build or deploy the user runs. A message the source no longer holds
+  points to a stale build, not a bug.
 - Before any hypothesis, build one command that goes red on this bug and green once it's fixed.
   Reading code to guess the cause first is the failure this step prevents.
 - Try, roughly in order: a failing test; a request to a running server; a CLI call diffed
@@ -34,6 +37,8 @@ before you fix anything.
 - List 3–5, most likely first, each with a prediction: "If the cache key ignores the locale,
   clearing the cache makes it pass." One without a prediction is a guess: sharpen it or drop it.
 - Show the list to the user, who may rule some out at once; don't wait if they're away.
+- If the symptom has come before, read its earlier fixes and notes first: a cause that explains
+  every time beats one that explains this one.
 
 **Test:** every hypothesis names what an experiment would show.
 
@@ -42,6 +47,8 @@ before you fix anything.
 - One hypothesis, one change. Prefer a debugger or REPL; otherwise log only where the
   hypotheses differ, every line tagged with one prefix (`[DEBUG-a4f2]`) so cleanup is one grep.
 - For a slowdown, measure a baseline and bisect; logs rarely show it.
+- Check the effect, not the line that reports it: "cleaned up" in a log shows the line ran,
+  not that anything was deleted.
 
 **Test:** each hypothesis is confirmed or ruled out by an experiment you ran.
 
@@ -51,6 +58,8 @@ before you fix anything.
   into a failing test there, watch it fail, fix, watch it pass, then re-run the original loop.
 - Where no seam reaches the bug, say that the design keeps it from being locked down, rather
   than write a shallow test that proves nothing.
+- A change that hides the symptom but leaves the cause (a retry, a cleanup, a fallback) is a
+  workaround: call it one, and say what the fix would be.
 - Remove the tagged lines and throwaway harnesses. Tell the user the causes and which
   hypotheses held, in a line or two; a commit message names the causes.
 
