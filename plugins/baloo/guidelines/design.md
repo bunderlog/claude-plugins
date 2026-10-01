@@ -38,6 +38,8 @@ that callers and tests go through.
 
 - Tests use the seam callers use. A test that needs private state says the module has the wrong
   shape: change the module, not the test.
+- A part inside a module may have a seam and tests of its own; keep that seam out of the
+  module's interface, which grows only for callers.
 - What sits behind the seam decides the test:
   - pure logic: call it;
   - a store with a local stand-in (SQLite, a temp folder): run the stand-in;
