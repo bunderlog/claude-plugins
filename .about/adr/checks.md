@@ -20,7 +20,8 @@ does so knows.
 
 The plugin writes a Git hook where the Config turns at least one of its Checks on, and takes its
 own out where none is; with husky 9 it goes through husky, which it finds by itself. Writing them
-has no key of its own.
+has no key of its own. It never changes git's config: `linear-history`, failing, names
+`git config pull.rebase true` for the user to run.
 
 Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the Config: a
 Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command that
@@ -59,6 +60,10 @@ Release.
   holds `core.hooksPath`, git runs only husky's, and without husky there is nothing to pick; a
   Check on with no Git hook would run only in CI, which calls `baloo check` whatever the key
   says.
+- Setting `pull.rebase=true` in the repo's git config where `linear-history` is on and it has
+  none — a change to how `git pull` works that nobody asked for, overriding the user's own global
+  setting, and git since 2.33 won't merge on a pull anyway until `pull.rebase` or `pull.ff` is
+  set.
 - A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
 - Asking before every change to Claude Code's settings — also covers a key missed here, but

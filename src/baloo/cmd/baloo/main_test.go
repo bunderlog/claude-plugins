@@ -332,7 +332,8 @@ func TestCheckLinearHistory(t *testing.T) {
 	}{
 		{base, strings.Repeat("0", 40), 0, ""},
 		{merge, base, 1, "baloo:linear-history: rebase instead of merging, then push the rebased " +
-			"branch with --force-with-lease; merge commits:\nrefs/heads/main " + merge[:12] + "\n"},
+			"branch with --force-with-lease; git config pull.rebase true makes git pull rebase; merge " +
+			"commits:\nrefs/heads/main " + merge[:12] + "\n"},
 		{strings.Repeat("2", 40), base, 2, "baloo:linear-history: git rev-list: "},
 	} {
 		pushed := "refs/heads/main " + tc.local + " refs/heads/main " + tc.remote + "\n"

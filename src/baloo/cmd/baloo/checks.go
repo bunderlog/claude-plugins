@@ -104,7 +104,8 @@ func noStaleADRDate(stderr io.Writer) int {
 }
 
 // linearHistory is the pre-push Git hook's Check baloo:linear-history on the repo git runs it in:
-// it fails with the merge commits the push sends, from the refs git gives it on stdin.
+// it fails with the merge commits the push sends, from the refs git gives it on stdin, and names the
+// setting that makes git pull rebase, which the plugin leaves to the user (ADR checks).
 func linearHistory(stdin io.Reader, stderr io.Writer) int {
 	const name = names.Plugin + ":linear-history"
 	pushed, err := io.ReadAll(stdin)
@@ -120,7 +121,8 @@ func linearHistory(stdin io.Reader, stderr io.Writer) int {
 		return 0
 	}
 	fmt.Fprintf(stderr, "%s: rebase instead of merging, then push the rebased branch with "+
-		"--force-with-lease; merge commits:\n%s\n", name, strings.Join(found, "\n"))
+		"--force-with-lease; git config pull.rebase true makes git pull rebase; merge commits:\n%s\n",
+		name, strings.Join(found, "\n"))
 	return 1
 }
 
