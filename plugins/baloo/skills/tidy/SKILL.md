@@ -10,14 +10,17 @@ Read the files as a set: most problems sit between files, not inside one.
 ## Scope
 
 Every tracked or new text file, unless the user names a subset. Read each in full, not in
-excerpts. Read the project's glossary and ADRs (e.g. `.about/`) first: they are the reference,
-not something to reopen.
+excerpts. Read the project's glossary and ADRs (e.g. `.about/`) first: their decisions are the
+reference, not something to reopen, but their facts are checked like any file's.
 
 ## Check
 
 - **Consistency.** One thing, one name, everywhere — the glossary's word if there is one. Facts
   that must match do: commands, paths, names, versions, descriptions repeated in manifests.
   Nothing points to a file, section or option that no longer exists.
+- **ADRs against each other and the code.** A number, path, name or key an ADR states matches the
+  code; two ADRs don't contradict each other. Fix a stale fact and update the ADR's Date; where
+  the code contradicts a decision, or two decisions clash, ask which is wrong.
 - **Duplicates.** A fact stated twice will drift. Keep one source; link or import it elsewhere.
   Keep a repeat only when the copies can't reach each other (units loaded separately, such as
   skills) or serve different readers — and say so.

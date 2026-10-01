@@ -2,16 +2,6 @@
 
 What is still to consider (ADR inbox): one `## ` heading per item, deleted once settled.
 
-## Whether `tidy` rechecks the ADRs
-
-2026-10-01 · session review
-
-`tidy` (or `adr`) checking the ADRs against each other and the code: `tidy` now takes the ADRs as
-the reference and doesn't recheck them, and a project's own skill doing so found stale numbers and
-contradictions, all of which were fixed.
-
-Settled by: deciding it with `baloo:adr`.
-
 ## Whether the Stop check can check only what changed
 
 2026-10-01 · session review
