@@ -35,7 +35,8 @@ yet. Nobody can answer questions: record only what the conversation clearly agre
 this repo. Anything contested or left open, and a bug or problem it found but didn't fix, is an
 item in ` + names.Inbox + `: a "## <title>", a line "<YYYY-MM-DD> · session review", then what it
 is and what would settle it; create the file, "# Inbox" first, with its first item. Delete an
-item there that the conversation settled. Change nothing else, and end with one line per change.`
+item there that the conversation settled, and the file with its last item. Change nothing else,
+and end with one line per change.`
 
 // files are where the Session review at `root` keeps its reply, after a line with when it
 // started, and its process id while it runs, in the plugin's data folder `data`.

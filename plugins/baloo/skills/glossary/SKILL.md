@@ -47,7 +47,7 @@ first, with its first item. Ask a few pointed questions at a time, not a questio
   rename the code right away: record the term as users say it and note the code's name in
   `_In code_`.
 - Never silently pick a winner: two words genuinely in play are an item in the inbox; once
-  settled, the loser moves to `_Avoid_` and the item is deleted.
+  settled, the loser moves to `_Avoid_` and the item is deleted, the file with its last one.
 - Price a rename first. Names in contracts the project doesn't own or can't cheaply change
   (external APIs and schemas, stored data, public URLs, events) stay — map them at the edge.
   If a term is wrong in one layer only, fix that layer.

@@ -17,7 +17,7 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Something found and left for later (a bug, a code review's finding, a decision still open)
   goes into `.about/inbox.md`, not Claude's memory: a `## <title>`, a line
   `<YYYY-MM-DD> · <source>`, then what it is and what would settle it. Delete an item once your
-  change settles it.
+  change settles it, and the file with its last item.
 
 ## In zsh
 

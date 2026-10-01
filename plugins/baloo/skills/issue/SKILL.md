@@ -44,6 +44,6 @@ they agree; then read it back and fix markup that shows as text instead of rende
 ## After
 
 - Tell the user in one line where it is: its link, or its file.
-- An Inbox item it came from is deleted.
+- An Inbox item it came from is deleted, and the Inbox's file with its last item.
 - In `.about/issues/`, the change that does the work deletes the file; in a tracker, close the
   Issue with that change. Don't commit.

@@ -7,7 +7,8 @@ description: Go through the project's Inbox, .about/inbox.md, with the user — 
 
 Go through `.about/inbox.md` at the git repo's root with the user. Each item is a `## <title>`,
 a line `<YYYY-MM-DD> · <source>`, then what it is and what would settle it. What to do with an
-item is the user's call; finding out whether something already settles it is your job.
+item is the user's call; finding out whether something already settles it is your job. The file
+goes with its last item.
 
 ## 1. Drop what is settled
 
