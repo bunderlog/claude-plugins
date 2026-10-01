@@ -223,15 +223,16 @@ func TestLoader(t *testing.T) {
 			t.Fatalf("install = %d, %q", code, errs)
 		}
 		path := filepath.Join(l.data, l.file)
-		then := time.Now().Add(-30 * 24 * time.Hour)
-		if err := os.Chtimes(path, then, then); err != nil {
-			t.Fatal(err)
-		}
-		if _, errs, code := l.run(t, nil, "version"); code != 0 {
-			t.Fatalf("version = %d, %q", code, errs)
-		}
-		if info, err := os.Stat(path); err != nil || time.Since(info.ModTime()) > time.Hour {
-			t.Errorf("binary last modified %v after a run; want now", info.ModTime())
+		// The hooks that never fail count too: a session longer than a week runs only them.
+		for _, sub := range []string{"version", "pre-tool-use", "session-end", "user-prompt-submit", "stop"} {
+			then := time.Now().Add(-30 * 24 * time.Hour)
+			if err := os.Chtimes(path, then, then); err != nil {
+				t.Fatal(err)
+			}
+			l.runWith(t, "{}", nil, sub)
+			if info, err := os.Stat(path); err != nil || time.Since(info.ModTime()) > time.Hour {
+				t.Errorf("binary last modified %v after a run of %s; want now", info.ModTime(), sub)
+			}
 		}
 	})
 

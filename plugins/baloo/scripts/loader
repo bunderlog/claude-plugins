@@ -128,6 +128,7 @@ case ${1:-} in
   allow-guideline | pre-tool-use | session-end | user-prompt-submit | stop)
     # A binary of an older version, without the subcommand, fails too: that is no failure either.
     [ -x "$bin" ] || exit 0
+    touch "$bin" "$bin.sha256" 2>/dev/null
     printf '%s\n' "$call" | "$bin" "$@" 2>/dev/null
     exit 0
     ;;
