@@ -3,20 +3,20 @@
 Date: 2026-10-01
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
-`testing`, `debugging` and `writing-for-agents` for any project, `go`, `typescript` and `vue` for
-their stacks. Each turns on with a key of its own in the Config, under `guidelines`. At session
-start the binary prints, for each Guideline turned on, one line: when to read it and its path.
-Claude reads the file itself when a task calls for it. `principles` also carries the few rules
+`testing`, `debugging` and `writing-for-agents` for any project, `go`, `typescript`, `vue` and
+`tailwind` for their stacks. Each turns on with a key of its own in the Config, under `guidelines`.
+At session start the binary prints, for each Guideline turned on, one line: when to read it and its
+path. Claude reads the file itself when a task calls for it. `principles` also carries the few rules
 that must hold on every task, and those are printed whole. A Guideline that is off puts nothing in
 the context. How Claude writes its replies is not a Guideline but an Output style (ADR
 output-styles).
 
-A new Config turns on the Guidelines for any project, and a stack's only where the repo's files
-name that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`,
-one depending on `vue` for `vue`, at any depth outside hidden folders, other projects' code
-(`node_modules`, `vendor`), test fixtures (`testdata`) and build output (`build`, `dist`, `out`,
-`target`). The stacks are looked for only then; from then on the Config is the user's, like every
-other setting in it (ADR config).
+A new Config turns on the Guidelines for any project, and a stack's only where the repo's files name
+that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`, one
+depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`, at any depth outside
+hidden folders, other projects' code (`node_modules`, `vendor`), test fixtures (`testdata`) and
+build output (`build`, `dist`, `out`, `target`). The stacks are looked for only then; from then on
+the Config is the user's, like every other setting in it (ADR config).
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at

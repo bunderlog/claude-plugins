@@ -55,6 +55,10 @@
         "vue": {
           "description": "Vue 3 with TypeScript: components, composables, Pinia stores, their tests.",
           "type": "boolean"
+        },
+        "tailwind": {
+          "description": "Tailwind CSS: theme tokens, dark mode, class names, configuration.",
+          "type": "boolean"
         }
       },
       "additionalProperties": false

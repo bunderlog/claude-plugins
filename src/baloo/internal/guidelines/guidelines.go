@@ -38,6 +38,8 @@ var All = []Guideline{
 		func(m manifests) bool { return m.packages["typescript"] }},
 	{"vue", "Writing or testing a Vue component, a composable or a Pinia store, or starting a " +
 		"Vue app", func(m manifests) bool { return m.packages["vue"] }},
+	{"tailwind", "Styling with Tailwind CSS: classes, theme tokens, dark mode",
+		func(m manifests) bool { return m.packages["tailwindcss"] }},
 }
 
 // Names are the names of All, in its order.

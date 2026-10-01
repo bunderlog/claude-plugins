@@ -34,6 +34,9 @@ func TestFitting(t *testing.T) {
 		{"a package.json naming typescript and vue", map[string]string{
 			"web/package.json": `{"devDependencies": {"typescript": "^5"}, "dependencies": {"vue": "^3"}}`,
 		}, append(always, "typescript", "vue")},
+		{"a package.json naming tailwindcss", map[string]string{
+			"web/package.json": `{"devDependencies": {"tailwindcss": "^4"}}`,
+		}, append(always, "tailwind")},
 		{"a package.json naming neither", map[string]string{
 			"package.json": `{"name": "vue", "scripts": {"typescript": "tsc"}}`,
 		}, always},

@@ -35,8 +35,8 @@ tests' too.
 - `<script setup lang="ts">`, then `<template>`, then `<style>` if there is one; no Options API.
 - Props, emits and models are typed where they're declared: `defineProps<{ monitor: Monitor }>()`,
   `defineEmits<{ saved: [id: string] }>()`, `defineModel<string>()`.
-- Styling comes from Tailwind classes and the design system's tokens; a `<style>` block is the
-  exception.
+- Styling comes from Tailwind classes and the design system's tokens (`tailwind.md`); a `<style>`
+  block is the exception.
 - A component renders and reacts. Fetching and business rules live in a composable it calls.
 
 **Test:** a component's script is mostly wiring: props, a composable, handlers.

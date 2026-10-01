@@ -51,6 +51,7 @@
     "toplevel",
     "trimpath",
     "webui",
+    "wcag",
     "worktrees"
   ],
   "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]
