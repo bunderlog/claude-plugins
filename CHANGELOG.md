@@ -2,6 +2,19 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.14.0 — 2026-10-01
+
+### Features
+
+- issue: write an Issue to the project's tracker or .about/issues/ with the issue skill (08bbaff)
+- tidy: recheck the ADRs' facts against the code and each other (b9bdb19)
+- retro: look for expensive calls, by the tokens each added to the context (5e9d881)
+- session-start: show the user the plugin's version (27547de)
+- guidelines: let a part inside a module keep a seam and tests of its own (890381c)
+- stop-check: hand the command the HEAD the turn started from in BALOO_BASE (3a87eb3)
+- inbox: delete .about/inbox.md with its last item (49a69b9)
+- inbox: go through the Inbox in rounds the user can stop and pick up later (6c7face)
+
 ## 0.13.0 — 2026-10-01
 
 ### Features
