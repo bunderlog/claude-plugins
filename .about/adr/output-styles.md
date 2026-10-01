@@ -1,6 +1,6 @@
 # How Claude replies is an Output style, which session start picks where none is
 
-Date: 2026-09-30
+Date: 2026-10-01
 
 The plugin ships how Claude writes its replies, such as `short-replies`, as Output styles in
 `plugins/baloo/output-styles/`, each with `keep-coding-instructions: true` so Claude Code keeps its
@@ -8,7 +8,8 @@ own instructions for coding. Claude Code sends the active one with every request
 `outputStyle` setting picks it (`baloo:short-replies`).
 
 The Config's `output-style` key names the plugin's Output style for the repo, and a new Config
-names `short-replies`. At session start the binary sets `outputStyle` to it, only where both hold:
+names `short-replies`. At session start the binary sets `outputStyle` to it, but not in a Session
+review's session (ADR session-review), and only where both hold:
 - the plugin is enabled in the project's local or project settings, or the user's: the most
   specific of them that names `baloo@bunderlog` in `enabledPlugins` decides, as in Claude Code;
 - none of Claude Code's settings files, managed ones included, sets `outputStyle`, to any value,

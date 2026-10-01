@@ -10,7 +10,7 @@ the context at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
 
 The Config's `status-line` key turns it on, and a new Config has it on. A plugin can't set
 Claude Code's `statusLine` itself, so at session start the binary writes it, as it picks an Output
-style (ADR output-styles), where both hold:
+style (ADR output-styles) and not in a Session review's session, where both hold:
 - the plugin is enabled in the project's local or project settings, or the user's;
 - none of the project's local or project settings, nor the managed ones, sets `statusLine`: the
   user's own, for every project, gives way to the repo's key.

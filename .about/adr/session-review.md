@@ -20,6 +20,12 @@ the repo it runs in, is recorded; anything contested or unanswered goes to the g
 `## Unresolved` or a proposed ADR. It never edits a PRD, an agreement with the user about what to
 build.
 
+Its session changes nothing else either: there session start creates no Config, picks no Output
+style, sets no Status line and writes no Git hook, and no Stop check or Format on edit runs. A
+review starts as the user may be opening their next session, whose session start writes the same
+settings files. The Checks a Hook runs still run there, so a tool call of the review's can't show
+it a Secret; session start still names the Guidelines.
+
 Its reply and process id are kept per repo in the plugin's data folder. The next session start
 tells Claude, once, to tell the user what the last review changed, or that it is still running.
 It runs with the user's default model.
@@ -28,6 +34,10 @@ It runs with the user's default model.
 
 - Dropping it, since most reviews change nothing — the few that do record what would otherwise
   be lost, and that is what it is for.
+- Session start as in any other session but for the Git hooks (until 2026-10-01) — nothing
+  needed its writes there, and they could race those of the user's next session.
+- The Checks a Hook runs off in its session too, so nothing of the plugin runs there — a Read of
+  an Env file by the review would go unchecked.
 - Off in a new Config too — no tokens without asking, but no review until someone knows to ask.
 - Handing over the conversation unmasked — a Secret the user pasted, or Claude repeated, would
   reach one more session and Transcript.

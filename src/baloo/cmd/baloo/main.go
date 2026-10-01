@@ -96,17 +96,24 @@ func project() (string, error) {
 // sessionStart is the SessionStart Hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), sets the Status line or takes it out (ADR
-// status-line), and writes the Git hooks or takes them out, but not in a Session review's own
-// session (ADR git-hooks). What it prints Claude Code adds to Claude's context, so it prints only
-// what Claude should know: a Config it created, an Output style or a Status line it set, the Git
-// hooks it wrote, took out, changed in husky or left alone, a Hook Check it turns off (ADR
-// checks), what the last Session review replied (ADR session-review), and the problems, each on
-// one line; then the Guidelines the Config turns on (ADR guidelines).
+// status-line), and writes the Git hooks or takes them out (ADR git-hooks). What it prints Claude
+// Code adds to Claude's context, so it prints only what Claude should know: a Config it created,
+// an Output style or a Status line it set, the Git hooks it wrote, took out, changed in husky or
+// left alone, a Hook Check it turns off (ADR checks), what the last Session review replied (ADR
+// session-review), and the problems, each on one line; then the Guidelines the Config turns on
+// (ADR guidelines). In a Session review's session it only names the Guidelines: that session
+// changes nothing but the glossary and the ADRs (ADR session-review).
 func sessionStart(stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
 		fmt.Fprintf(stderr, "baloo: %v\n", err)
 		return 1
+	}
+	if os.Getenv(review.Env) != "" {
+		if index, _ := guidelineIndex(config.Read(dir).Guidelines); index != "" {
+			fmt.Fprintf(stdout, "%s\n", index)
+		}
+		return 0
 	}
 	c, created, problems := config.Load(dir)
 	var report []string
@@ -143,7 +150,7 @@ func sessionStart(stdout, stderr io.Writer) int {
 			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
 		}
 	}
-	if c.Root != "" && os.Getenv(review.Env) == "" {
+	if c.Root != "" {
 		r, err := githooks.Write(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.CheckOn)
 		report = append(report, gitHooksReport(r)...)
 		if err != nil {

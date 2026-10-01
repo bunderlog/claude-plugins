@@ -303,6 +303,44 @@ func TestCheckTakesTheConfig(t *testing.T) {
 	}
 }
 
+// In a Session review's session, session start changes nothing in the repo or Claude Code's
+// settings, and only names the Guidelines.
+func TestSessionStartInSessionReview(t *testing.T) {
+	dir := inRepo(t)
+	t.Setenv(review.Env, "1")
+	enable := `{"enabledPlugins": {"` + names.PluginID + `": true}}`
+	if err := os.WriteFile(filepath.Join(os.Getenv("CLAUDE_CONFIG_DIR"), "settings.json"), []byte(enable), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 || stdout.Len() != 0 {
+		t.Errorf("session-start without a Config = %d, %q; want 0 and nothing", code, stdout.String())
+	}
+	if _, err := os.Stat(filepath.Join(dir, names.Config)); err == nil {
+		t.Errorf("session-start created %s", names.Config)
+	}
+	config := "output-style: short-replies\nstatus-line: true\nguidelines:\n  go: true\n" +
+		"git-hooks:\n  no-secrets-in-commits: true\n"
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stdout.Reset()
+	want := "Read a file when its task comes up:\n- Writing Go: " +
+		filepath.Join(plugin(t), "guidelines", "go.md") + "\n"
+	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 ||
+		!strings.HasSuffix(stdout.String(), want) || strings.Contains(stdout.String(), "baloo:") {
+		t.Errorf("session-start = %d, %q; want 0 and only the Guidelines, ending %q", code, stdout.String(), want)
+	}
+	for _, path := range []string{names.LocalSettings, ".git/hooks/pre-commit"} {
+		if _, err := os.Stat(filepath.Join(dir, path)); err == nil {
+			t.Errorf("session-start wrote %s", path)
+		}
+	}
+}
+
 // Session start names a Check a Hook runs that the Config turns off, for the user.
 func TestSessionStartChecksOff(t *testing.T) {
 	dir := inRepo(t)
