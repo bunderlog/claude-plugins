@@ -12,9 +12,9 @@ raises the minor, anything else the patch; from 1.0 a breaking change raises the
 that version for every platform, so a version that doesn't build is never tagged, then writes it
 to `plugin.json` and to the line the README's CI recipe pins (ADR checks), and a section to
 `CHANGELOG.md`, commits them as `chore(release): <version>` and tags the commit `v<version>`,
-signed, for `git push --follow-tags`. The tag starts the Release workflow, which builds the
-binaries for every platform and publishes them, their `SHA256SUMS` and the CHANGELOG section as
-the GitHub Release (ADR binary).
+signed; the task then pushes both with `git push --follow-tags`. The tag starts the Release
+workflow, which builds the binaries for every platform and publishes them, their `SHA256SUMS` and
+the CHANGELOG section as the GitHub Release (ADR binary).
 
 The release tool is a Go module of its own, `src/release/`, outside the plugin and the binary's
 module, so a change to it needs no Release; it takes the plugin's names from `src/baloo/names`.
@@ -35,6 +35,8 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   no longer runs as copied.
 - A test failing when the README's version lags `plugin.json` — nothing forgotten, but an edit by
   hand at every Release.
+- The push left to whoever ran the task (until 2026-10-01) — a Release made and never pushed
+  reaches nobody, and one sat local for three sessions until the next was pushed with it.
 - CI making the Release on every push to `main` — no local step, but the release commit would be
   CI's, unsigned, and CI would push to `main`.
 

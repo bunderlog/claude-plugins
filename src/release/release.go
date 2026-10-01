@@ -230,13 +230,14 @@ func Release(root, date string) (string, error) {
 	commit.Stdout, commit.Stderr = os.Stderr, os.Stderr
 	if err := commit.Run(); err != nil {
 		return "", fmt.Errorf("the release commit failed: fix what failed, then "+
-			"`git commit -m %q && git tag -s v%s -m v%s`", msg, version, version)
+			"`git commit -m %q && git tag -s v%s -m v%s && git push --follow-tags`",
+			msg, version, version)
 	}
 	// Signed whatever tag.gpgSign says, as ADR releases has it: -a alone would make an unsigned
 	// tag.
 	if out, err := exec.Command("git", "-C", root, "tag", "-s", "v"+version, "-m", "v"+version).CombinedOutput(); err != nil {
-		return "", fmt.Errorf("the release tag failed: fix what failed, then `git tag -s v%s -m v%s`: %s",
-			version, version, out)
+		return "", fmt.Errorf("the release tag failed: fix what failed, then "+
+			"`git tag -s v%s -m v%s && git push --follow-tags`: %s", version, version, out)
 	}
 	return version, nil
 }
