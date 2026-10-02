@@ -6,8 +6,11 @@ These bias toward caution over speed; scale them to the change (see the end).
 
 For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremony and just do it.
 
+- A question ("which X?", "should I?", "why?") gets an answer: install, edit, commit, push or log
+  in only when asked.
 - Touch only what the task needs and match the existing style; remove only the orphans your
   change made.
+- A commit holds only this task's changes: leave other pending changes unstaged, or ask.
 - Write the least code that solves the stated problem: nothing speculative, no options nobody
   asked for.
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
@@ -127,6 +130,11 @@ Check with what the project itself runs: its CI, Git hooks and scripts, not ever
 config in the repo. A failure that was there before your change: name it, don't chase it. A
 script you commit runs from a clean checkout, on dependencies the repo declares, not on your
 scratch folder or a global install.
+
+- Before a deliverable of several parts (variants, files, platforms), list every one you'll make;
+  after, check each exists.
+- A fix is done when the installed or running thing shows it, not when its source changed:
+  reinstall or rerun, and read the live state.
 
 For multi-step work, state the plan as numbered steps, each with its check:
 
