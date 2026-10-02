@@ -75,7 +75,7 @@ git reset -q --soft "$BASE" # the checked commits' changes, staged
 ## Development
 
 This repo uses its own plugin: `.claude/settings.json` installs `baloo` from GitHub, so a session
-here runs its last Release. To try an edit to a skill, Guideline or Hook before a Release, start a
-session with `claude --plugin-dir plugins/baloo`; the binary is still the last Release's. Its
-source is in `src/baloo/`, and `mise run check` checks its formatting, vets it and tests it. To
-make a Release and push it, run `mise run release`.
+here runs its last Release. To try an edit to a skill, the agent, a Guideline or a Hook before a
+Release, start a session with `claude --plugin-dir plugins/baloo`; the binary is still the last
+Release's. Its source is in `src/baloo/`, and `mise run check` checks its formatting, vets it and
+tests it. To make a Release and push it, run `mise run release`.
