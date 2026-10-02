@@ -1,3 +1,5 @@
+// cspell:ignore elif
+
 package checks
 
 import (
@@ -28,8 +30,12 @@ var wrappers = map[string][]string{
 
 var shells = []string{"sh", "bash", "zsh", "dash"}
 
-// programs are the programs the shell command `command` runs, past wrappers such as sudo and env,
-// and into `eval` and `sh -c`: enough to find each program and its arguments, not a full shell.
+// keywords are the shell's words that start a simple command and run the program after them.
+var keywords = []string{"if", "then", "else", "elif", "while", "until", "do", "!", "{"}
+
+// programs are the programs the shell command `command` runs, past keywords such as then, wrappers
+// such as sudo and env, and into `eval` and `sh -c`: enough to find each program and its
+// arguments, not a full shell. A for loop's header is a program named for.
 // An env with no program after it runs nothing but prints the environment, so it is one.
 func programs(command string) []program {
 	var found []program
@@ -40,6 +46,10 @@ func programs(command string) []program {
 		for len(words) > 0 {
 			if assignment.MatchString(words[0]) {
 				env, words = append(env, words[0]), words[1:]
+				continue
+			}
+			if slices.Contains(keywords, words[0]) {
+				words = words[1:]
 				continue
 			}
 			valued, ok := wrappers[path.Base(words[0])]

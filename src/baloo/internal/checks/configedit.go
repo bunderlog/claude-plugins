@@ -12,7 +12,9 @@ import (
 
 // ChangesConfig says whether the tool call `call`, run in the folder `dir`, may change the Config
 // at the path `config`, for Claude to ask the user first (ADR checks): an Edit, Write or MultiEdit
-// of it, or a Bash command that names a file of its name, unless only a program of readOnly reads it.
+// of it, or a Bash command that names a file of its name, unless only a program of readOnly reads
+// it. A for loop's list hands it to the loop's body by a variable, so there it passes only where
+// no program of the command may write a file.
 func ChangesConfig(call ToolCall, dir, config string) bool {
 	switch call.Tool {
 	case "Edit", "Write", "MultiEdit":
@@ -22,12 +24,19 @@ func ChangesConfig(call ToolCall, dir, config string) bool {
 		}
 		return filepath.Clean(path) == filepath.Clean(config)
 	case "Bash":
-		for _, p := range programs(call.Input.Command) {
+		all := programs(call.Input.Command)
+		for _, p := range all {
 			for i, w := range p.args {
 				if filepath.Base(strings.TrimLeft(w, "<>")) != filepath.Base(config) {
 					continue
 				}
 				redirected := strings.Contains(w, ">") || i > 0 && strings.HasSuffix(p.args[i-1], ">")
+				if p.name == "for" && !redirected {
+					if slices.ContainsFunc(all, writes) {
+						return true
+					}
+					continue
+				}
 				if redirected || !reads(p) {
 					return true
 				}
@@ -36,6 +45,29 @@ func ChangesConfig(call ToolCall, dir, config string) bool {
 	}
 	return false
 }
+
+// writes says whether the program `p` may write a file: it redirects its output to one, or names
+// one and is neither a program of readOnly nor one that only prints. A for loop's header writes
+// nothing.
+func writes(p program) bool {
+	for i, w := range p.args {
+		at := strings.Index(w, ">")
+		if at < 0 {
+			continue
+		}
+		target := strings.TrimLeft(w[at+1:], ">|")
+		if target == "" && i+1 < len(p.args) {
+			target = p.args[i+1]
+		}
+		if target != "" && target != "/dev/null" && !strings.HasPrefix(target, "&") {
+			return true
+		}
+	}
+	return p.name != "for" && len(p.args) > 0 && !reads(p) && !slices.Contains(printers, p.name)
+}
+
+// printers are programs that only print their arguments.
+var printers = []string{"echo", "printf"}
 
 // readOnly are programs that only read the files they name; sed is one without -i.
 var readOnly = []string{"cat", "head", "tail", "less", "more", "grep", "egrep", "fgrep", "rg", "wc",

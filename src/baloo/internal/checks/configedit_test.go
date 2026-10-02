@@ -36,6 +36,14 @@ func TestChangesConfig(t *testing.T) {
 		"sed -n 1,20p .claude/baloo.yml":                               false,
 		"git diff .claude/baloo.yml":                                   false,
 		"git status":                                                   false,
+		"if grep -q x .claude/baloo.yml; then echo y; fi":              false,
+		// A for loop's list hands the Config to the programs of its body, by its variable.
+		`for f in CLAUDE.md .claude/baloo.yml; do echo "$f"; cat "$f"; done`:            false,
+		`for f in .claude/baloo.yml; do head "$f" 2>/dev/null; done`:                    false,
+		`for f in .claude/baloo.yml; do sed -i 's/a/b/' "$f"; done`:                     true,
+		`for f in .claude/baloo.yml; do echo x > "$f"; done`:                            true,
+		`for f in .claude/baloo.yml; do cat "$f"; done > .claude/baloo.yml`:             true,
+		`for f in a b; do cat "$f"; done; for c in .claude/baloo.yml; do rm "$c"; done`: true,
 	} {
 		if got := ChangesConfig(bash(t, command), dir, config); got != want {
 			t.Errorf("ChangesConfig(%q) = %v, want %v", command, got, want)

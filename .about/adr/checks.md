@@ -1,6 +1,6 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-01
+Date: 2026-10-02
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
@@ -25,13 +25,14 @@ failing, names `git config pull.rebase true` for the user to run.
 
 Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the
 Config: a Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command
-that names it, unless a program that only reads files, such as `cat`, `grep`, `sed` without `-i`
-or `git diff`, reads it with no redirect into it. Claude Code's own settings can turn them off too, with `disableAllHooks` or by
-disabling the plugin, so the Hook also asks before a tool call that may do that: an Edit, Write or
-MultiEdit of a `settings.json` or `settings.local.json` in a `.claude` folder or in
-`$CLAUDE_CONFIG_DIR` whose new text names `disableAllHooks`, `enabledPlugins` or `baloo@`, a Bash
-command that names such a file and such a key, or `claude plugin disable` or `uninstall` of the
-plugin. These rules have no key.
+that names it, unless a program that only reads files, such as `cat`, `grep`, `sed` without `-i` or
+`git diff`, reads it with no redirect into it; a `for` loop's list hands it to the loop's body by a
+variable, so there it passes only where no program of the command writes a file. Claude Code's own
+settings can turn them off too, with `disableAllHooks` or by disabling the plugin, so the Hook also
+asks before a tool call that may do that: an Edit, Write or MultiEdit of a `settings.json` or
+`settings.local.json` in a `.claude` folder or in `$CLAUDE_CONFIG_DIR` whose new text names
+`disableAllHooks`, `enabledPlugins` or `baloo@`, a Bash command that names such a file and such a
+key, or `claude plugin disable` or `uninstall` of the plugin. These rules have no key.
 
 Where `no-ai-coauthor` is on, session start also sets Claude Code's `attribution` to
 `{"commit": ""}`, so Claude writes no co-author trailer the Check would then reject. It writes it

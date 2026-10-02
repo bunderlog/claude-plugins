@@ -15,6 +15,7 @@ func TestNoDestructiveCommands_DeniesWhatDestroysWork(t *testing.T) {
 	dir := t.TempDir() // no repo: git status fails, so reset --hard is denied
 	for _, command := range []string{
 		"git push --force",
+		"if true; then git push --force; fi",
 		"git push -f origin main",
 		"git push origin +main",
 		"git push --mirror",
