@@ -99,6 +99,33 @@ func project() (string, error) {
 	return os.Getwd()
 }
 
+// report is what session start tells Claude: the lines of what it did, and of what went wrong,
+// printed as one list once both are complete.
+type report struct{ lines, problems []string }
+
+// ok adds a line of what session start did.
+func (r *report) ok(line string) { r.lines = append(r.lines, line) }
+
+// fail adds what went wrong, under `prefix`, when `err` is set.
+func (r *report) fail(prefix string, err error) {
+	if err != nil {
+		r.problems = append(r.problems, fmt.Sprintf("%s: %v", prefix, err))
+	}
+}
+
+// setting reports the (path, Scope, err) a setting session start wrote returns, as
+// outputstyle.Pick and settings.SetUnset do: `line`, with the team-commit suffix where `enabled`
+// is Project, when `path` is set; `err` under `errPrefix` otherwise.
+func (r *report) setting(path string, enabled settings.Scope, line string, err error, errPrefix string) {
+	if path != "" {
+		if enabled == settings.Project {
+			line += "; the change to the team's settings is theirs to commit"
+		}
+		r.ok(line)
+	}
+	r.fail(errPrefix, err)
+}
+
 // sessionStart is the SessionStart Hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), turns off Claude Code's commit attribution
@@ -124,70 +151,50 @@ func sessionStart(stdout, stderr io.Writer) int {
 		return 0
 	}
 	c, created, problems := config.Load(dir)
-	var report []string
+	rep := report{problems: problems}
 	if created != "" {
-		report = append(report, fmt.Sprintf("created %s with every check on and the guidelines "+
+		rep.ok(fmt.Sprintf("created %s with every check on and the guidelines "+
 			"that fit the repo: tell the user, "+
 			"and that the file is theirs to commit and to change", created))
 	}
 	if c.OutputStyle != "" {
 		picked, err := outputstyle.Pick(dir, c.Root, c.OutputStyle)
-		if picked.Path != "" {
-			line := fmt.Sprintf("picked the %s:%s output style in %s: tell the user, that it "+
-				"applies from their next message or session, and that to drop it they set "+
-				"output-style: false in %s and pick another style, Default too, with /output-style",
-				names.Plugin, c.OutputStyle, picked.Path, names.Config)
-			if picked.Enabled == settings.Project {
-				line += "; the change to the team's settings is theirs to commit"
-			}
-			report = append(report, line)
-		}
-		if err != nil {
-			problems = append(problems, fmt.Sprintf("could not pick the %s:%s output style: %v",
-				names.Plugin, c.OutputStyle, err))
-		}
+		line := fmt.Sprintf("picked the %s:%s output style in %s: tell the user, that it "+
+			"applies from their next message or session, and that to drop it they set "+
+			"output-style: false in %s and pick another style, Default too, with /output-style",
+			names.Plugin, c.OutputStyle, picked.Path, names.Config)
+		rep.setting(picked.Path, picked.Enabled, line, err,
+			fmt.Sprintf("could not pick the %s:%s output style", names.Plugin, c.OutputStyle))
 	}
 	if c.Root != "" && c.CheckOn("no-ai-coauthor") {
 		path, enabled, err := settings.SetUnset(dir, c.Root,
 			[]string{"attribution", "includeCoAuthoredBy"}, "attribution", map[string]string{"commit": ""})
-		if path != "" {
-			line := fmt.Sprintf("turned off Claude Code's commit attribution in %s, since "+
-				"git-hooks.no-ai-coauthor in %s rejects it: tell the user", path, names.Config)
-			if enabled == settings.Project {
-				line += "; the change to the team's settings is theirs to commit"
-			}
-			report = append(report, line)
-		}
-		if err != nil {
-			problems = append(problems, fmt.Sprintf("could not turn off the commit attribution: %v", err))
-		}
+		line := fmt.Sprintf("turned off Claude Code's commit attribution in %s, since "+
+			"git-hooks.no-ai-coauthor in %s rejects it: tell the user", path, names.Config)
+		rep.setting(path, enabled, line, err, "could not turn off the commit attribution")
 	}
 	if c.Root != "" && c.StatusLine != nil {
 		shown, err := statusline.Set(dir, c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), *c.StatusLine)
 		if shown {
-			report = append(report, fmt.Sprintf("set the %s status line in %s: tell the user, that "+
+			rep.ok(fmt.Sprintf("set the %s status line in %s: tell the user, that "+
 				"it shows from their next message, and that status-line: false in %s takes it out",
 				names.Plugin, filepath.Join(dir, names.LocalSettings), names.Config))
 		}
-		if err != nil {
-			problems = append(problems, fmt.Sprintf("could not set the status line: %v", err))
-		}
+		rep.fail("could not set the status line", err)
 	}
 	if c.Root != "" {
 		r, err := githooks.Write(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.CheckOn)
-		report = append(report, gitHooksReport(r)...)
-		if err != nil {
-			problems = append(problems, fmt.Sprintf("could not write the Git hooks: %v", err))
-		}
+		rep.lines = append(rep.lines, gitHooksReport(r)...)
+		rep.fail("could not write the Git hooks", err)
 	}
 	for _, name := range checks.HookChecks {
 		if on, ok := c.Checks[name]; ok && !on {
-			report = append(report, fmt.Sprintf("claude-hooks.%s: false in %s turns off a check in Claude "+
+			rep.ok(fmt.Sprintf("claude-hooks.%s: false in %s turns off a check in Claude "+
 				"Code's hooks: tell the user", name, names.Config))
 		}
 	}
 	if c.Root != "" {
-		report = append(report, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
+		rep.lines = append(rep.lines, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
 		if n, kept := inboxItems(c.Root); n > 0 {
 			items := "items"
 			if n == 1 {
@@ -200,19 +207,17 @@ func sessionStart(stdout, stderr io.Writer) int {
 			case kept > 0:
 				left = fmt.Sprintf(", %d not gone through yet", n-kept)
 			}
-			report = append(report, fmt.Sprintf("%s holds %d %s to consider%s: tell the user, and that "+
+			rep.ok(fmt.Sprintf("%s holds %d %s to consider%s: tell the user, and that "+
 				"/%s:inbox goes through them", names.Inbox, n, items, left, names.Plugin))
 		}
 	}
 	index, err := guidelineIndex(c.Guidelines)
-	if err != nil {
-		problems = append(problems, fmt.Sprintf("could not name the guidelines: %v", err))
-	}
-	if report = append(report, problems...); len(report) > 0 {
-		for i, line := range report {
-			report[i] = oneLine(line)
+	rep.fail("could not name the guidelines", err)
+	if lines := append(rep.lines, rep.problems...); len(lines) > 0 {
+		for i, line := range lines {
+			lines[i] = oneLine(line)
 		}
-		fmt.Fprintf(stdout, "baloo:\n%s\n", strings.Join(report, "\n"))
+		fmt.Fprintf(stdout, "baloo:\n%s\n", strings.Join(lines, "\n"))
 	}
 	if index != "" {
 		fmt.Fprintf(stdout, "%s\n", index)
