@@ -592,6 +592,39 @@ func TestAllowGuideline(t *testing.T) {
 	}
 }
 
+// The verifier's SubagentStart Hook tells it the Guidelines the Config turns on, and says nothing
+// to another agent or with none on.
+func TestSubagentStart(t *testing.T) {
+	dir := inRepo(t)
+	verifier := `{"agent_type": "baloo:verifier"}`
+	var stdout bytes.Buffer
+	if code := run([]string{"subagent-start"}, strings.NewReader(verifier), &stdout, io.Discard); code != 0 || stdout.Len() != 0 {
+		t.Errorf("subagent-start without a Config = %d, %q; want 0 and nothing", code, stdout.String())
+	}
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("guidelines:\n  go: true\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, stdin, want string }{
+		{"the verifier", verifier, "- Writing Go: " + filepath.Join(plugin(t), "guidelines", "go.md")},
+		{"another agent", `{"agent_type": "Explore"}`, ""},
+		{"not JSON", "nope", ""},
+	} {
+		stdout.Reset()
+		code := run([]string{"subagent-start"}, strings.NewReader(tc.stdin), &stdout, io.Discard)
+		var hook struct {
+			HookSpecificOutput struct{ HookEventName, AdditionalContext string } `json:"hookSpecificOutput"`
+		}
+		json.Unmarshal(stdout.Bytes(), &hook)
+		if got := hook.HookSpecificOutput; code != 0 || tc.want == "" && stdout.Len() != 0 ||
+			tc.want != "" && (got.HookEventName != "SubagentStart" || !strings.HasSuffix(got.AdditionalContext, tc.want)) {
+			t.Errorf("subagent-start, %s = %d, %q; want 0 and a context ending %q", tc.name, code, stdout.String(), tc.want)
+		}
+	}
+}
+
 // condenseProject is a project folder, the folder commands run in until the test ends, whose
 // Transcripts, in Claude Code's config folder, are the sessions "one" and "two", "two" the newer.
 func condenseProject(t *testing.T) (project, transcripts string) {

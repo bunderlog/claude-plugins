@@ -30,7 +30,7 @@ import (
 // says "dev".
 var version = "dev"
 
-var usage = "usage: baloo version | session-start | allow-guideline | status-line |\n" +
+var usage = "usage: baloo version | session-start | allow-guideline | subagent-start | status-line |\n" +
 	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
@@ -55,6 +55,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return code
 		case "allow-guideline":
 			return allowGuideline(stdin, stdout)
+		case "subagent-start":
+			return subagentStart(stdin, stdout)
 		case "status-line":
 			return statusLine(stdin, stdout)
 		case "pre-tool-use":
@@ -327,6 +329,31 @@ func allowGuideline(stdin io.Reader, stdout io.Writer) int {
 		"hookEventName":            "PreToolUse",
 		"permissionDecision":       "allow",
 		"permissionDecisionReason": names.Plugin + ": one of the plugin's own guidelines",
+	}})
+	return 0
+}
+
+// subagentStart is the SubagentStart Hook of the plugin's verifier (ADR verify): it tells the
+// agent, which session start's context doesn't reach, the Guidelines the Config turns on, as
+// session start names them. For another agent, or with none on, it says nothing.
+func subagentStart(stdin io.Reader, stdout io.Writer) int {
+	var call struct {
+		AgentType string `json:"agent_type"`
+	}
+	if json.NewDecoder(stdin).Decode(&call) != nil || call.AgentType != names.Verifier {
+		return 0
+	}
+	dir, err := project()
+	if err != nil {
+		return 0
+	}
+	index, _ := guidelineIndex(config.Read(dir).Guidelines)
+	if index == "" {
+		return 0
+	}
+	json.NewEncoder(stdout).Encode(map[string]any{"hookSpecificOutput": map[string]string{
+		"hookEventName":     "SubagentStart",
+		"additionalContext": index,
 	}})
 	return 0
 }

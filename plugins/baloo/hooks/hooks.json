@@ -61,6 +61,19 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "matcher": "^baloo:verifier$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "subagent-start"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit",

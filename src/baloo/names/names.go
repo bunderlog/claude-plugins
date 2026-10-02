@@ -8,6 +8,8 @@ const (
 	Marketplace = "bunderlog"
 	// PluginID is the plugin as Claude Code's settings name it, in enabledPlugins.
 	PluginID = Plugin + "@" + Marketplace
+	// Verifier is the plugin's agent that the verify skill runs, as Claude Code names it.
+	Verifier = Plugin + ":verifier"
 	// PluginDir is the plugin's folder in this repo.
 	PluginDir = "plugins/" + Plugin
 	// Src is the binary's Go module, beside the plugin rather than in it (ADR plugin).

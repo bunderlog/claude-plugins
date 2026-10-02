@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-01
+Date: 2026-10-02
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `go`, `typescript`, `vue` and
@@ -30,9 +30,10 @@ a plugin's skills, and a SessionStart Hook runs after the skill listing is built
 as a skill would put every stack's description into every session, whatever the project.
 
 So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `issue`,
-`prd`) or are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`);
-rules for how to do a kind of task are a Guideline, `debugging` among them: it writes nothing and is
-not a conversation, and as a Guideline a project can turn it off.
+`prd`), are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`), or
+run the plugin's agent (`verify`, ADR verify); rules for how to do a kind of task are a
+Guideline, `debugging` among them: it writes nothing and is not a conversation, and as a Guideline
+a project can turn it off.
 
 ## Considered options
 

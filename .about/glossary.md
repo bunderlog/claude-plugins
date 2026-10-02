@@ -1,9 +1,9 @@
 # baloo glossary
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, write its Issues, go through its Inbox or run a
-Retro; a Session review; Guidelines of working rules; Checks in one Go binary that Hooks and Git
-hooks trigger; an Output style for Claude's replies; and a Status line.
+language, decisions and requirements explicit, write its Issues, go through its Inbox, run a
+Retro or a Verification; a Session review; Guidelines of working rules; Checks in one Go binary
+that Hooks and Git hooks trigger; an Output style for Claude's replies; and a Status line.
 
 ## Distribution
 
@@ -153,3 +153,11 @@ Work agreed to do, a bug to fix or a task: a page in the tracker the project nam
 it is still to decide.
 _Avoid_: ticket, todo
 _In code_: the `issue` skill writes one
+
+**Verification**:
+A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
+Guidelines the Config turns on, and the acceptance criteria of its Issue or PRD. The plugin's
+agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
+nothing. Unlike a code review, it doesn't hunt bugs; unlike a Check, it isn't the binary's code.
+_Avoid_: review, already a Session review's, a Retro's and a code review's word
+_In code_: the `verify` skill; `agents/verifier.md`; `names.Verifier`

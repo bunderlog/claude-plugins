@@ -9,17 +9,18 @@
 # it is downloaded, `loader pre-tool-use`, the PreToolUse Hook of the Checks a Hook runs, its
 # pre-tool-use, `loader post-tool-use`, the PostToolUse Hook of format-on-edit, its
 # post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end, and
-# `loader user-prompt-submit` and `loader stop`, the Stop check's Hooks, theirs.
+# `loader user-prompt-submit` and `loader stop`, the Stop check's Hooks, theirs, and
+# `loader subagent-start`, the verifier's SubagentStart Hook, its subagent-start.
 # A failure says why on stderr and exits 2, which a SessionStart Hook shows to the user; for the
 # others it says nothing and exits 0, since exit 2 there would stop the tool call, the prompt or
 # the turn's end: reading a Guideline then asks the user, as any file outside the project does,
-# the Checks, the Stop check and format-on-edit don't run, as session start has said, and no
-# Session review starts.
+# the Checks, the Stop check and format-on-edit don't run, as session start has said, no Session
+# review starts, and the verifier starts without the Guidelines.
 set -u
 
 quiet=
 case ${1:-} in
-  allow-guideline | pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop)
+  allow-guideline | pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop | subagent-start)
     quiet=1
     call=$(cat)
     ;;
@@ -126,7 +127,7 @@ fetch() {
 
 case ${1:-} in
   install) install ;;
-  allow-guideline | pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop)
+  allow-guideline | pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop | subagent-start)
     # A binary of an older version, without the subcommand, fails too: that is no failure either.
     [ -x "$bin" ] || exit 0
     touch "$bin" "$bin.sha256" 2>/dev/null
