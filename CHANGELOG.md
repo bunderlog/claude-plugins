@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.16.0 — 2026-10-02
+
+### Features
+
+- guidelines: answer a question without acting, commit only the task's changes, check each part (94453f1)
+
 ## 0.15.1 — 2026-10-02
 
 ### Fixes
