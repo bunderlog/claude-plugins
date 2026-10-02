@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.15.0 — 2026-10-02
+
+### Features
+
+- verify: verify a change against the project's decisions with the verifier agent (a1518da)
+
 ## 0.14.3 — 2026-10-01
 
 ### Fixes
