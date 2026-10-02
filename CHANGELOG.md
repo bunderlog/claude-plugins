@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.15.1 — 2026-10-02
+
+### Fixes
+
+- checks: see the program after a shell keyword, and let a for loop read the Config (4ab2d49)
+
 ## 0.15.0 — 2026-10-02
 
 ### Features
