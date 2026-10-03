@@ -67,6 +67,8 @@ done
 echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/base $BASE" | "$baloo" check linear-history
 git reset -q --soft "$BASE" # the checked commits' changes, staged
 "$baloo" check no-secrets-in-commits
+"$baloo" check no-conflict-markers
+"$baloo" check no-large-files
 ```
 
 - Check out the head with its full history, not a merge commit. In GitHub Actions that is

@@ -134,6 +134,27 @@
           "description": "pre-commit: an ADR the staged changes change has today's Date.",
           "type": "boolean"
         },
+        "no-conflict-markers": {
+          "description": "pre-commit: the staged changes add no conflict marker, as git diff --check finds them, in a file where one opens or closes a conflict; a longer conflict-marker-size in .gitattributes lets a file hold them.",
+          "type": "boolean"
+        },
+        "no-large-files": {
+          "description": "pre-commit: the staged changes add no file over 1024 KB; a file already committed passes. Its settings instead of true.",
+          "oneOf": [
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "properties": {
+                "max-size": {
+                  "description": "The largest file a commit may add, in KB. 1024 without it.",
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
         "linear-history": {
           "description": "pre-push: the push sends no merge commit.",
           "type": "boolean"

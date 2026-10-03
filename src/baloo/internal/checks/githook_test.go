@@ -124,6 +124,31 @@ func TestRun_NoStaleADRDate(t *testing.T) {
 	}
 }
 
+// The pre-commit Check no-conflict-markers fails with where each marker is.
+func TestRun_NoConflictMarkers(t *testing.T) {
+	dir := testkit.Repo(t)
+	stage(t, dir, map[string]string{"a.go": "<<<<<<< HEAD\n"})
+	want := "baloo:no-conflict-markers: resolve each conflict, or give a file that holds markers on " +
+		"purpose a longer conflict-marker-size in .gitattributes; conflict markers:\na.go:1\n"
+	if code, errs := run(t, "no-conflict-markers", nil, Input{Dir: dir}); code != 1 || errs != want {
+		t.Errorf("no-conflict-markers = %d, %q; want 1, %q", code, errs, want)
+	}
+}
+
+// The pre-commit Check no-large-files fails with each file over the limit the Input gives.
+func TestRun_NoLargeFiles(t *testing.T) {
+	dir := testkit.Repo(t)
+	stage(t, dir, map[string]string{"app": strings.Repeat("x", 2048)})
+	want := "baloo:no-large-files: keep each out of git, or raise no-large-files' max-size in " +
+		".claude/baloo.yml:\napp: 2 KB, over 1 KB\n"
+	if code, errs := run(t, "no-large-files", nil, Input{Dir: dir, MaxFileKB: 1}); code != 1 || errs != want {
+		t.Errorf("no-large-files = %d, %q; want 1, %q", code, errs, want)
+	}
+	if code, errs := run(t, "no-large-files", nil, Input{Dir: dir}); code != 0 || errs != "" {
+		t.Errorf("no-large-files with the default limit = %d, %q; want 0", code, errs)
+	}
+}
+
 // The pre-push Check linear-history fails with the merge commits the push sends, as git gives them
 // on stdin.
 func TestRun_LinearHistory(t *testing.T) {

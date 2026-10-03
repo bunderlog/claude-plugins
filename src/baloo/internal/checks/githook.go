@@ -10,12 +10,13 @@ import (
 )
 
 // Input is what the Checks Git hooks run read besides git's arguments: the repo, git's stdin,
-// today's date and conventional-commits' settings.
+// today's date, conventional-commits' settings and no-large-files' limit.
 type Input struct {
-	Dir   string
-	Stdin io.Reader
-	Today string // YYYY-MM-DD
-	Rules CommitRules
+	Dir       string
+	Stdin     io.Reader
+	Today     string // YYYY-MM-DD
+	Rules     CommitRules
+	MaxFileKB int // 0 for DefaultMaxFileKB
 }
 
 // gitHookCheck is a Check a Git hook runs: what it finds in the Input and the one argument it
@@ -53,6 +54,13 @@ var gitHookChecks = []gitHookCheck{
 	{name: "no-stale-adr-date", hook: "pre-commit",
 		advice: "an ADR's Date is when it last changed",
 		find:   func(in Input, _ string) ([]string, error) { return NoStaleADRDate(in.Dir, in.Today) }},
+	{name: "no-conflict-markers", hook: "pre-commit",
+		advice: "resolve each conflict, or give a file that holds markers on purpose a longer " +
+			"conflict-marker-size in .gitattributes; conflict markers",
+		find: func(in Input, _ string) ([]string, error) { return NoConflictMarkers(in.Dir) }},
+	{name: "no-large-files", hook: "pre-commit",
+		advice: "keep each out of git, or raise no-large-files' max-size in " + names.Config,
+		find:   func(in Input, _ string) ([]string, error) { return NoLargeFiles(in.Dir, in.MaxFileKB) }},
 	{name: "linear-history", hook: "pre-push", stdin: "<pushed refs>",
 		advice: "rebase instead of merging, then push the rebased branch with --force-with-lease; " +
 			"git config pull.rebase true makes git pull rebase; merge commits",

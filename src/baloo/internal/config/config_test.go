@@ -599,6 +599,29 @@ func TestConventionalCommitsSetting(t *testing.T) {
 	}
 }
 
+// no-large-files takes its limit, in KB, of 1 or more; a wrong setting is a problem, and its
+// default applies.
+func TestNoLargeFilesSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml      string
+		maxKB    int
+		problems []string
+	}{
+		{"git-hooks:\n  no-large-files: true\n", 0, nil},
+		{"git-hooks:\n  no-large-files:\n    max-size: 5000\n", 5000, nil},
+		{"git-hooks:\n  no-large-files:\n    max-size: 0\n    nope: 1\n", 0, []string{
+			".claude/baloo.yml line 3: git-hooks.no-large-files.max-size: is not a size of 1 KB or more; its default applies",
+			".claude/baloo.yml line 4: git-hooks.no-large-files.nope is not a setting of no-large-files; ignored",
+		}},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.MaxFileKB != tc.maxKB || !c.CheckOn("no-large-files") || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %d, %v, %q; want %d, on, %q", tc.yml, c.MaxFileKB, c.CheckOn("no-large-files"),
+				problems, tc.maxKB, tc.problems)
+		}
+	}
+}
+
 // A new Config turns every Check on, and the schema has a key for each under the group that runs
 // it.
 func TestChecks(t *testing.T) {

@@ -81,10 +81,10 @@ func TestDoctor_Problems(t *testing.T) {
 	contains(t, out,
 		"\nProblems:\n- ",
 		"- "+link+" is missing, so the Git hooks and the Status line run nothing",
-		"- "+theirs+" is not the plugin's Git hook, so no-secrets-in-commits, no-stale-adr-date don't run",
+		"- "+theirs+" is not the plugin's Git hook, so no-secrets-in-commits, no-stale-adr-date, no-conflict-markers, no-large-files don't run",
 		"nope is not a setting; ignored\n",
 		"no-git-hook-bypass       off\n",
-		"pre-commit  theirs: no-secrets-in-commits, no-stale-adr-date\n")
+		"pre-commit  theirs: no-secrets-in-commits, no-stale-adr-date, no-conflict-markers, no-large-files\n")
 	if _, err := os.Lstat(link); err == nil {
 		t.Errorf("doctor put back %s; want it to change nothing", link)
 	}

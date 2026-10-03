@@ -1,14 +1,15 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-02
+Date: 2026-10-03
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
 `no-git-hook-bypass`, `no-destructive-commands` and `no-secrets-in-context`; under `git-hooks`,
 the Checks Git hooks run, `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
-`no-stale-adr-date` and `linear-history`. A key is `true` or `false`; `conventional-commits` also
-takes a map of its settings, `types` (a list, or `any`) and `max-length` (0 for none), which turns
-it on. The two groups have opposite defaults, and the Stop check runs in a Hook too, not on a
+`no-stale-adr-date`, `no-conflict-markers`, `no-large-files` and `linear-history`. A key is `true`
+or `false`; `conventional-commits` also takes a map of its settings, `types` (a list, or `any`) and
+`max-length` (0 for none), and `no-large-files` one of `max-size` (in KB, 1024 without it), which
+turns it on. The two groups have opposite defaults, and the Stop check runs in a Hook too, not on a
 tool call, so they are named for what runs them.
 
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
@@ -39,6 +40,12 @@ Where `no-ai-coauthor` is on, session start also sets Claude Code's `attribution
 as it picks an Output style (ADR output-styles): where the plugin is enabled, in the settings file
 that enables it, and only where none of Claude Code's settings files sets `attribution` or
 `includeCoAuthoredBy`, to any value. It never takes it out.
+
+`no-conflict-markers` takes the markers from git's own `diff --check`, so a file whose
+`conflict-marker-size` in `.gitattributes` is longer, such as a test fixture, passes; it names a
+file's markers only where one of them is `<<<<<<<` or `>>>>>>>`, since git counts a Markdown
+heading underlined with seven `=` too. `no-large-files` looks only at files a commit adds: one
+already committed passes when it changes or is renamed, since it was let in once.
 
 `no-destructive-commands` asks before `git push --delete` (or `git push <remote> :<branch>`), but
 lets it pass where the remote's default branch, `<remote>/HEAD` as the repo last fetched it, holds
@@ -93,6 +100,12 @@ Release.
   it, and a question on each read teaches the user to say yes unread.
 - Leaving it to Claude Code, which treats `.claude/` as a protected folder — its docs don't say
   it asks in every permission mode, and a Bash edit goes around a rule on Edit and Write.
+
+- Matching conflict markers in the diff itself — a file that holds them on purpose would need a
+  mark of the plugin's own, where git already reads one from `.gitattributes`; `-whitespace`
+  there doesn't exempt a file from git's check, `conflict-marker-size` does.
+- `no-large-files` on a file that grows past its limit too — a file committed on purpose would
+  fail again at each change, until its limit is raised for every file.
 
 ## Consequences
 

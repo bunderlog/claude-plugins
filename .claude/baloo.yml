@@ -55,10 +55,12 @@ claude-hooks:
 # Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
 # where at least one of their Checks is on. conventional-commits also takes its settings instead
 # of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
-# max-length: 0 any length.
+# max-length: 0 any length. no-large-files takes { max-size: 5000 }, in KB; 1024 without it.
 git-hooks:
   conventional-commits: true
   linear-history: true
   no-ai-coauthor: true
+  no-conflict-markers: true
+  no-large-files: true
   no-secrets-in-commits: true
   no-stale-adr-date: true

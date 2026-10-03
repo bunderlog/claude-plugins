@@ -46,6 +46,8 @@ type Config struct {
 	Checks map[string]bool
 	// CommitRules are conventional-commits' settings.
 	CommitRules checks.CommitRules
+	// MaxFileKB is no-large-files' limit, in KB, or 0 for its default.
+	MaxFileKB int
 }
 
 // CheckOn says whether the Check `name` is on: as the Config says, and else on for a Check a Hook
@@ -143,9 +145,9 @@ func checkKeys(group []string) func(c *Config, key, value *yaml.Node) []string {
 				problems = append(problems, at(name.Line, entry+" is not a check; ignored"))
 				continue
 			}
-			if name.Value == "conventional-commits" && on.Kind == yaml.MappingNode {
+			if settings, ok := checkSettings[name.Value]; ok && on.Kind == yaml.MappingNode {
 				c.Checks[name.Value] = true
-				problems = append(problems, commitRules(&c.CommitRules, entry, on)...)
+				problems = append(problems, settings(c, entry, on)...)
 				continue
 			}
 			var b bool
@@ -157,6 +159,33 @@ func checkKeys(group []string) func(c *Config, key, value *yaml.Node) []string {
 		}
 		return problems
 	}
+}
+
+// checkSettings decode the settings a Check takes instead of true, the map `value` at `entry`, into
+// a Config, which turns it on, and return what is wrong with them; each wrong one keeps its
+// default.
+var checkSettings = map[string]func(c *Config, entry string, value *yaml.Node) []string{
+	"conventional-commits": func(c *Config, entry string, value *yaml.Node) []string {
+		return commitRules(&c.CommitRules, entry, value)
+	},
+	"no-large-files": func(c *Config, entry string, value *yaml.Node) []string {
+		var problems []string
+		for i := 0; i+1 < len(value.Content); i += 2 {
+			key, v := value.Content[i], value.Content[i+1]
+			setting := entry + "." + key.Value
+			if key.Value != "max-size" {
+				problems = append(problems, at(key.Line, setting+" is not a setting of no-large-files; ignored"))
+				continue
+			}
+			var n int
+			if v.Tag != "!!int" || v.Decode(&n) != nil || n < 1 {
+				problems = append(problems, wrong(key.Line, setting, "is not a size of 1 KB or more"))
+				continue
+			}
+			c.MaxFileKB = n
+		}
+		return problems
+	},
 }
 
 // commitRules decodes conventional-commits' settings, the map `value` at `entry`, into `rules`, and
@@ -261,7 +290,7 @@ claude-hooks:
 # Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
 # where at least one of their Checks is on. conventional-commits also takes its settings instead
 # of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
-# max-length: 0 any length.
+# max-length: 0 any length. no-large-files takes { max-size: 5000 }, in KB; 1024 without it.
 git-hooks:
 ` + gitHookList.String()
 }

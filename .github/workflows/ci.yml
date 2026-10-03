@@ -45,3 +45,5 @@ jobs:
           echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/base $BASE" | "$baloo" check linear-history
           git reset -q --soft "$BASE"
           "$baloo" check no-secrets-in-commits
+          "$baloo" check no-conflict-markers
+          "$baloo" check no-large-files

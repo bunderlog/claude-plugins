@@ -21,7 +21,7 @@ func gitHookInput(stdin io.Reader) (checks.Input, func(name string) bool) {
 		c = config.Read(dir)
 	}
 	return checks.Input{Dir: ".", Stdin: stdin, Today: time.Now().Format(time.DateOnly),
-		Rules: c.CommitRules}, c.CheckOn
+		Rules: c.CommitRules, MaxFileKB: c.MaxFileKB}, c.CheckOn
 }
 
 // runItYourself ends the reason of a command denied, for Claude to leave it to the user.
