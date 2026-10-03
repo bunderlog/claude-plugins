@@ -2,6 +2,13 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.18.0 — 2026-10-03
+
+### Features
+
+- guidelines: update outdated dependencies with the dependencies Guideline (5132939)
+- config: list a new Config's Guidelines and Checks sorted by name (50932e7)
+
 ## 0.17.0 — 2026-10-03
 
 ### Features
