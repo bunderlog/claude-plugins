@@ -3,6 +3,11 @@
 The `bunderlog` marketplace of Claude Code plugins. It holds one plugin, `baloo`, described in
 its [plugin.json](plugins/baloo/.claude-plugin/plugin.json).
 
+It is for developers who work with Claude Code across several projects and want the same
+discipline in each: decisions, terms and requirements recorded in the project's `.about/`, commits
+checked by Git hooks, the Stop check and CI, and one set of working rules and one reply style for
+Claude.
+
 ```sh
 claude plugin marketplace add bunderlog/claude-plugins
 claude plugin install baloo@bunderlog
