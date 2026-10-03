@@ -57,6 +57,8 @@ created and the problems.
   where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
   it has a package manager's manifest, and `stop-check` and `format-on-edit`, whose commands the
   template can't know, are comments there (ADR stop-check, ADR format-on-edit).
+- The template lists the keys of `guidelines`, `claude-hooks` and `git-hooks` sorted, whatever
+  order the code keeps them in, so a key is found by its name; a test checks it.
 - A new key reaches a Config that exists only when its user adds it, so its default must be what
   the Check did before it had the key, unless ADR checks says otherwise.
 - The schema is read from `main`, so an editor can check a Config against settings newer than

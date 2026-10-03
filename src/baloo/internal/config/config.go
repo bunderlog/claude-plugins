@@ -205,16 +205,16 @@ func wrong(line int, name, why string) string {
 
 // newConfig is a new Config, with the Guidelines `fit` on: it names the schema for editors, and
 // says in plain words how the settings work, for someone who has read neither the schema nor the
-// README.
+// README. The keys of each section are sorted, so one is found by its name.
 func newConfig(fit []string) string {
 	var list, hookList, gitHookList strings.Builder
-	for _, name := range guidelines.Names() {
+	for _, name := range slices.Sorted(slices.Values(guidelines.Names())) {
 		fmt.Fprintf(&list, "  %s: %t\n", name, slices.Contains(fit, name))
 	}
-	for _, name := range checks.HookChecks {
+	for _, name := range slices.Sorted(slices.Values(checks.HookChecks)) {
 		fmt.Fprintf(&hookList, "  %s: true\n", name)
 	}
-	for _, name := range checks.GitHookChecks {
+	for _, name := range slices.Sorted(slices.Values(checks.GitHookChecks)) {
 		fmt.Fprintf(&gitHookList, "  %s: true\n", name)
 	}
 	return "# yaml-language-server: $schema=" + names.Schema + `

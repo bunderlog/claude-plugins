@@ -418,6 +418,24 @@ func TestNewConfigGuidelines(t *testing.T) {
 	}
 }
 
+// A new Config's guidelines, claude-hooks and git-hooks list their keys sorted.
+func TestNewConfigSorted(t *testing.T) {
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(newConfig(nil)), &doc); err != nil {
+		t.Fatal(err)
+	}
+	top := doc.Content[0].Content
+	for i := 0; i < len(top); i += 2 {
+		var keys []string
+		for j := 0; j < len(top[i+1].Content); j += 2 {
+			keys = append(keys, top[i+1].Content[j].Value)
+		}
+		if top[i+1].Kind == yaml.MappingNode && !slices.IsSorted(keys) {
+			t.Errorf("new config's %s = %q; want them sorted", top[i].Value, keys)
+		}
+	}
+}
+
 // Every Guideline is a file in the plugin's guidelines/, and the schema has a key for each.
 func TestGuidelines(t *testing.T) {
 	entries, err := os.ReadDir("../../../../" + names.PluginDir + "/guidelines")
