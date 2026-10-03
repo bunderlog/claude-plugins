@@ -76,8 +76,8 @@ var packageManifests = map[string]bool{
 	"go.mod": true, "package.json": true, "Cargo.toml": true, "pyproject.toml": true,
 }
 
-// skipped are folders the stacks and manifests aren't looked for in: another project's code, test fixtures, and
-// what a build makes, which can hold more files than the repo's own code.
+// skipped are folders the stacks and manifests aren't looked for in: another project's code, test
+// fixtures, and what a build makes, which can hold more files than the repo's own code.
 var skipped = map[string]bool{
 	"node_modules": true, "vendor": true, "testdata": true,
 	"build": true, "dist": true, "out": true, "target": true,

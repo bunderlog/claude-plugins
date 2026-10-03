@@ -77,7 +77,7 @@ Release.
   defaults, which only a comment told apart.
 - `tool-calls` and `git-hooks` under `checks` — a level that tells nothing apart, and a Stop
   check runs in a Hook but not on a tool call.
-- Each key at the top of the Config — eight keys mixed with the other settings.
+- Each key at the top of the Config — ten keys mixed with the other settings.
 - A key to turn writing the Git hooks off, or to pick husky over plain Git hooks — where husky 9
   holds `core.hooksPath`, git runs only husky's, and without husky there is nothing to pick; a
   Check on with no Git hook would run only in CI, which calls `baloo check` whatever the key
@@ -100,7 +100,6 @@ Release.
   it, and a question on each read teaches the user to say yes unread.
 - Leaving it to Claude Code, which treats `.claude/` as a protected folder — its docs don't say
   it asks in every permission mode, and a Bash edit goes around a rule on Edit and Write.
-
 - Matching conflict markers in the diff itself — a file that holds them on purpose would need a
   mark of the plugin's own, where git already reads one from `.gitattributes`; `-whitespace`
   there doesn't exempt a file from git's check, `conflict-marker-size` does.

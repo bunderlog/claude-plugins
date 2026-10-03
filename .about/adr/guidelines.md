@@ -66,8 +66,8 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 ## Consequences
 
 - Outside a repo, and in Claude Code's own folder, there is no Config, so no Guideline is on.
-- A repo that takes up a stack, a CI or a package manager after its Config was made gets its Guideline only when
-  someone turns its key on.
+- A repo that takes up a stack, a CI or a package manager after its Config was made gets its
+  Guideline only when someone turns its key on.
 - Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
   one is a file and a key.
 - The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the

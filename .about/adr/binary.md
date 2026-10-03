@@ -14,9 +14,9 @@ was downloaded with, kept beside it and checked once a session: it downloads the
 against the file, and moves it into place in one step. A session the plugin is updated in runs
 the new version's Hooks without a `SessionStart`, so the `UserPromptSubmit` Hook's Loader, finding
 no binary of its version, downloads it the same way and runs the binary's session start, whose
-context Claude gets with that prompt. `loader <args>` runs the binary. A failure
-says why on stderr and exits 2, which a `SessionStart` Hook shows to the user; every other Hook
-fails silently instead, since exit 2 there would stop a tool call, a prompt or a turn's end (ADR
+context Claude gets with that prompt. `loader <args>` runs the binary. A failure says why on
+stderr and exits 2, which a `SessionStart` Hook shows to the user; every other Hook fails
+silently instead, since exit 2 there would stop a tool call, a prompt or a turn's end (ADR
 guidelines, ADR checks, ADR stop-check).
 
 The Release workflow builds the binary from the tag for macOS and Linux, amd64 and arm64, and
@@ -45,16 +45,16 @@ must work without a token: the Loader's download, the Config's `$schema` from
 - A private repo, read with a GitHub token — every user would need a token on every machine, set
   where the Loader, the editor fetching `$schema` and Claude Code's background update each find it.
 - Archives (`.tar.gz`) — about half the download, for `tar` and one more step in the Loader;
-  a binary is under 2 MB.
+  a binary is about 4 MB.
 
 ## Consequences
 
 - A user's machine needs `sh`, `curl` or `wget`, and `sha256sum` or `shasum`; macOS and WSL have
   them. There is no Windows binary; Git Bash on Windows gets "no binary" at every session start.
 - The first session after an install or update waits for the download, and so does the first
-  prompt after an update in a running session; the `UserPromptSubmit` Hook's timeout fits it. Offline, or when the
-  download or its check fails, no Check runs that session; the Checks that must not skip
-  silently say so (decided with each).
+  prompt after an update in a running session; the `UserPromptSubmit` Hook's timeout fits it.
+  Offline, or when the download or its check fails, no Check runs that session; the Checks that
+  must not skip silently say so (decided with each).
 - `BALOO_RELEASES` points the Loader at another host, which is how the tests serve it a Release.
 - Binaries of other versions are deleted from `${CLAUDE_PLUGIN_DATA}` a week after they were last
   run, so a session still on an older version keeps its binary meanwhile.
