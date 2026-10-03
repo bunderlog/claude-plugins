@@ -17,9 +17,9 @@ type Guideline struct {
 	Name string
 	// When is the task that calls for reading it, as its index line names it.
 	When string
-	// stack says whether a repo's manifests name the Guideline's stack; nil for a Guideline that
-	// fits any project.
-	stack func(manifests) bool
+	// fits says whether a repo's files call for the Guideline: they name its stack, or configure
+	// a CI; nil for a Guideline that fits any project.
+	fits func(manifests) bool
 }
 
 // All are the plugin's Guidelines, in the order session start names them. Each is a key under
@@ -33,6 +33,8 @@ var All = []Guideline{
 		"flaky test, a slowdown)", nil},
 	{"writing-for-agents", "Writing or editing a skill, a CLAUDE.md or AGENTS.md, or a prompt",
 		nil},
+	{"ci", "Fixing a failed CI run, or finding why a run, a pipeline or a PR went red",
+		func(m manifests) bool { return m.ci }},
 	{"go", "Writing Go", func(m manifests) bool { return m.goMod }},
 	{"typescript", "Writing TypeScript",
 		func(m manifests) bool { return m.packages["typescript"] }},
@@ -51,11 +53,18 @@ func Names() []string {
 	return names
 }
 
-// manifests is what a repo's manifests say of its stacks: whether it has a go.mod, and the
-// packages its package.json files depend on.
+// manifests is what a repo's files say of its stacks and its CI: whether it has a go.mod, the
+// packages its package.json files depend on, and whether its root holds a CI's config.
 type manifests struct {
 	goMod    bool
 	packages map[string]bool
+	ci       bool
+}
+
+// ciConfigs are the files and folders at a repo's root that configure a CI.
+var ciConfigs = []string{
+	".github/workflows", ".gitlab-ci.yml", "bitbucket-pipelines.yml", "bamboo-specs",
+	"Jenkinsfile", "azure-pipelines.yml", ".circleci", ".buildkite",
 }
 
 // skipped are folders the stacks aren't looked for in: another project's code, test fixtures, and
@@ -66,10 +75,15 @@ var skipped = map[string]bool{
 }
 
 // Fitting are the names of the Guidelines that fit the repo at `root`: every one for any project,
-// and a stack's where a manifest at any depth names it, outside hidden folders and the skipped
-// ones.
+// a stack's where a manifest at any depth names it, outside hidden folders and the skipped ones,
+// and ci where the root holds a CI's config.
 func Fitting(root string) []string {
 	m := manifests{packages: map[string]bool{}}
+	for _, name := range ciConfigs {
+		if _, err := os.Stat(filepath.Join(root, name)); err == nil {
+			m.ci = true
+		}
+	}
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -92,7 +106,7 @@ func Fitting(root string) []string {
 	})
 	var fit []string
 	for _, g := range All {
-		if g.stack == nil || g.stack(m) {
+		if g.fits == nil || g.fits(m) {
 			fit = append(fit, g.Name)
 		}
 	}

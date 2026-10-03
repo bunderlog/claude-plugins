@@ -48,6 +48,10 @@
           "description": "Writing for agents: skills, CLAUDE.md and AGENTS.md, prompts.",
           "type": "boolean"
         },
+        "ci": {
+          "description": "CI: fixing a failed run, reproducing its failed step locally first.",
+          "type": "boolean"
+        },
         "go": {
           "description": "Go: the choices where more than one would be reasonable.",
           "type": "boolean"
