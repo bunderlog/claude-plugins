@@ -230,17 +230,18 @@ func sessionStart(stdout, stderr io.Writer) int {
 }
 
 // started writes the SessionStart Hook's JSON: what session start tells Claude, `context`, which
-// Claude Code adds to Claude's context, and the plugin's version, which it shows the user, so
-// they can see which Release runs.
+// Claude Code adds to Claude's context; nothing where it has nothing to tell. The user sees which
+// Release runs with doctor (ADR doctor).
 func started(stdout io.Writer, context string) {
-	out := map[string]any{"systemMessage": names.Plugin + " " + version}
-	if context != "" {
-		out["hookSpecificOutput"] = map[string]string{
+	if context == "" {
+		return
+	}
+	json.NewEncoder(stdout).Encode(map[string]any{
+		"hookSpecificOutput": map[string]string{
 			"hookEventName":     "SessionStart",
 			"additionalContext": context,
-		}
-	}
-	json.NewEncoder(stdout).Encode(out)
+		},
+	})
 }
 
 // gitHooksReport is what Claude is told of the Git hooks session start wrote, took out or left

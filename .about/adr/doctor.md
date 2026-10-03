@@ -17,7 +17,9 @@ with the link's target; it asks GitHub for nothing.
 
 The binary isn't on the PATH, so the `doctor` skill runs it through the Loader, as `retro` runs
 `condense`, and answers the user's question from its output; Claude can run the skill when the
-user asks what is on or why something didn't run.
+user asks what is on or why something didn't run. With `doctor` showing the version, session start
+no longer shows it to the user (until 2026-10-03 its `systemMessage`, `baloo <version>`), and
+prints nothing where it has nothing to tell Claude.
 
 ## Considered options
 

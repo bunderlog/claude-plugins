@@ -61,11 +61,14 @@ func plugin(t *testing.T) string {
 }
 
 // start runs session-start and writes what it tells Claude, its JSON's additionalContext, to
-// `stdout`; it fails the test when session-start prints anything but that JSON.
+// `stdout`; it fails the test when session-start prints anything but that JSON, or nothing.
 func start(t *testing.T, stdout, stderr *bytes.Buffer) int {
 	t.Helper()
 	var out bytes.Buffer
 	code := run([]string{"session-start"}, nil, &out, stderr)
+	if out.Len() == 0 {
+		return code
+	}
 	var hook struct {
 		HookSpecificOutput struct{ AdditionalContext string } `json:"hookSpecificOutput"`
 	}
@@ -76,23 +79,17 @@ func start(t *testing.T, stdout, stderr *bytes.Buffer) int {
 	return code
 }
 
-// Session start shows the user the plugin's version, and tells Claude the rest.
-func TestSessionStartShowsTheVersion(t *testing.T) {
+// Session start tells Claude what it did, and shows the user nothing: doctor shows the version.
+func TestSessionStartShowsNothing(t *testing.T) {
 	inRepo(t)
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"session-start"}, nil, &stdout, &stderr); code != 0 {
 		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
-	var hook struct {
-		SystemMessage      string `json:"systemMessage"`
-		HookSpecificOutput struct {
-			HookEventName, AdditionalContext string
-		} `json:"hookSpecificOutput"`
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &hook); err != nil || hook.SystemMessage != "baloo dev" ||
-		hook.HookSpecificOutput.HookEventName != "SessionStart" ||
-		!strings.HasPrefix(hook.HookSpecificOutput.AdditionalContext, "baloo:\ncreated ") {
-		t.Errorf("session-start = %s (%v); want baloo dev for the user and the rest for Claude", stdout.String(), err)
+	var hook map[string]json.RawMessage
+	if err := json.Unmarshal(stdout.Bytes(), &hook); err != nil || len(hook) != 1 ||
+		hook["hookSpecificOutput"] == nil {
+		t.Errorf("session-start = %s (%v); want only hookSpecificOutput, for Claude", stdout.String(), err)
 	}
 }
 
