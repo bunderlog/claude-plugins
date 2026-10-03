@@ -14,6 +14,7 @@ modules (`src/baloo`, `src/release`), `shellcheck` on the Loader, and `cspell` o
 `mise run release` cuts and pushes a Release, but only counts commits under `plugins/baloo/` and
 `src/baloo/` (ADR releases); a commit outside those paths — this file, the README — just needs a
 plain push. Commit subjects become the CHANGELOG: split unrelated changes into a commit per type,
-and write each subject for users.
+and write each subject for users. A commit that changes a feature with a PRD in `.about/prd/`
+names it in its body, `PRD <feature>`, so a Verification finds it.
 
 See README.md for the Git hooks, the Stop check, Format on edit, CI and development in full.
