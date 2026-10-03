@@ -2,6 +2,13 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.19.0 — 2026-10-03
+
+### Features
+
+- doctor: show baloo's state in a repo and what is wrong with it with /baloo:doctor (00d20fb)
+- session-start: stop showing baloo's version at session start (296438b)
+
 ## 0.18.0 — 2026-10-03
 
 ### Features
