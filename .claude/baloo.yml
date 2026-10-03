@@ -37,6 +37,7 @@ guidelines:
   debugging: true
   writing-for-agents: true
   ci: true
+  dependencies: true
   go: true
   typescript: false
   vue: false
