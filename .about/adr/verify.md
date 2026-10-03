@@ -3,11 +3,11 @@
 Date: 2026-10-03
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
-Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is
-the one least likely to see it. Claude Code's own code review hunts bugs and knows nothing of
-`.about/`. So the plugin ships one agent, `agents/verifier.md`, which checks a change against
-these in a context of its own and reports each departure with `file:line`. It doesn't hunt bugs,
-which the code review does.
+Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
+one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
+change to see it work; neither knows anything of `.about/`. So the plugin ships one agent,
+`agents/verifier.md`, which checks a change against these in a context of its own and reports each
+departure with `file:line`. It doesn't hunt bugs, which the code review does.
 
 The `verify` skill runs it with `context: fork` and `agent: baloo:verifier`, waiting for its reply,
 so the user has `/baloo:verify`; Claude can also run the agent by its name. Both are for when the
@@ -20,11 +20,12 @@ built feature's whole PRD, every criterion's test link, stays the `prd` skill's 
 Verification looks at the criteria one change serves.
 
 Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that it writes nothing
-holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write.
-Its findings are its reply: the session that asked decides with the user what to fix, and sends
-what is left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox).
-It runs with the user's model, as the Session review does (ADR session-review). No Config key
-turns it on or off: a plugin's agent and skill can't be hidden from one project anyway.
+holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its
+findings are its reply: the session that asked decides with the user what to fix, and sends what is
+left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox). What it
+can't check by reading, whether the change works when run, it names for `/verify`. It runs with the
+user's model, as the Session review does (ADR session-review). No Config key turns it on or off: a
+plugin's agent and skill can't be hidden from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
 the agent alone (`^baloo:verifier$`): the binary's `subagent-start` gives it the same Guidelines

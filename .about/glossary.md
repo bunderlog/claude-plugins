@@ -158,6 +158,7 @@ _In code_: the `issue` skill writes one
 A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
 Guidelines the Config turns on, and the acceptance criteria of its Issue or PRD. The plugin's
 agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
-nothing. Unlike a code review, it doesn't hunt bugs; unlike a Check, it isn't the binary's code.
+nothing. Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't
+run the change; unlike a Check, it isn't the binary's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` skill; `agents/verifier.md`; `names.Verifier`
