@@ -31,25 +31,25 @@ stop-check: mise run check
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
 # when this file was made, and ci where it had a CI's config.
 guidelines:
-  principles: true
-  design: true
-  testing: true
-  debugging: true
-  writing-for-agents: true
   ci: true
+  debugging: true
   dependencies: true
+  design: true
   go: true
+  principles: true
+  tailwind: false
+  testing: true
   typescript: false
   vue: false
-  tailwind: false
+  writing-for-agents: true
 
 # Checks, each on with true and off with false.
 #
 # Checks in Claude Code's hooks deny, or ask you about, a tool call of Claude's that would destroy
 # work, bypass the Git hooks or show a secret. They are on without their key too.
 claude-hooks:
-  no-git-hook-bypass: true
   no-destructive-commands: true
+  no-git-hook-bypass: true
   no-secrets-in-context: true
 
 # Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
@@ -57,8 +57,8 @@ claude-hooks:
 # of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
 # max-length: 0 any length.
 git-hooks:
-  no-ai-coauthor: true
   conventional-commits: true
+  linear-history: true
+  no-ai-coauthor: true
   no-secrets-in-commits: true
   no-stale-adr-date: true
-  linear-history: true
