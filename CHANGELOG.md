@@ -2,6 +2,16 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.20.0 — 2026-10-03
+
+### Features
+
+- checks: refuse a commit that adds conflict markers or a file over 1 MB (afd41e9)
+
+### Fixes
+
+- skills: add an Inbox item without a heading for the file, as the Guidelines do (1ba3931)
+
 ## 0.19.1 — 2026-10-03
 
 ### Fixes

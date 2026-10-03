@@ -50,7 +50,7 @@ would, with `$BASE` the commit the checked commits start from:
 
 ```sh
 set -e
-version=0.19.1
+version=0.20.0
 file=baloo_${version}_linux_amd64
 dir=$(mktemp -d)
 for f in "$file" SHA256SUMS; do
