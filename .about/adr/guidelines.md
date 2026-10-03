@@ -1,23 +1,26 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-02
+Date: 2026-10-03
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
-`testing`, `debugging` and `writing-for-agents` for any project, `go`, `typescript`, `vue` and
-`tailwind` for their stacks. Each turns on with a key of its own in the Config, under `guidelines`.
-At session start the binary prints, for each Guideline turned on, one line: when to read it and its
-path. Claude reads the file itself when a task calls for it. `principles` also carries the few rules
-that must hold on every task, and those are printed whole, with the rules zsh needs where the Bash
-tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
-`=` fails the whole command there. A Guideline that is off puts nothing in the context. How Claude
-writes its replies is not a Guideline but an Output style (ADR output-styles).
+`testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI, `go`,
+`typescript`, `vue` and `tailwind` for their stacks. Each turns on with a key of its own in the
+Config, under `guidelines`. At session start the binary prints, for each Guideline turned on, one
+line: when to read it and its path. Claude reads the file itself when a task calls for it.
+`principles` also carries the few rules that must hold on every task, and those are printed whole,
+with the rules zsh needs where the Bash tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob
+with no match or a word starting with `=` fails the whole command there. A Guideline that is off
+puts nothing in the context. How Claude writes its replies is not a Guideline but an Output style
+(ADR output-styles).
 
-A new Config turns on the Guidelines for any project, and a stack's only where the repo's files name
-that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`, one
-depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`, at any depth outside
-hidden folders, other projects' code (`node_modules`, `vendor`), test fixtures (`testdata`) and
-build output (`build`, `dist`, `out`, `target`). The stacks are looked for only then; from then on
-the Config is the user's, like every other setting in it (ADR config).
+A new Config turns on the Guidelines for any project, `ci` only where the repo's root holds a CI's
+config (`.github/workflows/`, `.gitlab-ci.yml`, `bitbucket-pipelines.yml`, `bamboo-specs/`,
+`Jenkinsfile`, `azure-pipelines.yml`, `.circleci/`, `.buildkite/`), and a stack's only where the
+repo's files name that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for
+`typescript`, one depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`, at
+any depth outside hidden folders, other projects' code (`node_modules`, `vendor`), test fixtures
+(`testdata`) and build output (`build`, `dist`, `out`, `target`). The stacks are looked for only
+then; from then on the Config is the user's, like every other setting in it (ADR config).
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
@@ -32,8 +35,8 @@ as a skill would put every stack's description into every session, whatever the 
 So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `issue`,
 `prd`), are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`), or
 run the plugin's agent (`verify`, ADR verify); rules for how to do a kind of task are a
-Guideline, `debugging` among them: it writes nothing and is not a conversation, and as a Guideline
-a project can turn it off.
+Guideline, `debugging` and `ci` among them: they keep no document, and as Guidelines a project can
+turn them off, and one with no CI never gets `ci`'s line.
 
 ## Considered options
 
@@ -42,6 +45,9 @@ a project can turn it off.
   description, and a project can't turn one off.
 - `debugging` as a skill — `/debugging` calls it by name, but its description is in every
   session and no project can turn it off.
+- `ci` as a skill (until 2026-10-03) — `/baloo:ci` calls it by name, and it commits and asks the
+  user before a push, but its description was in every session, a project with no CI too, and
+  it leans on `debugging`, which a project may have turned off.
 - Printing each Guideline turned on whole — simpler, but every session pays for the rules of
   tasks it never gets to.
 - The rules for every task printed always, with no key — the one part of the plugin in the
@@ -58,8 +64,8 @@ a project can turn it off.
 ## Consequences
 
 - Outside a repo, and in Claude Code's own folder, there is no Config, so no Guideline is on.
-- A repo that takes up a stack after its Config was made gets its Guideline only when someone
-  turns its key on.
+- A repo that takes up a stack or a CI after its Config was made gets its Guideline only when
+  someone turns its key on.
 - Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
   one is a file and a key.
 - The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the

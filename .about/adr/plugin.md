@@ -13,10 +13,10 @@ Every name the Go code, the binary's and the release tool's, uses for the plugin
 and file names) is a constant in `src/baloo/names`, so a rename is one edit in the code, plus the
 manifests, the Loader and the docs.
 
-New work that leans on what baloo already reads, its Config and its Guidelines, is a skill in
-baloo, not a plugin of its own: fixing a failed CI run reproduces it with the Config's
-`stop-check` and follows the `debugging` Guideline, and a second plugin would need its own tags,
-CHANGELOG and Releases (ADR releases) to read baloo's files anyway.
+New work that leans on what baloo already has is part of baloo, not a plugin of its own: fixing
+a failed CI run is the `ci` Guideline (ADR guidelines), which follows `debugging`, knows the
+Config's `stop-check` and hands a flaky failure to the `issue` skill, and a second plugin would
+need its own tags, CHANGELOG and Releases (ADR releases) to read baloo's files anyway.
 
 ## Considered options
 
