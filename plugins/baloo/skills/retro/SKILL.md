@@ -73,5 +73,5 @@ is a report to send. Neither is a change to their installed copy.
 A ranked list of stalls; for each: what happened (session, `[line]`, how often), what it cost,
 the fix (which file, what change). Ask which to apply, apply only those, and run the project's
 checks. Each fix not picked, unless the user drops it, becomes an item in `.about/inbox.md`: a
-`## <title>`, a line `<YYYY-MM-DD> · retro`, then the stall and the fix; create the file,
-`# Inbox` first, with its first item. Don't commit. Replace secrets you quote with `*****`.
+`## <title>`, a line `<YYYY-MM-DD> · retro`, then the stall and the fix. Don't commit. Replace
+secrets you quote with `*****`.

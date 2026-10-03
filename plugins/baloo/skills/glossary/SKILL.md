@@ -38,8 +38,8 @@ Reach for:
 Check the code as well: a term the code uses differently, or one concept named differently
 across modules, is the most valuable finding. A case the glossary can't answer is a finding too:
 make it an item in `.about/inbox.md`, don't paper over it: a `## <title>`, a line
-`<YYYY-MM-DD> · glossary`, then what it is and what would settle it; create the file, `# Inbox`
-first, with its first item. Ask a few pointed questions at a time, not a questionnaire.
+`<YYYY-MM-DD> · glossary`, then what it is and what would settle it. Ask a few pointed questions
+at a time, not a questionnaire.
 
 ## Name
 

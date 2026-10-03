@@ -25,7 +25,7 @@ project's own template or conventions win.
   skill rather than filing it.
 - What is still to decide (whether to fix it, which way) is an Inbox item, not an Issue: say so
   and add it to `.about/inbox.md` instead: a `## <title>`, a line `<YYYY-MM-DD> · issue`, then
-  what it is and what would settle it; create the file, `# Inbox` first, with its first item.
+  what it is and what would settle it.
 
 ## Write
 

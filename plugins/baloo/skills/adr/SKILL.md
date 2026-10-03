@@ -60,9 +60,9 @@ Write an ADR only when all three hold — otherwise the conversation is the reco
 
 - A decision goes into the ADR on its subject, a new file only for a new subject. Still open →
   an item in `.about/inbox.md` with the options: a `## <title>`, a line `<YYYY-MM-DD> · adr`,
-  then what it is and what would settle it; create the file, `# Inbox` first, with its first
-  item. Once settled, write the decision taken ("we won't do X" is a decision too) into the ADR
-  on its subject and delete the item, and the file with its last one.
+  then what it is and what would settle it. Once settled, write the decision taken ("we won't do
+  X" is a decision too) into the ADR on its subject and delete the item, and the file with its
+  last one.
 - An ADR says what holds now. When a decision changes, edit it in place and update the Date;
   git keeps the earlier text. The choice it drops moves to Considered options, marked
   `(until <date>)` with why, so nobody proposes it again unwarned.
