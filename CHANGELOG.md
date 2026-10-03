@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.19.1 — 2026-10-03
+
+### Fixes
+
+- loader: download the binary at the first prompt after a mid-session update (443ca78)
+
 ## 0.19.0 — 2026-10-03
 
 ### Features
