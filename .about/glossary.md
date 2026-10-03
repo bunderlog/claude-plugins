@@ -2,7 +2,7 @@
 
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
 language, decisions and requirements explicit, write its Issues, go through its Inbox, run a
-Retro or a Verification; a Session review; Guidelines of working rules; Checks in one Go binary
+Retro or a Verification, or show the plugin's state; a Session review; Guidelines of working rules; Checks in one Go binary
 that Hooks and Git hooks trigger; an Output style for Claude's replies; and a Status line.
 
 ## Distribution

@@ -34,6 +34,13 @@ With `format-on-edit: <command>` in `.claude/baloo.yml`, such as `format-on-edit
 --write`, the plugin runs the command in the repo's root with the path of each file Claude edits,
 and says nothing of how it went; the Stop check reports what still fails at the turn's end.
 
+## Doctor
+
+`/baloo:doctor`, or asking Claude what baloo has on or why a Check didn't run, shows the plugin's
+state in the repo: its problems first, each with what fixes it, then the binary and the link the
+Git hooks run, the Config's settings, each Check on or off, the Git hooks and the Guidelines. It
+changes nothing.
+
 ## CI
 
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git

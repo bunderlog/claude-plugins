@@ -332,6 +332,21 @@ func Read(dir string) Config {
 	return c
 }
 
+// Inspect reads the Config of the repo `dir` is in, as Read does, with its problems, and returns
+// its path, or "" where the repo has none or no Config is read.
+func Inspect(dir string) (c Config, path string, problems []string) {
+	root, inRepo := repo(dir)
+	if !inRepo || claudeCodes(root) {
+		return Config{}, "", nil
+	}
+	c, problems = read(root)
+	c.Root = root
+	if _, err := os.Stat(filepath.Join(root, names.Config)); err == nil {
+		path = filepath.Join(root, names.Config)
+	}
+	return c, path, problems
+}
+
 func read(root string) (Config, []string) {
 	data, err := os.ReadFile(filepath.Join(root, names.Config))
 	if errors.Is(err, fs.ErrNotExist) {

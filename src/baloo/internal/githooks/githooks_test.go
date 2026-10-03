@@ -189,3 +189,66 @@ func TestWrite_Husky(t *testing.T) {
 		t.Errorf(".husky/pre-push = %q; want it as it was", got)
 	}
 }
+
+// states are the State of each Git hook in `hooks`, by name.
+func states(hooks []Hook) map[string]State {
+	got := map[string]State{}
+	for _, h := range hooks {
+		got[h.Name] = h.State
+	}
+	return got
+}
+
+// Inspect finds each Git hook as it is against what Write would make of it, and changes nothing.
+func TestInspect(t *testing.T) {
+	root, data := testkit.Repo(t), t.TempDir()
+	hooks := filepath.Join(root, ".git", "hooks")
+	dir, husky, got, err := Inspect(root, data, all)
+	want := map[string]State{"commit-msg": Missing, "pre-commit": Missing, "pre-push": Missing}
+	if err != nil || dir != hooks || husky || !reflect.DeepEqual(states(got), want) {
+		t.Fatalf("Inspect before Write = %q, %v, %v, %v; want %v in %s", dir, husky, states(got), err, want, hooks)
+	}
+	missing(t, filepath.Join(hooks, "commit-msg"))
+
+	if _, err := Write(root, data, all); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(hooks, "pre-commit"), "#!/bin/sh\nnpm test\n")
+	write(t, filepath.Join(hooks, "pre-push"), wantScript(t.TempDir(), "pre-push"))
+	_, _, got, err = Inspect(root, data, all)
+	want = map[string]State{"commit-msg": Running, "pre-commit": Theirs, "pre-push": Outdated}
+	if err != nil || !reflect.DeepEqual(states(got), want) {
+		t.Errorf("Inspect = %v, %v; want %v", states(got), err, want)
+	}
+	if got[0].Bin != filepath.Join(data, "baloo") || got[1].Bin != "" ||
+		!reflect.DeepEqual(got[0].Checks, []string{"no-ai-coauthor", "conventional-commits"}) {
+		t.Errorf("Inspect = %+v; want commit-msg running the link in %s, and pre-commit no binary", got, data)
+	}
+
+	_, _, got, err = Inspect(root, data, on())
+	want = map[string]State{"commit-msg": Leftover, "pre-commit": Off, "pre-push": Leftover}
+	if err != nil || !reflect.DeepEqual(states(got), want) {
+		t.Errorf("Inspect with every Check off = %v, %v; want %v", states(got), err, want)
+	}
+}
+
+// With husky 9, Inspect finds the plugin's Git hooks in the git folder, and a line in husky's own
+// that isn't as session start keeps it.
+func TestInspect_Husky(t *testing.T) {
+	root, data := testkit.Repo(t), t.TempDir()
+	write(t, filepath.Join(root, ".husky", "_", "h"), "# husky's\n")
+	testkit.Git(t, root, "config", "core.hooksPath", ".husky/_")
+	if _, err := Write(root, data, all); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(root, ".husky", "pre-push"), "npm run lint\n")
+	dir, husky, got, err := Inspect(root, data, all)
+	if err != nil || dir != filepath.Join(root, ".git", "baloo-hooks") || !husky {
+		t.Fatalf("Inspect = %q, %v, %v; want husky's, in .git/baloo-hooks", dir, husky, err)
+	}
+	for _, h := range got {
+		if h.State != Running || h.HuskyOutdated != (h.Name == "pre-push") {
+			t.Errorf("Inspect's %s = %+v; want it running, and only pre-push's husky line outdated", h.Name, h)
+		}
+	}
+}

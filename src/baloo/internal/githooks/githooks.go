@@ -44,35 +44,15 @@ type Blocked struct {
 // on: it writes each Git hook one of whose Checks is on, running the link in `data`, the plugin's
 // data folder (see binlink), and takes out its own whose Checks are all off.
 func Write(root, data string, on func(check string) bool) (Report, error) {
-	out, err := exec.Command("git", "-C", root, "rev-parse", "--git-path", "hooks",
-		"--git-common-dir").Output()
+	dir, husky, err := locate(root)
 	if err != nil {
-		return Report{}, fmt.Errorf("git rev-parse: %w", err)
+		return Report{}, err
 	}
-	paths := strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
-	if len(paths) != 2 {
-		return Report{}, fmt.Errorf("git rev-parse printed %q", out)
-	}
-	for i, p := range paths {
-		if !filepath.IsAbs(p) {
-			paths[i] = filepath.Join(root, p)
-		}
-	}
-	hooks, common := paths[0], paths[1]
-	husky := hooks == filepath.Join(root, ".husky", "_") && exists(filepath.Join(hooks, "h"))
-	r := Report{Dir: hooks}
-	if husky {
-		r.Dir = filepath.Join(common, names.Plugin+"-hooks")
-	}
+	r := Report{Dir: dir}
 	inTree := !husky && inside(root, r.Dir)
 	bin := ""
 	for _, hook := range slices.Sorted(maps.Keys(checks.GitHooks)) {
-		var running []string
-		for _, check := range checks.GitHooks[hook] {
-			if on(check) {
-				running = append(running, check)
-			}
-		}
+		running := runs(hook, on)
 		path := filepath.Join(r.Dir, hook)
 		current, err := os.ReadFile(path)
 		had := err == nil
@@ -123,6 +103,131 @@ func Write(root, data string, on func(check string) bool) (Report, error) {
 		}
 	}
 	return r, nil
+}
+
+// locate is the folder the plugin's Git hooks of the repo at `root` go in, and whether husky 9
+// runs the repo's Git hooks, so the plugin's are in the git folder's instead (ADR git-hooks).
+func locate(root string) (dir string, husky bool, err error) {
+	out, err := exec.Command("git", "-C", root, "rev-parse", "--git-path", "hooks",
+		"--git-common-dir").Output()
+	if err != nil {
+		return "", false, fmt.Errorf("git rev-parse: %w", err)
+	}
+	paths := strings.Split(strings.TrimSuffix(string(out), "\n"), "\n")
+	if len(paths) != 2 {
+		return "", false, fmt.Errorf("git rev-parse printed %q", out)
+	}
+	for i, p := range paths {
+		if !filepath.IsAbs(p) {
+			paths[i] = filepath.Join(root, p)
+		}
+	}
+	hooks, common := paths[0], paths[1]
+	if hooks == filepath.Join(root, ".husky", "_") && exists(filepath.Join(hooks, "h")) {
+		return filepath.Join(common, names.Plugin+"-hooks"), true, nil
+	}
+	return hooks, false, nil
+}
+
+// runs are the Checks of the Git hook `hook` that `on` turns on, in the order it runs them.
+func runs(hook string, on func(check string) bool) []string {
+	var running []string
+	for _, check := range checks.GitHooks[hook] {
+		if on(check) {
+			running = append(running, check)
+		}
+	}
+	return running
+}
+
+// State is what Inspect finds of one of the plugin's Git hooks.
+type State string
+
+const (
+	// Off: none of its Checks is on, and no Git hook of the plugin's is there.
+	Off State = "off"
+	// Running: the plugin's, as session start writes it, runs its Checks that are on.
+	Running State = "running"
+	// Missing: one of its Checks is on, but no Git hook is there.
+	Missing State = "missing"
+	// Theirs: a Git hook the plugin didn't write is there, and keeps its Checks that are on from
+	// running.
+	Theirs State = "theirs"
+	// Outdated: the plugin's is there, but not as session start would write it now, such as one
+	// running the link in another data folder.
+	Outdated State = "outdated"
+	// Leftover: the plugin's is there, but its Checks are all off.
+	Leftover State = "leftover"
+)
+
+// Hook is one of the plugin's Git hooks as Inspect finds it.
+type Hook struct {
+	Name, Path string
+	// Checks are its Checks the Config turns on.
+	Checks []string
+	State  State
+	// Bin is the binary the plugin's Git hook runs, read from it; "" where none of the plugin's
+	// is there.
+	Bin string
+	// HuskyOutdated says, with husky 9, that husky's own Git hook isn't as session start keeps
+	// it: running the plugin's where Checks are on, and not where none is.
+	HuskyOutdated bool
+}
+
+// Inspect finds the Git hooks of the repo at `root` as they are, against what Write would make of
+// them with `on` and the link in `data`, the plugin's data folder, and changes nothing. It returns
+// the folder they are in and whether husky 9 runs them.
+func Inspect(root, data string, on func(check string) bool) (dir string, husky bool, hooks []Hook, err error) {
+	dir, husky, err = locate(root)
+	if err != nil {
+		return "", false, nil, err
+	}
+	bin := filepath.Join(data, names.Plugin)
+	for _, name := range slices.Sorted(maps.Keys(checks.GitHooks)) {
+		h := Hook{Name: name, Path: filepath.Join(dir, name), Checks: runs(name, on)}
+		text, err := os.ReadFile(h.Path)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return dir, husky, hooks, err
+		}
+		had := err == nil
+		switch {
+		case had && !ours(string(text)):
+			h.State = Theirs
+			if len(h.Checks) == 0 {
+				h.State = Off
+			}
+		case !had && len(h.Checks) == 0:
+			h.State = Off
+		case !had:
+			h.State = Missing
+		case len(h.Checks) == 0:
+			h.State = Leftover
+		case data != "" && string(text) == script(bin, name):
+			h.State = Running
+		default:
+			h.State = Outdated
+		}
+		if had && ours(string(text)) {
+			h.Bin = runsBin(string(text))
+		}
+		if husky {
+			text, _ := os.ReadFile(filepath.Join(root, ".husky", name))
+			has := slices.Contains(strings.Split(string(text), "\n"), huskyLine(name))
+			h.HuskyOutdated = has != (len(h.Checks) > 0)
+		}
+		hooks = append(hooks, h)
+	}
+	return dir, husky, hooks, nil
+}
+
+// runsBin is the binary the plugin's Git hook `text` runs, as script writes it, or "".
+func runsBin(text string) string {
+	for _, line := range strings.Split(text, "\n") {
+		if q, ok := strings.CutPrefix(line, "b="); ok {
+			return strings.ReplaceAll(strings.Trim(q, "'"), `'\''`, "'")
+		}
+	}
+	return ""
 }
 
 // script is the Git hook `hook` that runs the binary at `bin`, marked as the plugin's on its second

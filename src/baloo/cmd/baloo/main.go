@@ -30,7 +30,7 @@ import (
 // says "dev".
 var version = "dev"
 
-var usage = "usage: baloo version | session-start | allow-guideline | subagent-start | status-line |\n" +
+var usage = "usage: baloo version | doctor | session-start | allow-guideline | subagent-start | status-line |\n" +
 	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
@@ -46,6 +46,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "version":
 			fmt.Fprintln(stdout, version)
 			return 0
+		case "doctor":
+			return doctor(stdout, stderr)
 		case "session-start":
 			var context strings.Builder
 			code := sessionStart(&context, stderr)
