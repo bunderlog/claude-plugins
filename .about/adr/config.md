@@ -54,9 +54,9 @@ created and the problems.
   its key off, not by deleting the file.
 - Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
-  where the repo has the stack, `ci` only where it has a CI's config, and `stop-check` and
-  `format-on-edit`, whose commands the template can't know, are comments there (ADR stop-check,
-  ADR format-on-edit).
+  where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
+  it has a package manager's manifest, and `stop-check` and `format-on-edit`, whose commands the
+  template can't know, are comments there (ADR stop-check, ADR format-on-edit).
 - A new key reaches a Config that exists only when its user adds it, so its default must be what
   the Check did before it had the key, unless ADR checks says otherwise.
 - The schema is read from `main`, so an editor can check a Config against settings newer than

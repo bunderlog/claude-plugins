@@ -69,8 +69,8 @@ _In code_: `format-on-edit`, `cmd/baloo/format.go`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
-with a CI (`ci`) or for one stack (`go`, `vue`), that Claude reads when a task calls for it; one
-the Config turns on is named to Claude at session start.
+with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that Claude
+reads when a task calls for it; one the Config turns on is named to Claude at session start.
 _Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
 _In code_: `src/baloo/internal/guidelines`
 
