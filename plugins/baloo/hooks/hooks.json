@@ -31,7 +31,7 @@
             "type": "command",
             "command": "sh",
             "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "user-prompt-submit"],
-            "timeout": 30
+            "timeout": 180
           }
         ]
       }

@@ -78,13 +78,3 @@ and the code. Settled by deciding whether it's a skill or a question Claude alre
 
 A fuller Output style beside `short-replies`, explaining or teaching, for those who find it too
 terse. Settled by deciding whether one is asked for and what it would say.
-
-## The Git hooks run an older binary than the plugin
-
-2026-10-03 · session
-
-In this repo, on 2026-10-03, with the plugin at 0.18.0 (Release published), `.git/hooks/pre-commit`
-ran `~/.claude/plugins/data/baloo-bunderlog/baloo`, a link to `baloo_0.15.1_darwin_arm64`, and no
-0.16–0.18 binary was in that folder (0.16.0 was in `baloo-inline/`). So the Git hooks ran 0.15.1's
-Checks and nothing said so. Settled by finding why session start didn't download 0.18.0 and point
-the link at it, or where that session's `CLAUDE_PLUGIN_DATA` was.

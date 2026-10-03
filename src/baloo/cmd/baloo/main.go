@@ -30,7 +30,7 @@ import (
 // says "dev".
 var version = "dev"
 
-var usage = "usage: baloo version | doctor | session-start | allow-guideline | subagent-start | status-line |\n" +
+var usage = "usage: baloo version | doctor | session-start [UserPromptSubmit] | allow-guideline | subagent-start | status-line |\n" +
 	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
@@ -49,12 +49,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "doctor":
 			return doctor(stdout, stderr)
 		case "session-start":
-			var context strings.Builder
-			code := sessionStart(&context, stderr)
-			if code == 0 {
-				started(stdout, context.String())
-			}
-			return code
+			return sessionStartHook("SessionStart", stdout, stderr)
 		case "allow-guideline":
 			return allowGuideline(stdin, stdout)
 		case "subagent-start":
@@ -72,6 +67,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "stop":
 			return stop(stdin, stdout)
 		}
+	}
+	// The Loader's UserPromptSubmit Hook, in a session the plugin was updated in, runs the session
+	// start no SessionStart Hook ran for this version (ADR binary).
+	if len(args) == 2 && args[0] == "session-start" && args[1] == "UserPromptSubmit" {
+		return sessionStartHook(args[1], stdout, stderr)
 	}
 	if len(args) > 0 && args[0] == "condense" {
 		if code, ok := condenseSessions(args[1:], stdout, stderr); ok {
@@ -229,19 +229,21 @@ func sessionStart(stdout, stderr io.Writer) int {
 	return 0
 }
 
-// started writes the SessionStart Hook's JSON: what session start tells Claude, `context`, which
-// Claude Code adds to Claude's context; nothing where it has nothing to tell. The user sees which
-// Release runs with doctor (ADR doctor).
-func started(stdout io.Writer, context string) {
-	if context == "" {
-		return
+// sessionStartHook runs session start for the Hook of `event` and writes that Hook's JSON: what
+// session start tells Claude, which Claude Code adds to Claude's context; nothing where it has
+// nothing to tell. The user sees which Release runs with doctor (ADR doctor).
+func sessionStartHook(event string, stdout, stderr io.Writer) int {
+	var context strings.Builder
+	code := sessionStart(&context, stderr)
+	if code == 0 && context.Len() > 0 {
+		json.NewEncoder(stdout).Encode(map[string]any{
+			"hookSpecificOutput": map[string]string{
+				"hookEventName":     event,
+				"additionalContext": context.String(),
+			},
+		})
 	}
-	json.NewEncoder(stdout).Encode(map[string]any{
-		"hookSpecificOutput": map[string]string{
-			"hookEventName":     "SessionStart",
-			"additionalContext": context,
-		},
-	})
+	return code
 }
 
 // gitHooksReport is what Claude is told of the Git hooks session start wrote, took out or left

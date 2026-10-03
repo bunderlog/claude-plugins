@@ -434,12 +434,17 @@ func TestLoader(t *testing.T) {
 		for _, hook := range []string{"user-prompt-submit", "stop", "post-tool-use", "subagent-start"} {
 			l := setup(t, bin)
 			l.withSum(sum)
+			if hook == "user-prompt-submit" {
+				// It downloads a missing binary, so a Release it can't download is what it meets.
+				l.sums = ""
+			}
 			if out, errs, code := l.runWith(t, turn, nil, hook); code != 0 || out != "" || errs != "" {
 				t.Errorf("%s, no binary = %d, %q, %q; want 0 and nothing", hook, code, out, errs)
 			}
 			if n := l.downloads.Load(); n != 0 {
 				t.Errorf("%s downloaded the binary %d times; want never", hook, n)
 			}
+			l.withSum(sum)
 			if _, errs, code := l.run(t, nil, "install"); code != 0 {
 				t.Fatalf("install = %d, %q", code, errs)
 			}
@@ -457,6 +462,35 @@ func TestLoader(t *testing.T) {
 			if out, _, code := l.runWith(t, turn, nil, hook); code != 0 || out != turn+"\n" {
 				t.Errorf("%s = %d, %q; want 0 and the binary's %q", hook, code, out, turn+"\n")
 			}
+		}
+	})
+
+	t.Run("user-prompt-submit downloads a missing binary and runs its session start", func(t *testing.T) {
+		// A session the plugin was updated in: its Hooks are the new version's, which no
+		// SessionStart Hook downloaded.
+		l := setup(t, bin)
+		l.withSum(sum)
+		project := t.TempDir()
+		for _, dir := range []string{".git", ".claude"} {
+			if err := os.MkdirAll(filepath.Join(project, dir), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := os.WriteFile(filepath.Join(project, names.Config), []byte("nope: 1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		env := []string{"CLAUDE_PROJECT_DIR=" + project}
+		out, errs, code := l.runWith(t, `{"session_id": "s1"}`, env, "user-prompt-submit")
+		if code != 0 || errs != "" || !strings.Contains(out, `"hookEventName":"UserPromptSubmit"`) ||
+			!strings.Contains(out, "nope is not a setting") {
+			t.Errorf("user-prompt-submit, no binary = %d, %q, %q; want 0 and session start's JSON for "+
+				"UserPromptSubmit", code, out, errs)
+		}
+		// Once it is there, a prompt runs only the binary's user-prompt-submit.
+		out, errs, code = l.runWith(t, `{"session_id": "s1"}`, env, "user-prompt-submit")
+		if code != 0 || out != "" || errs != "" || l.downloads.Load() != 1 {
+			t.Errorf("second user-prompt-submit = %d, %q, %q after %d downloads; want 0 and nothing after one",
+				code, out, errs, l.downloads.Load())
 		}
 	})
 
