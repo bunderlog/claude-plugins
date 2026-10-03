@@ -1,6 +1,6 @@
 # A Verification is the plugin's one agent, run by the `verify` skill when the user asks
 
-Date: 2026-10-02
+Date: 2026-10-03
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is
@@ -38,7 +38,8 @@ says it couldn't check the Guidelines.
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
   steer it; testing is the Stop check's and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
-- A pipeline from Issue to tested change — each repo's flow is its own, as for `ship` (ADR issues).
+- A pipeline from Issue to tested change — each repo's flow is its own, as for `ship`
+  (ADR issues).
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
 - Only the agent, with no skill — no `/baloo:verify`; the user would have to know
