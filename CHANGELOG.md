@@ -2,6 +2,16 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.17.0 — 2026-10-03
+
+### Features
+
+- guidelines: fix a failed CI run with the ci Guideline, on where the repo has a CI (528c61f)
+
+### Fixes
+
+- verify: tell a Verification apart from Claude Code's /verify, and name what to run there (9f35853)
+
 ## 0.16.0 — 2026-10-02
 
 ### Features

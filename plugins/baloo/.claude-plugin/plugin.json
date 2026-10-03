@@ -1,6 +1,6 @@
 {
   "name": "baloo",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Skills, an agent that verifies a change against the project's decisions, guidelines, checks, an output style for Claude's replies and a status line, for working with Claude Code across projects; the checks are one Go binary that the hooks run, downloaded at session start.",
   "author": {
     "name": "Andrew Molyuk",
