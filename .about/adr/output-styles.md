@@ -1,6 +1,6 @@
 # How Claude replies is an Output style, which session start picks where none is
 
-Date: 2026-10-01
+Date: 2026-10-03
 
 The plugin ships how Claude writes its replies, such as `short-replies`, as Output styles in
 `plugins/baloo/output-styles/`, each with `keep-coding-instructions: true` so Claude Code keeps its
@@ -42,6 +42,8 @@ own, so the binary writes Claude Code's setting.
 - `force-for-plugin` — every user of the plugin would get the style, with no way to turn it off
   but removing the plugin.
 - A plugin's own CLAUDE.md — Claude Code never loads one.
+- A second, fuller Output style that explains or teaches — Claude Code's own Explanatory and
+  Learning styles already do.
 
 ## Consequences
 

@@ -105,6 +105,12 @@ Release.
   there doesn't exempt a file from git's check, `conflict-marker-size` does.
 - `no-large-files` on a file that grows past its limit too — a file committed on purpose would
   fail again at each change, until its limit is raised for every file.
+- `protected-paths`, asking before Claude edits generated files, lock files or vendored code —
+  Claude Code's own `permissions.ask` rules already do.
+- `no-edits-outside-repo`, asking before a Write or an Edit outside the repo — Claude Code already
+  asks before writing outside its working directories.
+- `prd-reference`, refusing a commit that changes a feature with a PRD but doesn't name it — a
+  Check can't tell which feature a commit changes, so the rule stays text in CLAUDE.md.
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # Project knowledge lives in `.about/` at the repo root
 
-Date: 2026-10-01
+Date: 2026-10-03
 
 The skills keep a project's glossary, ADRs, PRDs, Inbox and Issues in `.about/glossary.md`,
 `.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/issues/` (ADR issues), at
@@ -20,6 +20,8 @@ edits only what is there (ADR session-review). A project with its own convention
 - The folder the session was opened in — each project of a monorepo gets its own, but where the
   files land depends on how the session was opened, and a session in a subfolder never finds the
   repo's.
+- An `onboard` skill, a tour of the project for someone new — Claude already answers that as a
+  question with `.about/` at hand.
 
 ## Consequences
 
