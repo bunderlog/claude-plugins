@@ -248,7 +248,8 @@ session-review: true
 
 # Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
 # one on is named to Claude at session start. A stack's is on where the repo had that stack
-# when this file was made, and ci where it had a CI's config.
+# when this file was made, ci where it had a CI's config, and dependencies where it had a package
+# manager's manifest.
 guidelines:
 ` + list.String() + `
 # Checks, each on with true and off with false.

@@ -28,6 +28,7 @@
     "gpgsign",
     "hookspath",
     "httptest",
+    "lockfiles",
     "minisign",
     "mktemp",
     "molyuk",

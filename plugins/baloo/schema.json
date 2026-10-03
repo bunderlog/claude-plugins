@@ -52,6 +52,10 @@
           "description": "CI: fixing a failed run, reproducing its failed step locally first.",
           "type": "boolean"
         },
+        "dependencies": {
+          "description": "Dependencies: updating outdated ones in green commits, majors only once picked.",
+          "type": "boolean"
+        },
         "go": {
           "description": "Go: the choices where more than one would be reasonable.",
           "type": "boolean"

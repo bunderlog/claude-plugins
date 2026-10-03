@@ -17,8 +17,8 @@ type Guideline struct {
 	Name string
 	// When is the task that calls for reading it, as its index line names it.
 	When string
-	// fits says whether a repo's files call for the Guideline: they name its stack, or configure
-	// a CI; nil for a Guideline that fits any project.
+	// fits says whether a repo's files call for the Guideline: they name its stack, configure a
+	// CI or declare packages; nil for a Guideline that fits any project.
 	fits func(manifests) bool
 }
 
@@ -35,6 +35,8 @@ var All = []Guideline{
 		nil},
 	{"ci", "Fixing a failed CI run, or finding why a run, a pipeline or a PR went red",
 		func(m manifests) bool { return m.ci }},
+	{"dependencies", "Updating the project's dependencies, all of them or one by name",
+		func(m manifests) bool { return m.packageManager }},
 	{"go", "Writing Go", func(m manifests) bool { return m.goMod }},
 	{"typescript", "Writing TypeScript",
 		func(m manifests) bool { return m.packages["typescript"] }},
@@ -54,11 +56,13 @@ func Names() []string {
 }
 
 // manifests is what a repo's files say of its stacks and its CI: whether it has a go.mod, the
-// packages its package.json files depend on, and whether its root holds a CI's config.
+// packages its package.json files depend on, whether it has any package manager's manifest, and
+// whether its root holds a CI's config.
 type manifests struct {
-	goMod    bool
-	packages map[string]bool
-	ci       bool
+	goMod          bool
+	packages       map[string]bool
+	packageManager bool
+	ci             bool
 }
 
 // ciConfigs are the files and folders at a repo's root that configure a CI.
@@ -67,7 +71,12 @@ var ciConfigs = []string{
 	"Jenkinsfile", "azure-pipelines.yml", ".circleci", ".buildkite",
 }
 
-// skipped are folders the stacks aren't looked for in: another project's code, test fixtures, and
+// packageManifests are the files a package manager declares a module's dependencies in.
+var packageManifests = map[string]bool{
+	"go.mod": true, "package.json": true, "Cargo.toml": true, "pyproject.toml": true,
+}
+
+// skipped are folders the stacks and manifests aren't looked for in: another project's code, test fixtures, and
 // what a build makes, which can hold more files than the repo's own code.
 var skipped = map[string]bool{
 	"node_modules": true, "vendor": true, "testdata": true,
@@ -75,8 +84,9 @@ var skipped = map[string]bool{
 }
 
 // Fitting are the names of the Guidelines that fit the repo at `root`: every one for any project,
-// a stack's where a manifest at any depth names it, outside hidden folders and the skipped ones,
-// and ci where the root holds a CI's config.
+// a stack's where a manifest at any depth names it, and dependencies where there is a package
+// manager's manifest, both outside hidden folders and the skipped ones, and ci where the root
+// holds a CI's config.
 func Fitting(root string) []string {
 	m := manifests{packages: map[string]bool{}}
 	for _, name := range ciConfigs {
@@ -93,6 +103,9 @@ func Fitting(root string) []string {
 				return filepath.SkipDir
 			}
 			return nil
+		}
+		if packageManifests[d.Name()] {
+			m.packageManager = true
 		}
 		switch d.Name() {
 		case "go.mod":

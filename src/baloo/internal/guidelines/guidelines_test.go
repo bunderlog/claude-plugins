@@ -30,17 +30,23 @@ func TestFitting(t *testing.T) {
 		want  []string
 	}{
 		{"no stack", map[string]string{"README.md": "go.mod vue"}, always},
-		{"go.mod at any depth", map[string]string{"src/app/go.mod": "module app\n"}, append(always, "go")},
+		{"go.mod at any depth", map[string]string{"src/app/go.mod": "module app\n"},
+			append(always, "dependencies", "go")},
 		{"a package.json naming typescript and vue", map[string]string{
 			"web/package.json": `{"devDependencies": {"typescript": "^5"}, "dependencies": {"vue": "^3"}}`,
-		}, append(always, "typescript", "vue")},
+		}, append(always, "dependencies", "typescript", "vue")},
 		{"a package.json naming tailwindcss", map[string]string{
 			"web/package.json": `{"devDependencies": {"tailwindcss": "^4"}}`,
-		}, append(always, "tailwind")},
+		}, append(always, "dependencies", "tailwind")},
 		{"a package.json naming neither", map[string]string{
 			"package.json": `{"name": "vue", "scripts": {"typescript": "tsc"}}`,
-		}, always},
-		{"not JSON", map[string]string{"package.json": `{"dependencies": {"vue": `}, always},
+		}, append(always, "dependencies")},
+		{"not JSON", map[string]string{"package.json": `{"dependencies": {"vue": `},
+			append(always, "dependencies")},
+		{"a Cargo.toml", map[string]string{"crates/x/Cargo.toml": "[package]\n"},
+			append(always, "dependencies")},
+		{"a pyproject.toml", map[string]string{"pyproject.toml": "[project]\n"},
+			append(always, "dependencies")},
 		{"a GitHub Actions workflow", map[string]string{".github/workflows/ci.yml": "on: push\n"},
 			append(always, "ci")},
 		{"a Jenkinsfile", map[string]string{"Jenkinsfile": "pipeline {}\n"}, append(always, "ci")},
@@ -53,6 +59,7 @@ func TestFitting(t *testing.T) {
 			".cache/go.mod":               "module x\n",
 			"tools/testdata/go.mod":       "module x\n",
 			"target/web/package.json":     `{"dependencies": {"vue": "^3"}}`,
+			"dist/Cargo.toml":             "[package]\n",
 		}, always},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -82,6 +89,11 @@ func TestIndex_Zsh(t *testing.T) {
 	}
 }
 
+// when is the When of the Guideline `name`.
+func when(name string) string {
+	return All[slices.IndexFunc(All, func(g Guideline) bool { return g.Name == name })].When
+}
+
 func TestIndex(t *testing.T) {
 	plugin := t.TempDir()
 	if text, err := Index(plugin, map[string]bool{"go": false}, ""); text != "" || err != nil {
@@ -89,8 +101,8 @@ func TestIndex(t *testing.T) {
 	}
 	// Without the rules for every task, the lines are still there.
 	lines := "Read a file when its task comes up:\n" +
-		"- " + All[0].When + ": " + filepath.Join(plugin, "guidelines", "principles.md") + "\n" +
-		"- " + All[8].When + ": " + filepath.Join(plugin, "guidelines", "vue.md")
+		"- " + when("principles") + ": " + filepath.Join(plugin, "guidelines", "principles.md") + "\n" +
+		"- " + when("vue") + ": " + filepath.Join(plugin, "guidelines", "vue.md")
 	on := map[string]bool{"principles": true, "vue": true}
 	if text, err := Index(plugin, on, ""); err == nil || !strings.HasSuffix(text, lines) {
 		t.Errorf("Index without principles.md = %q, %v; want the lines and an error", text, err)

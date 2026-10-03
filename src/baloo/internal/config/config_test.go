@@ -411,7 +411,7 @@ func TestNewConfigGuidelines(t *testing.T) {
 	}
 	c, _, problems := Load(root)
 	want := map[string]bool{"principles": true, "design": true, "testing": true, "debugging": true,
-		"writing-for-agents": true, "ci": false, "go": true,
+		"writing-for-agents": true, "ci": false, "dependencies": true, "go": true,
 		"typescript": false, "vue": false, "tailwind": false}
 	if !maps.Equal(c.Guidelines, want) || problems != nil {
 		t.Errorf("new config's guidelines = %v, %q; want %v", c.Guidelines, problems, want)

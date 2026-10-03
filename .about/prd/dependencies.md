@@ -52,6 +52,7 @@ the user naming a command or opening a changelog.
 - A new Config in a repo with a `go.mod`, `package.json`, `Cargo.toml` or `pyproject.toml` at
   any depth turns `dependencies` on; one whose only manifest is in `node_modules`, `vendor`,
   `testdata`, build output or a hidden folder leaves it off.
+  → test: src/baloo/internal/guidelines/guidelines_test.go "TestFitting"
 - A repo with outdated patch, minor and major versions: Claude updates the patch and minor ones,
   commits them in one commit, and lists each major with its current and latest version, the
   breaking changes its changelog names and the files they touch, then asks which to update.
