@@ -2,6 +2,14 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.21.0 — 2026-10-04
+
+### Features
+
+- status-line: show how long the prompt cache stays warm, and the 7-day reset day (b0714f1)
+- config: pick the Status line's bars, their order and thresholds (6836bf5)
+- status-line: show the Cache bar last by default (ff6259a)
+
 ## 0.20.0 — 2026-10-03
 
 ### Features
