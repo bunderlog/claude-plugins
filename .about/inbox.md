@@ -59,17 +59,19 @@ is who it's for: baloo holds what is useful to everyone, `bagheera` only what is
 developers. So baloo is no longer "knowledge only", and there is no thin layer of its own for
 other roles: what guards or helps any role is baloo's.
 
+Agreed 2026-10-04: a domain's own plugin is neither this repo's nor this marketplace's: it holds
+the domain's private knowledge and has another owner, so it lives with them.
+
 Settled by deciding:
-- where the knowledge lives for roles without the code repo: read access to it, a repo of `.about/`
-  alone, or a store such as Notion through MCP. The case: people in Cowork, with no git or terminal,
-  who act as product, hold the domain's knowledge and accept the work. baloo needs its Hooks, and in
-  Cowork they are unreliable (item baloo in Cowork); the options proposed: they work in Claude
-  Code's desktop app or claude.ai/code, where Claude commits and pushes for them, tried first with
-  one of them for a week; a shell of our own, an MCP server over the knowledge repo, which has no
-  session's end for a Session review; or every baloo skill carrying its own rules (the Inbox's
-  format, where `.about/` is) so it is still useful where the Hooks didn't fire. Open with it:
-  whether acceptance gets a plugin or a skill in `akela`, and whether a domain's own plugin is a
-  kind of its own, kept in a private marketplace rather than this public one;
+- where the knowledge lives for roles without the code repo: read access to it, a repo of
+  `.about/` alone, or a store such as Notion through MCP. The case: people in Cowork, with no git
+  or terminal, who act as product, hold the domain's knowledge and accept the work. baloo needs
+  its Hooks, and in Cowork they are unreliable (item baloo in Cowork); the options proposed: they
+  work in Claude Code's desktop app or claude.ai/code, where Claude commits and pushes for them,
+  tried first with one of them for a week; a shell of our own, an MCP server over the knowledge repo, which has no session's end
+  for a Session review; or every baloo skill carrying its own rules (the Inbox's format, where
+  `.about/` is) so it is still useful where the Hooks didn't fire. Open with it: whether
+  acceptance gets a plugin or a skill in `akela`;
 - which plugin each part goes to under "useful to everyone". Proposed, not agreed: baloo takes
   the knowledge skills, the Session review and the Inbox's count, `retro` with `condense`,
   `doctor` (in both), the Output style, the Status line, `no-secrets-in-context`,
@@ -82,7 +84,7 @@ Settled by deciding:
 - one repo for every plugin, or a repo per plugin with this one left as the marketplace. Proposed:
   the public plugins stay here, since `bagheera` leans on baloo's skill names and only a test in
   the same repo catches a rename, with a semver, `CHANGELOG.md` and `<name>-v*` tags per plugin
-  and `mise run release <name>`; a plugin with another owner or access gets a repo of its own;
+  and `mise run release <name>`;
 - how installed copies of baloo learn their Checks and Guidelines moved, with the Config split
   between the plugins.
 
