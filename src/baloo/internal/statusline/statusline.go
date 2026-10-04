@@ -16,6 +16,9 @@ type line struct {
 	Type    string `json:"type"`
 	Command string `json:"command"`
 	Padding int    `json:"padding"`
+	// RefreshInterval is the seconds between runs while Claude Code is idle, so the Cache bar's
+	// minutes count down.
+	RefreshInterval int `json:"refreshInterval"`
 }
 
 // command is the status line command that runs the binary at `bin`, marked as the plugin's.
@@ -65,7 +68,7 @@ func Set(project, root, data string, on bool) (shown bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	want := line{"command", command(bin), 0}
+	want := line{"command", command(bin), 0, 60}
 	var got line
 	if mine && json.Unmarshal(current, &got) == nil && got == want {
 		return false, nil

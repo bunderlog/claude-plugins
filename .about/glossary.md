@@ -82,9 +82,9 @@ Config names the one to pick where no setting does.
 _Avoid_: "style" alone; tone
 
 **Status line**:
-The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars and
-the model, is drawn by the binary, and set in the project's local settings where the Config turns
-it on.
+The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars, the
+Cache bar and the model, is drawn by the binary, and set in the project's local settings where the
+Config turns it on.
 _Avoid_: "status" alone, which is a PRD's Status
 _In code_: `src/baloo/internal/statusline`
 
@@ -92,6 +92,11 @@ _In code_: `src/baloo/internal/statusline`
 One of the Status line's three bars showing how much is used: the context window, and the 5-hour
 and 7-day rate limits.
 _Avoid_: meter, gauge
+
+**Cache bar**:
+The Status line's bar showing how long the prompt cache stays warm, or that it is cold, and,
+without the context bar, its size: the tokens the next message writes to it again once it is cold.
+_Avoid_: cache meter
 
 ## Secrets
 

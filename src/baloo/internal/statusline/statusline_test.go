@@ -146,6 +146,10 @@ func TestSetOwn(t *testing.T) {
 	if got, want := statusLine(t, local), "'"+filepath.Join(data, "baloo")+"' status-line # managed by baloo"; got != want {
 		t.Errorf("status line = %q; want %q", got, want)
 	}
+	var fields struct{ StatusLine line }
+	if err := json.Unmarshal([]byte(contents(t, local)), &fields); err != nil || fields.StatusLine.RefreshInterval != 60 {
+		t.Errorf("status line = %+v, %v; want it refreshed every 60 seconds", fields.StatusLine, err)
+	}
 	if _, err := Set(root, root, data, false); err != nil {
 		t.Fatal(err)
 	}

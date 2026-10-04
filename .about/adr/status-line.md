@@ -1,16 +1,27 @@
 # The Status line is the binary's, set by session start in the project's local settings
 
-Date: 2026-10-01
+Date: 2026-10-04
 
-The plugin ships a Status line: the branch on the left, the context, 5-hour and 7-day Usage bars
-centered, and the model with its effort on the right. The binary draws it, `baloo status-line`, from
-what Claude Code gives a status line command on stdin; a line too narrow shrinks the bars, then
-drops the 5-hour reset time, then the model. Each bar turns yellow and red at fixed percentages:
-the context at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
+The plugin ships a Status line: the branch on the left, the context Usage bar, the Cache bar and
+the 5-hour and 7-day Usage bars centered, and the model with its effort on the right. The binary
+draws it, `baloo status-line`, from what Claude Code gives a status line command on stdin; a line
+too narrow shrinks the bars, then drops the reset times, the 5-hour's clock time and the 7-day's
+weekday, then the model. Each Usage bar turns yellow and red at percentages, by default the
+context at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
 
-The Config's `status-line` key turns it on, and a new Config has it on. A plugin can't set
-Claude Code's `statusLine` itself, so at session start the binary writes it, as it picks an Output
-style (ADR output-styles) and not in a Session review's session, where both hold:
+The Cache bar reads Claude Code's `prompt_cache`: it fills with the share of the cache's lifetime
+left, 5 minutes or an hour, turning yellow below 40% and red below 20% by default, and empty when
+cold; beside it are the minutes until the cache goes cold, rounded up, or `cold` in red. Without
+the context bar the cache's size follows them, the tokens the next message writes again once it
+is cold; it is the context's tokens again, so beside them it would say the same twice. With
+caching off it doesn't show. Claude Code runs the line again when the cache goes cold, and the
+`statusLine` setting asks it to every 60 seconds besides, so the minutes count down while idle.
+
+The Config's `status-line` key turns it on, and a new Config has it on.
+
+A plugin can't set Claude Code's `statusLine` itself, so at session start the binary writes it, as
+it picks an Output style (ADR output-styles) and not in a Session review's session, where both
+hold:
 - the plugin is enabled in the project's local or project settings, or the user's;
 - none of the project's local or project settings, nor the managed ones, sets `statusLine`: the
   user's own, for every project, gives way to the repo's key.
@@ -38,6 +49,13 @@ the repo's `info/exclude`, and one that was there keeps the rest of its text as 
 - The Loader's path in the installed plugin, rewritten at each session start — the path changes
   with every version, so each update rewrites the settings file, and the line breaks in the
   sessions between the update and the rewrite.
+
+- A countdown in seconds, run every second — a binary and a `git` call each second for a number
+  nobody reads to the second.
+- The cache's hit ratio, as the prompt-cache-control mod shows it, as the bar or beside it — over
+  a session it stays near 98% and says nothing; the time left is what tells whether to send the
+  next message now or `/compact` first.
+- The last miss's cause beside it for a while after a miss — it seldom tells what to do.
 
 ## Consequences
 

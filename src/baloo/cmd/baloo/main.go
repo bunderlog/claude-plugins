@@ -377,7 +377,7 @@ func statusLine(stdin io.Reader, stdout io.Writer) int {
 	if err != nil || columns <= 0 {
 		columns = 120
 	}
-	fmt.Fprintln(stdout, statusline.Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
+	fmt.Fprintln(stdout, statusline.Default().Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
 	return 0
 }
 
