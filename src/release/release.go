@@ -135,7 +135,8 @@ func git(root string, args ...string) (string, error) {
 // Release makes a Release in the repo at `root` from the commits since the last `v*` tag: it
 // builds the next version for every platform, to check that it builds, writes it to the manifest
 // and the README's CI recipe and a section to CHANGELOG.md, commits these and tags the commit,
-// whose push has CI build and publish the binaries. It returns the version.
+// whose tag `mise run publish` pushes for CI to build and publish the binaries. It returns the
+// version.
 func Release(root, date string) (string, error) {
 	if status, err := git(root, "status", "--porcelain"); err != nil || status != "" {
 		return "", fmt.Errorf("commit or stash your changes first")
@@ -230,14 +231,14 @@ func Release(root, date string) (string, error) {
 	commit.Stdout, commit.Stderr = os.Stderr, os.Stderr
 	if err := commit.Run(); err != nil {
 		return "", fmt.Errorf("the release commit failed: fix what failed, then "+
-			"`git commit -m %q && git tag -s v%s -m v%s && git push --follow-tags`",
+			"`git commit -m %q && git tag -s v%s -m v%s && mise run publish`",
 			msg, version, version)
 	}
 	// Signed whatever tag.gpgSign says, as ADR releases has it: -a alone would make an unsigned
 	// tag.
 	if out, err := exec.Command("git", "-C", root, "tag", "-s", "v"+version, "-m", "v"+version).CombinedOutput(); err != nil {
 		return "", fmt.Errorf("the release tag failed: fix what failed, then "+
-			"`git tag -s v%s -m v%s && git push --follow-tags`: %s", version, version, out)
+			"`git tag -s v%s -m v%s && mise run publish`: %s", version, version, out)
 	}
 	return version, nil
 }

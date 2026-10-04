@@ -27,4 +27,22 @@ run = "go run . build"
 [tasks.release]
 description = "Make a Release from the commits since the last one and push it"
 dir = "src/release"
-run = ["go run .", "git push --follow-tags"]
+run = ["go run .", "mise run publish"]
+
+# The marketplace installs from main, so main is pushed only once the Release workflow has put the
+# binaries on the GitHub Release: before that, a session updated to the new version would ask its
+# Loader for a binary that isn't there yet (ADR releases).
+[tasks.publish]
+description = "Push the Release tagged at HEAD, wait for CI to publish its binaries, then push main"
+run = '''
+tag=$(git describe --tags --exact-match --match 'v*' HEAD) || { echo "HEAD has no v* tag: run mise run release"; exit 1; }
+git push origin "$tag"
+for _ in $(seq 24); do
+  id=$(gh run list --workflow release.yml --branch "$tag" --limit 1 --json databaseId -q '.[0].databaseId')
+  [ -n "$id" ] && break
+  sleep 5
+done
+[ -n "$id" ] || { echo "no Release workflow started for $tag"; exit 1; }
+gh run watch "$id" --exit-status
+git push
+'''

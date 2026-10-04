@@ -1,6 +1,6 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-10-01
+Date: 2026-10-04
 
 The marketplace installs `baloo` from this repo's `main`, and an installed copy updates only to a
 new version, so a change to `plugins/baloo/`, or to the binary's source in `src/baloo/`, reaches
@@ -12,9 +12,10 @@ raises the minor, anything else the patch; from 1.0 a breaking change raises the
 that version for every platform, so a version that doesn't build is never tagged, then writes it
 to `plugin.json` and to the line the README's CI recipe pins (ADR checks), and a section to
 `CHANGELOG.md`, commits them as `chore(release): <version>` and tags the commit `v<version>`,
-signed; the task then pushes both with `git push --follow-tags`. The tag starts the Release
-workflow, which builds the binaries for every platform and publishes them, their `SHA256SUMS` and
-the CHANGELOG section as the GitHub Release (ADR binary).
+signed. The task then pushes the tag alone, which starts the Release workflow: it builds the
+binaries for every platform and publishes them, their `SHA256SUMS` and the CHANGELOG section as the
+GitHub Release (ADR binary). The task waits for that workflow and pushes `main` only once it has
+succeeded, so no installed copy updates to a version whose binaries aren't there yet.
 
 The release tool is a Go module of its own, `src/release/`, outside the plugin and the binary's
 module, so a change to it needs no Release; it takes the plugin's names from `src/baloo/names`.
@@ -37,6 +38,11 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   hand at every Release.
 - The push left to whoever ran the task (until 2026-10-01) — a Release made and never pushed
   reaches nobody, and one sat local for three sessions until the next was pushed with it.
+- Pushing the commit and the tag together with `git push --follow-tags` (until 2026-10-04) — no
+  wait, but a session that started in the minute before the workflow had published got 0.21.0 from
+  `main`, and its Loader's download failed with a 404.
+- Installing from a branch or tag CI moves once the binaries are published — no wait either, but
+  CI would push to the repo, and it changes where the marketplace installs from (ADR plugin).
 - CI making the Release on every push to `main` — no local step, but the release commit would be
   CI's, unsigned, and CI would push to `main`.
 
@@ -46,5 +52,7 @@ module, so a change to it needs no Release; it takes the plugin's names from `sr
   read. A commit that changes the plugin and something else counts whole.
 - The release commit is signed like any other, and the tag always is (`git tag -s`), so the
   Release is made where the signing key is.
+- `mise run release` waits a minute or so for the Release workflow. If the workflow fails, `main`
+  stays local and no user gets the version; fix it, then rerun `mise run publish`.
 - Nothing stops a push that changes `plugins/baloo/` or `src/baloo/` without a Release: it
   reaches users with the next one.
