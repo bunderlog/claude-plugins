@@ -371,17 +371,17 @@ func TestStatusLayoutSetting(t *testing.T) {
 		{"status-line:\n  bars:\n    - context\n    - ctx\n    - context\n  thresholds:\n    context: {yellow: 30, red: 20}\n" +
 			"    cache: {yellow: 10, red: 20}\n    5h: {yellow: 101}\n    7d: {blue: 1}\n    week: {red: 1}\n  colors: true\n",
 			[]string{"context"}, def.Thresholds, []string{
-				".claude/baloo.yml line 4: status-line.bars: ctx is not one of context, cache, 5h, 7d; ignored",
+				".claude/baloo.yml line 4: status-line.bars: ctx is not one of context, 5h, 7d, cache; ignored",
 				".claude/baloo.yml line 5: status-line.bars: context is there twice; ignored",
 				".claude/baloo.yml line 7: status-line.thresholds.context: turns red before yellow; its default applies",
 				".claude/baloo.yml line 8: status-line.thresholds.cache: turns red before yellow; its default applies",
 				".claude/baloo.yml line 9: status-line.thresholds.5h: is not { yellow: <percent>, red: <percent> }; its default applies",
 				".claude/baloo.yml line 10: status-line.thresholds.7d: is not { yellow: <percent>, red: <percent> }; its default applies",
-				".claude/baloo.yml line 11: status-line.thresholds.week is not one of context, cache, 5h, 7d; ignored",
+				".claude/baloo.yml line 11: status-line.thresholds.week is not one of context, 5h, 7d, cache; ignored",
 				".claude/baloo.yml line 12: status-line.colors is not a setting of status-line; ignored",
 			}},
 		{"status-line:\n  bars: context\n  thresholds: [1]\n", def.Bars, def.Thresholds, []string{
-			".claude/baloo.yml line 2: status-line.bars: is not a list of context, cache, 5h, 7d; its default applies",
+			".claude/baloo.yml line 2: status-line.bars: is not a list of context, 5h, 7d, cache; its default applies",
 			".claude/baloo.yml line 3: status-line.thresholds: is not a map of bars to thresholds; its default applies",
 		}},
 	} {

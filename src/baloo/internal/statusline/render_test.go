@@ -187,17 +187,17 @@ func cached(t *testing.T, at int64, fields string) Input {
 		fields+`}, "rate_limits": {"five_hour": {"used_percentage": 55}}}`)
 }
 
-// The Cache bar, between the context and the 5-hour bars, fills with the share of the cache's
+// The Cache bar, after the 7-day bar, fills with the share of the cache's
 // lifetime left, dim green, then yellow below 40% and red below 20%, and shows the minutes until
 // the cache goes cold, rounded up.
 func TestRender_Cache(t *testing.T) {
 	start := at(24, 14, 0)
 	warm := `"warm": true, "ttl": "5m", "expires_at": ` + fmt.Sprint(start+221)
 	for fields, want := range map[string]string{
-		warm: "Ctx █░░░░░░░░░ 12% Cache ███████░░░ 4m 5h",
-		warm + `, "recache_tokens_if_cold": 45000`:                           "Cache ███████░░░ 4m 5h",
-		`"warm": true, "ttl": "1h", "expires_at": ` + fmt.Sprint(start+3600): "Cache ██████████ 60m 5h",
-		`"warm": true, "ttl": "2h", "expires_at": ` + fmt.Sprint(start+30):   "Cache ██████████ 1m 5h",
+		warm: "Ctx █░░░░░░░░░ 12% 5h █████░░░░░ 55% Cache ███████░░░ 4m",
+		warm + `, "recache_tokens_if_cold": 45000`:                           "Cache ███████░░░ 4m",
+		`"warm": true, "ttl": "1h", "expires_at": ` + fmt.Sprint(start+3600): "Cache ██████████ 60m",
+		`"warm": true, "ttl": "2h", "expires_at": ` + fmt.Sprint(start+30):   "Cache ██████████ 1m",
 	} {
 		if got := plain(Default().Render(cached(t, start, fields), "", 120)); !strings.Contains(got, want) {
 			t.Errorf("cache %s = %q; want %q in it", fields, got, want)
@@ -219,7 +219,7 @@ func TestRender_CacheCold(t *testing.T) {
 		`"warm": true, "expires_at": ` + fmt.Sprint(start),
 	} {
 		got := Default().Render(cached(t, start, fields), "", 120)
-		if want := "Cache ░░░░░░░░░░ cold 5h"; !strings.Contains(plain(got), want) || !strings.Contains(got, paint("2;31", "cold")) {
+		if want := "Cache ░░░░░░░░░░ cold"; !strings.Contains(plain(got), want) || !strings.Contains(got, paint("2;31", "cold")) {
 			t.Errorf("cache %s = %q; want %q in it, cold in dim red", fields, got, want)
 		}
 	}

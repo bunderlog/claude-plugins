@@ -56,7 +56,7 @@ type PromptCache struct {
 
 // Bars are the Status line's bars, by their names in the Config, in the order it shows them
 // without one.
-var Bars = []string{"context", "cache", "5h", "7d"}
+var Bars = []string{"context", "5h", "7d", "cache"}
 
 // Thresholds are the percentages at which a bar turns yellow and red: for a Usage bar, of what is
 // used, from them up; for the Cache bar, of the cache's lifetime left, below them.

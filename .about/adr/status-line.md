@@ -2,12 +2,13 @@
 
 Date: 2026-10-04
 
-The plugin ships a Status line: the branch on the left, the context Usage bar, the Cache bar and
-the 5-hour and 7-day Usage bars centered, and the model with its effort on the right. The binary
-draws it, `baloo status-line`, from what Claude Code gives a status line command on stdin; a line
-too narrow shrinks the bars, then drops the reset times, the 5-hour's clock time and the 7-day's
-weekday, then the model. Each Usage bar turns yellow and red at percentages, by default the
-context at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
+The plugin ships a Status line: the branch on the left, the context, 5-hour and 7-day Usage bars
+and the Cache bar centered, the Cache bar last since nothing in parentheses closes it, and the
+model with its effort on the right. The binary draws it, `baloo status-line`, from what Claude
+Code gives a status line command on stdin; a line too narrow shrinks the bars, then drops the
+reset times, the 5-hour's clock time and the 7-day's weekday, then the model. Each Usage bar turns
+yellow and red at percentages, by default the context at 15 and 20, the 5-hour at 70 and 85, the
+7-day at 80 and 95.
 
 The Cache bar reads Claude Code's `prompt_cache`: it fills with the share of the cache's lifetime
 left, 5 minutes or an hour, turning yellow below 40% and red below 20% by default, and empty when

@@ -18,7 +18,7 @@
             "bars": {
               "description": "The bars shown, in this order; all four without it.",
               "type": "array",
-              "items": { "enum": ["context", "cache", "5h", "7d"] },
+              "items": { "enum": ["context", "5h", "7d", "cache"] },
               "uniqueItems": true
             },
             "thresholds": {
