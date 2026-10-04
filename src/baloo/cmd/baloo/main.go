@@ -364,9 +364,10 @@ func subagentStart(stdin io.Reader, stdout io.Writer) int {
 }
 
 // statusLine is Claude Code's status line command (ADR status-line): it prints the Status line for
-// what Claude Code gives it on stdin, in a terminal as wide as COLUMNS says. A field of another
-// type than the plugin's is left out, and the rest shows; whatever else goes wrong, it prints
-// nothing, since Claude Code shows under the prompt whatever it prints.
+// what Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with the bars the
+// Config of the repo it shows sets, read each time so an edit shows at the next run. A field of
+// another type than the plugin's is left out, and the rest shows; whatever else goes wrong, it
+// prints nothing, since Claude Code shows under the prompt whatever it prints.
 func statusLine(stdin io.Reader, stdout io.Writer) int {
 	var in statusline.Input
 	var typeErr *json.UnmarshalTypeError
@@ -377,7 +378,14 @@ func statusLine(stdin io.Reader, stdout io.Writer) int {
 	if err != nil || columns <= 0 {
 		columns = 120
 	}
-	fmt.Fprintln(stdout, statusline.Default().Render(in, statusline.Branch(in.Workspace.CurrentDir), columns))
+	dir := in.Workspace.CurrentDir
+	layout := statusline.Default()
+	if dir != "" {
+		if l := config.Read(dir).StatusLayout; l != nil {
+			layout = *l
+		}
+	}
+	fmt.Fprintln(stdout, layout.Render(in, statusline.Branch(dir), columns))
 	return 0
 }
 

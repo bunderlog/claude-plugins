@@ -9,8 +9,33 @@
       "enum": ["short-replies", false]
     },
     "status-line": {
-      "description": "The plugin's Status line, set at session start in the project's .claude/settings.local.json, where no settings file of Claude Code's but the user's own sets one; false takes it out.",
-      "type": "boolean"
+      "description": "The plugin's Status line, set at session start in the project's .claude/settings.local.json, where no settings file of Claude Code's but the user's own sets one; false takes it out. Its bars and thresholds instead of true.",
+      "oneOf": [
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "properties": {
+            "bars": {
+              "description": "The bars shown, in this order; all four without it.",
+              "type": "array",
+              "items": { "enum": ["context", "cache", "5h", "7d"] },
+              "uniqueItems": true
+            },
+            "thresholds": {
+              "description": "The percentages at which a bar turns yellow and red: of what is used, from them up; for cache, of its lifetime left, below them. One left out keeps its default: context 15 and 20, cache 40 and 20, 5h 70 and 85, 7d 80 and 95.",
+              "type": "object",
+              "properties": {
+                "context": { "$ref": "#/definitions/thresholds" },
+                "cache": { "$ref": "#/definitions/thresholds" },
+                "5h": { "$ref": "#/definitions/thresholds" },
+                "7d": { "$ref": "#/definitions/thresholds" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "session-review": {
       "description": "The Session review: when a session ends, a separate Claude session records in .about/glossary.md, .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote down; the next session start says what it changed. It never commits.",
@@ -163,5 +188,15 @@
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "yellow": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "red": { "type": "integer", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": false
+    }
+  }
 }

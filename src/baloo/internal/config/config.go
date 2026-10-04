@@ -17,6 +17,7 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/settings"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/statusline"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -32,6 +33,9 @@ type Config struct {
 	// StatusLine says whether session start sets the plugin's Status line or takes it out (ADR
 	// status-line), or is nil where the Config doesn't say, and the line is left as it is.
 	StatusLine *bool
+	// StatusLayout is the Status line's bars, their order and thresholds, or nil where the Config
+	// sets none and statusline.Default applies.
+	StatusLayout *statusline.Layout
 	// SessionReview says whether a Session review starts when a session ends (ADR
 	// session-review).
 	SessionReview bool
@@ -80,8 +84,15 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 	},
 	"status-line": func(c *Config, key, value *yaml.Node) []string {
 		var on bool
+		if value.Kind == yaml.MappingNode {
+			on = true
+			c.StatusLine = &on
+			layout, problems := statusLayout(key.Value, value)
+			c.StatusLayout = &layout
+			return problems
+		}
 		if value.Tag != "!!bool" || value.Decode(&on) != nil {
-			why := ": is not true or false; the Status line is left as it is"
+			why := ": is not true, false or its bars and thresholds; the Status line is left as it is"
 			return []string{at(key.Line, key.Value+why)}
 		}
 		c.StatusLine = &on
@@ -221,6 +232,88 @@ func commitRules(rules *checks.CommitRules, entry string, value *yaml.Node) []st
 	return problems
 }
 
+// statusLayout decodes the Status line's settings, the map `value` at `entry`, and returns what is
+// wrong with them; each wrong one keeps its default, a wrong bar in the list is left out.
+func statusLayout(entry string, value *yaml.Node) (statusline.Layout, []string) {
+	layout := statusline.Default()
+	bars := strings.Join(statusline.Bars, ", ")
+	var problems []string
+	for i := 0; i+1 < len(value.Content); i += 2 {
+		key, v := value.Content[i], value.Content[i+1]
+		setting := entry + "." + key.Value
+		switch key.Value {
+		case "bars":
+			var names []string
+			if v.Kind != yaml.SequenceNode || v.Decode(&names) != nil {
+				problems = append(problems, wrong(key.Line, setting, "is not a list of "+bars))
+				continue
+			}
+			layout.Bars = []string{}
+			for j, name := range names {
+				switch {
+				case !slices.Contains(statusline.Bars, name):
+					why := ": " + name + " is not one of " + bars + "; ignored"
+					problems = append(problems, at(v.Content[j].Line, setting+why))
+				case slices.Contains(layout.Bars, name):
+					problems = append(problems, at(v.Content[j].Line, setting+": "+name+" is there twice; ignored"))
+				default:
+					layout.Bars = append(layout.Bars, name)
+				}
+			}
+		case "thresholds":
+			if v.Kind != yaml.MappingNode {
+				problems = append(problems, wrong(key.Line, setting, "is not a map of bars to thresholds"))
+				continue
+			}
+			for j := 0; j+1 < len(v.Content); j += 2 {
+				name, t := v.Content[j], v.Content[j+1]
+				bar := setting + "." + name.Value
+				got, ok := layout.Thresholds[name.Value]
+				if !ok {
+					problems = append(problems, at(name.Line, bar+" is not one of "+bars+"; ignored"))
+					continue
+				}
+				if why := thresholds(&got, t); why != "" {
+					problems = append(problems, wrong(name.Line, bar, why))
+					continue
+				}
+				if !statusline.Ordered(name.Value, got) {
+					problems = append(problems, wrong(name.Line, bar, "turns red before yellow"))
+					continue
+				}
+				layout.Thresholds[name.Value] = got
+			}
+		default:
+			problems = append(problems, at(key.Line, setting+" is not a setting of status-line; ignored"))
+		}
+	}
+	return layout, problems
+}
+
+// thresholds decodes a bar's thresholds, the map `value`, into `t`, and says what is wrong with
+// them, or "".
+func thresholds(t *statusline.Thresholds, value *yaml.Node) string {
+	const why = "is not { yellow: <percent>, red: <percent> }"
+	if value.Kind != yaml.MappingNode {
+		return why
+	}
+	for i := 0; i+1 < len(value.Content); i += 2 {
+		var n int
+		if v := value.Content[i+1]; v.Tag != "!!int" || v.Decode(&n) != nil || n < 0 || n > 100 {
+			return why
+		}
+		switch value.Content[i].Value {
+		case "yellow":
+			t.Yellow = n
+		case "red":
+			t.Red = n
+		default:
+			return why
+		}
+	}
+	return ""
+}
+
 // at is the problem `text` at line `line` of the Config.
 func at(line int, text string) string {
 	return fmt.Sprintf("%s line %d: %s", names.Config, line, text)
@@ -257,7 +350,10 @@ func newConfig(fit []string) string {
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
-# settings file of Claude Code's but the user's own sets one; false takes it out.
+# settings file of Claude Code's but the user's own sets one; false takes it out. Instead of
+# true it also takes its bars, in the order shown, and the percentages at which each turns yellow
+# and red, such as { bars: [context, 5h], thresholds: { context: { yellow: 30, red: 50 } } };
+# cache's are of the cache's lifetime left, so red is below yellow.
 status-line: true
 
 # The Session review: when a session ends, a separate Claude session records in .about/glossary.md,

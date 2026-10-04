@@ -17,7 +17,11 @@ is cold; it is the context's tokens again, so beside them it would say the same 
 caching off it doesn't show. Claude Code runs the line again when the cache goes cold, and the
 `statusLine` setting asks it to every 60 seconds besides, so the minutes count down while idle.
 
-The Config's `status-line` key turns it on, and a new Config has it on.
+The Config's `status-line` key turns it on, and a new Config has it on. Instead of `true` it takes
+`bars`, the bars shown in their order, and `thresholds`, each bar's `yellow` and `red`; one it
+leaves out keeps its default, and a wrong one is a problem at session start that keeps its default.
+The binary reads them from the Config each time it draws the line, so an edit shows at the next
+run, not the next session.
 
 A plugin can't set Claude Code's `statusLine` itself, so at session start the binary writes it, as
 it picks an Output style (ADR output-styles) and not in a Session review's session, where both
@@ -42,8 +46,10 @@ the repo's `info/exclude`, and one that was there keeps the rest of its text as 
 
 - Giving way, as the Output style does, to a `statusLine` in any settings file — a user with a
   status line of their own for every project would never get the plugin's.
-- Thresholds for each bar in the Config — an object where `true` is, for settings nobody has
-  changed yet; they can come later without breaking a Config.
+- One list of bars, each a name or a name with its thresholds — shorter, but its
+  entries mix two types, which a schema and an editor handle worse.
+- Writing the bars into the command's arguments at session start — an edit shows only in the
+  next session.
 - Writing the file that enables the plugin, as the Output style does — a team's committed
   `.claude/settings.json` would get a path from one person's machine.
 - The Loader's path in the installed plugin, rewritten at each session start — the path changes

@@ -15,6 +15,7 @@ import (
 
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/checks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/statusline"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
@@ -332,7 +333,8 @@ func TestStatusLineSetting(t *testing.T) {
 		{"status-line: true\n", "true", 0},
 		{"status-line: false\n", "false", 0},
 		{"status-line: yes please\n", "unset", 1},
-		{"status-line: {}\n", "unset", 1},
+		{"status-line: [context]\n", "unset", 1},
+		{"status-line: {}\n", "true", 0},
 		{"# none\n", "unset", 0},
 	} {
 		c, problems := parse([]byte(tc.yml))
@@ -343,9 +345,57 @@ func TestStatusLineSetting(t *testing.T) {
 		if got != tc.on || len(problems) != tc.problems {
 			t.Errorf("parse(%q) = %s, %q; want %s and %d problems", tc.yml, got, problems, tc.on, tc.problems)
 		}
-		if want := ".claude/baloo.yml line 1: status-line: is not true or false; the Status line is left as it is"; tc.problems == 1 && problems[0] != want {
+		if want := ".claude/baloo.yml line 1: status-line: is not true, false or its bars and thresholds; the Status line is left as it is"; tc.problems == 1 && problems[0] != want {
 			t.Errorf("parse(%q) problem = %q; want %q", tc.yml, problems[0], want)
 		}
+	}
+}
+
+// The Status line takes its bars, in order, and their thresholds; a wrong one is a problem, and
+// its default applies, a wrong bar in the list left out. Without them the default Layout applies.
+func TestStatusLayoutSetting(t *testing.T) {
+	def := statusline.Default()
+	for _, tc := range []struct {
+		yml        string
+		bars       []string
+		thresholds map[string]statusline.Thresholds
+		problems   []string
+	}{
+		{"status-line: {}\n", def.Bars, def.Thresholds, nil},
+		{"status-line:\n  bars: [7d, context]\n  thresholds:\n    context: {red: 50}\n    cache: {yellow: 50, red: 10}\n",
+			[]string{"7d", "context"}, map[string]statusline.Thresholds{
+				"context": {Yellow: 15, Red: 50}, "cache": {Yellow: 50, Red: 10},
+				"5h": {Yellow: 70, Red: 85}, "7d": {Yellow: 80, Red: 95},
+			}, nil},
+		{"status-line:\n  bars: []\n", []string{}, def.Thresholds, nil},
+		{"status-line:\n  bars:\n    - context\n    - ctx\n    - context\n  thresholds:\n    context: {yellow: 30, red: 20}\n" +
+			"    cache: {yellow: 10, red: 20}\n    5h: {yellow: 101}\n    7d: {blue: 1}\n    week: {red: 1}\n  colors: true\n",
+			[]string{"context"}, def.Thresholds, []string{
+				".claude/baloo.yml line 4: status-line.bars: ctx is not one of context, cache, 5h, 7d; ignored",
+				".claude/baloo.yml line 5: status-line.bars: context is there twice; ignored",
+				".claude/baloo.yml line 7: status-line.thresholds.context: turns red before yellow; its default applies",
+				".claude/baloo.yml line 8: status-line.thresholds.cache: turns red before yellow; its default applies",
+				".claude/baloo.yml line 9: status-line.thresholds.5h: is not { yellow: <percent>, red: <percent> }; its default applies",
+				".claude/baloo.yml line 10: status-line.thresholds.7d: is not { yellow: <percent>, red: <percent> }; its default applies",
+				".claude/baloo.yml line 11: status-line.thresholds.week is not one of context, cache, 5h, 7d; ignored",
+				".claude/baloo.yml line 12: status-line.colors is not a setting of status-line; ignored",
+			}},
+		{"status-line:\n  bars: context\n  thresholds: [1]\n", def.Bars, def.Thresholds, []string{
+			".claude/baloo.yml line 2: status-line.bars: is not a list of context, cache, 5h, 7d; its default applies",
+			".claude/baloo.yml line 3: status-line.thresholds: is not a map of bars to thresholds; its default applies",
+		}},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if c.StatusLine == nil || !*c.StatusLine || c.StatusLayout == nil {
+			t.Errorf("parse(%q) = %v, %v; want the Status line on with a Layout", tc.yml, c.StatusLine, c.StatusLayout)
+			continue
+		}
+		if l := c.StatusLayout; !slices.Equal(l.Bars, tc.bars) || !maps.Equal(l.Thresholds, tc.thresholds) || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %v, %v, %q; want %v, %v, %q", tc.yml, l.Bars, l.Thresholds, problems, tc.bars, tc.thresholds, tc.problems)
+		}
+	}
+	if c, _ := parse([]byte("status-line: true\n")); c.StatusLayout != nil {
+		t.Errorf("status-line: true = %v; want no Layout, for the default", c.StatusLayout)
 	}
 }
 

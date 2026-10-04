@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -274,6 +275,28 @@ func TestStatusLine(t *testing.T) {
 		if code != 0 || got != want || stderr.Len() != 0 {
 			t.Errorf("status-line with %s = %d, %q, %q; want 0, %q", in, code, got, stderr.String(), want)
 		}
+	}
+}
+
+// The status-line command shows the bars the Config of the repo it is in sets, in their order.
+func TestStatusLineBars(t *testing.T) {
+	dir := t.TempDir()
+	for _, sub := range []string{".git", ".claude"} {
+		if err := os.Mkdir(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("status-line:\n  bars: [7d, context]\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("COLUMNS", "80")
+	in := fmt.Sprintf(`{"workspace": {"current_dir": %q}, "context_window": {"used_percentage": 12},
+		"rate_limits": {"five_hour": {"used_percentage": 55}, "seven_day": {"used_percentage": 81}}}`, dir)
+	var stdout, stderr bytes.Buffer
+	run([]string{"status-line"}, strings.NewReader(in), &stdout, &stderr)
+	got := strings.TrimSpace(regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(stdout.String(), ""))
+	if want := "7d ████████░░ 81% Ctx █░░░░░░░░░ 12%"; got != want {
+		t.Errorf("status-line = %q, %q; want %q", got, stderr.String(), want)
 	}
 }
 
