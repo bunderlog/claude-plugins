@@ -9,8 +9,16 @@
 output-style: short-replies
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
-# settings file of Claude Code's but the user's own sets one; false takes it out.
-status-line: true
+# settings file of Claude Code's but the user's own sets one; false takes it out. Instead of
+# true it also takes its bars, in the order shown, and the percentages at which each turns yellow
+# and red; cache's are of the cache's lifetime left, so red is below yellow.
+status-line:
+  bars: [context, cache, 5h, 7d]
+  thresholds:
+    context: { yellow: 15, red: 20 }
+    5h: { yellow: 70, red: 85 }
+    7d: { yellow: 80, red: 95 }
+    cache: { yellow: 40, red: 20 }
 
 # The Session review: when a session ends, a separate Claude session records in .about/glossary.md,
 # .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote
