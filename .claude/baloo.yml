@@ -13,7 +13,7 @@ output-style: short-replies
 # true it also takes its bars, in the order shown, and the percentages at which each turns yellow
 # and red; cache's are of the cache's lifetime left, so red is below yellow.
 status-line:
-  bars: [context, cache, 5h, 7d]
+  bars: [context, 5h, 7d, cache]
   thresholds:
     context: { yellow: 15, red: 20 }
     5h: { yellow: 70, red: 85 }
