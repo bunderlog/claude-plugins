@@ -51,7 +51,7 @@ changes nothing.
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git
 hooks didn't: without the plugin, or in GitHub's web editor. Download the binary of a pinned
 Release, check it against the Release's `SHA256SUMS`, and give each Check the input its Git hook
-would, with `$BASE` the commit the checked commits start from:
+would, with `$BASE` the commit the checked commits start from and `$BRANCH` the branch they go to:
 
 ```sh
 set -e
@@ -69,7 +69,7 @@ for sha in $(git rev-list "$BASE"..HEAD); do
   "$baloo" check conventional-commits "$dir/msg"
   "$baloo" check no-ai-coauthor "$dir/msg"
 done
-echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/base $BASE" | "$baloo" check linear-history
+echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | "$baloo" check linear-history
 git reset -q --soft "$BASE" # the checked commits' changes, staged
 "$baloo" check no-secrets-in-commits
 "$baloo" check no-conflict-markers
@@ -79,6 +79,7 @@ git reset -q --soft "$BASE" # the checked commits' changes, staged
 - Check out the head with its full history, not a merge commit. In GitHub Actions that is
   `fetch-depth: 0`, and on a pull request `ref: ${{ github.event.pull_request.head.sha }}` with
   `BASE=$(git merge-base <the base's sha> HEAD)`; on a push, `BASE` is `github.event.before`.
+  `BRANCH` is `github.base_ref` on a pull request and `github.ref_name` on a push.
 - Each Check takes its settings from the repo's `.claude/baloo.yml`, as in its Git hook, and one
   the Config turns off passes.
 - `no-stale-adr-date` is left out: it compares an ADR's Date with today, so a change checked on a

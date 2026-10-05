@@ -31,6 +31,7 @@ jobs:
       - env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PUSH_BASE: ${{ github.event.before }}
+          BRANCH: ${{ github.base_ref || github.ref_name }}
         run: |
           set -e
           if [ -n "$PR_BASE" ]; then BASE=$(git merge-base "$PR_BASE" HEAD); else BASE=$PUSH_BASE; fi
@@ -42,7 +43,7 @@ jobs:
             "$baloo" check conventional-commits "$dir/msg"
             "$baloo" check no-ai-coauthor "$dir/msg"
           done
-          echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/base $BASE" | "$baloo" check linear-history
+          echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | "$baloo" check linear-history
           git reset -q --soft "$BASE"
           "$baloo" check no-secrets-in-commits
           "$baloo" check no-conflict-markers
