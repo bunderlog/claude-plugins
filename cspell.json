@@ -50,6 +50,7 @@
     "stopcheck",
     "subshell",
     "subtests",
+    "symref",
     "testdata",
     "testkit",
     "textconv",

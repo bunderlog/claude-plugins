@@ -10,28 +10,58 @@ import (
 
 var zero = strings.Repeat("0", 40)
 
+// commit makes an empty commit in the repo `dir` and returns it.
+func commit(t *testing.T, dir, message string) string {
+	t.Helper()
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", message)
+	return strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
+}
+
 // history is a repo whose main has a merge commit, with the commits before it, of it and after it.
 func history(t *testing.T) (dir, base, merge, after string) {
 	t.Helper()
 	dir = testkit.Repo(t)
-	commit := func(message string) string {
-		testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", message)
-		return strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
-	}
-	base = commit("feat: base")
+	base = commit(t, dir, "feat: base")
 	testkit.Git(t, dir, "checkout", "-q", "-b", "side")
-	commit("feat: side")
+	commit(t, dir, "feat: side")
 	testkit.Git(t, dir, "checkout", "-q", "main")
-	commit("feat: main")
+	commit(t, dir, "feat: main")
 	testkit.Git(t, dir, "merge", "-q", "--no-ff", "-m", "Merge side", "side")
 	merge = strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
-	after = commit("feat: after")
+	after = commit(t, dir, "feat: after")
 	return dir, base, merge, after
+}
+
+// cloned is the history repo as a clone has it: origin/main at main's tip, and origin's default
+// branch main.
+func cloned(t *testing.T) (dir, base, merge, after string) {
+	t.Helper()
+	dir, base, merge, after = history(t)
+	testkit.Git(t, dir, "update-ref", "refs/remotes/origin/main", after)
+	testkit.Git(t, dir, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+	return dir, base, merge, after
+}
+
+// withMerge makes a branch `branch` from `from` with a merge commit of its own, and returns the merge.
+func withMerge(t *testing.T, dir, branch, from string) string {
+	t.Helper()
+	testkit.Git(t, dir, "checkout", "-q", "-b", branch, from)
+	testkit.Git(t, dir, "checkout", "-q", "-b", branch+"-topic")
+	commit(t, dir, "feat: topic")
+	testkit.Git(t, dir, "checkout", "-q", branch)
+	testkit.Git(t, dir, "merge", "-q", "--no-ff", "-m", "Merge topic", branch+"-topic")
+	return strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
 }
 
 // push is the line git gives pre-push for pushing `local` to main, where the remote had `remote`.
 func push(local, remote string) string {
 	return "refs/heads/main " + local + " refs/heads/main " + remote + "\n"
+}
+
+// pushFeature is the line git gives pre-push for pushing `local` to feature, where the remote had
+// `remote`.
+func pushFeature(local, remote string) string {
+	return "refs/heads/feature " + local + " refs/heads/feature " + remote + "\n"
 }
 
 func linearHistory(t *testing.T, dir, pushed string) []string {
@@ -71,6 +101,62 @@ func TestLinearHistory_ChecksANewBranchAgainstTheRemoteTrackingBranches(t *testi
 	testkit.Git(t, dir, "update-ref", "refs/remotes/origin/main", merge)
 	if got := linearHistory(t, dir, push(after, zero)); got != nil {
 		t.Errorf("LinearHistory with the merge on origin/main = %q, want none", got)
+	}
+}
+
+// A branch rebased onto main sends main's merges past the remote commit, but the remote's default
+// branch already has them.
+func TestLinearHistory_PassesARebaseOntoMainsMerges(t *testing.T) {
+	dir, base, _, after := cloned(t)
+	testkit.Git(t, dir, "checkout", "-q", "-b", "feature", base)
+	old := commit(t, dir, "feat: feature")
+	testkit.Git(t, dir, "checkout", "-q", "-B", "feature", after)
+	rebased := commit(t, dir, "feat: feature")
+	if got := linearHistory(t, dir, pushFeature(rebased, old)); got != nil {
+		t.Errorf("LinearHistory = %q, want none", got)
+	}
+}
+
+func TestLinearHistory_PassesABranchFastForwardedOntoMain(t *testing.T) {
+	dir, base, _, after := cloned(t)
+	testkit.Git(t, dir, "checkout", "-q", "-b", "feature", after)
+	ahead := commit(t, dir, "feat: feature")
+	if got := linearHistory(t, dir, pushFeature(ahead, base)); got != nil {
+		t.Errorf("LinearHistory = %q, want none", got)
+	}
+}
+
+func TestLinearHistory_FindsAMergeARebasedBranchAdds(t *testing.T) {
+	dir, base, _, after := cloned(t)
+	testkit.Git(t, dir, "checkout", "-q", "-b", "old", base)
+	old := commit(t, dir, "feat: feature")
+	own := withMerge(t, dir, "feature", after)
+	want := []string{"refs/heads/feature " + own[:12]}
+	if got := linearHistory(t, dir, pushFeature(own, old)); !slices.Equal(got, want) {
+		t.Errorf("LinearHistory = %q, want %q", got, want)
+	}
+}
+
+// A merge on a remote branch other than the default one isn't on the branch the push rewrites.
+func TestLinearHistory_FindsAMergeFromAnotherRemoteBranch(t *testing.T) {
+	dir, base, _, after := cloned(t)
+	other := withMerge(t, dir, "other", base)
+	testkit.Git(t, dir, "update-ref", "refs/remotes/origin/other", other)
+	want := []string{"refs/heads/main " + other[:12]}
+	if got := linearHistory(t, dir, push(other, after)); !slices.Equal(got, want) {
+		t.Errorf("LinearHistory = %q, want %q", got, want)
+	}
+}
+
+// The tracking ref of the branch pushed to doesn't count, past the remote commit: in CI, where the
+// head is checked as if pushed onto the base, it already has the head.
+func TestLinearHistory_FindsAMergeRewritingTheDefaultBranch(t *testing.T) {
+	dir, base, merge, after := cloned(t)
+	testkit.Git(t, dir, "checkout", "-q", "-b", "old", base)
+	old := commit(t, dir, "feat: old")
+	want := []string{"refs/heads/main " + merge[:12]}
+	if got := linearHistory(t, dir, push(after, old)); !slices.Equal(got, want) {
+		t.Errorf("LinearHistory = %q, want %q", got, want)
 	}
 }
 
