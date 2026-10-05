@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.21.1 — 2026-10-05
+
+### Fixes
+
+- linear-history: pass the merges a branch brings along from the remote's default branch (f51eb51)
+
 ## 0.21.0 — 2026-10-04
 
 ### Features
