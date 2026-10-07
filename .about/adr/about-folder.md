@@ -8,8 +8,9 @@ the root of the git repo the session is in, whatever folder it was opened in. It
 knowledge for people and for any agent, so it belongs neither in one vendor's config folder nor in a
 folder other tools already claim; `.about` is short, unclaimed, and sorts first. A monorepo has one
 glossary, with a context per project, and one ADR log. The Session review runs at the same root and
-edits only what is there (ADR session-review). A project with its own conventions (`CONTEXT.md`,
-`docs/adr/`, numbered ADRs) keeps them: the skills follow the project.
+proposes changes only to what is there, in `.about/proposals/` (ADR session-review). A project with
+its own conventions (`CONTEXT.md`, `docs/adr/`, numbered ADRs) keeps them: the skills follow the
+project.
 
 Every role, product and testing too, works with this knowledge through git alone, in a clone of
 the code repo: there are no roles without git, and no MCP server or other store holds it. baloo

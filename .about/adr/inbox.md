@@ -1,6 +1,6 @@
 # What is still to consider waits in `.about/inbox.md` until something settles it
 
-Date: 2026-10-01
+Date: 2026-10-07
 
 A decision or a term still open, and a bug or a finding left for later, had no common place: a
 proposed ADR, the glossary's `## Unresolved`, or nowhere, and Claude's auto-memory took some,
@@ -9,19 +9,20 @@ where a teammate never sees them. In one real project a Hook of its own wrote ab
 nine minutes to move what auto-memory held into git, and about 16 memory files repeated the
 repo's own `docs/issues/`.
 
-So each is an item of the Inbox, `.about/inbox.md` at the repo's root (ADR about-folder): a
-`## <title>`, a line `<YYYY-MM-DD> · <source>` naming who added it, then what it is and what would
-settle it. The Session review adds what the conversation left open, or found and didn't fix (ADR
-session-review); `adr` and `glossary` add what stays open, `issue` what is still to decide,
-`retro` each fix the user didn't pick, and a rule `principles` prints on every task sends anything
-else left for later there, a code review's findings among them, rather than to Claude's memory.
-An item is deleted once the code, an ADR, the glossary or the Guidelines settle it: by the change
-that settles it, or by the Session review where the conversation did; the file goes with its last
-item, so a project with nothing open has none. Session start tells Claude how many items there
-are, one per `## ` heading outside a code block, and how many nobody has gone through yet, to tell
-the user, and that the `inbox` skill goes through them with the user. The `interview` skill reads
-the Inbox before its questions, so an item a plan touches becomes one of its open decisions; it
-writes nothing, so the change that settles the item deletes it.
+So each is an item of the Inbox, `.about/inbox.md` at the repo's root (ADR about-folder): a `##
+<title>`, a line `<YYYY-MM-DD> · <source>` naming who added it, then what it is and what would
+settle it. The Session review proposes to add what the conversation left open, or found and didn't
+fix, for the user to accept (ADR session-review); `adr` and `glossary` add what stays open, `issue`
+what is still to decide, `retro` each fix the user didn't pick, and a rule `principles` prints on
+every task sends anything else left for later there, a code review's findings among them, rather
+than to Claude's memory. An item is deleted once the code, an ADR, the glossary or the Guidelines
+settle it: by the change that settles it, or by an accepted Proposal of the Session review where the
+conversation did; the file goes with its last item, so a project with nothing open has none. Session
+start tells Claude how many items there are, one per `## ` heading outside a code block, and how
+many nobody has gone through yet, to tell the user, and that the `inbox` skill goes through them
+with the user. The `interview` skill reads the Inbox before its questions, so an item a plan touches
+becomes one of its open decisions; it writes nothing, so the change that settles the item deletes
+it.
 
 The `inbox` skill ranks every item by its text, by what waiting costs, then goes through a few at a
 time: it drops those the code, an ADR, the glossary or the Guidelines already settle, and asks of

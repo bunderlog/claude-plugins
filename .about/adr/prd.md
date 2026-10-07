@@ -1,6 +1,6 @@
 # PRDs have a skill of their own, one per feature in `.about/prd/` or the project's tracker
 
-Date: 2026-10-01
+Date: 2026-10-07
 
 The `prd` skill writes and keeps a PRD per feature in `.about/prd/<feature>.md`, beside the
 glossary and ADRs it is checked against (ADR about-folder). It probes the problem, the success
@@ -29,8 +29,9 @@ and `prd` checks those of the repo it runs in. When `prd` is used on a built fea
 every link and names a criterion with no test, a link to a test that's gone, or code that does
 something else, asking which is wrong rather than rewriting the criterion to match the code.
 
-The Session review never edits a PRD (ADR session-review): a PRD is an agreement with the user
-about what to build, and a change nobody saw costs more there than in a term or a decision record.
+The Session review may propose a change to a PRD, which applies only once the user accepts it
+through `prd` (ADR session-review): a PRD is an agreement with the user about what to build, and a
+change nobody saw costs more there than in a term or a decision record.
 
 ## Considered options
 
@@ -54,6 +55,8 @@ about what to build, and a change nobody saw costs more there than in a term or 
   the feature exists, and the criteria QA tests it against.
 - A frozen PRD, each change a new one — a chain to read, as ADR adr-format found for ADRs.
 - The Session review keeping draft PRDs up to date — an unattended change to what gets built.
+- The Session review never touching a PRD (until 2026-10-07) — right while it edited unasked; with
+  each change accepted by the user, a PRD gains what the conversation agreed of it.
 - "Spec" or "Brief" for the document — a spec reads as a technical design; a brief undersells the
   acceptance criteria.
 - A `Planned` trailer, removed once the feature ships — one line, but it goes stale the day
@@ -68,5 +71,4 @@ about what to build, and a change nobody saw costs more there than in a term or 
 - A PRD has no Date line and no Check like `no-stale-adr-date`: only `prd` edits one, with the
   user there, and git records when.
 - A PRD falls behind the code unnoticed until `prd` is used on its feature, which checks the
-  links. Revisit the Check on test links when teams leave criteria unlinked, and the Session
-  review's limit when PRDs keep going stale.
+  links. Revisit the Check on test links when teams leave criteria unlinked.

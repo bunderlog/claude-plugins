@@ -7,10 +7,11 @@ why, which Git hook runs which binary, which version runs. A Git hook running a 
 binary, with nothing saying so, went unnoticed in this repo. So the binary has `doctor`, which shows
 the plugin's state in the repo it runs in, its problems first, each with what fixes it: the binary
 running and the link the Git hooks and the Status line run (ADR git-hooks), the Config's settings,
-each Check on or off and whether by its key or by default (ADR checks), each Git hook, and the
-Guidelines on and off; a setting an earlier Release had and this one removed is one of its problems,
-for the user to delete, which session start leaves out (ADR measurement). It exits 1 when it finds a
-problem, 0 otherwise, and prints the same text for the user and for Claude.
+whether a Session review runs and how many Proposals wait or disagree with their files (ADR
+session-review), each Check on or off and whether by its key or by default (ADR checks), each Git
+hook, and the Guidelines on and off; a setting an earlier Release had and this one removed is one of
+its problems, for the user to delete, which session start leaves out (ADR measurement). It exits 1
+when it finds a problem, 0 otherwise, and prints the same text for the user and for Claude.
 
 It only reads: what fixes a problem is the next session start, or a file or a Config key that is
 the user's to change, which it names. The versions it compares are local, the running binary's

@@ -134,10 +134,18 @@ _Avoid_: issue, incident
 
 **Session review**:
 A review the plugin starts itself when a session ends, where the Config turns it on: a separate
-headless session records in the glossary, the ADRs and the Inbox what the conversation settled or
-left open but nobody wrote down, and the next session start says what it changed. Unlike a Retro, it
-looks at what was settled, not at how the work went.
+headless session proposes, as Proposals, what the conversation settled or left open but nobody
+wrote down, and a later session asks the user about each. Unlike a Retro, it looks at what was
+settled, not at how the work went.
 _Avoid_: session-end review
+
+**Proposal**:
+One change a Session review proposes to the Inbox, the glossary, an ADR or a PRD, with its ready
+edit, in `.about/proposals/<review>.md`; it reaches `.about/` only once the user accepts it, and
+waits while they defer it; once decided, it is kept in the plugin's data folder. Stale when the
+text it changes is gone; a mismatch when the log of decisions and its file disagree.
+_Avoid_: suggestion, draft
+_In code_: `src/baloo/internal/review`
 _In code_: `src/baloo/internal/review`
 
 **Inbox**:

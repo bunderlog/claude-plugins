@@ -1,13 +1,13 @@
 # ADRs are edited in place, one per subject, and hold only decisions taken
 
-Date: 2026-10-01
+Date: 2026-10-07
 
 An ADR, `.about/adr/<subject>.md` (ADR about-folder), holds the decisions on one subject as they
 stand now. When one changes, the ADR is edited in place and its Date set to today; the choice it
 drops moves to Considered options, marked `(until <date>)` with why, so the file still warns
 against it. Git keeps every earlier version. The Check `no-stale-adr-date` (pre-commit) fails when
 a staged edit changes an ADR but not its Date, unless that Date is already today's, so an
-unattended edit, such as the Session review's, shows as a change (ADR checks).
+edit nobody meant to make shows as a change (ADR checks).
 
 An ADR holds only decisions taken, and has no Status line: a decision still open is an item of the
 Inbox until it settles (ADR inbox). ADRs have no numbers: the file is named for its subject and
@@ -40,10 +40,9 @@ cited as "ADR <subject>".
 ## Consequences
 
 - What was decided on a given day, word for word, is in git, not in the file.
-- A second edit on the Date's day passes unflagged, the Session review's among them; the diff
-  still shows it.
+- A second edit on the Date's day passes unflagged; the diff still shows it.
 - Nothing stops an edit that rewrites a decision's reasoning; reading the diff before a commit
-  does. The Session review never commits.
+  does. The Session review only proposes (ADR session-review).
 - An ADR grows with its subject's decisions.
 - `no-stale-adr-date` doesn't run in CI: it compares the Date with today, so an edit checked on a
   later day than it was made would fail (ADR checks).

@@ -90,3 +90,13 @@ weaken it unseen. Settled by deciding whether skills get evals, a set of tasks r
 with its result checked, and which skills first, or that sessions and `retro` are enough. The
 measurement of 2026-10-07 (ADR measurement) read sessions, not prompts: it shows whether a part was
 used, not whether a skill's text works.
+
+## Interactive sessions leave `.about/` edits nobody reviewed too
+
+2026-10-07 · user
+
+Of 9 edits to `.about/` found uncommitted and unread on 2026-10-07, 5 came from the user's own
+interactive sessions, not from a Session review: an interview's results written and never
+committed. Proposals cover only the review (ADR session-review). Settled by deciding whether an
+interactive session's edits to `.about/` need a step of their own, such as session start naming
+uncommitted changes there, or are the user's to commit like any other.
