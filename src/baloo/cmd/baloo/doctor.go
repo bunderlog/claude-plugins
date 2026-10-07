@@ -27,6 +27,7 @@ func doctor(stdout, stderr io.Writer) int {
 		return 1
 	}
 	c, path, problems := config.Inspect(dir)
+	problems = append(problems, c.Removed...)
 	data := os.Getenv("CLAUDE_PLUGIN_DATA")
 	var body strings.Builder
 	w := tabwriter.NewWriter(&body, 0, 0, 2, ' ', 0)
@@ -74,7 +75,6 @@ func doctor(stdout, stderr io.Writer) int {
 		{"output-style", orNone(c.OutputStyle)},
 		{"status-line", statusLine},
 		{"session-review", fmt.Sprint(c.SessionReview)},
-		{"stop-check", orNone(c.StopCheck)},
 		{"format-on-edit", orNone(c.FormatOnEdit)},
 	} {
 		fmt.Fprintf(w, "  %s\t%s\n", s[0], s[1])

@@ -39,8 +39,6 @@ type Config struct {
 	// SessionReview says whether a Session review starts when a session ends (ADR
 	// session-review).
 	SessionReview bool
-	// StopCheck is the command the Stop check runs, or "" where it is off (ADR stop-check).
-	StopCheck string
 	// FormatOnEdit is the command run on each file Claude edits, or "" where it is off (ADR
 	// format-on-edit).
 	FormatOnEdit string
@@ -52,6 +50,8 @@ type Config struct {
 	CommitRules checks.CommitRules
 	// MaxFileKB is no-large-files' limit, in KB, or 0 for its default.
 	MaxFileKB int
+	// Removed are the settings of removed, one line each, for doctor to name (see removed).
+	Removed []string
 }
 
 // CheckOn says whether the Check `name` is on: as the Config says, and else on for a Check a Hook
@@ -65,6 +65,15 @@ func (c Config) CheckOn(name string) bool {
 
 // OutputStyles are the plugin's Output styles, the files in its output-styles/.
 var OutputStyles = []string{"short-replies"}
+
+// removed are the settings earlier Releases had and this one dropped (ADR measurement): a Config
+// that still has one works as without it, and only doctor names it, for the user to delete.
+var removed = []string{"stop-check", "claude-hooks.no-destructive-commands"}
+
+// removedAt is the line doctor shows for the removed setting `name` at line `line`.
+func removedAt(line int, name string) string {
+	return at(line, name+" is no longer a setting and is ignored: delete it")
+}
 
 // keys decodes each setting's value into a Config, and returns what is wrong with it, a problem
 // per line (see at); a key that isn't here is not a setting.
@@ -104,7 +113,6 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		}
 		return nil
 	},
-	"stop-check":     command(func(c *Config) *string { return &c.StopCheck }),
 	"format-on-edit": command(func(c *Config) *string { return &c.FormatOnEdit }),
 	"claude-hooks":   checkKeys(checks.HookChecks),
 	"git-hooks":      checkKeys(checks.GitHookChecks),
@@ -152,6 +160,10 @@ func checkKeys(group []string) func(c *Config, key, value *yaml.Node) []string {
 		for i := 0; i+1 < len(value.Content); i += 2 {
 			name, on := value.Content[i], value.Content[i+1]
 			entry := key.Value + "." + name.Value
+			if slices.Contains(removed, entry) {
+				c.Removed = append(c.Removed, removedAt(name.Line, entry))
+				continue
+			}
 			if !slices.Contains(group, name.Value) {
 				problems = append(problems, at(name.Line, entry+" is not a check; ignored"))
 				continue
@@ -361,11 +373,6 @@ status-line: true
 # down; the next session start says what it changed. It never commits.
 session-review: true
 
-# The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
-# the repo's root and hands a failure back to Claude to fix before it stops. Off without it, or
-# with false.
-# stop-check: mise run check
-
 # Format on edit: after each of Claude's edits to a file in the repo, it runs this command in the
 # repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
 # with false.
@@ -379,8 +386,8 @@ guidelines:
 ` + list.String() + `
 # Checks, each on with true and off with false.
 #
-# Checks in Claude Code's hooks deny, or ask you about, a tool call of Claude's that would destroy
-# work, bypass the Git hooks or show a secret. They are on without their key too.
+# Checks in Claude Code's hooks deny a tool call of Claude's that would bypass the Git hooks or show
+# a secret. They are on without their key too.
 claude-hooks:
 ` + hookList.String() + `
 # Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
@@ -501,6 +508,10 @@ func parse(data []byte) (Config, []string) {
 	var problems []string
 	for i := 0; i+1 < len(top.Content); i += 2 {
 		key, value := top.Content[i], top.Content[i+1]
+		if slices.Contains(removed, key.Value) {
+			c.Removed = append(c.Removed, removedAt(key.Line, key.Value))
+			continue
+		}
 		set, ok := keys[key.Value]
 		if !ok {
 			problems = append(problems, at(key.Line, key.Value+" is not a setting; ignored"))

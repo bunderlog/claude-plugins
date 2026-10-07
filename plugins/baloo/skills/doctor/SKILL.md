@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Show baloo's state in this repo and what is wrong with it — when the user asks what baloo has on, which version runs, or why a Check, a Git hook, the Stop check or a Guideline didn't run. Runs the binary's doctor, which only reads. Not for changing the Config.
+description: Show baloo's state in this repo and what is wrong with it — when the user asks what baloo has on, which version runs, or why a Check, a Git hook or a Guideline didn't run. Runs the binary's doctor, which only reads. Not for changing the Config.
 ---
 
 # Doctor

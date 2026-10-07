@@ -11,9 +11,8 @@ Every update lands green, in commits that can be reverted one at a time.
   manager is the one its lockfile names: `package-lock.json` npm, `pnpm-lock.yaml` pnpm,
   `yarn.lock` yarn, unless `package.json`'s `packageManager` names another. A workspace has
   one lockfile at its root: update it from there.
-- The check: the Config's `stop-check` (`.claude/baloo.yml`), else the one CLAUDE.md or
-  AGENTS.md names, else each module's build and tests. None: ask the user what proves an update
-  works, and stop.
+- The check: the one CLAUDE.md or AGENTS.md names, else each module's build and tests. None: ask
+  the user what proves an update works, and stop.
 - Run the check. Red: show the failure and stop; an update on top of it can't be told apart
   from it.
 - The manager missing, or its registry unreachable: say which, with the command or setting to

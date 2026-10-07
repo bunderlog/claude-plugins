@@ -13,8 +13,7 @@ var GitHookChecks = func() (list []string) {
 
 // HookChecks are the Checks a Hook runs, by name: each is on without its key under claude-hooks in
 // the Config (ADR checks).
-var HookChecks = []string{"no-git-hook-bypass", "no-destructive-commands",
-	"no-secrets-in-context"}
+var HookChecks = []string{"no-git-hook-bypass", "no-secrets-in-context"}
 
 // GitHooks are the Git hooks the plugin writes (ADR git-hooks), each with its Checks, in the order
 // it runs them.

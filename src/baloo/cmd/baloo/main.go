@@ -31,7 +31,7 @@ import (
 var version = "dev"
 
 var usage = "usage: baloo version | doctor | session-start [UserPromptSubmit] | allow-guideline | subagent-start | status-line |\n" +
-	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit | stop |\n  " +
+	"  pre-tool-use | post-tool-use | session-end |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
 	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
@@ -62,10 +62,6 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return postToolUse(stdin)
 		case "session-end":
 			return sessionEnd(stdin)
-		case "user-prompt-submit":
-			return userPromptSubmit(stdin)
-		case "stop":
-			return stop(stdin, stdout)
 		}
 	}
 	// The Loader's UserPromptSubmit Hook, in a session the plugin was updated in, runs the session

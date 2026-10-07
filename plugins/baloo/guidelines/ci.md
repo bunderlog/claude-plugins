@@ -39,8 +39,7 @@ what made it fail, not the color. A rerun that passes fixes nothing.
 ## 3. Reproduce
 
 - Run the step's command from the repo's root and see it fail with the log's error before you
-  change any file. Where it is the Config's `stop-check` (`.claude/baloo.yml`), run it once: the
-  Stop check runs it again when the turn ends.
+  change any file.
 - With changes in the working tree, reproduce in a clean checkout of the run's commit, `git
   worktree add --detach <scratchpad>/ci <sha>`, so they neither cause nor hide the failure.
 - It passes here: try what differs from the runner: the date and time zone it ran at (runners

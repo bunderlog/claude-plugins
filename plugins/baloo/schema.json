@@ -41,10 +41,6 @@
       "description": "The Session review: when a session ends, a separate Claude session records in .about/glossary.md, .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote down; the next session start says what it changed. It never commits.",
       "type": "boolean"
     },
-    "stop-check": {
-      "description": "The command the Stop check runs, with sh in the repo's root, when Claude ends a turn that changed the working tree; a failure goes back to Claude to fix. It gets the HEAD the turn started from in BALOO_BASE, to check only what changed since. Off without it, or with false.",
-      "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
-    },
     "format-on-edit": {
       "description": "The command run, with sh in the repo's root and the file's path at the end, after each of Claude's edits to a file in the repo, such as npx prettier --write; nothing is said of how it went. Off without it, or with false.",
       "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
@@ -106,10 +102,6 @@
       "properties": {
         "no-git-hook-bypass": {
           "description": "Denies a Bash command that would bypass the Git hooks: --no-verify, core.hooksPath, HUSKY=0.",
-          "type": "boolean"
-        },
-        "no-destructive-commands": {
-          "description": "Denies a Bash command that would destroy work beyond undo, such as git push --force or rm -rf /, and asks you first about git push --delete of a branch the remote's default branch doesn't hold, or git reset --hard with no changes to lose.",
           "type": "boolean"
         },
         "no-secrets-in-context": {

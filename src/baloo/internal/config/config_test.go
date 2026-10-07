@@ -522,29 +522,25 @@ func TestGuidelines(t *testing.T) {
 	}
 }
 
-// stop-check names the command the Stop check runs; without it, or false, it is off, and a new
-// Config has it only as a comment (ADR stop-check).
-func TestStopCheckSetting(t *testing.T) {
-	for _, tc := range []struct {
-		yml, command string
-		problems     []string
-	}{
-		{"stop-check: mise run check\n", "mise run check", nil},
-		{"stop-check: false\n", "", nil},
-		{"# none\n", "", nil},
-		{"stop-check: \"\"\n", "", []string{
-			".claude/baloo.yml line 1: stop-check: is not a command or false; its default applies"}},
-		{"stop-check: [make, test]\n", "", []string{
-			".claude/baloo.yml line 1: stop-check: is not a command or false; its default applies"}},
-		{newConfig(nil), "", nil},
-	} {
-		c, problems := parse([]byte(tc.yml))
-		if c.StopCheck != tc.command || !slices.Equal(problems, tc.problems) {
-			t.Errorf("parse(%q) = %q, %q; want %q, %q", tc.yml, c.StopCheck, problems, tc.command, tc.problems)
-		}
+// A setting an earlier Release had is no problem: the Config works as without it, the settings
+// beside it apply, and doctor gets a line naming it to delete (ADR measurement).
+func TestRemovedSettings(t *testing.T) {
+	yml := "stop-check: mise run check\nclaude-hooks:\n  no-destructive-commands: true\n" +
+		"  no-secrets-in-context: false\nformat-on-edit: npx prettier --write\n"
+	c, problems := parse([]byte(yml))
+	want := []string{
+		".claude/baloo.yml line 1: stop-check is no longer a setting and is ignored: delete it",
+		".claude/baloo.yml line 3: claude-hooks.no-destructive-commands is no longer a setting and is " +
+			"ignored: delete it",
 	}
-	if !strings.Contains(newConfig(nil), "\n# stop-check: mise run check\n") {
-		t.Error("a new Config has no stop-check example")
+	if len(problems) > 0 || !slices.Equal(c.Removed, want) {
+		t.Errorf("parse(%q) = problems %q, removed %q; want none, %q", yml, problems, c.Removed, want)
+	}
+	if c.CheckOn("no-secrets-in-context") || c.FormatOnEdit != "npx prettier --write" {
+		t.Errorf("parse(%q) dropped the settings beside the removed ones", yml)
+	}
+	if strings.Contains(newConfig(nil), "stop-check") || strings.Contains(newConfig(nil), "no-destructive-commands") {
+		t.Error("a new Config names a removed setting")
 	}
 }
 
@@ -582,12 +578,12 @@ func TestChecksSetting(t *testing.T) {
 		problems []string
 	}{
 		{"git-hooks:\n  no-ai-coauthor: true\nclaude-hooks:\n  no-secrets-in-context: false\n",
-			[]string{"no-ai-coauthor", "no-destructive-commands", "no-git-hook-bypass"}, nil},
+			[]string{"no-ai-coauthor", "no-git-hook-bypass"}, nil},
 		{"", checks.HookChecks, nil},
 		{"claude-hooks:\ngit-hooks:\n", checks.HookChecks, nil},
 		{"git-hooks:\n  nope: true\n  linear-history: yes please\n  no-secrets-in-context: false\n" +
-			"claude-hooks:\n  no-destructive-commands: false\n  no-ai-coauthor: true\n",
-			[]string{"no-git-hook-bypass", "no-secrets-in-context"}, []string{
+			"claude-hooks:\n  no-git-hook-bypass: false\n  no-ai-coauthor: true\n",
+			[]string{"no-secrets-in-context"}, []string{
 				".claude/baloo.yml line 2: git-hooks.nope is not a check; ignored",
 				".claude/baloo.yml line 3: git-hooks.linear-history: is not true or false; its default applies",
 				".claude/baloo.yml line 4: git-hooks.no-secrets-in-context is not a check; ignored",
@@ -600,7 +596,7 @@ func TestChecksSetting(t *testing.T) {
 			".claude/baloo.yml line 1: checks is not a setting; ignored",
 		}},
 		{"git-hooks:\n  conventional-commits:\n    types: any\n", []string{"conventional-commits",
-			"no-destructive-commands", "no-git-hook-bypass", "no-secrets-in-context"}, nil},
+			"no-git-hook-bypass", "no-secrets-in-context"}, nil},
 	} {
 		c, problems := parse([]byte(tc.yml))
 		var on []string

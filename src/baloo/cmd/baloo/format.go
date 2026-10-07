@@ -19,7 +19,7 @@ const formatTimeout = 50 * time.Second
 
 // postToolUse is the PostToolUse Hook on Claude's edits (ADR format-on-edit): it runs the Config's
 // format-on-edit command in the repo's root on the file an Edit, Write or MultiEdit changed, when
-// it is in the repo. It says nothing, whatever the command does: the Stop check reports failures.
+// it is in the repo. It says nothing, whatever the command does.
 func postToolUse(stdin io.Reader) int {
 	var call struct {
 		ToolInput struct {

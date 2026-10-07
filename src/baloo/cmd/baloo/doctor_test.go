@@ -46,7 +46,7 @@ func TestDoctor(t *testing.T) {
 	contains(t, out,
 		"baloo dev doctor in "+dir+"\n\nNo problems.\n",
 		"Config: "+filepath.Join(dir, names.Config)+"\n",
-		"no-destructive-commands  on\n",
+		"no-secrets-in-context  on\n",
 		"commit-msg  running: no-ai-coauthor, conventional-commits\n",
 		"Guidelines:\n")
 }
@@ -63,7 +63,7 @@ func TestDoctor_Problems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text = append(text, "nope: 1\nclaude-hooks:\n  no-git-hook-bypass: false\n"...)
+	text = append(text, "nope: 1\nstop-check: make\nclaude-hooks:\n  no-git-hook-bypass: false\n"...)
 	theirs := filepath.Join(dir, ".git", "hooks", "pre-commit")
 	link := filepath.Join(os.Getenv("CLAUDE_PLUGIN_DATA"), names.Plugin)
 	for path, data := range map[string]string{config: string(text), theirs: "#!/bin/sh\nnpm test\n"} {
@@ -83,7 +83,8 @@ func TestDoctor_Problems(t *testing.T) {
 		"- "+link+" is missing, so the Git hooks and the Status line run nothing",
 		"- "+theirs+" is not the plugin's Git hook, so no-secrets-in-commits, no-stale-adr-date, no-conflict-markers, no-large-files don't run",
 		"nope is not a setting; ignored\n",
-		"no-git-hook-bypass       off\n",
+		"stop-check is no longer a setting and is ignored: delete it\n",
+		"no-git-hook-bypass     off\n",
 		"pre-commit  theirs: no-secrets-in-commits, no-stale-adr-date, no-conflict-markers, no-large-files\n")
 	if _, err := os.Lstat(link); err == nil {
 		t.Errorf("doctor put back %s; want it to change nothing", link)
@@ -101,7 +102,7 @@ func TestDoctor_OutsideRepo(t *testing.T) {
 	inRepo(t)
 	t.Setenv("CLAUDE_PROJECT_DIR", dir)
 	_, out := doctorRun(t)
-	contains(t, out, "Config: none, outside a repo", "no-secrets-in-context    on, by default\n",
+	contains(t, out, "Config: none, outside a repo", "no-secrets-in-context  on, by default\n",
 		"linear-history         off, by default\n")
 	if strings.Contains(out, "Git hooks in ") {
 		t.Errorf("doctor outside a repo printed %q; want no Git hooks", out)

@@ -328,30 +328,23 @@ func bashCall(command string) string {
 }
 
 // pre-tool-use runs the Checks a Hook runs that the Config turns on, which are all of
-// them without a key; a denial wins over a question to the user.
+// them without a key, and only denies: it asks the user nothing (ADR measurement).
 func TestPreToolUse(t *testing.T) {
 	dir := inRepo(t)
-	testkit.Repo(t) // for its environment: reset --hard asks git
 	for in, want := range map[string][2]string{
 		bashCall("git commit --no-verify"): {"deny", "baloo:no-git-hook-bypass: git commit --no-verify " +
 			"bypasses the Git hooks. If it's really needed, ask the user to run it themselves with `! <command>`."},
-		bashCall("git push -f"): {"deny", "baloo:no-destructive-commands: git push --force rewrites remote " +
-			"history; --force-with-lease is allowed. If it's really needed, ask the user to run it themselves " +
-			"with `! <command>`."},
-		bashCall("git push --delete origin x"): {"ask", "baloo:no-destructive-commands: git push --delete " +
-			"removes a remote branch"},
-		bashCall("git push --delete origin x; cat .env"): {"deny", "baloo:no-secrets-in-context: .env is an " +
+		bashCall("git status; cat .env"): {"deny", "baloo:no-secrets-in-context: .env is an " +
 			"env file: showing it would put a secret into this session. If it's really needed, ask the user " +
 			"to look in their own terminal, not with `!`, whose output enters the session."},
 		`{"tool_name": "Read", "tool_input": {"file_path": "` + dir + `/.env"}}`: {"deny", "baloo:no-secrets-in-context: " +
 			dir + "/.env is an env file: showing it would put a secret into this session. If it's really needed, " +
 			"ask the user to look in their own terminal, not with `!`, whose output enters the session."},
-		`{"tool_name": "Edit", "tool_input": {"file_path": "` + dir + `/.claude/baloo.yml"}}`: {"ask",
-			"baloo: this may change .claude/baloo.yml, which turns the plugin's checks on and off"},
-		bashCall("claude plugin disable baloo@bunderlog"): {"ask",
-			"baloo: this may turn off the hooks that run the plugin's checks"},
-		bashCall("git status"): {"", ""},
-		`nope`:                 {"", ""},
+		`{"tool_name": "Edit", "tool_input": {"file_path": "` + dir + `/.claude/baloo.yml"}}`: {"", ""},
+		bashCall("claude plugin disable baloo@bunderlog"):                                     {"", ""},
+		bashCall("git push -f"): {"", ""},
+		bashCall("git status"):  {"", ""},
+		`nope`:                  {"", ""},
 	} {
 		if decision, reason := runPreToolUse(t, in); decision != want[0] || reason != want[1] {
 			t.Errorf("pre-tool-use on %s = %q, %q; want %q, %q", in, decision, reason, want[0], want[1])
@@ -362,7 +355,7 @@ func TestPreToolUse(t *testing.T) {
 // A Check the Config turns off doesn't run.
 func TestPreToolUseChecksOff(t *testing.T) {
 	dir := inRepo(t)
-	config := "claude-hooks:\n  no-git-hook-bypass: false\n  no-destructive-commands: false\n  no-secrets-in-context: false\n"
+	config := "claude-hooks:\n  no-git-hook-bypass: false\n  no-secrets-in-context: false\n"
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -767,46 +760,23 @@ func TestSessionEnd(t *testing.T) {
 	}
 }
 
-// The Stop check hands a failure of the Config's command back to Claude, once a turn, after a
-// prompt and a change; in a Session review's session it runs nothing.
-func TestStopCheck(t *testing.T) {
+// A setting an earlier Release had, such as stop-check, is not reported at session start: the
+// Config works as without it, and doctor names it (ADR measurement).
+func TestSessionStartIgnoresRemovedSettings(t *testing.T) {
 	dir := inRepo(t)
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("stop-check: echo broken; exit 1\n"), 0o644); err != nil {
+	config := "stop-check: make\nclaude-hooks:\n  no-destructive-commands: true\n"
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	turn := func(env string, stopActive bool) (string, string) {
-		t.Helper()
-		t.Setenv(review.Env, env)
-		var stdout, stderr bytes.Buffer
-		if code := run([]string{"user-prompt-submit"}, strings.NewReader(`{"session_id":"s1"}`), &stdout, &stderr); code != 0 ||
-			stdout.Len() != 0 {
-			t.Fatalf("user-prompt-submit = %d, %q, %q; want 0 and nothing said", code, stdout.String(), stderr.String())
-		}
-		if err := os.WriteFile(filepath.Join(dir, "a"), []byte(time.Now().String()), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		stdout.Reset()
-		in := `{"session_id":"s1","stop_hook_active":` + strconv.FormatBool(stopActive) + `}`
-		if code := run([]string{"stop"}, strings.NewReader(in), &stdout, &stderr); code != 0 {
-			t.Fatalf("stop = %d, %q", code, stderr.String())
-		}
-		return stdout.String(), stderr.String()
+	var stdout, stderr bytes.Buffer
+	if code := start(t, &stdout, &stderr); code != 0 {
+		t.Fatalf("session-start = %d, %q", code, stderr.String())
 	}
-	var out struct{ Decision, Reason string }
-	got, _ := turn("", false)
-	if err := json.Unmarshal([]byte(got), &out); err != nil || out.Decision != "block" ||
-		out.Reason != "baloo:stop-check: `echo broken; exit 1` failed with exit status 1:\nbroken\n"+
-			"Fix it before you finish, or tell the user why it can't pass." {
-		t.Errorf("stop after a change = %q; want it blocked with the failure", got)
-	}
-	if got, errs := turn("", true); got != "" || errs != "" {
-		t.Errorf("stop after a block = %q, %q; want nothing", got, errs)
-	}
-	if got, errs := turn("1", false); got != "" || errs != "" {
-		t.Errorf("stop in a Session review = %q, %q; want nothing", got, errs)
+	if got := stdout.String(); strings.Contains(got, "stop-check") || strings.Contains(got, "no-destructive-commands") {
+		t.Errorf("session-start = %q; want the removed settings left out", got)
 	}
 }
 
