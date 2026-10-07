@@ -97,18 +97,16 @@ Then rewrite ADR plugin.
 
 2026-10-05 · user
 
-Roles work in different repos, developers apart from testers, a product manager maybe in none, yet
-share the terms and the knowledge of the project. Agreed so far: the project names where each kind
-lives (requirements, bugs, tasks, decisions, test plans, the glossary), such as Jira, Confluence,
-GitHub Issues or a wiki, and a skill writes there through its connector or command-line client, else
-to `.about/`, as ADR issues and ADR prd already do for two kinds; technical ADRs stay with the code,
-apart from the project's decisions; what a Session review finds for a kind kept in an outside tool
-goes to the local Inbox, for a person to move. To weigh: Sancrisoft's risk register handed from spec
-to QA, Squad's opportunity solution tree, Kiro's steering split into product, tech and structure.
-Settled by deciding where a role without a repo works and whether baloo serves it there (its Hooks
-are unreliable in Cowork), where the map of kinds to tools lives when roles share no repo, how
-shared knowledge reaches a session in any repo, and how ADRs and the Inbox split between shared and
-local; then rewrite ADR about-folder.
+A project can keep part of its knowledge outside the repo, in a tool such as Jira, Confluence,
+GitHub Issues or a wiki. Agreed so far: the project names where each kind lives (requirements, bugs,
+tasks, decisions, test plans, the glossary), and a skill writes there through its connector or
+command-line client, else to `.about/`, as ADR issues and ADR prd already do for two kinds;
+technical ADRs stay with the code, apart from the project's decisions; what a Session review finds
+for a kind kept in an outside tool goes to the local Inbox, for a person to move. To weigh:
+Sancrisoft's risk register handed from spec to QA, Squad's opportunity solution tree, Kiro's
+steering split into product, tech and structure. Settled once a project keeps a kind in an outside
+tool, or `.about/` takes a new kind such as "Records of solved problems": then decide where the map
+of kinds to places lives and how a skill finds it, and rewrite ADR about-folder.
 
 ## Session start knows every part of the plugin
 
