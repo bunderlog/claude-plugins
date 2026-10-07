@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.24.1 — 2026-10-07
+
+### Fixes
+
+- session-review: start no review of an Agent SDK session either, only of one with the user (9ee77c6)
+
 ## 0.24.0 — 2026-10-07
 
 ### Features
