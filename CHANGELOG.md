@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.23.0 — 2026-10-07
+
+### Features
+
+- session-review: propose changes to .about/ for the user to accept, reject or defer (5eedae5)
+
 ## 0.22.0 — 2026-10-07
 
 ### Breaking changes
