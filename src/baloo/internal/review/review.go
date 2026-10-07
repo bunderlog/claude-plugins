@@ -30,11 +30,9 @@ const (
 )
 
 // Headless says whether this process runs in a headless session, such as `claude -p` run by a
-// project's own Git hook: Claude Code sets CLAUDE_CODE_ENTRYPOINT to sdk-cli there, sdk-ts or
-// sdk-py from the Agent SDK, and cli or an editor's name in a session with the user. Nobody
-// there can answer, so it is shown no Proposal.
+// project's own Git hook. Nobody there can answer, so it is shown no Proposal.
 func Headless() bool {
-	return strings.HasPrefix(os.Getenv("CLAUDE_CODE_ENTRYPOINT"), "sdk-")
+	return condense.Headless(os.Getenv("CLAUDE_CODE_ENTRYPOINT"))
 }
 
 // prompt is what the review of `id` is asked: to write its Proposals to `file`.

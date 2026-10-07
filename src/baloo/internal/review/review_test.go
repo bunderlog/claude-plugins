@@ -103,17 +103,34 @@ func TestStart_RunsAHeadlessReviewThatWritesOnlyProposals(t *testing.T) {
 	}
 }
 
-// A session too short to have settled much, or a headless one, gets no review.
+// A session too short to have settled much gets no review, nor does a headless one of any kind:
+// `claude -p`'s, or the Agent SDK's in TypeScript or in Python.
 func TestStart_SkipsAShortOrHeadlessSession(t *testing.T) {
-	claude, seen := fakeClaude(t, "")
-	headless := []byte(`{"type":"user","entrypoint":"sdk-cli","message":{"content":"` + strings.Repeat("x", 3000) + `"}}` + "\n")
-	for _, transcript := range [][]byte{conversation(1000), headless} {
-		if started, err := Start(claude, "/plugins/baloo", testkit.Repo(t), t.TempDir(), "s", transcript); started || err != nil {
-			t.Errorf("Start = %t, %v; want no review", started, err)
-		}
-	}
-	if _, err := os.Stat(filepath.Join(seen, "args")); err == nil {
-		t.Error("claude ran; want it not run")
+	for _, c := range []struct {
+		name, entrypoint string
+		chars            int
+		want             bool
+	}{
+		{"short", "cli", 1000, false},
+		{"sdk-cli", "sdk-cli", 3000, false},
+		{"sdk-ts", "sdk-ts", 3000, false},
+		{"sdk-py", "sdk-py", 3000, false},
+		{"cli", "cli", 3000, true},
+		{"empty", "", 3000, true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			claude, seen := fakeClaude(t, "")
+			root, data := testkit.Repo(t), t.TempDir()
+			transcript := []byte(`{"type":"user","entrypoint":"` + c.entrypoint + `","message":{"content":"` +
+				strings.Repeat("x", c.chars) + `"}}` + "\n")
+			if started, err := Start(claude, "/plugins/baloo", root, data, "s", transcript); started != c.want || err != nil {
+				t.Fatalf("Start = %t, %v; want %t", started, err, c.want)
+			}
+			wait(t, root, data)
+			if _, err := os.Stat(filepath.Join(seen, "args")); (err == nil) != c.want {
+				t.Errorf("claude ran = %t; want %t", err == nil, c.want)
+			}
+		})
 	}
 }
 
@@ -215,6 +232,25 @@ func show(root, data, session string) string {
 	return strings.Join(Show(root, data, session, "decide"), "\n")
 }
 
+// A headless session of any kind is shown no Proposal: `claude -p`'s, or the Agent SDK's in
+// TypeScript or in Python.
+func TestShow_ShowsNoneInAHeadlessSession(t *testing.T) {
+	for _, c := range []struct {
+		entrypoint string
+		want       bool
+	}{
+		{"sdk-cli", false}, {"sdk-ts", false}, {"sdk-py", false}, {"cli", true}, {"", true},
+	} {
+		t.Run("entrypoint "+c.entrypoint, func(t *testing.T) {
+			t.Setenv("CLAUDE_CODE_ENTRYPOINT", c.entrypoint)
+			got := show(repoWith(t), t.TempDir(), "s")
+			if shown := strings.Contains(got, "R1 P1 inbox add"); shown != c.want {
+				t.Errorf("Show = %q; want the Proposals shown: %t", got, c.want)
+			}
+		})
+	}
+}
+
 // The Proposals are shown once a session, until each is decided; the log gets a line a decision,
 // with the repo's origin; the file goes once each is decided and applied.
 func TestShowAndDecide(t *testing.T) {
@@ -234,11 +270,6 @@ func TestShowAndDecide(t *testing.T) {
 	if other := show(root, data, "s2"); other != got {
 		t.Errorf("Show in another session = %q; want the same list", other)
 	}
-	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
-	if headless := show(root, data, "s3"); headless != "" {
-		t.Errorf("Show in a headless session = %q; want nothing", headless)
-	}
-	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
 
 	// P2 applied in other words, which its Applied records, P3 deferred twice, then neither
 	// deferred again nor accepted unread.

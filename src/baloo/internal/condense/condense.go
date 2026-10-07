@@ -270,6 +270,14 @@ func (s *Session) charge(rs []result, other, tokens int) {
 	}
 }
 
+// Headless says whether a session whose entrypoint, CLAUDE_CODE_ENTRYPOINT in its environment and
+// in each line of its Transcript, is `entrypoint` is headless, with nobody to answer: `claude -p`'s,
+// such as one run by a project's own Git hook, is sdk-cli, the Agent SDK's sdk-ts or sdk-py, and
+// one with the user cli or an editor's name.
+func Headless(entrypoint string) bool {
+	return strings.HasPrefix(entrypoint, "sdk-")
+}
+
 // Condense is the session of the Transcript `transcript`, whose id is `id`.
 func Condense(transcript []byte, id string) Session {
 	s := Session{ID: id, Tools: map[string]int{}, Tokens: map[string]int{}}
@@ -288,7 +296,7 @@ func Condense(transcript []byte, id string) Session {
 		if l.Cwd != "" {
 			cwd = l.Cwd
 		}
-		if l.Entrypoint == "sdk-cli" {
+		if Headless(l.Entrypoint) {
 			s.Headless = true
 		}
 		if t, err := time.Parse(time.RFC3339, l.Timestamp); err == nil {
