@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.22.0 — 2026-10-07
+
+### Breaking changes
+
+- remove the Stop check, no-destructive-commands and the checks' questions to the user (c82c986)
+
 ## 0.21.1 — 2026-10-05
 
 ### Fixes
