@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -12,6 +12,36 @@ that must hold on every task, and those are printed whole, with the rules zsh ne
 tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
 `=` fails the whole command there. A Guideline that is off puts nothing in the context. How Claude
 writes its replies is not a Guideline but an Output style (ADR output-styles).
+
+`typescript`, `vue` and `testing` don't wait for Claude to read them: a Guideline was read before an
+edit on its subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement). A
+`PostToolUse` Hook on Read, Edit, Write and MultiEdit gives Claude the whole file, as the Hook's
+added context, the first time in a session that it reads or edits a file in the repo of its subject:
+`.ts`, `.tsx`, `.mts`, `.cts` and `.vue` for `typescript`, `.vue` for `vue`, and a test for
+`testing` (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under
+`__tests__/`). Claude reads a file before it edits it, so the Guideline is in context before the
+first edit of it. The same call logs a line in the plugin's data folder,
+`guidelines/guidelines.log`, its fields split by tabs: when, in UTC, the session, the Guideline and
+the file, from the repo's root; so a measurement tells whether it came before an edit without
+guessing. Session start's index leaves the three out. A Guideline tied to a task rather than a file,
+such as `debugging`, `ci` or `design`, stays in the index, Claude's to read (Inbox).
+
+What the next measurement checks of the three is a rule each whose breach shows, with no judgment,
+in the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
+- `typescript`, no `any`: `: any`, `as any`, `<any>` or `any[]` on a line that isn't a comment;
+- `vue`, no Options API: `export default {` or `defineComponent(`, or a `.vue` written whole with
+  no `<script setup>`, since a second plain `<script>` beside one is allowed;
+- `testing`, no fake of a module of the project: `vi.mock(` or `jest.mock(` of a path starting with
+  `.`, `@/` or `~/`, counted in JavaScript and TypeScript tests only.
+
+Before 0.24, this machine's Transcripts held 24, 4 and 2 edits on these subjects, with no breach
+of any of the three rules, and none of the other rules that show in a diff (an `enum`, a class, a
+built-in module imported without `node:`, `defineProps` without a type, `router.push` by path, a
+`<style>` block, fake timers) reached 3 breaches either. On that data none of the three Guidelines
+is measured by a rule: the next measurement counts whether a Guideline was in context before an
+edit of its subject. A rule's share of breaches, before 0.24 and after, is reported only once the
+other machine's Transcripts, where these stacks are worked on, show 3 or more breaches of it before
+0.24.
 
 A new Config turns on the Guidelines for any project, `ci` only where the repo's root holds a CI's
 config (`.github/workflows/`, `.gitlab-ci.yml`, `bitbucket-pipelines.yml`, `bamboo-specs/`,
@@ -42,6 +72,18 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 ## Considered options
 
+- Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
+  a Guideline before an edit on its subject in 5 of 79 cases (ADR measurement).
+- The project's own rules, `.claude/rules/*.md` with `paths:`, which Claude Code loads when Claude
+  reads or edits a matching file — a plugin can't ship rules, so the binary would write files into
+  every repo, and a rule linked from outside the repo loads only without `paths:`.
+- The user's rules, `~/.claude/rules/*.md` with `paths:` — the binary would write into Claude
+  Code's own folder, which it never does (ADR config), a rule there applies to every project
+  whatever its Config says, and Claude Code's docs don't say `paths:` works there. Revisit when
+  Claude Code lets a plugin ship rules, or documents `paths:` in the user's rules: Claude Code's
+  own loading would then replace the Hook, and its `InstructionsLoaded` Hook can record each load.
+- The Guideline given at `PreToolUse`, before the call — Claude Code adds a Hook's context next to
+  the tool's result, so it comes no sooner than after the Read before the edit.
 - A skill per Guideline, with no key (until 2026-09-30) — no Hook for them, no stack detection,
   no permission to read from the plugin's folder, but every session gets every stack's
   description, and a project can't turn one off.
@@ -76,7 +118,11 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   own ask rule covers the file.
 - The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's
   own text, and reading one is Claude's step, not the context's cost.
-- Whether a Guideline is read is Claude's call; a rule that must always hold goes among the ones
-  `principles` prints whole.
+- `typescript`, `vue` and `testing` come only after a Write that creates a file: a new test,
+  written test-first, or a new component is written without them.
+- Every Read runs the binary once more, and one of the three Guidelines adds up to about 4,000
+  characters to a session once its subject comes up.
+- Whether one of the other Guidelines is read is Claude's call; a rule that must always hold goes
+  among the ones `principles` prints whole.
 - Revisit when Claude Code lets a project hide a plugin's skills, and `debugging` as a skill when
   Claude doesn't open it on a bug by itself.

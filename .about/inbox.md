@@ -100,3 +100,15 @@ interactive sessions, not from a Session review: an interview's results written 
 committed. Proposals cover only the review (ADR session-review). Settled by deciding whether an
 interactive session's edits to `.about/` need a step of their own, such as session start naming
 uncommitted changes there, or are the user's to commit like any other.
+
+## Guidelines tied to a task, not a file, still wait to be read
+
+2026-10-07 · user
+
+`debugging`, `ci`, `design`, `principles`, `writing-for-agents` and `dependencies` reach Claude
+only as a line of session start's index, for Claude to read when their task comes up; the
+measurement of 2026-10-07 found a Guideline read before an edit on its subject in 5 of 79 cases,
+and in one project in 0 of 29 (ADR measurement). The file Claude touches can't tell their task,
+so the Hook that gives `typescript`, `vue` and `testing` (ADR guidelines) doesn't reach them.
+Settled by finding a signal that does tell the task, such as a failing test run for `debugging`
+or a CI run named in the prompt for `ci`, or deciding they stay Claude's to read.
