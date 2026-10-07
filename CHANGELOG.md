@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.24.0 — 2026-10-07
+
+### Features
+
+- guidelines: give typescript, vue and testing whole when Claude first reads or edits a file (dbfdb27)
+
 ## 0.23.0 — 2026-10-07
 
 ### Features
