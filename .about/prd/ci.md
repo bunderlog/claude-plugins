@@ -42,8 +42,6 @@ pasting a log or naming the failed step.
   → test: src/baloo/internal/guidelines/guidelines_test.go "TestFitting"
 - HEAD's run has failed in one step: Claude names the workflow, job and step, and runs that
   step's command locally, red, before it changes any file.
-- The failed step is `mise run check` and the Config's `stop-check` is the same command: Claude
-  runs it once, not twice.
 - The failure was a test's: the fix adds a regression test, or names the missing seam, as the
   `debugging` Guideline's last step says.
 - The fixed step's command passes locally: Claude commits, shows the commit, and pushes only

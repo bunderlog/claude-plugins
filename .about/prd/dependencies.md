@@ -27,8 +27,8 @@ the user naming a command or opening a changelog.
 - Patch and minor updates at once; each major listed with its version, the breaking changes its
   changelog names and the code they touch, and updated only once the user picks it. A
   dependency the user names is updated alone, to its latest version, a major too.
-- The check that proves an update: the Config's `stop-check`, else the one CLAUDE.md or
-  AGENTS.md names, else the project's build and tests; run before any update and after each.
+- The check that proves an update: the one CLAUDE.md or AGENTS.md names, else the project's build
+  and tests; run before any update and after each.
 - An update that breaks the check is fixed from its changelog's migration as the `debugging`
   Guideline says, or rolled back, with the reason, when the migration changes the code's design
   or the cause is unclear.

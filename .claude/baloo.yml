@@ -25,11 +25,6 @@ status-line:
 # down; the next session start says what it changed. It never commits.
 session-review: true
 
-# The Stop check: when Claude ends a turn that changed the working tree, it runs this command in
-# the repo's root and hands a failure back to Claude to fix before it stops. Off without it, or
-# with false.
-stop-check: mise run check
-
 # Format on edit: after each of Claude's edits to a file in the repo, it runs this command in the
 # repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
 # with false.
@@ -53,10 +48,9 @@ guidelines:
 
 # Checks, each on with true and off with false.
 #
-# Checks in Claude Code's hooks deny, or ask you about, a tool call of Claude's that would destroy
-# work, bypass the Git hooks or show a secret. They are on without their key too.
+# Checks in Claude Code's hooks deny a tool call of Claude's that would bypass the Git hooks or show
+# a secret. They are on without their key too.
 claude-hooks:
-  no-destructive-commands: true
   no-git-hook-bypass: true
   no-secrets-in-context: true
 

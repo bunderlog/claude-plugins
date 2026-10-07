@@ -5,8 +5,7 @@ its [plugin.json](plugins/baloo/.claude-plugin/plugin.json).
 
 It is for developers who work with Claude Code across several projects and want the same
 discipline in each: decisions, terms and requirements recorded in the project's `.about/`, commits
-checked by Git hooks, the Stop check and CI, and one set of working rules and one reply style for
-Claude.
+checked by Git hooks and CI, and one set of working rules and one reply style for Claude.
 
 ```sh
 claude plugin marketplace add bunderlog/claude-plugins
@@ -23,21 +22,11 @@ where it turns them all off. A Git hook already there that the plugin didn't wri
 and session start names the Checks it keeps from running. With husky 9, the plugin's Git hooks go
 into `.git/baloo-hooks/`, and a line first in `.husky/<hook>` runs each: commit that line.
 
-## Stop check
-
-With `stop-check: <command>` in `.claude/baloo.yml`, such as `stop-check: mise run check`, the
-plugin runs the command in the repo's root when Claude ends a turn that changed the working tree,
-and hands a failure back to Claude to fix before it stops, once a turn. The command gets the
-HEAD the turn started from in `BALOO_BASE`, empty before the first commit, so it can check only
-what the turn changed, its commits too: the files `git diff --name-only $BALOO_BASE` lists, with
-the new ones `git ls-files --others --exclude-standard` lists, or a linter's
-`--new-from-rev=$BALOO_BASE`. With `BALOO_BASE` empty, check everything.
-
 ## Format on edit
 
 With `format-on-edit: <command>` in `.claude/baloo.yml`, such as `format-on-edit: npx prettier
 --write`, the plugin runs the command in the repo's root with the path of each file Claude edits,
-and says nothing of how it went; the Stop check reports what still fails at the turn's end.
+and says nothing of how it went.
 
 ## Doctor
 

@@ -1,6 +1,6 @@
 # A Session review records, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-01
+Date: 2026-10-07
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
 closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the binary's
@@ -23,10 +23,10 @@ settled is deleted (ADR inbox). It never edits a PRD, an agreement with the user
 build.
 
 Its session changes nothing else either: there session start creates no Config, picks no Output
-style, sets no Status line and writes no Git hook, and no Stop check or Format on edit runs. A
-review starts as the user may be opening their next session, whose session start writes the same
-settings files. The Checks a Hook runs still run there, so a tool call of the review's can't show
-it a Secret; session start still names the Guidelines.
+style, sets no Status line and writes no Git hook, and no Format on edit runs. A review starts as
+the user may be opening their next session, whose session start writes the same settings files. The
+Checks a Hook runs still run there, so a tool call of the review's can't show it a Secret; session
+start still names the Guidelines.
 
 Its reply and process id are kept per repo in the plugin's data folder. The next session start
 tells Claude, once, to tell the user what the last review changed, or that it is still running.

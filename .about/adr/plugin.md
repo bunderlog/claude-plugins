@@ -1,6 +1,6 @@
 # One plugin, `baloo`, in the `bunderlog` marketplace
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 This repo is the `bunderlog` marketplace, and it holds one plugin, `baloo`: skills, an agent
 (ADR verify), Guidelines, Output styles, Hooks and the Go binary they run (ADR binary). The skills
@@ -13,10 +13,10 @@ Every name the Go code, the binary's and the release tool's, uses for the plugin
 and file names) is a constant in `src/baloo/names`, so a rename is one edit in the code, plus the
 manifests, the Loader and the docs.
 
-New work that leans on what baloo already has is part of baloo, not a plugin of its own: fixing
-a failed CI run is the `ci` Guideline (ADR guidelines), which follows `debugging`, knows the
-Config's `stop-check` and hands a flaky failure to the `issue` skill, and a second plugin would
-need its own tags, CHANGELOG and Releases (ADR releases) to read baloo's files anyway.
+New work that leans on what baloo already has is part of baloo, not a plugin of its own: fixing a
+failed CI run is the `ci` Guideline (ADR guidelines), which follows `debugging` and hands a flaky
+failure to the `issue` skill, and a second plugin would need its own tags, CHANGELOG and Releases
+(ADR releases) to read baloo's files anyway.
 
 ## Considered options
 
@@ -26,6 +26,12 @@ need its own tags, CHANGELOG and Releases (ADR releases) to read baloo's files a
   for everything a Release ships, but every install carried the Go source, which no user runs.
 - The Go module at the repo root, `cmd/` and `internal/` — the usual Go layout, but the root is
   the marketplace's, and a second plugin's binary would have no folder of its own.
+- A plugin per role on top of baloo, which would keep only the project's knowledge: `bagheera`
+  for developers, `kaa` for testers, `hathi` guarding with the Checks and Git hooks, `mowgli` for
+  the person's own setup, `akela` for product managers (agreed in an interview 2026-10-05, never
+  built; dropped 2026-10-07) — it rested on enforcement in code being a niche of its own, which
+  the measurement didn't confirm (ADR measurement): what is left beside the knowledge is too
+  little to split.
 - A second plugin for fixing a failed CI run — installed without baloo, but it would find the
   local command to reproduce a failure on its own, and the release tool, tags and CHANGELOG
   would have to handle two plugins.

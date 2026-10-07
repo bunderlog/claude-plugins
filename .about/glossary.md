@@ -55,13 +55,6 @@ hook Check").
 _Avoid_: built-in check; "a Check on Claude's tool calls"
 _In code_: `src/baloo/internal/checks`; `HookChecks`, `GitHookChecks`
 
-**Stop check**:
-The plugin's run of the project's own command, named in the Config, when Claude ends a turn that
-changed the working tree, so a failure goes back to Claude to fix before it stops; not a Check,
-which is the binary's code.
-_Avoid_: "check" alone; a Check
-_In code_: `src/baloo/internal/stopcheck`
-
 **Format on edit**:
 The plugin's run of the project's own formatter, named in the Config, on each file Claude edits,
 saying nothing of how it went; not a Check.

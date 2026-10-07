@@ -1,6 +1,6 @@
 # A Verification is the plugin's one agent, run by the `verify` skill when the user asks
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -11,13 +11,12 @@ departure with `file:line`. It doesn't hunt bugs, which the code review does.
 
 The `verify` skill runs it with `context: fork` and `agent: baloo:verifier`, waiting for its reply,
 so the user has `/baloo:verify`; Claude can also run the agent by its name. Both are for when the
-user asks: a Verification is a whole run's tokens, and the Stop check already runs the tests
-after each turn that changed something. By default it looks at the current branch's commits since
-the default branch, plus the working tree; a commit range, a branch or a PR given overrides that.
-It checks the criteria of the Issue or PRD it is given, or else of the one the branch's name, its
-commits or its files point to, and says so when it finds none rather than guessing. Checking a
-built feature's whole PRD, every criterion's test link, stays the `prd` skill's (ADR prd): a
-Verification looks at the criteria one change serves.
+user asks: a Verification is a whole run's tokens. By default it looks at the current branch's
+commits since the default branch, plus the working tree; a commit range, a branch or a PR given
+overrides that. It checks the criteria of the Issue or PRD it is given, or else of the one the
+branch's name, its commits or its files point to, and says so when it finds none rather than
+guessing. Checking a built feature's whole PRD, every criterion's test link, stays the `prd` skill's
+(ADR prd): a Verification looks at the criteria one change serves.
 
 Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that it writes nothing
 holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its
@@ -37,7 +36,7 @@ says it couldn't check the Guidelines.
 - Four agents: analyzing an Issue, implementing, reviewing and testing — analyzing is what the
   built-in Explore and the `debugging` Guideline do already, with the conversation the session
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
-  steer it; testing is the Stop check's and building test-first's, and what remains of it,
+  steer it; testing is the project's checks' and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
 - A pipeline from Issue to tested change — each repo's flow is its own, as for `ship`
   (ADR issues).

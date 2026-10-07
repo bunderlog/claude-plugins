@@ -1,16 +1,15 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
-`no-git-hook-bypass`, `no-destructive-commands` and `no-secrets-in-context`; under `git-hooks`,
-the Checks Git hooks run, `no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`,
-`no-stale-adr-date`, `no-conflict-markers`, `no-large-files` and `linear-history`. A key is `true`
-or `false`; `conventional-commits` also takes a map of its settings, `types` (a list, or `any`) and
-`max-length` (0 for none), and `no-large-files` one of `max-size` (in KB, 1024 without it), which
-turns it on. The two groups have opposite defaults, and the Stop check runs in a Hook too, not on a
-tool call, so they are named for what runs them.
+`no-git-hook-bypass` and `no-secrets-in-context`; under `git-hooks`, the Checks Git hooks run,
+`no-ai-coauthor`, `conventional-commits`, `no-secrets-in-commits`, `no-stale-adr-date`,
+`no-conflict-markers`, `no-large-files` and `linear-history`. A key is `true` or `false`;
+`conventional-commits` also takes a map of its settings, `types` (a list, or `any`) and `max-length`
+(0 for none), and `no-large-files` one of `max-size` (in KB, 1024 without it), which turns it on.
+The two groups have opposite defaults, so they are named for what runs them.
 
 A Check a Git hook runs is off without its key, as ADR config has it: it acts on every commit in
 the repo, Claude's or not, so it waits to be asked, and a new Config asks for all of them. The
@@ -24,16 +23,8 @@ own out where none is; with husky 9 it goes through husky, which it finds by its
 git-hooks). Writing them has no key of its own. It never changes git's config: `linear-history`,
 failing, names `git config pull.rebase true` for the user to run.
 
-Since a Config can turn the Checks a Hook runs off, Claude asks the user before it changes the
-Config: a Hook asks first about an Edit, Write or MultiEdit of the Config, and about a Bash command
-that names it, unless a program that only reads files, such as `cat`, `grep`, `sed` without `-i` or
-`git diff`, reads it with no redirect into it; a `for` loop's list hands it to the loop's body by a
-variable, so there it passes only where no program of the command writes a file. Claude Code's own
-settings can turn them off too, with `disableAllHooks` or by disabling the plugin, so the Hook also
-asks before a tool call that may do that: an Edit, Write or MultiEdit of a `settings.json` or
-`settings.local.json` in a `.claude` folder or in `$CLAUDE_CONFIG_DIR` whose new text names
-`disableAllHooks`, `enabledPlugins` or `baloo@`, a Bash command that names such a file and such a
-key, or `claude plugin disable` or `uninstall` of the plugin. These rules have no key.
+A Check only denies; none asks the user first, and nothing asks before a change to the Config or
+to Claude Code's settings that may turn the Checks off (ADR measurement).
 
 Where `no-ai-coauthor` is on, session start also sets Claude Code's `attribution` to
 `{"commit": ""}`, so Claude writes no co-author trailer the Check would then reject. It writes it
@@ -47,17 +38,10 @@ file's markers only where one of them is `<<<<<<<` or `>>>>>>>`, since git count
 heading underlined with seven `=` too. `no-large-files` looks only at files a commit adds: one
 already committed passes when it changes or is renamed, since it was let in once.
 
-`no-destructive-commands` asks before `git push --delete` (or `git push <remote> :<branch>`), but
-lets it pass where the remote's default branch, `<remote>/HEAD` as the repo last fetched it, holds
-each branch it deletes whole: deleting a branch after it is merged is a step the user asks for by
-name, and a question on each is one to say yes to unread. It looks at the last fetch and doesn't
-fetch, so it asks where the branch is ahead, missing from the remote-tracking refs, or the remote's
-HEAD is unknown.
-
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the binary's
-`pre-tool-use`, which reads the Config once and runs the Checks it turns on; a denial wins over a
-question to the user. Where the binary is missing or fails, it says nothing, and the call runs:
-session start has already said that no Check runs that session (ADR binary).
+`pre-tool-use`, which reads the Config once and runs the Checks it turns on. Where the binary is
+missing or fails, it says nothing, and the call runs: session start has already said that no Check
+runs that session (ADR binary).
 
 `baloo check <name>` takes the input its Git hook gets, so a project's CI can run the same Checks
 on commits made where the Git hooks didn't run, as the README's CI section shows; this repo's CI
@@ -67,16 +51,15 @@ Release.
 
 ## Considered options
 
-- One Check for the three jobs, with one key — commands that destroy work, a bypass of
-  the Git hooks and a Leak into Claude's context are unrelated, and one can't be turned off alone.
+- One Check for both jobs, with one key — a bypass of the Git hooks and a Leak into Claude's
+  context are unrelated, and one can't be turned off alone.
 - Every Check off without its key, the Checks a Hook runs too (until 2026-10-01) —
   one rule for all, but no protection outside a repo or in a Config made before the keys.
 - `no-secrets-in-context` always on, with no key — no repo could turn it off, but a false alarm
   would have no way around it.
 - Every key under `checks` (until 2026-10-01) — one list for two kinds of Check with opposite
   defaults, which only a comment told apart.
-- `tool-calls` and `git-hooks` under `checks` — a level that tells nothing apart, and a Stop
-  check runs in a Hook but not on a tool call.
+- `tool-calls` and `git-hooks` under `checks` — a level that tells nothing apart.
 - Each key at the top of the Config — ten keys mixed with the other settings.
 - A key to turn writing the Git hooks off, or to pick husky over plain Git hooks — where husky 9
   holds `core.hooksPath`, git runs only husky's, and without husky there is nothing to pick; a
@@ -86,20 +69,24 @@ Release.
   none — a change to how `git pull` works that nobody asked for, overriding the user's own global
   setting, and git since 2.33 won't merge on a pull anyway until `pull.rebase` or `pull.ff` is
   set.
-- A Hook per Check — three runs of the binary on every Bash call, each reading the Config.
+- A Hook per Check — a run of the binary per Check on every Bash call, each reading the Config.
 - Leaving `no-ai-coauthor` alone to catch the trailer — Claude Code adds it by default, so each
   commit fails once and is written again.
 - `attribution.pr` too — the Check reads commits, not pull requests.
 - Taking the attribution out where `no-ai-coauthor` goes off — the binary can't tell its value
   from one the user wrote.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
-- Asking before every change to Claude Code's settings — also covers a key missed here, but
-  permissions and env are edited often, and a question on each teaches the user to say yes
-  unread.
-- Asking about every Bash command that names the Config — it asked on every `cat` and `grep` of
-  it, and a question on each read teaches the user to say yes unread.
-- Leaving it to Claude Code, which treats `.claude/` as a protected folder — its docs don't say
-  it asks in every permission mode, and a Bash edit goes around a rule on Edit and Write.
+- `no-destructive-commands` (until 2026-10-07), denying a Bash command that destroys work beyond
+  undo, such as `git push --force`, `rm -rf /` or `git reset --hard` with changes to lose, and
+  asking before `git push --delete` of an unmerged branch — of its two denials in about three
+  weeks (ADR measurement), Claude reached the same effect another way once, and Claude Code's
+  auto mode classifier refuses the same commands itself.
+- Asking the user before a change to the Config, or to Claude Code's settings that may turn the
+  Hooks off (`disableAllHooks`, `enabledPlugins`, `claude plugin disable`), and before
+  `no-destructive-commands`' commands to ask about (until 2026-10-07) — the user allowed 11 of
+  its 12 questions (ADR measurement): friction, not protection, and a question said yes to
+  unread. Asking about every Bash command that names the Config, or every change to Claude
+  Code's settings, asked more and taught the same.
 - Matching conflict markers in the diff itself — a file that holds them on purpose would need a
   mark of the plugin's own, where git already reads one from `.gitattributes`; `-whitespace`
   there doesn't exempt a file from git's check, `conflict-marker-size` does.
@@ -118,15 +105,11 @@ Release.
   the Git hooks' only once its user adds their keys; `checks` is reported as not a setting.
 - A repo's committed Config can turn a Check off for everyone who opens it; session start says
   so, but doesn't stop it.
-- Claude asks the user before every change to the Config, a harmless one too.
-- A Bash command that writes the Config through a program not known to write, such as
-  `git diff --output`, goes unasked.
+- Claude can change the Config, or Claude Code's settings, and so turn a Check off, without a
+  question; session start names a Config that turns a Check a Hook runs off.
+- Nothing in the plugin stops a command that destroys work: Claude Code's permissions and its
+  auto mode do.
 - Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
-- A commit pushed to a merged branch since the last fetch is deleted with it, unasked.
-- A tool call that turns the Hooks off in a way the rules don't name, such as a script that
-  writes the key, goes unasked; they guard against accidents, not against Claude.
-- Managed settings and the `/plugin` menu are out of reach: one needs an administrator, the other
-  is the user's own.
-- Revisit when a false alarm makes people turn a Check a Hook runs off wholesale, or a
-  committed Config that turns one off leads to a Leak, and when Claude Code asks before every
-  change to its own settings.
+- Revisit when a false alarm makes people turn a Check a Hook runs off wholesale, a committed
+  Config that turns one off leads to a Leak, or a session shows work destroyed that a Check
+  would have stopped.

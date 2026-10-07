@@ -1,6 +1,6 @@
 # The Hooks and Git hooks run one Go binary, downloaded at session start from its GitHub Release
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 Claude Code's Hooks and Git hooks are only triggers: each runs one Go binary, `baloo`, which runs
 the Checks the Config turns on (ADR config). The Checks and the Status line are the binary's code,
@@ -11,13 +11,12 @@ The Loader, `scripts/loader`, is a POSIX `sh` script. The `SessionStart` Hook ru
 version in `plugin.json`. It downloads one only when it is missing, or no longer has the sha256 it
 was downloaded with, kept beside it and checked once a session: it downloads the GitHub Release's
 `SHA256SUMS` and this machine's binary into `${CLAUDE_PLUGIN_DATA}`, checks the binary's sha256
-against the file, and moves it into place in one step. A session the plugin is updated in runs
-the new version's Hooks without a `SessionStart`, so the `UserPromptSubmit` Hook's Loader, finding
-no binary of its version, downloads it the same way and runs the binary's session start, whose
-context Claude gets with that prompt. `loader <args>` runs the binary. A failure says why on
-stderr and exits 2, which a `SessionStart` Hook shows to the user; every other Hook fails
-silently instead, since exit 2 there would stop a tool call, a prompt or a turn's end (ADR
-guidelines, ADR checks, ADR stop-check).
+against the file, and moves it into place in one step. A session the plugin is updated in runs the
+new version's Hooks without a `SessionStart`, so the `UserPromptSubmit` Hook's Loader, finding no
+binary of its version, downloads it the same way and runs the binary's session start, whose context
+Claude gets with that prompt. `loader <args>` runs the binary. A failure says why on stderr and
+exits 2, which a `SessionStart` Hook shows to the user; every other Hook fails silently instead,
+since exit 2 there would stop a tool call, a prompt or a turn's end (ADR guidelines, ADR checks).
 
 The Release workflow builds the binary from the tag for macOS and Linux, amd64 and arm64, and
 publishes each platform's, as a bare file named like `baloo_0.1.0_darwin_arm64`, with their

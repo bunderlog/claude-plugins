@@ -1,6 +1,6 @@
 # The Config is `.claude/baloo.yml`, created at session start with every Check on
 
-Date: 2026-10-03
+Date: 2026-10-07
 
 A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
 settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
@@ -19,10 +19,11 @@ work. A Config that is there is never written to.
 
 The binary reads it with `go.yaml.in/yaml/v3`, the YAML organization's maintained copy of
 `gopkg.in/yaml.v3`, and goes through its top-level keys itself. A key that isn't a setting, or a
-value that doesn't decode, is a problem, one line with its line number, and that setting keeps
-its default while the others apply; a file that isn't YAML or isn't a map of settings is one
-problem, and none of it applies. At session start the binary prints, for Claude, a Config it
-created and the problems.
+value that doesn't decode, is a problem, one line with its line number, and that setting keeps its
+default while the others apply; a setting an earlier Release had and this one removed is no problem,
+but is ignored, and only `doctor` names it, for the user to delete (ADR measurement); a file that
+isn't YAML or isn't a map of settings is one problem, and none of it applies. At session start the
+binary prints, for Claude, a Config it created and the problems.
 
 ## Considered options
 
@@ -55,8 +56,8 @@ created and the problems.
 - Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
   where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
-  it has a package manager's manifest, and `stop-check` and `format-on-edit`, whose commands the
-  template can't know, are comments there (ADR stop-check, ADR format-on-edit).
+  it has a package manager's manifest, and `format-on-edit`, whose command the template can't
+  know, is a comment there (ADR format-on-edit).
 - The template lists the keys of `guidelines`, `claude-hooks` and `git-hooks` sorted, whatever
   order the code keeps them in, so a key is found by its name; a test checks it.
 - A new key reaches a Config that exists only when its user adds it, so its default must be what

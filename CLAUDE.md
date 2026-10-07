@@ -9,12 +9,12 @@ first.
 `.about/` holds this project's own decisions (ADRs, glossary, Inbox) — read it before proposing
 an architecture change or a new domain term; don't reopen what it already settled.
 
-`mise run check` runs what CI and the Stop check run: `gofmt`, `go vet`, `go test` for both Go
-modules (`src/baloo`, `src/release`), `shellcheck` on the Loader, and `cspell` on the repo.
+`mise run check` runs what CI runs: `gofmt`, `go vet`, `go test` for both Go modules
+(`src/baloo`, `src/release`), `shellcheck` on the Loader, and `cspell` on the repo.
 `mise run release` cuts and pushes a Release, but only counts commits under `plugins/baloo/` and
 `src/baloo/`, tests and the schema aside (ADR releases); a commit outside those — this file, the
 README — just needs a plain push. Commit subjects become the CHANGELOG: split unrelated changes
 into a commit per type, and write each subject for users. A commit that changes a feature with a
 PRD in `.about/prd/` names it in its body, `PRD <feature>`, so a Verification finds it.
 
-See README.md for the Git hooks, the Stop check, Format on edit, CI and development in full.
+See README.md for the Git hooks, Format on edit, CI and development in full.
