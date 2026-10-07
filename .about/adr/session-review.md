@@ -51,7 +51,9 @@ measurement judges its quality by.
 Nothing is shown in a headless session, such as a project's own `claude -p` in a Git hook: Claude
 Code sets `CLAUDE_CODE_ENTRYPOINT` to `sdk-cli` there, `cli` with the user, which both a
 SessionStart and a UserPromptSubmit Hook get. Showing consumes nothing, so a Proposal shown where
-nobody answers still waits.
+nobody answers still waits. No headless session of any kind gets a review either, `claude -p`'s
+or the Agent SDK's, whose entrypoints all start `sdk-`: nobody there agreed anything with the user,
+and a Git hook's reviewer of commits would leave Proposals after every commit.
 
 The log of decisions is `session-review.log` in the plugin's data folder: a line a decision, its
 fields split by tabs: when, in UTC; the repo, its origin's URL without a user or password, or its
