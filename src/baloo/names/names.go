@@ -22,8 +22,12 @@ const (
 	// its folder: the team's and one person's.
 	ProjectSettings = ".claude/settings.json"
 	LocalSettings   = ".claude/settings.local.json"
-	// ADRs is a repo's folder of ADRs, from its root.
-	ADRs = ".about/adr/"
+	// Glossary is a repo's glossary, ADRs its folder of ADRs and PRDs of PRDs, from its root.
+	Glossary = ".about/glossary.md"
+	ADRs     = ".about/adr/"
+	PRDs     = ".about/prd/"
+	// Proposals is a repo's folder of the Session reviews' Proposals, from its root.
+	Proposals = ".about/proposals/"
 	// Inbox is a repo's file of what is still to consider, one `## ` heading per item, from its
 	// root.
 	Inbox = ".about/inbox.md"

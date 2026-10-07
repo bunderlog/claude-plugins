@@ -368,9 +368,9 @@ output-style: short-replies
 # cache's are of the cache's lifetime left, so red is below yellow.
 status-line: true
 
-# The Session review: when a session ends, a separate Claude session records in .about/glossary.md,
-# .about/adr/ and .about/inbox.md what the conversation settled or left open but nobody wrote
-# down; the next session start says what it changed. It never commits.
+# The Session review: when a session ends, a separate Claude session proposes, in .about/proposals/,
+# changes to .about/ for what the conversation settled or left open but nobody wrote down; a
+# later session shows you each, to accept, reject or defer. It never edits .about/ or commits.
 session-review: true
 
 # Format on edit: after each of Claude's edits to a file in the repo, it runs this command in the

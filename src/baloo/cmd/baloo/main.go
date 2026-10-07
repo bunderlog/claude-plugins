@@ -31,7 +31,8 @@ import (
 var version = "dev"
 
 var usage = "usage: baloo version | doctor | session-start [UserPromptSubmit] | allow-guideline | subagent-start | status-line |\n" +
-	"  pre-tool-use | post-tool-use | session-end |\n  " +
+	"  pre-tool-use | post-tool-use | session-end | user-prompt-submit |\n" +
+	"  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n  " +
 	strings.Join(checks.Usage(), " |\n  ") + " |\n" +
 	"  git-hook " + strings.Join(slices.Sorted(maps.Keys(checks.GitHooks)), "|") + " <git's arguments> |\n" +
 	"  condense [--last <n> | <session>...] | condense <session> --around <line>"
@@ -49,7 +50,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "doctor":
 			return doctor(stdout, stderr)
 		case "session-start":
-			return sessionStartHook("SessionStart", stdout, stderr)
+			return sessionStartHook("SessionStart", stdin, stdout, stderr)
 		case "allow-guideline":
 			return allowGuideline(stdin, stdout)
 		case "subagent-start":
@@ -62,12 +63,17 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			return postToolUse(stdin)
 		case "session-end":
 			return sessionEnd(stdin)
+		case "user-prompt-submit":
+			return userPromptSubmit(stdin, stdout)
 		}
 	}
 	// The Loader's UserPromptSubmit Hook, in a session the plugin was updated in, runs the session
 	// start no SessionStart Hook ran for this version (ADR binary).
 	if len(args) == 2 && args[0] == "session-start" && args[1] == "UserPromptSubmit" {
-		return sessionStartHook(args[1], stdout, stderr)
+		return sessionStartHook(args[1], stdin, stdout, stderr)
+	}
+	if len(args) == 4 && args[0] == "review-decision" {
+		return reviewDecision(args[1:], stdout, stderr)
 	}
 	if len(args) > 0 && args[0] == "condense" {
 		if code, ok := condenseSessions(args[1:], stdout, stderr); ok {
@@ -129,16 +135,16 @@ func (r *report) setting(path string, enabled settings.Scope, line string, err e
 // sessionStart is the SessionStart Hook's part, run once the Loader has the binary: it creates the
 // repo's Config when it has none (ADR config), reads it, picks the Output style it names where
 // Claude Code's settings pick none (ADR output-styles), turns off Claude Code's commit attribution
-// where no-ai-coauthor is on and they set none (ADR checks), sets the Status line or takes it
-// out (ADR status-line), and writes the Git hooks or takes them out (ADR git-hooks). What it prints
+// where no-ai-coauthor is on and they set none (ADR checks), sets the Status line or takes it out
+// (ADR status-line), and writes the Git hooks or takes them out (ADR git-hooks). What it prints
 // Claude Code adds to Claude's context, so it prints only what Claude should know: a Config it
 // created, an Output style, an attribution or a Status line it set, the Git hooks it wrote, took
-// out, changed in husky or left alone, a Hook Check it turns off (ADR checks), what the last
-// Session review replied (ADR session-review), how many items the Inbox holds (ADR inbox), and
-// the problems, each on one line; then the Guidelines the Config turns on (ADR guidelines). In a
-// Session review's session it only names the Guidelines: that session changes nothing but
-// .about/'s glossary, ADRs and Inbox (ADR session-review).
-func sessionStart(stdout, stderr io.Writer) int {
+// out, changed in husky or left alone, a Hook Check it turns off (ADR checks), a Session review
+// still running and the Proposals waiting for the user (ADR session-review), how many items the
+// Inbox holds (ADR inbox), and the problems, each on one line; then the Guidelines the Config turns
+// on (ADR guidelines). In a Session review's session it only names the Guidelines: that session
+// changes nothing but its Proposals (ADR session-review).
+func sessionStart(session string, stdout, stderr io.Writer) int {
 	dir, err := project()
 	if err != nil {
 		fmt.Fprintf(stderr, "baloo: %v\n", err)
@@ -194,7 +200,12 @@ func sessionStart(stdout, stderr io.Writer) int {
 		}
 	}
 	if c.Root != "" {
-		rep.lines = append(rep.lines, review.Last(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"))...)
+		data := os.Getenv("CLAUDE_PLUGIN_DATA")
+		if review.Running(c.Root, data) && !review.Headless() {
+			rep.ok("a Session review of an earlier session is still running: its proposals come " +
+				"with a later prompt")
+		}
+		rep.lines = append(rep.lines, review.Show(c.Root, data, session, decideCommand())...)
 		if n, kept := inboxItems(c.Root); n > 0 {
 			items := "items"
 			if n == 1 {
@@ -228,11 +239,20 @@ func sessionStart(stdout, stderr io.Writer) int {
 // sessionStartHook runs session start for the Hook of `event` and writes that Hook's JSON: what
 // session start tells Claude, which Claude Code adds to Claude's context; nothing where it has
 // nothing to tell. The user sees which Release runs with doctor (ADR doctor).
-func sessionStartHook(event string, stdout, stderr io.Writer) int {
+// It reads the session's id from the Hook's input, where there is one.
+func sessionStartHook(event string, stdin io.Reader, stdout, stderr io.Writer) int {
+	var in struct {
+		Session string `json:"session_id"`
+	}
+	if stdin != nil {
+		json.NewDecoder(stdin).Decode(&in)
+	}
 	var context strings.Builder
-	code := sessionStart(&context, stderr)
+	code := sessionStart(in.Session, &context, stderr)
 	if code == 0 && context.Len() > 0 {
-		json.NewEncoder(stdout).Encode(map[string]any{
+		out := json.NewEncoder(stdout)
+		out.SetEscapeHTML(false)
+		out.Encode(map[string]any{
 			"hookSpecificOutput": map[string]string{
 				"hookEventName":     event,
 				"additionalContext": context.String(),

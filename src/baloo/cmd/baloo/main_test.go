@@ -705,19 +705,24 @@ func TestCondense_WithoutTranscripts(t *testing.T) {
 	}
 }
 
-// A session that ends in a repo whose Config turns the Session review on starts one, and the next
-// session start says what it replied.
+// A session that ends in a repo whose Config turns the Session review on starts one; a session
+// start while it runs says so, and the prompt after it ends shows its Proposals, once; the user's
+// decision is logged by review-decision. A headless session is shown none.
 func TestSessionEnd(t *testing.T) {
 	dir := inRepo(t)
+	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
 	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte("session-review: true\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("CLAUDE_PLUGIN_DATA", t.TempDir())
 	bin := t.TempDir()
-	if err := os.WriteFile(filepath.Join(bin, "claude"), []byte("#!/bin/sh\ncat >/dev/null\necho 'Added Order to the glossary.'\n"), 0o755); err != nil {
+	proposal := "# Session review T\n\n## P1 · glossary · add · .about/glossary.md · Order\n\nAfter:\n~~~markdown\n" +
+		"**Order**:\nA request to buy.\n~~~\n"
+	claude := "#!/bin/sh\ncat >/dev/null\nsleep 1\nmkdir -p .about/proposals\nprintf '%s' '" + proposal +
+		"' > .about/proposals/T.md\necho 'P1 adds Order.'\n"
+	if err := os.WriteFile(filepath.Join(bin, "claude"), []byte(claude), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -725,25 +730,51 @@ func TestSessionEnd(t *testing.T) {
 	if err := os.WriteFile(transcript, []byte(`{"type":"user","message":{"content":"`+strings.Repeat("x", 3000)+`"}}`+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	in := `{"transcript_path":"` + transcript + `","cwd":"` + dir + `"}`
+	in := `{"session_id":"s0","transcript_path":"` + transcript + `","cwd":"` + dir + `"}`
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"session-end"}, strings.NewReader(in), &stdout, &stderr); code != 0 ||
 		stdout.Len() != 0 || stderr.Len() != 0 {
 		t.Fatalf("session-end = %d, %q, %q; want 0 and nothing said", code, stdout.String(), stderr.String())
 	}
-	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
-		stdout.Reset()
-		if code := start(t, &stdout, &stderr); code != 0 {
-			t.Fatalf("session-start = %d, %q", code, stderr.String())
-		}
-		if !strings.Contains(stdout.String(), "still running") || time.Now().After(deadline) {
-			break
-		}
+	if code := start(t, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "Session review of an earlier session is still running") {
+		t.Errorf("session-start while the review runs = %d, %q; want it to say so", code, stdout.String())
 	}
-	if got := stdout.String(); !strings.Contains(got, "\nthe Session review of the last session (") ||
-		!strings.Contains(got, ") replied as below: tell the user") ||
-		!strings.Contains(got, "\n  Added Order to the glossary.\n") {
-		t.Errorf("session-start after a Session review = %q; want what it replied", got)
+	prompt := func() string {
+		t.Helper()
+		var out bytes.Buffer
+		if code := run([]string{"user-prompt-submit"}, strings.NewReader(`{"session_id":"s1"}`), &out, &stderr); code != 0 {
+			t.Fatalf("user-prompt-submit = %d, %q", code, stderr.String())
+		}
+		return out.String()
+	}
+	var shown string
+	for deadline := time.Now().Add(5 * time.Second); shown == "" && time.Now().Before(deadline); time.Sleep(50 * time.Millisecond) {
+		shown = prompt()
+	}
+	if !strings.Contains(shown, `"hookEventName":"UserPromptSubmit"`) || !strings.Contains(shown, "T P1 glossary add .about/glossary.md: Order") ||
+		!strings.Contains(shown, "review-decision <review> <id> accepted|accepted-edited|rejected|deferred") {
+		t.Errorf("user-prompt-submit after the review = %q; want its Proposal and how to log a decision", shown)
+	}
+	if again := prompt(); again != "" {
+		t.Errorf("user-prompt-submit again = %q; want nothing: the session was told", again)
+	}
+	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+	stdout.Reset()
+	start(t, &stdout, &stderr)
+	if strings.Contains(stdout.String(), "Session review") {
+		t.Errorf("session-start in a headless session = %q; want no Proposal", stdout.String())
+	}
+	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
+	stdout.Reset()
+	if code := run([]string{"review-decision", "T", "P1", "rejected"}, nil, &stdout, &stderr); code != 0 ||
+		stdout.String() != "logged T P1 rejected\n" {
+		t.Errorf("review-decision = %d, %q, %q; want it logged", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(dir, names.Proposals, "T.md")); err == nil {
+		t.Error("T.md is still there; want it gone with its last Proposal decided")
+	}
+	if kept, _ := filepath.Glob(filepath.Join(os.Getenv("CLAUDE_PLUGIN_DATA"), "session-review", "*", "decided", "T.md")); len(kept) != 1 {
+		t.Errorf("decided T.md = %q; want it kept in the data folder", kept)
 	}
 	// Its own end, and a Config that doesn't turn it on, start none.
 	for _, env := range []string{"1", ""} {

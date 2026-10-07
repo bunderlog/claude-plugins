@@ -455,17 +455,12 @@ func TestLoader(t *testing.T) {
 			if out, errs, code := l.runWith(t, turn, nil, hook); code != 0 || out != "" || errs != "" {
 				t.Errorf("%s with a binary that fails = %d, %q, %q; want 0 and nothing", hook, code, out, errs)
 			}
-			// What the binary prints reaches Claude Code; user-prompt-submit runs it only to
-			// download it.
+			// What the binary prints reaches Claude Code.
 			if err := os.WriteFile(filepath.Join(l.data, l.file), []byte("#!/bin/sh\ncat\n"), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			want := turn + "\n"
-			if hook == "user-prompt-submit" {
-				want = ""
-			}
-			if out, _, code := l.runWith(t, turn, nil, hook); code != 0 || out != want {
-				t.Errorf("%s = %d, %q; want 0 and %q", hook, code, out, want)
+			if out, _, code := l.runWith(t, turn, nil, hook); code != 0 || out != turn+"\n" {
+				t.Errorf("%s = %d, %q; want 0 and the binary's %q", hook, code, out, turn+"\n")
 			}
 		}
 	})
@@ -491,7 +486,7 @@ func TestLoader(t *testing.T) {
 			t.Errorf("user-prompt-submit, no binary = %d, %q, %q; want 0 and session start's JSON for "+
 				"UserPromptSubmit", code, out, errs)
 		}
-		// Once it is there, a prompt runs nothing.
+		// Once it is there, a prompt runs only the binary's user-prompt-submit.
 		out, errs, code = l.runWith(t, `{"session_id": "s1"}`, env, "user-prompt-submit")
 		if code != 0 || out != "" || errs != "" || l.downloads.Load() != 1 {
 			t.Errorf("second user-prompt-submit = %d, %q, %q after %d downloads; want 0 and nothing after one",

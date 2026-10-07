@@ -13,12 +13,13 @@ import (
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/config"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/githooks"
 	"github.com/bunderlog/claude-plugins/src/baloo/internal/guidelines"
+	"github.com/bunderlog/claude-plugins/src/baloo/internal/review"
 	"github.com/bunderlog/claude-plugins/src/baloo/names"
 )
 
 // doctor shows the plugin's state in the repo it runs in, its problems first, each with what fixes
-// it (ADR doctor): the binary and the link the Git hooks run, the Config's settings, each Check on
-// or off and why, the Git hooks and the Guidelines. It changes nothing, for session start does the
+// it (ADR doctor): the binary and the link the Git hooks run, the Config's settings, the Session
+// review's Proposals, each Check on or off and why, the Git hooks and the Guidelines. It changes nothing, for session start does the
 // fixing, and fails when it finds a problem.
 func doctor(stdout, stderr io.Writer) int {
 	dir, err := project()
@@ -78,6 +79,22 @@ func doctor(stdout, stderr io.Writer) int {
 		{"format-on-edit", orNone(c.FormatOnEdit)},
 	} {
 		fmt.Fprintf(w, "  %s\t%s\n", s[0], s[1])
+	}
+
+	if c.Root != "" {
+		var waiting, mismatches int
+		for _, it := range review.Items(c.Root, data) {
+			switch {
+			case it.Mismatch != "":
+				mismatches++
+				problems = append(problems, fmt.Sprintf("%s%s.md, %s: %s: fix the file, or log "+
+					"the decision when the next session asks", names.Proposals, it.Review, it.ID, it.Mismatch))
+			case it.Pending():
+				waiting++
+			}
+		}
+		fmt.Fprintf(w, "\nSession review:\n  running\t%t\n  proposals waiting\t%d\n  mismatches\t%d\n",
+			review.Running(c.Root, data), waiting, mismatches)
 	}
 
 	for _, group := range []struct {

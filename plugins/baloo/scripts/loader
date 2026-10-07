@@ -8,11 +8,11 @@
 # `loader allow-guideline`, the Read tool's PreToolUse Hook, runs the binary's allow-guideline when
 # it is downloaded, `loader pre-tool-use`, the PreToolUse Hook of the Checks a Hook runs, its
 # pre-tool-use, `loader post-tool-use`, the PostToolUse Hook of format-on-edit, its
-# post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end, and
+# post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end,
+# `loader user-prompt-submit`, the UserPromptSubmit Hook, its user-prompt-submit, and
 # `loader subagent-start`, the verifier's SubagentStart Hook, its subagent-start.
-# `loader user-prompt-submit`, the UserPromptSubmit Hook, runs only without the binary, in a
-# session the plugin was updated in, which no SessionStart Hook ran for: it downloads it and runs
-# the binary's session start.
+# `loader user-prompt-submit` without the binary, in a session the plugin was updated in, which no
+# SessionStart Hook ran for, downloads it and runs the binary's session start first.
 # A failure says why on stderr and exits 2, which a SessionStart Hook shows to the user; for the
 # others it says nothing and exits 0, since exit 2 there would stop the tool call, the prompt or
 # the turn's end: reading a Guideline then asks the user, as any file outside the project does,
@@ -132,9 +132,10 @@ case ${1:-} in
   user-prompt-submit)
     if [ ! -x "$bin" ]; then
       install 2>/dev/null
-      "$bin" session-start UserPromptSubmit 2>/dev/null
+      printf '%s\n' "$call" | "$bin" session-start UserPromptSubmit 2>/dev/null
     fi
     touch "$bin" "$bin.sha256" 2>/dev/null
+    printf '%s\n' "$call" | "$bin" "$@" 2>/dev/null
     exit 0
     ;;
   allow-guideline | pre-tool-use | post-tool-use | session-end | subagent-start)
