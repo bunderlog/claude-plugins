@@ -93,6 +93,23 @@ Settled by deciding:
 
 Then rewrite ADR plugin.
 
+## Where each kind of project knowledge lives
+
+2026-10-05 · user
+
+Roles work in different repos, developers apart from testers, a product manager maybe in none, yet
+share the terms and the knowledge of the project. Agreed so far: the project names where each kind
+lives (requirements, bugs, tasks, decisions, test plans, the glossary), such as Jira, Confluence,
+GitHub Issues or a wiki, and a skill writes there through its connector or command-line client, else
+to `.about/`, as ADR issues and ADR prd already do for two kinds; technical ADRs stay with the code,
+apart from the project's decisions; what a Session review finds for a kind kept in an outside tool
+goes to the local Inbox, for a person to move. To weigh: Sancrisoft's risk register handed from spec
+to QA, Squad's opportunity solution tree, Kiro's steering split into product, tech and structure.
+Settled by deciding where a role without a repo works and whether baloo serves it there (its Hooks
+are unreliable in Cowork), where the map of kinds to tools lives when roles share no repo, how
+shared knowledge reaches a session in any repo, and how ADRs and the Inbox split between shared and
+local; then rewrite ADR about-folder.
+
 ## Session start knows every part of the plugin
 
 2026-10-04 · plugin review · kept 2026-10-04
@@ -104,3 +121,48 @@ too, with no package of its own. So a new part edits `main.go` and `main_test.go
 Settled by deciding whether each package returns its own report lines and `main` only gathers
 them, with the Inbox's parsing moved to a package of its own, or the orchestration stays as is.
 Kept to decide when the next part joins session start.
+
+## Project knowledge reaches the context only as a task needs it
+
+2026-10-06 · user
+
+After a few weeks, this repo's `.about/` is about 25k tokens (20 ADRs about 82 KB, the glossary
+and the Inbox about 15 KB) and the Guidelines another 10k, and both only grow; the more of it a
+session holds, the worse Claude follows what matters. Today session start prints a line per
+Guideline and the Inbox's count, and the skills and the verifier pick ADRs by the subject in their
+file names; ADRs and PRDs are edited in place, so nothing superseded piles up in the files.
+Measures to weigh:
+
+- Session start lists the titles of the ADRs, terms and PRDs, and Claude reads a file by its path.
+- The binary picks what a task needs from the files it touches, once ADRs and acceptance criteria
+  link to code.
+- Reading many ADRs goes to an agent of its own, as the verifier does, which returns only its
+  report.
+- The binary counts the tokens session start adds and says when they pass a budget.
+- A kind that only grows, such as Compound Engineering's `docs/solutions/` of solved problems,
+  gets a search and a cleanup before baloo adds it, and what it archives stays out of every
+  listing.
+
+Settled by measuring how much of `.about/` a session holds in a project a year old, then deciding
+which measures earn their cost.
+
+Loading on a task's demand is itself an open question, not a confirmed approach: the measurement
+of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
+`.about/` read before an edit to code in 8 of 28 sessions.
+
+## Records of solved problems
+
+2026-10-07 · session review
+
+Compound Engineering keeps a record of each solved problem in `docs/solutions/`, for a later
+session to find; `.about/` has no such kind. Its cost to the context is in "Project knowledge
+reaches the context only as a task needs it". Settled by deciding whether baloo takes it.
+
+## No evals for the skills
+
+2026-10-07 · session review
+
+Nothing in the repo measures whether the skills, the agent and the Guidelines make Claude follow
+their rules: the Go tests cover the binary, not the prompts, so a change to a skill's text can
+weaken it unseen. Settled by deciding whether skills get evals, a set of tasks run against a skill
+with its result checked, and which skills first, or that sessions and `retro` are enough.
