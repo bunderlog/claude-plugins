@@ -46,7 +46,7 @@
       "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
     },
     "guidelines": {
-      "description": "The plugin's Guidelines, files of working rules Claude reads when a task calls for one; each one true is named to Claude at session start.",
+      "description": "The plugin's Guidelines, files of working rules: each one true is named to Claude at session start, for Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given whole the first time it reads or edits a file of their subject in a session.",
       "type": ["object", "null"],
       "properties": {
         "principles": {

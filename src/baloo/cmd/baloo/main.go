@@ -60,7 +60,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		case "pre-tool-use":
 			return preToolUse(stdin, stdout)
 		case "post-tool-use":
-			return postToolUse(stdin)
+			return postToolUse(stdin, stdout)
 		case "session-end":
 			return sessionEnd(stdin)
 		case "user-prompt-submit":

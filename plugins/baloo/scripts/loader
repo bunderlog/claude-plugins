@@ -7,10 +7,10 @@
 # session-start.
 # `loader allow-guideline`, the Read tool's PreToolUse Hook, runs the binary's allow-guideline when
 # it is downloaded, `loader pre-tool-use`, the PreToolUse Hook of the Checks a Hook runs, its
-# pre-tool-use, `loader post-tool-use`, the PostToolUse Hook of format-on-edit, its
-# post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end,
-# `loader user-prompt-submit`, the UserPromptSubmit Hook, its user-prompt-submit, and
-# `loader subagent-start`, the verifier's SubagentStart Hook, its subagent-start.
+# pre-tool-use, `loader post-tool-use`, the PostToolUse Hook of the Guidelines given by the file and
+# of format-on-edit, its post-tool-use, `loader session-end`, the SessionEnd Hook, its session-end,
+# `loader user-prompt-submit`, the UserPromptSubmit Hook, its user-prompt-submit, and `loader
+# subagent-start`, the verifier's SubagentStart Hook, its subagent-start.
 # `loader user-prompt-submit` without the binary, in a session the plugin was updated in, which no
 # SessionStart Hook ran for, downloads it and runs the binary's session start first.
 # A failure says why on stderr and exits 2, which a SessionStart Hook shows to the user; for the

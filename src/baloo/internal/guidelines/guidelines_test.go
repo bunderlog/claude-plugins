@@ -99,11 +99,12 @@ func TestIndex(t *testing.T) {
 	if text, err := Index(plugin, map[string]bool{"go": false}, ""); text != "" || err != nil {
 		t.Errorf("Index with none on = %q, %v; want nothing", text, err)
 	}
-	// Without the rules for every task, the lines are still there.
+	// Without the rules for every task, the lines are still there; a Guideline given by the file
+	// Claude works on has none.
 	lines := "Read a file when its task comes up:\n" +
 		"- " + when("principles") + ": " + filepath.Join(plugin, "guidelines", "principles.md") + "\n" +
-		"- " + when("vue") + ": " + filepath.Join(plugin, "guidelines", "vue.md")
-	on := map[string]bool{"principles": true, "vue": true}
+		"- " + when("go") + ": " + filepath.Join(plugin, "guidelines", "go.md")
+	on := map[string]bool{"principles": true, "go": true, "vue": true, "typescript": true, "testing": true}
 	if text, err := Index(plugin, on, ""); err == nil || !strings.HasSuffix(text, lines) {
 		t.Errorf("Index without principles.md = %q, %v; want the lines and an error", text, err)
 	}
@@ -125,5 +126,46 @@ func TestIndex(t *testing.T) {
 		if got, err := Index(plugin, on, ""); got != head+tc.rules+lines || err != nil {
 			t.Errorf("Index, %s = %q, %v; want %q", tc.name, got, err, head+tc.rules+lines)
 		}
+	}
+}
+
+// A Guideline given by the file Claude works on comes whole, once a session, where the Config
+// turns it on, and each one given is logged.
+func TestForFile(t *testing.T) {
+	plugin, data := t.TempDir(), t.TempDir()
+	write(t, plugin, map[string]string{"guidelines/typescript.md": "# TypeScript\n\nNo any.\n",
+		"guidelines/vue.md": "# Vue\n\nScript setup.\n", "guidelines/testing.md": "# Testing\n\nRed first.\n"})
+	on := map[string]bool{"typescript": true, "vue": true, "testing": true}
+	for rel, want := range map[string][]string{
+		"src/a.ts": {"typescript"}, "src/App.vue": {"typescript", "vue"}, "x/a_test.go": {"testing"},
+		"src/a.test.ts": {"typescript", "testing"}, "tests/test_a.py": {"testing"}, "src/__tests__/a.js": {"testing"},
+		"src/a.go": nil, "README.md": nil, "src/testing.ts": {"typescript"},
+	} {
+		text, err := ForFile(plugin, t.TempDir(), "", rel, on)
+		var got []string
+		for _, name := range []string{"typescript", "vue", "testing"} {
+			if strings.Contains(text, "The "+name+" Guideline applies to "+rel) {
+				got = append(got, name)
+			}
+		}
+		if err != nil || !slices.Equal(got, want) {
+			t.Errorf("ForFile(%s) gave %q, %v; want %q", rel, got, err, want)
+		}
+	}
+	text, err := ForFile(plugin, data, "s1", "src/App.vue", on)
+	if err != nil || !strings.Contains(text, "# Vue\n\nScript setup.") || !strings.Contains(text, "# TypeScript\n\nNo any.") {
+		t.Errorf("ForFile = %q, %v; want both Guidelines whole", text, err)
+	}
+	if again, _ := ForFile(plugin, data, "s1", "src/b.ts", on); again != "" {
+		t.Errorf("ForFile again in the session = %q; want nothing", again)
+	}
+	if other, _ := ForFile(plugin, data, "s2", "src/b.ts", map[string]bool{"vue": true}); other != "" {
+		t.Errorf("ForFile of a Guideline turned off = %q; want nothing", other)
+	}
+	log, _ := os.ReadFile(filepath.Join(data, "guidelines", "guidelines.log"))
+	lines := strings.Split(strings.TrimSpace(string(log)), "\n")
+	if len(lines) != 2 || !strings.HasSuffix(lines[0], "\ts1\ttypescript\tsrc/App.vue") ||
+		!strings.HasSuffix(lines[1], "\ts1\tvue\tsrc/App.vue") {
+		t.Errorf("log = %q; want a line per Guideline given: when, session, Guideline, file", log)
 	}
 }

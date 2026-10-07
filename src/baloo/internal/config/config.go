@@ -378,10 +378,11 @@ session-review: true
 # with false.
 # format-on-edit: npx prettier --write
 
-# Guidelines, the plugin's working rules, which Claude reads when a task calls for one; each
-# one on is named to Claude at session start. A stack's is on where the repo had that stack
-# when this file was made, ci where it had a CI's config, and dependencies where it had a package
-# manager's manifest.
+# Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
+# Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
+# whole the first time it reads or edits a file of their subject in a session. A stack's is on
+# where the repo had that stack when this file was made, ci where it had a CI's config, and
+# dependencies where it had a package manager's manifest.
 guidelines:
 ` + list.String() + `
 # Checks, each on with true and off with false.

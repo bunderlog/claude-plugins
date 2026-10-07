@@ -856,3 +856,32 @@ func TestFormatOnEdit(t *testing.T) {
 	}
 	edit(inside) // a failing command is said nothing of, too
 }
+
+// A Read or an edit of a file in the repo gives Claude the Guidelines whose subject it is, once a
+// session, where the Config turns them on.
+func TestPostToolUseGivesGuidelines(t *testing.T) {
+	dir := inRepo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config := "guidelines:\n  typescript: true\n  testing: false\n"
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	call := func(tool, file string) string {
+		t.Helper()
+		in := `{"session_id":"s1","tool_name":"` + tool + `","tool_input":{"file_path":"` + filepath.Join(dir, file) + `"}}`
+		var stdout, stderr bytes.Buffer
+		if code := run([]string{"post-tool-use"}, strings.NewReader(in), &stdout, &stderr); code != 0 || stderr.Len() != 0 {
+			t.Fatalf("post-tool-use = %d, %q", code, stderr.String())
+		}
+		return stdout.String()
+	}
+	if got := call("Read", "src/a.test.ts"); !strings.Contains(got, `"hookEventName":"PostToolUse"`) ||
+		!strings.Contains(got, "The typescript Guideline applies to src/a.test.ts") || strings.Contains(got, "testing Guideline") {
+		t.Errorf("post-tool-use on a Read of a TypeScript test = %q; want only the typescript Guideline", got)
+	}
+	if got := call("Edit", "src/b.ts"); got != "" {
+		t.Errorf("post-tool-use again in the session = %q; want nothing", got)
+	}
+}

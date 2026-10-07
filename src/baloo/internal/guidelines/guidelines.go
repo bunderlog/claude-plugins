@@ -156,13 +156,14 @@ const everyTask = "## On every task"
 const inZsh = "## In zsh"
 
 // Index is what session start tells Claude of the Guidelines `on` in the plugin at `plugin`: a
-// line for each, when to read it and its path, after the rules for every task when principles is
+// line for each, when to read it and its path, but those given by the file Claude works on (see
+// ForFile), after the rules for every task when principles is
 // on, and the rules zsh needs where `shell`, the Bash tool's, is zsh. With none on it is "". When
 // the rules can't be read, it is the lines without them, and why.
 func Index(plugin string, on map[string]bool, shell string) (string, error) {
 	var lines []string
 	for _, g := range All {
-		if on[g.Name] {
+		if _, given := byPath[g.Name]; on[g.Name] && !given {
 			lines = append(lines, fmt.Sprintf("- %s: %s", g.When, path(plugin, g.Name)))
 		}
 	}
