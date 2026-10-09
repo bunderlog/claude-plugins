@@ -60,17 +60,18 @@ func (it Item) Pending() bool { return it.Decision == "" || it.Decision == Defer
 
 var heading = regexp.MustCompile(`^## (P\d+) · (\S+) · (\S+) · (\S+) · (.+)$`)
 
-// Parse reads the Proposals of the review `review` from the text of its file.
+// Parse reads the Proposals of the review `review` from the text of its file. A block is fenced
+// with ~~~, as the review is asked to write it, or with ```, as a reviewer may write it anyway.
 func Parse(review string, text []byte) []Proposal {
 	var list []Proposal
 	var block *string
-	fenced := false
+	fence := "" // the open block's fence, "" outside one
 	for _, line := range strings.Split(string(text), "\n") {
 		p := len(list) - 1
 		switch {
-		case fenced && line == "~~~":
-			fenced = false
-		case fenced:
+		case fence != "" && line == fence:
+			fence = ""
+		case fence != "":
 			*block += line + "\n"
 		case strings.HasPrefix(line, "## "):
 			block = nil
@@ -89,8 +90,8 @@ func Parse(review string, text []byte) []Proposal {
 			block = &list[p].After
 		case line == "Applied:":
 			block = &list[p].Applied
-		case strings.HasPrefix(line, "~~~") && block != nil:
-			fenced = true
+		case block != nil && (strings.HasPrefix(line, "~~~") || strings.HasPrefix(line, "```")):
+			fence = line[:3]
 		}
 	}
 	for i := range list {

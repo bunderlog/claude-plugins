@@ -202,6 +202,18 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// A Proposal fenced with backticks, as a reviewer may write it, reads as one fenced with tildes: a
+// heading inside its After is its text, not a Proposal of its own.
+func TestParse_BacktickFence(t *testing.T) {
+	text := "# Session review R\n\n## P1 · inbox · add · .about/inbox.md · X\n\nAfter:\n\n" +
+		"```markdown\n## X\n\n~~~\nkept\n~~~\n```\n"
+	got := Parse("R", []byte(text))
+	want := "## X\n\n~~~\nkept\n~~~\n"
+	if len(got) != 1 || got[0].Problem != "" || got[0].After != want {
+		t.Errorf("Parse = %+v; want one Proposal, its After %q", got, want)
+	}
+}
+
 // repoWith is a repo with an origin carrying a token, the glossary and the ADR the Proposals change,
 // and their file.
 func repoWith(t *testing.T) string {
