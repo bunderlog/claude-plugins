@@ -61,6 +61,12 @@ saying nothing of how it went; not a Check.
 _Avoid_: "lint on edit"; a Check
 _In code_: `format-on-edit`, `cmd/baloo/format.go`
 
+**Git hook command**:
+The project's own command, named by Git hook under `git-hook-commands` in the Config, that the
+plugin's Git hook runs once its Checks pass, such as `mise run test` before a commit; not a Check.
+_Avoid_: a Check; "hook command", which could be a Hook's
+_In code_: `git-hook-commands`, `GitHookCommands`, `cmd/baloo/checks.go`
+
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
 with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that Claude

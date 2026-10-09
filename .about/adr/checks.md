@@ -1,6 +1,6 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-07
+Date: 2026-10-09
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
@@ -18,8 +18,9 @@ Checks a Hook runs are on without their key, outside a repo too, where no Config
 turns one off is named at every session start, so someone who opens a repo whose committed Config
 does so knows.
 
-The plugin writes a Git hook where the Config turns at least one of its Checks on, and takes its
-own out where none is; with husky 9 it goes through husky, which it finds by itself (ADR
+The plugin writes a Git hook where the Config turns at least one of its Checks on, or sets its
+command under `git-hook-commands`, which is not a Check (ADR git-hooks), and takes its own out
+where neither is; with husky 9 it goes through husky, which it finds by itself (ADR
 git-hooks). Writing them has no key of its own. It never changes git's config: `linear-history`,
 failing, names `git config pull.rebase true` for the user to run.
 

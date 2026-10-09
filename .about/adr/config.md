@@ -1,6 +1,6 @@
 # The Config is `.claude/baloo.yml`, created at session start with every Check on
 
-Date: 2026-10-07
+Date: 2026-10-09
 
 A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
 settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
@@ -56,8 +56,8 @@ binary prints, for Claude, a Config it created and the problems.
 - Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
   where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
-  it has a package manager's manifest, and `format-on-edit`, whose command the template can't
-  know, is a comment there (ADR format-on-edit).
+  it has a package manager's manifest, and `format-on-edit` and `git-hook-commands`, whose
+  commands the template can't know, are comments there (ADR format-on-edit, ADR git-hooks).
 - The template lists the keys of `guidelines`, `claude-hooks` and `git-hooks` sorted, whatever
   order the code keeps them in, so a key is found by its name; a test checks it.
 - A new key reaches a Config that exists only when its user adds it, so its default must be what

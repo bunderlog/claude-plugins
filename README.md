@@ -22,6 +22,18 @@ where it turns them all off. A Git hook already there that the plugin didn't wri
 and session start names the Checks it keeps from running. With husky 9, the plugin's Git hooks go
 into `.git/baloo-hooks/`, and a line first in `.husky/<hook>` runs each: commit that line.
 
+A Git hook also runs the project's own command, once its Checks pass, where `.claude/baloo.yml`
+sets one under `git-hook-commands`, so a repo needs no husky just for its tests:
+
+```yaml
+git-hook-commands:
+  pre-commit: mise run test
+```
+
+The command runs with `sh` in the repo, with git's arguments as `$1` on (`commit-msg: npx
+commitlint --edit $1`) and, for `pre-push`, the pushed refs on stdin; the commit or push fails
+when it does. Only people with the plugin run it: CI should run it too.
+
 ## Format on edit
 
 With `format-on-edit: <command>` in `.claude/baloo.yml`, such as `format-on-edit: npx prettier
