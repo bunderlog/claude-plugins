@@ -20,7 +20,7 @@ jobs:
             echo "the tag is $GITHUB_REF_NAME, but plugin.json says $version"
             exit 1
           fi
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v5
       - run: mise run build
       - name: Publish the GitHub Release
         env:
