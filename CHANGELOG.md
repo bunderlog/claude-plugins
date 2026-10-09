@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.25.1 — 2026-10-09
+
+### Fixes
+
+- session-review: read a Proposal fenced with backticks, not only tildes (3b16a1d)
+
 ## 0.25.0 — 2026-10-09
 
 ### Features
