@@ -86,3 +86,67 @@ func TestGitHooks_RunTheChecks(t *testing.T) {
 		}
 	}
 }
+
+// A Git hook runs the command the Config sets for it once its Checks pass, with git's arguments,
+// and the commit fails when the command does; where a Check fails, the command doesn't run.
+func TestGitHooks_RunTheCommands(t *testing.T) {
+	bin := binary(t)
+	dir := testkit.Repo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config := "git-hooks:\n  conventional-commits: true\ngit-hook-commands:\n" +
+		"  commit-msg: grep -q feat \"$1\" && echo ran >> ran\n" +
+		"  pre-commit: test ! -e fail\n"
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	data := t.TempDir()
+	start := exec.Command(bin, "session-start")
+	start.Env = append(os.Environ(), "CLAUDE_PROJECT_DIR="+dir, "CLAUDE_PLUGIN_DATA="+data,
+		"CLAUDE_CONFIG_DIR="+t.TempDir(), "CLAUDE_PLUGIN_ROOT="+plugin(t))
+	if out, err := start.CombinedOutput(); err != nil || !strings.Contains(string(out), "wrote the Git hooks commit-msg, pre-commit in ") {
+		t.Fatalf("session-start = %v, %q; want commit-msg and pre-commit written", err, out)
+	}
+	ran := func() string {
+		text, _ := os.ReadFile(filepath.Join(dir, "ran"))
+		return string(text)
+	}
+
+	if out, ok := commit(t, dir, "feat: x"); !ok || ran() != "ran\n" {
+		t.Errorf("commit of feat: x = %v, %q, ran %q; want it committed after commit-msg's command ran once", ok, out, ran())
+	}
+	if out, ok := commit(t, dir, "Add y"); ok || ran() != "ran\n" {
+		t.Errorf("commit of Add y = %v, %q, ran %q; want it stopped by conventional-commits, the command not run", ok, out, ran())
+	}
+	if err := os.WriteFile(filepath.Join(dir, "fail"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, ok := commit(t, dir, "feat: z"); ok || !strings.Contains(out, "baloo:git-hook-commands.pre-commit: ") {
+		t.Errorf("commit with pre-commit's command failing = %v, %q; want it stopped, and named", ok, out)
+	}
+}
+
+// pre-push's command gets the pushed refs on stdin, after linear-history has read them.
+func TestGitHooks_PrePushCommandGetsTheRefs(t *testing.T) {
+	bin := binary(t)
+	dir := testkit.Repo(t)
+	if err := os.MkdirAll(filepath.Join(dir, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config := "git-hooks:\n  linear-history: true\ngit-hook-commands:\n  pre-push: cat > pushed\n"
+	if err := os.WriteFile(filepath.Join(dir, names.Config), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	testkit.Git(t, dir, "commit", "-q", "--allow-empty", "-m", "feat: x")
+	head := strings.TrimSpace(testkit.Git(t, dir, "rev-parse", "HEAD"))
+	refs := "refs/heads/main " + head + " refs/heads/main " + strings.Repeat("0", 40) + "\n"
+	push := exec.Command(bin, "git-hook", "pre-push", "origin", "https://example.com/x.git")
+	push.Dir, push.Stdin = dir, strings.NewReader(refs)
+	if out, err := push.CombinedOutput(); err != nil {
+		t.Fatalf("git-hook pre-push = %v, %q; want it passed", err, out)
+	}
+	if got, _ := os.ReadFile(filepath.Join(dir, "pushed")); string(got) != refs {
+		t.Errorf("pre-push's command read %q; want %q", got, refs)
+	}
+}

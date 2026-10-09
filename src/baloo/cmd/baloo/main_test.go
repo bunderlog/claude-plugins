@@ -113,7 +113,7 @@ func TestSessionStart(t *testing.T) {
 		t.Fatal(err)
 	}
 	want = "baloo:\ntook out the Git hooks commit-msg, pre-commit, pre-push in " +
-		filepath.Join(dir, ".git", "hooks") + ", whose checks .claude/baloo.yml turns off: tell the user\n" +
+		filepath.Join(dir, ".git", "hooks") + ", whose checks and command .claude/baloo.yml turns off: tell the user\n" +
 		".claude/baloo.yml line 1: nope is not a setting; ignored\n"
 	if code := start(t, &stdout, &stderr); code != 0 ||
 		stdout.String() != want || stderr.Len() != 0 {

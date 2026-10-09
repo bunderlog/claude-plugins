@@ -85,6 +85,22 @@ func TestWrite_WritesTheHooksWhoseChecksAreOn(t *testing.T) {
 	}
 }
 
+// A Git hook is written where the Config sets its command, though none of its Checks is on, and
+// Inspect names the command among what it runs.
+func TestWrite_WritesTheHooksWithACommand(t *testing.T) {
+	root, data := testkit.Repo(t), t.TempDir()
+	r, err := Write(root, data, on("git-hook-commands.pre-commit"))
+	hooks := filepath.Join(root, ".git", "hooks")
+	if err != nil || !reflect.DeepEqual(r, Report{Dir: hooks, Written: []string{"pre-commit"}}) {
+		t.Fatalf("Write = %+v, %v; want pre-commit written in %s", r, err, hooks)
+	}
+	_, _, got, err := Inspect(root, data, on("no-secrets-in-commits", "git-hook-commands.pre-commit"))
+	if err != nil || got[1].State != Running ||
+		!reflect.DeepEqual(got[1].Runs, []string{"no-secrets-in-commits", "git-hook-commands.pre-commit"}) {
+		t.Errorf("Inspect's pre-commit = %+v, %v; want it running its Check, then its command", got[1], err)
+	}
+}
+
 // A Git hook whose Checks are all off is taken out, but only the plugin's own.
 func TestWrite_TakesOutItsOwn(t *testing.T) {
 	root, data := testkit.Repo(t), t.TempDir()
@@ -221,7 +237,7 @@ func TestInspect(t *testing.T) {
 		t.Errorf("Inspect = %v, %v; want %v", states(got), err, want)
 	}
 	if got[0].Bin != filepath.Join(data, "baloo") || got[1].Bin != "" ||
-		!reflect.DeepEqual(got[0].Checks, []string{"no-ai-coauthor", "conventional-commits"}) {
+		!reflect.DeepEqual(got[0].Runs, []string{"no-ai-coauthor", "conventional-commits"}) {
 		t.Errorf("Inspect = %+v; want commit-msg running the link in %s, and pre-commit no binary", got, data)
 	}
 

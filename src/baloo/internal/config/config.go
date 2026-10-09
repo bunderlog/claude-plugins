@@ -42,6 +42,9 @@ type Config struct {
 	// FormatOnEdit is the command run on each file Claude edits, or "" where it is off (ADR
 	// format-on-edit).
 	FormatOnEdit string
+	// GitHookCommands are the project's own commands the Git hooks run after their Checks, by Git
+	// hook (ADR git-hooks).
+	GitHookCommands map[string]string
 	// Guidelines are the Guidelines turned on, by name (ADR guidelines).
 	Guidelines map[string]bool
 	// Checks are the Checks the Config turns on or off, by name; see CheckOn for one it doesn't.
@@ -61,6 +64,15 @@ func (c Config) CheckOn(name string) bool {
 		return on
 	}
 	return slices.Contains(checks.HookChecks, name)
+}
+
+// GitHookRuns says whether a Git hook runs `name`: a Check the Config turns on, or the command
+// `git-hook-commands.<hook>` it sets.
+func (c Config) GitHookRuns(name string) bool {
+	if hook, ok := strings.CutPrefix(name, names.GitHookCommands+"."); ok {
+		return c.GitHookCommands[hook] != ""
+	}
+	return c.CheckOn(name)
 }
 
 // OutputStyles are the plugin's Output styles, the files in its output-styles/.
@@ -114,8 +126,34 @@ var keys = map[string]func(c *Config, key, value *yaml.Node) []string{
 		return nil
 	},
 	"format-on-edit": command(func(c *Config) *string { return &c.FormatOnEdit }),
-	"claude-hooks":   checkKeys(checks.HookChecks),
-	"git-hooks":      checkKeys(checks.GitHookChecks),
+	names.GitHookCommands: func(c *Config, key, value *yaml.Node) []string {
+		if value.Tag == "!!null" {
+			return nil
+		}
+		if value.Kind != yaml.MappingNode {
+			return []string{wrong(key.Line, key.Value, "is not a map of Git hooks to commands")}
+		}
+		var problems []string
+		for i := 0; i+1 < len(value.Content); i += 2 {
+			hook, cmd := value.Content[i], value.Content[i+1]
+			entry := key.Value + "." + hook.Value
+			if _, ok := checks.GitHooks[hook.Value]; !ok {
+				problems = append(problems, at(hook.Line, entry+" is not a Git hook of the plugin's; ignored"))
+				continue
+			}
+			set, wrong := commandAt(hook.Line, entry, cmd)
+			problems = append(problems, wrong...)
+			if set != "" {
+				if c.GitHookCommands == nil {
+					c.GitHookCommands = map[string]string{}
+				}
+				c.GitHookCommands[hook.Value] = set
+			}
+		}
+		return problems
+	},
+	"claude-hooks": checkKeys(checks.HookChecks),
+	"git-hooks":    checkKeys(checks.GitHookChecks),
 	"guidelines": func(c *Config, key, value *yaml.Node) []string {
 		if value.Tag == "!!null" {
 			return nil
@@ -378,6 +416,12 @@ session-review: true
 # with false.
 # format-on-edit: npx prettier --write
 
+# The project's own commands, by Git hook (pre-commit, commit-msg, pre-push), that the plugin's Git
+# hook runs with sh after its Checks pass, with git's arguments as $1 and, for pre-push, the pushed
+# refs on stdin; the commit or push fails when the command does. Off without it, or with false.
+# git-hook-commands:
+#   pre-commit: mise run test
+
 # Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
 # Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
 # whole the first time it reads or edits a file of their subject in a session. A stack's is on
@@ -403,16 +447,25 @@ git-hooks:
 // with false.
 func command(field func(c *Config) *string) func(c *Config, key, value *yaml.Node) []string {
 	return func(c *Config, key, value *yaml.Node) []string {
-		var off bool
-		if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
-			return nil
+		cmd, problems := commandAt(key.Line, key.Value, value)
+		if cmd != "" {
+			*field(c) = cmd
 		}
-		if value.Tag != "!!str" || strings.TrimSpace(value.Value) == "" {
-			return []string{wrong(key.Line, key.Value, "is not a command or false")}
-		}
-		*field(c) = value.Value
-		return nil
+		return problems
 	}
+}
+
+// commandAt is the command `value` names for the setting `name` at line `line`, or "" where it is
+// false or wrong, with what is wrong with it.
+func commandAt(line int, name string, value *yaml.Node) (string, []string) {
+	var off bool
+	if value.Tag == "!!bool" && value.Decode(&off) == nil && !off {
+		return "", nil
+	}
+	if value.Tag != "!!str" || strings.TrimSpace(value.Value) == "" {
+		return "", []string{wrong(line, name, "is not a command or false")}
+	}
+	return value.Value, nil
 }
 
 // repo is the root of the repo `dir` is in, where its Config is: the nearest folder up from `dir`

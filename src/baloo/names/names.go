@@ -31,6 +31,9 @@ const (
 	// Inbox is a repo's file of what is still to consider, one `## ` heading per item, from its
 	// root.
 	Inbox = ".about/inbox.md"
+	// GitHookCommands is the Config's key of the project's own commands the Git hooks run after
+	// their Checks; `GitHookCommands + "." + <hook>` names one.
+	GitHookCommands = "git-hook-commands"
 	// Marker marks what the plugin wrote into a file it shares, so it knows it for its own: the
 	// statusLine command, a Git hook, husky's line.
 	Marker = "# managed by " + Plugin

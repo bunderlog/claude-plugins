@@ -81,14 +81,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 	}
 	if len(args) > 1 && args[0] == "git-hook" {
-		in, on := gitHookInput(stdin)
-		if code, ok := checks.RunHook(args[1], args[2:], in, on, stderr); ok {
+		if code, ok := gitHook(args[1], args[2:], stdin, stdout, stderr); ok {
 			return code
 		}
 	}
 	if len(args) > 1 && args[0] == "check" {
-		in, on := gitHookInput(stdin)
-		if code, ok := checks.Run(args[1], args[2:], in, on, stderr); ok {
+		in, c := gitHookInput(stdin)
+		if code, ok := checks.Run(args[1], args[2:], in, c.CheckOn, stderr); ok {
 			return code
 		}
 	}
@@ -189,7 +188,7 @@ func sessionStart(session string, stdout, stderr io.Writer) int {
 		rep.fail("could not set the status line", err)
 	}
 	if c.Root != "" {
-		r, err := githooks.Write(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.CheckOn)
+		r, err := githooks.Write(c.Root, os.Getenv("CLAUDE_PLUGIN_DATA"), c.GitHookRuns)
 		rep.lines = append(rep.lines, gitHooksReport(r)...)
 		rep.fail("could not write the Git hooks", err)
 	}
@@ -267,12 +266,13 @@ func sessionStartHook(event string, stdin io.Reader, stdout, stderr io.Writer) i
 func gitHooksReport(r githooks.Report) []string {
 	var lines []string
 	if len(r.Written) > 0 {
-		lines = append(lines, fmt.Sprintf("wrote the Git hooks %s in %s, which run the plugin's checks "+
-			"on every commit and push: tell the user, and that a check's key under git-hooks in %s "+
-			"turns it off", strings.Join(r.Written, ", "), r.Dir, names.Config))
+		lines = append(lines, fmt.Sprintf("wrote the Git hooks %s in %s, which run the plugin's checks, "+
+			"and the commands under git-hook-commands, on every commit and push: tell the user, and "+
+			"that a check's key under git-hooks in %s turns it off", strings.Join(r.Written, ", "), r.Dir,
+			names.Config))
 	}
 	if len(r.Removed) > 0 {
-		lines = append(lines, fmt.Sprintf("took out the Git hooks %s in %s, whose checks %s turns off: "+
+		lines = append(lines, fmt.Sprintf("took out the Git hooks %s in %s, whose checks and command %s turns off: "+
 			"tell the user", strings.Join(r.Removed, ", "), r.Dir, names.Config))
 	}
 	if len(r.Husky) > 0 {
@@ -281,8 +281,8 @@ func gitHooksReport(r githooks.Report) []string {
 	}
 	for _, b := range r.Theirs {
 		lines = append(lines, fmt.Sprintf("%s is not the plugin's Git hook, so %s don't run: tell the user, "+
-			"and that their keys under git-hooks in %s, turned off, end this line",
-			b.Path, strings.Join(b.Checks, ", "), names.Config))
+			"and that their keys in %s, turned off, end this line",
+			b.Path, strings.Join(b.Runs, ", "), names.Config))
 	}
 	return lines
 }

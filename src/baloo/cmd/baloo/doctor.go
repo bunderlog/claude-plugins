@@ -118,7 +118,7 @@ func doctor(stdout, stderr io.Writer) int {
 	}
 
 	if c.Root != "" {
-		hooksDir, husky, hooks, err := githooks.Inspect(c.Root, data, c.CheckOn)
+		hooksDir, husky, hooks, err := githooks.Inspect(c.Root, data, c.GitHookRuns)
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("could not read the Git hooks: %v", err))
 		} else {
@@ -130,8 +130,8 @@ func doctor(stdout, stderr io.Writer) int {
 			fmt.Fprintf(w, "\nGit hooks in %s%s:\n", hooksDir, via)
 			for _, h := range hooks {
 				fmt.Fprintf(w, "  %s\t%s", h.Name, h.State)
-				if len(h.Checks) > 0 {
-					fmt.Fprintf(w, ": %s", strings.Join(h.Checks, ", "))
+				if len(h.Runs) > 0 {
+					fmt.Fprintf(w, ": %s", strings.Join(h.Runs, ", "))
 				}
 				fmt.Fprintln(w)
 			}
@@ -173,15 +173,15 @@ func doctor(stdout, stderr io.Writer) int {
 func gitHookProblems(hooks []githooks.Hook, link string) []string {
 	var problems []string
 	for _, h := range hooks {
-		checks := strings.Join(h.Checks, ", ")
+		checks := strings.Join(h.Runs, ", ")
 		switch h.State {
 		case githooks.Missing:
 			problems = append(problems, fmt.Sprintf("%s is missing, so %s don't run: the next "+
 				"session start writes it", h.Path, checks))
 		case githooks.Theirs:
 			problems = append(problems, fmt.Sprintf("%s is not the plugin's Git hook, so %s don't "+
-				"run: move it out of the way and start a session, or turn their keys under "+
-				"git-hooks in %s off", h.Path, checks, names.Config))
+				"run: move it out of the way and start a session, or turn their keys in %s off",
+				h.Path, checks, names.Config))
 		case githooks.Outdated:
 			if link != "" && h.Bin != link {
 				problems = append(problems, fmt.Sprintf("%s runs %s, not %s: the next session "+
@@ -192,7 +192,7 @@ func gitHookProblems(hooks []githooks.Hook, link string) []string {
 			}
 		case githooks.Leftover:
 			problems = append(problems, fmt.Sprintf("%s is the plugin's, but %s turns its "+
-				"checks off: the next session start takes it out", h.Path, names.Config))
+				"checks and command off: the next session start takes it out", h.Path, names.Config))
 		}
 		if h.HuskyOutdated {
 			problems = append(problems, fmt.Sprintf(".husky/%s is not as session start keeps "+

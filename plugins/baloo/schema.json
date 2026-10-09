@@ -45,6 +45,16 @@
       "description": "The command run, with sh in the repo's root and the file's path at the end, after each of Claude's edits to a file in the repo, such as npx prettier --write; nothing is said of how it went. Off without it, or with false.",
       "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }]
     },
+    "git-hook-commands": {
+      "description": "The project's own commands, by Git hook, that the plugin's Git hook runs with sh after its Checks pass, with git's arguments as $1 and, for pre-push, the pushed refs on stdin, such as { pre-commit: mise run test }; the commit or push fails when the command does. Off without it, or with false.",
+      "type": ["object", "null"],
+      "properties": {
+        "commit-msg": { "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }] },
+        "pre-commit": { "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }] },
+        "pre-push": { "oneOf": [{ "type": "string", "minLength": 1 }, { "const": false }] }
+      },
+      "additionalProperties": false
+    },
     "guidelines": {
       "description": "The plugin's Guidelines, files of working rules: each one true is named to Claude at session start, for Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given whole the first time it reads or edits a file of their subject in a session.",
       "type": ["object", "null"],

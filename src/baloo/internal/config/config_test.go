@@ -567,6 +567,40 @@ func TestFormatOnEditSetting(t *testing.T) {
 	}
 }
 
+// git-hook-commands names, by Git hook, the project's own command it runs after its Checks; a hook
+// the plugin doesn't write, or a value that isn't a command or false, is a problem at its own line
+// while the entries beside it apply, and a new Config has it only as a comment (ADR git-hooks).
+func TestGitHookCommandsSetting(t *testing.T) {
+	for _, tc := range []struct {
+		yml      string
+		commands map[string]string
+		problems []string
+	}{
+		{"git-hook-commands:\n  pre-commit: mise run test\n  pre-push: false\n",
+			map[string]string{"pre-commit": "mise run test"}, nil},
+		{"git-hook-commands:\n  post-merge: npm ci\n  pre-commit: [x]\n  commit-msg: npx commitlint --edit $1\n",
+			map[string]string{"commit-msg": "npx commitlint --edit $1"}, []string{
+				".claude/baloo.yml line 2: git-hook-commands.post-merge is not a Git hook of the plugin's; ignored",
+				".claude/baloo.yml line 3: git-hook-commands.pre-commit: is not a command or false; its default applies"}},
+		{"git-hook-commands: mise run test\n", nil, []string{
+			".claude/baloo.yml line 1: git-hook-commands: is not a map of Git hooks to commands; its default applies"}},
+		{newConfig(nil), nil, nil},
+	} {
+		c, problems := parse([]byte(tc.yml))
+		if !maps.Equal(c.GitHookCommands, tc.commands) || !slices.Equal(problems, tc.problems) {
+			t.Errorf("parse(%q) = %q, %q; want %q, %q", tc.yml, c.GitHookCommands, problems, tc.commands, tc.problems)
+		}
+	}
+	if !strings.Contains(newConfig(nil), "\n# git-hook-commands:\n#   pre-commit: mise run test\n") {
+		t.Error("a new Config has no git-hook-commands example")
+	}
+	c, _ := parse([]byte("git-hook-commands:\n  pre-commit: mise run test\n"))
+	if !c.GitHookRuns("git-hook-commands.pre-commit") || c.GitHookRuns("git-hook-commands.pre-push") ||
+		c.GitHookRuns("conventional-commits") {
+		t.Error("GitHookRuns doesn't say what the Git hooks run: the commands set and the Checks on")
+	}
+}
+
 // Each Check turns on or off with its own key under the group that runs it, and a wrong entry is a
 // problem at its own line while the entries beside it apply. Without its key, a Check a Hook runs
 // is on and a Git hook's is off (ADR checks).

@@ -1,6 +1,6 @@
-// Package githooks writes the Git hooks that run the Checks the Config turns on, at session start
-// (ADR git-hooks): into the folder git runs them from, or with husky 9 into the git folder, with a
-// line in husky's own Git hook that runs each.
+// Package githooks writes the Git hooks that run the Checks the Config turns on, and the commands it
+// sets, at session start (ADR git-hooks): into the folder git runs them from, or with husky 9 into
+// the git folder, with a line in husky's own Git hook that runs each.
 package githooks
 
 import (
@@ -29,20 +29,22 @@ type Report struct {
 	Written, Removed []string
 	// Husky are the files of husky's it changed, from the repo's root, for the user to commit.
 	Husky []string
-	// Theirs are the Git hooks it didn't write and left alone, which keep Checks that are on from
-	// running.
+	// Theirs are the Git hooks it didn't write and left alone, which keep Checks that are on, or a
+	// command, from running.
 	Theirs []Blocked
 }
 
-// Blocked is a Git hook of someone else's, at Path, and the Checks it keeps from running.
+// Blocked is a Git hook of someone else's, at Path, and what it keeps from running: Checks, and the
+// command the Config sets for it.
 type Blocked struct {
-	Path   string
-	Checks []string
+	Path string
+	Runs []string
 }
 
 // Write brings the Git hooks of the repo at `root` in line with `on`, which says whether a Check is
-// on: it writes each Git hook one of whose Checks is on, running the link in `data`, the plugin's
-// data folder (see binlink), and takes out its own whose Checks are all off.
+// on, or a Git hook's command is set (see runs): it writes each Git hook that runs either, running
+// the link in `data`, the plugin's data folder (see binlink), and takes out its own that runs
+// neither.
 func Write(root, data string, on func(check string) bool) (Report, error) {
 	dir, husky, err := locate(root)
 	if err != nil {
@@ -129,12 +131,13 @@ func locate(root string) (dir string, husky bool, err error) {
 	return hooks, false, nil
 }
 
-// runs are the Checks of the Git hook `hook` that `on` turns on, in the order it runs them.
-func runs(hook string, on func(check string) bool) []string {
+// runs is what the Git hook `hook` runs, in order: its Checks that `on` turns on, then its command,
+// named `git-hook-commands.<hook>`, where `on` says the Config sets one.
+func runs(hook string, on func(name string) bool) []string {
 	var running []string
-	for _, check := range checks.GitHooks[hook] {
-		if on(check) {
-			running = append(running, check)
+	for _, name := range append(slices.Clone(checks.GitHooks[hook]), names.GitHookCommands+"."+hook) {
+		if on(name) {
+			running = append(running, name)
 		}
 	}
 	return running
@@ -144,28 +147,27 @@ func runs(hook string, on func(check string) bool) []string {
 type State string
 
 const (
-	// Off: none of its Checks is on, and no Git hook of the plugin's is there.
+	// Off: it runs nothing (see runs), and no Git hook of the plugin's is there.
 	Off State = "off"
-	// Running: the plugin's, as session start writes it, runs its Checks that are on.
+	// Running: the plugin's, as session start writes it, runs what it runs.
 	Running State = "running"
-	// Missing: one of its Checks is on, but no Git hook is there.
+	// Missing: it runs something, but no Git hook is there.
 	Missing State = "missing"
-	// Theirs: a Git hook the plugin didn't write is there, and keeps its Checks that are on from
-	// running.
+	// Theirs: a Git hook the plugin didn't write is there, and keeps what it runs from running.
 	Theirs State = "theirs"
 	// Outdated: the plugin's is there, but not as session start would write it now, such as one
 	// running the link in another data folder.
 	Outdated State = "outdated"
-	// Leftover: the plugin's is there, but its Checks are all off.
+	// Leftover: the plugin's is there, but it runs nothing.
 	Leftover State = "leftover"
 )
 
 // Hook is one of the plugin's Git hooks as Inspect finds it.
 type Hook struct {
 	Name, Path string
-	// Checks are its Checks the Config turns on.
-	Checks []string
-	State  State
+	// Runs is what it runs: its Checks the Config turns on, then its command (see runs).
+	Runs  []string
+	State State
 	// Bin is the binary the plugin's Git hook runs, read from it; "" where none of the plugin's
 	// is there.
 	Bin string
@@ -184,7 +186,7 @@ func Inspect(root, data string, on func(check string) bool) (dir string, husky b
 	}
 	bin := filepath.Join(data, names.Plugin)
 	for _, name := range slices.Sorted(maps.Keys(checks.GitHooks)) {
-		h := Hook{Name: name, Path: filepath.Join(dir, name), Checks: runs(name, on)}
+		h := Hook{Name: name, Path: filepath.Join(dir, name), Runs: runs(name, on)}
 		text, err := os.ReadFile(h.Path)
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return dir, husky, hooks, err
@@ -193,14 +195,14 @@ func Inspect(root, data string, on func(check string) bool) (dir string, husky b
 		switch {
 		case had && !ours(string(text)):
 			h.State = Theirs
-			if len(h.Checks) == 0 {
+			if len(h.Runs) == 0 {
 				h.State = Off
 			}
-		case !had && len(h.Checks) == 0:
+		case !had && len(h.Runs) == 0:
 			h.State = Off
 		case !had:
 			h.State = Missing
-		case len(h.Checks) == 0:
+		case len(h.Runs) == 0:
 			h.State = Leftover
 		case data != "" && string(text) == script(bin, name):
 			h.State = Running
@@ -213,7 +215,7 @@ func Inspect(root, data string, on func(check string) bool) (dir string, husky b
 		if husky {
 			text, _ := os.ReadFile(filepath.Join(root, ".husky", name))
 			has := slices.Contains(strings.Split(string(text), "\n"), huskyLine(name))
-			h.HuskyOutdated = has != (len(h.Checks) > 0)
+			h.HuskyOutdated = has != (len(h.Runs) > 0)
 		}
 		hooks = append(hooks, h)
 	}
