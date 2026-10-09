@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.25.0 — 2026-10-09
+
+### Features
+
+- git-hooks: run the project's own command under git-hook-commands once the Checks pass (b4903ef)
+
 ## 0.24.1 — 2026-10-07
 
 ### Fixes
