@@ -1,6 +1,6 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-07
+Date: 2026-10-09
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
 closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the binary's
@@ -24,7 +24,8 @@ started and the first eight characters of the ended session's id, such as
 `20261007T174211Z-acf806f4`, and writes its Proposals to `.about/proposals/<id>.md`: a
 `## <P1> · <target> · <kind> · <path> · <title>` heading each, the target `inbox`, `glossary`,
 `adr` or `prd`, the kind `add`, `edit` or `delete`, a line of why, and the ready edit, the text it
-changes under `Before:` and the text it puts there under `After:`, each in a `~~~` fence. Its tools
+changes under `Before:` and the text it puts there under `After:`, each in a `~~~` fence, which the
+binary also reads as a ``` one, as a reviewer sometimes writes it anyway. Its tools
 are reading and writing that folder only; anything not allowed is denied rather than asked, and it
 never commits. The folder goes into the repo's `info/exclude`, not into git: a Proposal is a
 retelling of the conversation the user hasn't agreed to yet, and a commit of "everything" would
