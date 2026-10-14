@@ -6,8 +6,8 @@ Git hooks or takes them out (ADR git-hooks). What it prints Claude Code adds to 
 it prints only what Claude should know: a Config it created, an Output style, an attribution or a
 Status line it set, the Git hooks it wrote, took out, changed in husky or left alone, a Hook Check
 it turns off (ADR checks), a Session review still running and the Proposals waiting for the user
-(ADR session-review), how many items the Inbox holds (ADR inbox), and the problems, each on one
-line; then the Guidelines the Config turns on (ADR guidelines). In a Session review's session it
+(ADR session-review), how many items the Inbox holds (ADR inbox), the files in .about/ git hasn't
+committed (ADR about-folder), and the problems, each on one line; then the Guidelines the Config turns on (ADR guidelines). In a Session review's session it
 only names the Guidelines: that session changes nothing but its Proposals (ADR session-review).
 
 Each part returns its own Lines, and session start only gathers them, in the order of PARTS: a new
@@ -33,6 +33,7 @@ from baloo import (
     settings,
     statusline,
 )
+from baloo.checks.git import Error as GitError, git
 
 
 @dataclass
@@ -195,6 +196,33 @@ def _inbox(s: Start) -> Lines:
     return Lines(inbox.lines(s.config.root) if s.config.root else [])
 
 
+def _uncommitted_about(s: Start) -> Lines:
+    """The files in .about/ with changes git hasn't committed, new ones too, for the user to
+    commit (ADR about-folder): not the Proposals, and nothing in a headless session."""
+    if not s.config.root or review.headless():
+        return Lines()
+    try:
+        out = git(s.config.root, "status", "--porcelain", "-z", "--untracked-files=all", "--",
+                  ".about")
+    except (GitError, OSError) as e:
+        return Lines(problems=[f".about/ changes: {e}"])
+    files = []
+    entries = iter(out.split("\0"))
+    for entry in entries:
+        path = entry[3:]
+        if entry[:1] in ("R", "C"):
+            next(entries, "")  # a rename's or a copy's old path
+        if path.startswith(".about/") and not path.startswith(names.PROPOSALS):
+            files.append(path)
+    files.sort()
+    if not files:
+        return Lines()
+    return Lines([
+        f".about/ has changes git hasn't committed: {', '.join(files)}: tell the user, and that "
+        "committing them is theirs"
+    ])
+
+
 # The parts session start reports on, in the order it prints their lines; the Guidelines' index
 # comes after them all.
 PARTS: List[Callable[[Start], Lines]] = [
@@ -206,6 +234,7 @@ PARTS: List[Callable[[Start], Lines]] = [
     _hook_checks_off,
     _session_review,
     _inbox,
+    _uncommitted_about,
 ]
 
 

@@ -3,7 +3,7 @@ import os
 import unittest
 
 from baloo import names, review
-from tests import commands
+from tests import commands, testkit
 from tests.commands import PLUGIN, in_repo, read, run, start, write
 
 ENABLE = '{"enabledPlugins": {"' + names.PLUGIN_ID + '": true}}'
@@ -174,6 +174,29 @@ class SessionStart(unittest.TestCase):
                     self.assertIn("\n" + want, out)
                 else:
                     self.assertNotIn(names.INBOX + " holds", out)
+
+    # Session start names the files in .about/ with changes git hasn't committed, new ones too,
+    # for the user to commit, but not the Proposals, and a headless session is shown nothing.
+    def test_uncommitted_about(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, ".about/glossary.md"), "# Glossary\n")
+        testkit.git(dir, "add", ".about/glossary.md")
+        testkit.git(dir, "commit", "-q", "-m", "docs: glossary")
+        _, out, _ = start(self)
+        self.assertNotIn("git hasn't committed", out)
+
+        write(os.path.join(dir, ".about/glossary.md"), "# Glossary\n\nchanged\n")
+        write(os.path.join(dir, ".about/adr/new.md"), "# New\n")
+        write(os.path.join(dir, names.PROPOSALS + "r.md"), "# Session review r\n")
+        _, out, _ = start(self)
+        self.assertIn(
+            "\n.about/ has changes git hasn't committed: .about/adr/new.md, .about/glossary.md: "
+            "tell the user, and that committing them is theirs\n",
+            out,
+        )
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
+        _, out, _ = start(self)
+        self.assertNotIn("git hasn't committed", out)
 
     # Session start names a Check a Hook runs that the Config turns off, for the user.
     def test_checks_off(self):
