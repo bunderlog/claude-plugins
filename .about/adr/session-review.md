@@ -16,7 +16,10 @@ than 2,000 characters, which can't have settled much, and a headless one, its ow
 tool's, and a review never starts another. Only what the conversation clearly agreed, and only
 about the repo it runs in, is proposed. Anything contested or left open, and a bug or a problem
 the session found but didn't fix, is an Inbox item to add, and an item the conversation settled
-one to delete (ADR inbox).
+one to delete (ADR inbox). What is still to do or check on a ticket the conversation worked on, a
+check on a device, a PR to merge, a wait on firmware, stays with that ticket and gets no Proposal:
+in one project's week, 14 of the review's 37 Inbox items were such, and 44 of the 48 items added
+that week never came up again outside going through the Proposals and the Inbox.
 
 It edits nothing in `.about/` itself: it writes Proposals, each a change to the Inbox, the
 glossary, an ADR or a PRD that the user accepts, rejects or defers. Each review has an id, when it
@@ -94,6 +97,10 @@ session start still names the Guidelines. It runs with the user's default model.
   yet at session start, where the environment already says it.
 - Only the glossary and the ADRs (until 2026-10-01) — a bug the session found and didn't fix was
   lost with it.
+- A ticket's open check or wait as an Inbox item (until 2026-10-14) — nobody looks for it there,
+  and the ticket is where whoever takes it up looks.
+- A Proposal of a comment on the ticket — the review can't reach the tracker, and the user would
+  post each by hand.
 - Dropping it, since most reviews change nothing — the few that do record what would otherwise
   be lost, and what they recorded came up in a later session in 58% of cases.
 - Session start as in any other session but for the Git hooks (until 2026-10-01) — nothing

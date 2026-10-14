@@ -55,7 +55,9 @@ propose only what the conversation clearly agreed, and only about this repo. Any
 left open, and a bug or problem it found but didn't fix, is an Inbox item to add to """
         + names.INBOX
         + """: a "## <title>", a line "<YYYY-MM-DD> · session review", then what it is and
-what would settle it. An item the conversation settled is one to delete. A PRD changes only where
+what would settle it. What is still to do or check on a ticket the conversation worked on (a check
+on a device, a PR to merge, a wait on firmware) stays with that ticket: propose nothing for it. An
+item the conversation settled is one to delete. A PRD changes only where
 the conversation agreed what the feature is for or how it is checked.
 
 Write nothing when there is nothing to propose. Otherwise write the file as:
