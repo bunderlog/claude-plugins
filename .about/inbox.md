@@ -29,8 +29,8 @@ technical ADRs stay with the code, apart from the project's decisions; what a Se
 for a kind kept in an outside tool goes to the local Inbox, for a person to move. To weigh:
 Sancrisoft's risk register handed from spec to QA, Squad's opportunity solution tree, Kiro's
 steering split into product, tech and structure. Settled once a project keeps a kind in an outside
-tool, or `.about/` takes a new kind such as "Records of solved problems": then decide where the map
-of kinds to places lives and how a skill finds it, and rewrite ADR about-folder.
+tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
+a skill finds it, and rewrite ADR about-folder.
 
 ## Session start knows every part of the plugin
 
@@ -72,14 +72,6 @@ Loading on a task's demand is itself an open question, not a confirmed approach:
 of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
 `.about/` read before an edit to code in 8 of 28 sessions.
 
-## Records of solved problems
-
-2026-10-07 · session review
-
-Compound Engineering keeps a record of each solved problem in `docs/solutions/`, for a later
-session to find; `.about/` has no such kind. Its cost to the context is in "Project knowledge
-reaches the context only as a task needs it". Settled by deciding whether baloo takes it.
-
 ## No evals for the skills
 
 2026-10-07 · session review
@@ -90,16 +82,6 @@ weaken it unseen. Settled by deciding whether skills get evals, a set of tasks r
 with its result checked, and which skills first, or that sessions and `retro` are enough. The
 measurement of 2026-10-07 (ADR measurement) read sessions, not prompts: it shows whether a part was
 used, not whether a skill's text works.
-
-## Interactive sessions leave `.about/` edits nobody reviewed too
-
-2026-10-07 · user
-
-Of 9 edits to `.about/` found uncommitted and unread on 2026-10-07, 5 came from the user's own
-interactive sessions, not from a Session review: an interview's results written and never
-committed. Proposals cover only the review (ADR session-review). Settled by deciding whether an
-interactive session's edits to `.about/` need a step of their own, such as session start naming
-uncommitted changes there, or are the user's to commit like any other.
 
 ## Guidelines tied to a task, not a file, still wait to be read
 
