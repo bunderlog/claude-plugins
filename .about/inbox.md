@@ -1,15 +1,16 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-10-03
+2026-10-03 · user · kept 2026-10-14
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. Settled by deciding
 which stacks get one, each with its stack detection for a new Config, or none. Kept to write
-each when a project in that stack takes up baloo.
+each when a project in that stack takes up baloo: `python` when the port to Python starts (ADR
+binary), since this repo becomes that project.
 
 ## Guidelines for concerns across stacks
 
-2026-10-03 · user · kept 2026-10-03
+2026-10-03 · user · kept 2026-10-14
 
 `security` (input, authorization, Secrets in code), `api-design` (versions, compatibility) and
 `observability` (logs, errors, metrics) as Guidelines. Settled by deciding which earn a Guideline
@@ -19,7 +20,7 @@ out of commits and Claude's context; kept until a session shows a gap they leave
 
 ## Where each kind of project knowledge lives
 
-2026-10-05 · user
+2026-10-05 · user · kept 2026-10-14
 
 A project can keep part of its knowledge outside the repo, in a tool such as Jira, Confluence,
 GitHub Issues or a wiki. Agreed so far: the project names where each kind lives (requirements, bugs,
@@ -34,7 +35,7 @@ a skill finds it, and rewrite ADR about-folder.
 
 ## Project knowledge reaches the context only as a task needs it
 
-2026-10-06 · user
+2026-10-06 · user · kept 2026-10-14
 
 After a few weeks, this repo's `.about/` is about 25k tokens (20 ADRs about 82 KB, the glossary
 and the Inbox about 15 KB) and the Guidelines another 10k, and both only grow; the more of it a
@@ -62,7 +63,7 @@ of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 
 
 ## Guidelines tied to a task, not a file, still wait to be read
 
-2026-10-07 · user
+2026-10-07 · user · kept 2026-10-14
 
 `debugging`, `ci`, `design`, `principles`, `writing-for-agents` and `dependencies` reach Claude
 only as a line of session start's index, for Claude to read when their task comes up; the
@@ -71,10 +72,12 @@ and in one project in 0 of 29 (ADR measurement). The file Claude touches can't t
 so the Hook that gives `typescript`, `vue` and `testing` (ADR guidelines) doesn't reach them.
 Settled by finding a signal that does tell the task, such as a failing test run for `debugging`
 or a CI run named in the prompt for `ci`, or deciding they stay Claude's to read.
+Kept to settle with the port to Python (ADR binary), which rewrites the Hooks anyway; an eval
+suite (ADR evals) can measure whether a signal makes Claude read them.
 
 ## The Release workflow's runner moves to Ubuntu 26
 
-2026-10-06 · session review
+2026-10-06 · session review · kept 2026-10-14
 
 The `ubuntu-latest` label that CI and the Release workflow run on moves to Ubuntu 26 from
 2026-10-19; the v0.21.1 Release run warned of it. Settled by pinning the runner, or by seeing a
