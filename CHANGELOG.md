@@ -2,6 +2,16 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.27.0 — 2026-10-14
+
+### Features
+
+- give the Guidelines tied to a task when the task shows, not only by session start's index (2c52acf)
+
+### Fixes
+
+- guidelines: cut what principles repeats or what Claude does anyway (6000f75)
+
 ## 0.26.2 — 2026-10-14
 
 ### Fixes

@@ -59,7 +59,7 @@ with `$BASE` the commit the checked commits start from and `$BRANCH` the branch 
 
 ```sh
 set -e
-version=0.26.2
+version=0.27.0
 dir=$(mktemp -d)
 curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/refs/tags/v$version.tar.gz" |
   tar -xz -C "$dir"
