@@ -5,8 +5,8 @@
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. Settled by deciding
 which stacks get one, each with its stack detection for a new Config, or none. Kept to write
-each when a project in that stack takes up baloo: `python` when the port to Python starts (ADR
-binary), since this repo becomes that project.
+each when a project in that stack takes up baloo: `python` now, since this repo is in Python from
+0.26.0 (ADR binary) and the port left it unwritten.
 
 ## Guidelines for concerns across stacks
 
@@ -72,8 +72,9 @@ and in one project in 0 of 29 (ADR measurement). The file Claude touches can't t
 so the Hook that gives `typescript`, `vue` and `testing` (ADR guidelines) doesn't reach them.
 Settled by finding a signal that does tell the task, such as a failing test run for `debugging`
 or a CI run named in the prompt for `ci`, or deciding they stay Claude's to read.
-Kept to settle with the port to Python (ADR binary), which rewrites the Hooks anyway; an eval
-suite (ADR evals) can measure whether a signal makes Claude read them.
+It was kept to settle with the port to Python (ADR binary), which ended in 0.26.0 without settling
+it, so it needs a new reason to stay or goes; an eval suite (ADR evals) can measure whether a
+signal makes Claude read them.
 
 ## The Release workflow's runner moves to Ubuntu 26
 
@@ -162,3 +163,37 @@ With the binary, the recipe checked the download against the Release's `SHA256SU
 `run.py` from GitHub's archive of the pinned tag over HTTPS, and a tag can be moved. Settled by
 deciding whether the recipe pins a commit's SHA instead, or the Release workflow publishes a
 checksum of the archive to check, or the tag over HTTPS is enough.
+
+## The data folder's link flips between installed versions, and the old binary is never pruned
+
+2026-10-14 · upgrade to 0.26.0
+
+The plugin's data folder is shared by every version installed, so with 0.26.0 here and 0.25.1 in
+other projects, each session start points `baloo` in it anew: 0.25.1 at its Go binary, 0.26.0 at its
+plugin folder. Whichever started last wins, and the other's Git hooks and Status line find the
+wrong thing (0.26.0's Git hooks skip the Checks with "is missing"). The 0.25.1 Loader pruned old
+`baloo_*` binaries; 0.26.0 has no Loader, so `baloo_0.25.1_linux_amd64` and its `.sha256` stay
+forever once no project runs 0.25.1. Settled by session start removing `baloo_*` files when no
+installed version needs them, or by deciding upgrading every project and deleting them by hand is
+enough.
+
+## No test covers run.py on a python3 older than 3.9
+
+2026-10-14 · session review
+
+ADR binary decides that `run.py` on a python3 older than 3.9 says so: exit 2 for session start,
+`doctor` and `check`, exit 0 for a Git hook, nothing for the other Hooks and the Status line. The
+port checked it once by hand on a real Python 3.8, but `mise run check` and CI run only 3.9, so
+newer syntax slipping into what `run.py` runs before its version check would go unnoticed.
+Settled by a test that runs `run.py` under an older `python3`, in CI or faked as the `hook`
+wrapper's tests fake `python3`, or by deciding the hand check is enough.
+
+## Nothing formats or lints the plugin's Python
+
+2026-10-14 · session review
+
+The Go code had `gofmt` and `vet` in `mise run check`; since the port, the Python in
+`plugins/baloo/scripts/` and `src/release/` has neither, only the tests, `shellcheck` and `cspell`.
+A dev tool such as `ruff` would run in `mise run check` and CI, and as this repo's
+`format-on-edit`, without becoming a plugin dependency (ADR binary). Settled by choosing a
+formatter and linter for the repo, or deciding the tests and Pyright are enough.
