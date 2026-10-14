@@ -39,7 +39,7 @@ guidelines:
   debugging: true
   dependencies: true
   design: true
-  go: true
+  go: false
   principles: true
   tailwind: false
   testing: true
