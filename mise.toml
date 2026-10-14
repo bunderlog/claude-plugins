@@ -1,13 +1,15 @@
 # Tools and tasks for working on this repo; CI runs the same `mise run check`. A Release's binaries
-# take their Go version from src/baloo/go.mod, whatever Go this installs.
+# take their Go version from src/baloo/go.mod, whatever Go this installs. Python is the oldest the
+# plugin supports (ADR binary), so the tests catch code that needs a newer one.
 [tools]
 go = "1.27.1"
+python = "3.9.25"
 shellcheck = "0.11.0"
 node = "24.21.0"
 "npm:cspell" = "10.3.6"
 
 [tasks.check]
-description = "Check the Go code's formatting, vet and test it, lint the Loader, and spell-check the repo"
+description = "Check the Go code's formatting, vet and test it, test the Python code, lint the Loader, and spell-check the repo"
 dir = "src"
 run = [
   'test -z "$(gofmt -l baloo release)" || { gofmt -l baloo release; exit 1; }',
@@ -15,6 +17,7 @@ run = [
   "go -C baloo test ./...",
   "go -C release vet ./...",
   "go -C release test ./...",
+  "cd .. && python -m unittest discover -s tests -t .",
   "shellcheck ../plugins/baloo/scripts/loader",
   "cd .. && cspell --no-progress $(git ls-files -co --exclude-standard)",
 ]

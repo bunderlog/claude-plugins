@@ -2,6 +2,7 @@
   "version": "0.2",
   "language": "en,en-US",
   "words": [
+    "adrs",
     "akela",
     "ampcode",
     "anthropics",
@@ -45,6 +46,7 @@
     "obra",
     "outputstyle",
     "pinia",
+    "prds",
     "pyproject",
     "pythonpath",
     "rdap",
