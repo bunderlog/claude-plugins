@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 
@@ -59,6 +60,39 @@ class Doctor(unittest.TestCase):
         ]:
             self.assertIn(want, out)
         self.assertFalse(os.path.lexists(link), "doctor put the link back")
+
+    # A newer version installed for this project than the one running is a problem a restart
+    # fixes: Claude Code loads a plugin only when it starts. Another project's install, an older
+    # one or a file of another shape is none; a user's install counts where the project has none.
+    def test_installed_newer(self):
+        dir = in_repo(self)
+        self.assertEqual(start(self)[0], 0)
+        installed = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json")
+        want = (
+            f"- this session runs baloo {version.read()}, but 99.0.0 is installed for this "
+            "project: restart Claude Code to run it\n"
+        )
+
+        def entry(scope, version, project=""):
+            e = {"scope": scope, "version": version}
+            if project:
+                e["projectPath"] = project
+            return e
+
+        for entries, problem in [
+            ([entry("local", "99.0.0", dir)], True),
+            ([entry("user", "99.0.0")], True),
+            ([entry("user", "99.0.0"), entry("project", "0.0.1", dir)], False),
+            ([entry("local", "99.0.0", "/elsewhere")], False),
+            ([entry("local", "0.0.1", dir)], False),
+            ("not a list", False),
+        ]:
+            with self.subTest(entries=entries):
+                write(installed, json.dumps({"plugins": {names.PLUGIN_ID: entries}}))
+                code, out = doctor_run(self)
+                self.assertEqual((code, want in out), (1 if problem else 0, problem), out)
+        write(installed, "{")
+        self.assertEqual(doctor_run(self)[0], 0)
 
     # A link that points elsewhere, such as at the version before, is a problem.
     def test_link_elsewhere(self):

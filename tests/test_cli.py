@@ -407,6 +407,27 @@ class PostToolUse(unittest.TestCase):
         self.assertNotIn("testing Guideline", got)
         self.assertEqual(call("Edit", "src/b.ts"), "")
 
+    # A session running an older version than the one installed for the project is told, once,
+    # to have the user restart, at its next prompt: no session start runs for it again.
+    def test_prompt_names_a_newer_install(self):
+        dir = in_repo(self)
+        write(
+            os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+            json.dumps({"plugins": {names.PLUGIN_ID: [
+                {"scope": "local", "projectPath": dir, "version": "99.0.0"}
+            ]}}),
+        )
+
+        def prompt():
+            code, out, err = run("user-prompt-submit", stdin='{"session_id":"s1"}')
+            self.assertEqual((code, err), (0, ""))
+            return out
+
+        out = prompt()
+        self.assertIn('"hookEventName":"UserPromptSubmit"', out)
+        self.assertIn("but 99.0.0 is installed for this project: tell the user to restart", out)
+        self.assertNotIn("99.0.0", prompt())
+
     # A Bash command that failed, which Claude Code hands to PostToolUseFailure, gives Claude the
     # Guideline of its task in that Hook's answer.
     def test_gives_guidelines_by_command(self):

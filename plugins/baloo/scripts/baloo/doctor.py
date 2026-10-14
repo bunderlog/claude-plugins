@@ -24,6 +24,12 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     w = io.StringIO()
 
     w.write(f"\nPlugin:\n  running\t{binlink.PLUGIN} ({version.read()})\n")
+    newer = version.newer_installed(c.root) if c.root else ""
+    if newer:
+        problems.append(
+            f"this session runs {names.PLUGIN} {version.read()}, but {newer} is installed for this "
+            "project: restart Claude Code to run it"
+        )
     link = ""
     if not data:
         problems.append(

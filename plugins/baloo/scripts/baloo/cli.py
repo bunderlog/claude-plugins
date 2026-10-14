@@ -23,6 +23,7 @@ from baloo import (
     guidelines,
     hook,
     names,
+    once,
     review,
     session_start,
     settings,
@@ -366,7 +367,8 @@ def session_end(text: str, stdout: TextIO) -> int:
 def user_prompt_submit(text: str, stdout: TextIO) -> int:
     """The UserPromptSubmit Hook's part (ADR session-review): it tells Claude of the Proposals that
     came, such as from a Session review that ended after session start, and the session hasn't
-    been told of yet. It says nothing else, and nothing in a Session review's session.
+    been told of yet, and once of a newer version installed for the project, which only a restart
+    runs (ADR doctor). It says nothing else, and nothing in a Session review's session.
     In a session the plugin was updated in, which no SessionStart Hook ran for, the link in the
     plugin's data folder still points at the version before (see binlink): it runs this version's
     session start first, which points it here, and says nothing of what fails there."""
@@ -387,6 +389,12 @@ def user_prompt_submit(text: str, stdout: TextIO) -> int:
     if not c.root:
         return 0
     lines = review.show(c.root, data, session, hook.decide_command())
+    newer = version.newer_installed(c.root) if not review.headless() else ""
+    if newer and once.first(data, "restart", session):
+        lines.append(
+            f"this session runs {names.PLUGIN} {version.read()}, but {newer} is installed for this "
+            "project: tell the user to restart Claude Code to run it"
+        )
     if lines:
         hook.context(stdout, "UserPromptSubmit", f"{names.PLUGIN}:\n" + "\n".join(lines) + "\n")
     return 0

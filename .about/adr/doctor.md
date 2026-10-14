@@ -15,7 +15,13 @@ exits 1 when it finds a problem, 0 otherwise, and prints the same text for the u
 
 It only reads: what fixes a problem is the next session start, or a file or a Config key that is the
 user's to change, which it names. The versions it compares are local, the running plugin's with the
-link's target; it asks GitHub for nothing.
+link's target and with the one Claude Code records as installed for the project, in its own
+folder's `plugins/installed_plugins.json`; it asks GitHub for nothing. Claude Code loads a plugin
+only when it starts, so a session started before an update runs the version before for hours: on
+2026-10-14 a project ran 0.24.1 and 0.21.1 for a week with 0.25.1 installed. A newer version
+installed is a problem a restart fixes, and the next prompt in such a session tells Claude, once,
+to tell the user; that file is Claude Code's and undocumented, so a shape it can't read says
+nothing.
 
 The plugin isn't on the PATH, so the `doctor` skill runs it as `python3 -E -s
 <plugin>/scripts/run.py doctor`, as `retro` runs `condense` (ADR binary), and answers the user's
@@ -35,6 +41,9 @@ Claude.
 - The latest GitHub Release beside the local versions — "update the plugin" said for the user, for
   a network call, its time and the API's limits, on every run.
 - JSON output — one format for Claude to parse, but the user would read it too.
+
+- Asking GitHub for the latest Release — it would name an update the user hasn't installed, at a
+  call per session; what was installed and not yet run is the gap.
 
 ## Consequences
 
