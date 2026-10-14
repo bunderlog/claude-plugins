@@ -1,0 +1,4 @@
+{
+  "extraPaths": ["plugins/baloo/scripts"],
+  "pythonVersion": "3.9"
+}
