@@ -2,6 +2,16 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.26.0 — 2026-10-14
+
+### Breaking changes
+
+- run the Hooks and Git hooks with python3 instead of a downloaded binary (65a54e9)
+
+### Fixes
+
+- guidelines: drop the pre-coding questions and the plan template, so Claude doesn't over-plan (a46ca63)
+
 ## 0.25.1 — 2026-10-09
 
 ### Fixes
