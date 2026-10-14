@@ -29,21 +29,10 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Never start a word with `=` (`echo ====`): zsh expands it to a command's path. Use `echo ---`.
 - Don't name a variable `status`, `path` or `argv`: zsh reserves them.
 
-## Before starting
-
-Answer these before writing code. If an answer is missing, say so rather than proceeding
-silently:
-
-- **Problem** — whose pain, in one sentence?
-- **Why now** — what changed; what's the evidence or trigger?
-- **Scope** — the smallest change that tests the hypothesis.
-- **Success signal** — the one metric expected to move, or the qualitative signal if no metric
-  applies.
-- **Reversibility** — one-way or two-way door?
-
 ## 1. Frame the problem before the solution
 
 - State the user, the problem and the job to be done _before_ proposing a solution.
+- Say why now: what changed, and the evidence or trigger.
 - Tell the symptom ("the button is slow") from the problem ("users abandon checkout").
 - Look for prior art in the codebase before designing something new.
 
@@ -136,12 +125,7 @@ scratch folder or a global install.
 - A fix is done when the installed or running thing shows it, not when its source changed:
   reinstall or rerun, and read the live state.
 
-For multi-step work, state the plan as numbered steps, each with its check:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-```
+For multi-step work, give each step the check that shows it's done.
 
 If acceptance criteria can't be written, the work isn't ready to start.
 
