@@ -164,7 +164,7 @@ def _shows(p: Program, dir: str) -> str:
         elif p.name in _READERS and i != pattern:
             file = a
         why = _secret_file(file, dir)
-        if why:
+        if why and not _hides_values(p, i):
             return why
     named = [a for a in args if not a.startswith("-")]
 
@@ -187,6 +187,8 @@ def _shows(p: Program, dir: str) -> str:
         if not args:
             return "set prints every shell variable"
     elif p.name in ("echo", "printf", "print"):
+        if _to_file(args):
+            return ""
         shown: List[str] = []
         for a in args:
             text, inner = _substituted(a)
@@ -234,6 +236,41 @@ def _shows(p: Program, dir: str) -> str:
     return ""
 
 
+# grep's flags that print no line: a count, the files' names, or nothing.
+_NO_LINES = (
+    "-c", "-l", "-L", "-q", "--count", "--files-with-matches", "--files-without-match", "--quiet",
+    "--silent",
+)
+
+
+def _hides_values(p: Program, at: int) -> bool:
+    """Whether the program `p` shows no value of the file its argument at `at` names: a grep that
+    prints only a count or the files' names, or only the names before `=`. Another reader, as
+    `cut -d= -f1`, prints a line with no `=` whole, as the next line of a value over several is."""
+    if p.name not in ("grep", "egrep", "fgrep"):
+        return False
+    drop = 2 if p.args[at] == "<" else 1
+    rest = Program(p.name, p.args[:at] + p.args[at + drop :])
+    return has_flag(p.args, *_NO_LINES) or _names_only(rest)
+
+
+# A redirection of the output, `>` or `>>`, with its target when it is in the same word.
+_REDIRECT = re.compile(r"1?>>?(.*)", re.S)
+
+
+def _to_file(args: List[str]) -> bool:
+    """Whether the arguments `args` send the program's output into a file: not into a descriptor,
+    as `>&2` (whose `&` ends the word), or a device other than /dev/null."""
+    for i, a in enumerate(args):
+        m = _REDIRECT.fullmatch(a)
+        if not m:
+            continue
+        target = m[1] or (args[i + 1] if i + 1 < len(args) else "")
+        if target and (target == "/dev/null" or not target.startswith("/dev/")):
+            return True
+    return False
+
+
 def _dumps_env(p: Program) -> bool:
     """Whether the program `p` prints every environment variable: env or printenv without a
     name."""
@@ -251,8 +288,8 @@ def _keeps_names(p: List[Program]) -> bool:
     return False
 
 
-# A grep -o pattern that can match only the start of a line, and no `=`.
-_NAME_MATCH = re.compile(r"\^[\w()|\[\]*+?{},-]*", re.A)
+# A grep -o pattern that can match only the start of a line, and no `=` but one at its end.
+_NAME_MATCH = re.compile(r"\^[\w()|\[\]*+?{},-]*=?", re.A)
 _CUT_NAMES = re.compile(r"-d ?= -f ?1|-f ?1 -d ?=")
 _AWK_NAMES = re.compile(r"-F ?= \{ ?print \$1 ?\}")
 
