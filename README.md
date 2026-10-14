@@ -53,17 +53,16 @@ Guidelines. It changes nothing.
 ## CI
 
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git
-hooks didn't: without the plugin, or in GitHub's web editor. Download a pinned Release's source,
-run its `run.py` with `python3` 3.9 or later, and give each Check the input its Git hook would,
+hooks didn't: without the plugin, or in GitHub's web editor. Download a Release's source, pinned
+by its commit, run its `run.py` with `python3` 3.9 or later, and give each Check the input its Git hook would,
 with `$BASE` the commit the checked commits start from and `$BRANCH` the branch they go to:
 
 ```sh
 set -e
-version=0.27.0
+commit=ca278ce0458b7a5483c94a6888bec664d402f004 # v0.27.0
 dir=$(mktemp -d)
-curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/refs/tags/v$version.tar.gz" |
-  tar -xz -C "$dir"
-baloo() { python3 -E -s "$dir/claude-plugins-$version/plugins/baloo/scripts/run.py" "$@"; }
+curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/$commit.tar.gz" | tar -xz -C "$dir"
+baloo() { python3 -E -s "$dir/claude-plugins-$commit/plugins/baloo/scripts/run.py" "$@"; }
 for sha in $(git rev-list "$BASE"..HEAD); do
   git log -1 --format=%B "$sha" > "$dir/msg"
   baloo check conventional-commits "$dir/msg"
@@ -84,8 +83,10 @@ baloo check no-large-files
   the Config turns off passes.
 - `no-stale-adr-date` is left out: it compares an ADR's Date with today, so a change checked on a
   later day than it was made would fail.
-- How a Check takes its input follows the Git hooks, not a promised interface; the pinned version
-  keeps a later Release from breaking CI.
+- How a Check takes its input follows the Git hooks, not a promised interface; the pinned commit
+  keeps a later Release from breaking CI, and, unlike a tag, can't be moved to other code. The
+  line above is the last Release's; another's commit is `git ls-remote
+  https://github.com/bunderlog/claude-plugins v<version>`.
 
 ## Development
 

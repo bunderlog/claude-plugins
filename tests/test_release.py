@@ -74,33 +74,36 @@ class Section(unittest.TestCase):
 
 
 class Pin(unittest.TestCase):
-    # The README's CI recipe pins the new version; nothing else in it changes.
+    # The README's CI recipe pins the Release's commit, named with its version; nothing else in it
+    # changes.
     def test_pin(self):
         readme = (
-            "Pin it:\n\n```sh\nset -e\nversion=0.9.0\nfile=baloo_${version}_linux_amd64\n```\n\n"
-            "version=0.9.0 in prose.\n"
+            "Pin it:\n\n```sh\nset -e\ncommit=aaa # v0.9.0\ndir=$(mktemp -d)\n```\n\n"
+            "commit=aaa # v0.9.0 in prose.\n"
         )
         want = (
-            "Pin it:\n\n```sh\nset -e\nversion=0.10.0\nfile=baloo_${version}_linux_amd64\n```\n\n"
-            "version=0.9.0 in prose.\n"
+            "Pin it:\n\n```sh\nset -e\ncommit=bbb # v0.10.0\ndir=$(mktemp -d)\n```\n\n"
+            "commit=aaa # v0.9.0 in prose.\n"
         )
-        self.assertEqual(release.pin(readme, "0.10.0"), want)
+        self.assertEqual(release.pin(readme, "0.10.0", "bbb"), want)
 
     # A README with no line to pin, or more than one, is an error rather than a Release that
     # leaves the recipe behind.
     def test_not_one_line(self):
         for readme, n in [
             ("no recipe\n", 0),
-            ("  version=0.9.0\n", 0),
-            ("version=0.9.0\r\n", 0),
-            ("version=0.9.0\nversion=0.9.0\n", 2),
+            ("version=0.9.0\n", 0),
+            ("  commit=aaa # v0.9.0\n", 0),
+            ("commit=aaa # v0.9.0\r\n", 0),
+            ("commit=aaa # v0.9.0\ncommit=aaa # v0.9.0\n", 2),
         ]:
             with self.subTest(readme=readme):
                 with self.assertRaises(release.Error) as caught:
-                    release.pin(readme, "0.10.0")
+                    release.pin(readme, "0.10.0", "bbb")
                 self.assertEqual(
                     str(caught.exception),
-                    f"README.md has {n} lines `version=<version>` for its CI recipe; want one",
+                    f"README.md has {n} lines `commit=<sha> # v<version>` for its CI recipe; "
+                    "want one",
                 )
 
 
@@ -121,7 +124,7 @@ def released(test):
     """A repo whose last Release is v0.3.1, with a README to pin and a CHANGELOG."""
     root = testkit.repo(test)
     write(root, names.MANIFEST, json.dumps({"name": "baloo", "version": "0.3.1"}, indent=2) + "\n")
-    write(root, "README.md", "```sh\nversion=0.3.1\n```\n")
+    write(root, "README.md", "```sh\ncommit=aaa # v0.3.0\n```\n")
     write(root, "CHANGELOG.md", release.CHANGELOG_HEADER + "\n## 0.3.1 — 2026-09-01\n\nOld.\n")
     testkit.git(root, "add", ".")
     testkit.git(root, "commit", "-q", "-m", "chore(release): 0.3.1")
@@ -144,7 +147,8 @@ class Release(unittest.TestCase):
         self.assertTrue(
             str(caught.exception).startswith(
                 "the release tag failed: fix what failed, then "
-                "`git tag -s v0.3.2 -m v0.3.2 && git push --atomic origin main v0.3.2`: "
+                "`git tag -s v0.3.2 -m v0.3.2 && python3 src/release/release.py pin && "
+                "git push --atomic origin main v0.3.2`: "
             ),
             caught.exception,
         )
@@ -158,9 +162,25 @@ class Release(unittest.TestCase):
                 + f"\n## 0.3.2 — 2026-10-14\n\n### Fixes\n\n- skills: a fix ({sha})\n"
                 + "\n## 0.3.1 — 2026-09-01\n\nOld.\n",
             )
+        # The README pins the tag's commit only in a commit after it, which a failed tag never
+        # makes.
         with open(os.path.join(root, "README.md")) as f:
-            self.assertEqual(f.read(), "```sh\nversion=0.3.2\n```\n")
+            self.assertEqual(f.read(), "```sh\ncommit=aaa # v0.3.0\n```\n")
         self.assertEqual(release.version(root), "0.3.2")
+
+    # After the tag, a commit of its own pins the README's CI recipe to the tagged commit, which
+    # the tagged commit can't name.
+    def test_pin_release(self):
+        root = released(self)
+        tagged = testkit.git(root, "rev-parse", "v0.3.1").strip()
+        release.pin_release(root, "0.3.1")
+        with open(os.path.join(root, "README.md")) as f:
+            self.assertEqual(f.read(), f"```sh\ncommit={tagged} # v0.3.1\n```\n")
+        self.assertEqual(
+            testkit.git(root, "log", "-1", "--format=%s").strip(),
+            "docs: pin the README's CI recipe to v0.3.1",
+        )
+        self.assertEqual(testkit.git(root, "rev-parse", "HEAD~1").strip(), tagged)
 
     def test_nothing_to_release(self):
         root = released(self)

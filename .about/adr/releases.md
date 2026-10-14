@@ -10,9 +10,10 @@ it.
 Release, so a commit only to the release tool, a test or the schema is never in a Release's
 version or notes. The commits follow Conventional Commits: below 1.0 a breaking change or a `feat`
 raises the minor, anything else the patch; from 1.0 a breaking change raises the major. It writes
-that version to `plugin.json` and to the line the README's CI recipe pins (ADR checks), and a
-section to `CHANGELOG.md`, commits them as `chore(release): <version>` and tags the commit
-`v<version>`, signed. The task then pushes `main` and the tag together; the tag starts the Release
+that version to `plugin.json` and a section to `CHANGELOG.md`, commits them as `chore(release):
+<version>` and tags the commit `v<version>`, signed. A commit after it pins the README's CI recipe
+(ADR checks) to the tagged commit's SHA, `docs: pin the README's CI recipe to v<version>`: a tag
+can be moved to other code, and a commit can't name its own SHA. The task then pushes `main` and the tag together; the tag starts the Release
 workflow, which publishes the CHANGELOG section as the GitHub Release. With nothing to build or
 download (ADR binary), a copy that updates before the workflow has run misses only the notes page.
 
@@ -31,6 +32,8 @@ it needs no Release.
   showed in the users' notes, and a `feat` to it raised the plugin's minor.
 - A pre-push check that a push changing the plugin carries a Release — a Release is made when
   someone decides to make one, not with every push.
+- The recipe pinning the tag (until 2026-10-14) — one commit a Release, but a moved tag would
+  run other code in a project's CI.
 - A placeholder for the version in the README's CI recipe — nothing to keep up, but the recipe
   no longer runs as copied.
 - A test failing when the README's version lags `plugin.json` — nothing forgotten, but an edit by

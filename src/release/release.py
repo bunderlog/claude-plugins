@@ -117,17 +117,34 @@ def section(version: str, date: str, commits: List[Commit]) -> str:
     return f"## {version} — {date}\n\n{body}"
 
 
-# The line of the README's CI recipe that names the Release it pins.
-_PINNED = re.compile(r"^version=\S+$", re.M | re.A)
+# The line of the README's CI recipe that names the commit it pins, and its Release: a commit,
+# since a tag can be moved.
+_PINNED = re.compile(r"^commit=\S+ # v\S+$", re.M | re.A)
 
 
-def pin(readme: str, version: str) -> str:
-    """The README `readme` with its CI recipe pinning `version`; an Error unless it has exactly
-    one line to pin."""
+def pin(readme: str, version: str, sha: str) -> str:
+    """The README `readme` with its CI recipe pinning the commit `sha` of the Release `version`;
+    an Error unless it has exactly one line to pin."""
     n = len(_PINNED.findall(readme))
     if n != 1:
-        raise Error(f"README.md has {n} lines `version=<version>` for its CI recipe; want one")
-    return _PINNED.sub(lambda _: "version=" + version, readme)
+        raise Error(
+            f"README.md has {n} lines `commit=<sha> # v<version>` for its CI recipe; want one"
+        )
+    return _PINNED.sub(lambda _: f"commit={sha} # v{version}", readme)
+
+
+def pin_release(root: str, version: str) -> None:
+    """Pins the README's CI recipe in the repo at `root` to the commit the tag of `version` names,
+    and commits it: the tagged commit can't name itself."""
+    sha = _git(root, "rev-parse", f"v{version}^{{commit}}")
+    readme = os.path.join(root, "README.md")
+    text = _read(readme)
+    if text is None:
+        raise Error(f"open {readme}: no such file or directory")
+    with open(readme, "w", encoding="utf-8", newline="") as f:
+        f.write(pin(text, version, sha))
+    _git(root, "add", "README.md")
+    _git(root, "commit", "-q", "-m", f"docs: pin the README's CI recipe to v{version}")
 
 
 def _git(root: str, *args: str) -> str:
@@ -164,9 +181,9 @@ def _read(path: str) -> Optional[str]:
 
 def release(root: str, today: str) -> str:
     """Makes a Release in the repo at `root` from the commits since the last `v*` tag: it writes
-    the next version to the manifest and the README's CI recipe and a section to CHANGELOG.md,
-    commits these and tags the commit, signed, for `mise run release` to push with main. It
-    returns the version."""
+    the next version to the manifest and a section to CHANGELOG.md, commits these and tags the
+    commit, signed, then pins the README's CI recipe to it in a commit of its own (see
+    pin_release), for `mise run release` to push with main. It returns the version."""
     try:
         clean = _git(root, "status", "--porcelain") == ""
     except Error:
@@ -200,7 +217,7 @@ def release(root: str, today: str) -> str:
     text = _read(readme)
     if text is None:
         raise Error(f"open {readme}: no such file or directory")
-    pinned = pin(text, new)
+    pin(text, new, "")  # checked now, written once the tag names the commit
     manifest = os.path.join(root, names.MANIFEST)
     text = _read(manifest)
     if text is None:
@@ -213,13 +230,13 @@ def release(root: str, today: str) -> str:
     entry = "\n" + section(new, today, commits)
     at = old.find("\n## ")
     changelog = old[:at] + entry + old[at:] if at >= 0 else old + entry
-    for path, out in ((manifest, bumped), (file, changelog), (readme, pinned)):
+    for path, out in ((manifest, bumped), (file, changelog)):
         with open(path, "w", encoding="utf-8", newline="") as f:
             f.write(out)
 
-    _git(root, "add", names.MANIFEST, "CHANGELOG.md", "README.md")
+    _git(root, "add", names.MANIFEST, "CHANGELOG.md")
     msg = "chore(release): " + new
-    push = f"git push --atomic origin main v{new}"
+    push = f"python3 src/release/release.py pin && git push --atomic origin main v{new}"
     if subprocess.run(["git", "-C", root, "commit", "-q", "-m", msg], stdout=sys.stderr).returncode:
         raise Error(
             "the release commit failed: fix what failed, then "
@@ -238,12 +255,13 @@ def release(root: str, today: str) -> str:
             f"the release tag failed: fix what failed, then `git tag -s v{new} -m v{new} && "
             f"{push}`: {p.stdout}"
         )
+    pin_release(root, new)
     return new
 
 
 def main(args: List[str]) -> int:
-    if args:
-        print("release: usage: python3 src/release/release.py", file=sys.stderr)
+    if args not in ([], ["pin"]):
+        print("release: usage: python3 src/release/release.py [pin]", file=sys.stderr)
         return 1
     try:
         root = _git(os.getcwd(), "rev-parse", "--show-toplevel")
@@ -251,6 +269,11 @@ def main(args: List[str]) -> int:
         print(f"release: not in the repo: {e}", file=sys.stderr)
         return 1
     try:
+        if args:  # the README pinned to the last tag, as release does after it
+            new = version(root)
+            pin_release(root, new)
+            print(f"pinned v{new}")
+            return 0
         new = release(root, date.today().isoformat())
     except (Error, OSError) as e:
         print(f"release: {e}", file=sys.stderr)
