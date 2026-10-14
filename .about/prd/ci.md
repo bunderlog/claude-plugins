@@ -39,7 +39,7 @@ pasting a log or naming the failed step.
 
 - A new Config in a repo whose root holds a CI's config (`.github/workflows/`, `Jenkinsfile`…)
   turns `ci` on; one in a repo without, or with it only below the root, leaves it off.
-  → test: src/baloo/internal/guidelines/guidelines_test.go "TestFitting"
+  → test: tests/test_guidelines.py "Fitting.test_fitting"
 - HEAD's run has failed in one step: Claude names the workflow, job and step, and runs that
   step's command locally, red, before it changes any file.
 - The failure was a test's: the fix adds a regression test, or names the missing seam, as the

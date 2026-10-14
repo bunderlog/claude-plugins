@@ -48,16 +48,17 @@ at the pushed commit, is still checked. A push that creates a branch, or whose r
 here, is checked against every remote-tracking ref. CI passes the branch the commits go to as the
 remote ref.
 
-One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the binary's
-`pre-tool-use`, which reads the Config once and runs the Checks it turns on. Where the binary is
-missing or fails, it says nothing, and the call runs: session start has already said that no Check
-runs that session (ADR binary).
+One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the plugin's
+`pre-tool-use`, which reads the Config once and runs the Checks it turns on. Where `python3` is
+missing or the plugin fails, it says nothing, and the call runs: session start has already said
+that no Check runs that session (ADR binary).
 
-`baloo check <name>` takes the input its Git hook gets, so a project's CI can run the same Checks
-on commits made where the Git hooks didn't run, as the README's CI section shows; this repo's CI
-does, with the binary built from the checked commit. `no-stale-adr-date` is left out there (ADR
-adr-format). That input follows the Git hooks and is not a promised interface, so a CI pins a
-Release.
+`baloo check <name>`, `run.py check <name>`, takes the input its Git hook gets, so a project's CI
+can run the same Checks on commits made where the Git hooks didn't run, as the README's CI section
+shows: it downloads a pinned Release's source archive from GitHub and runs its `run.py` with
+`python3`. This repo's CI does, with the checked commit's `run.py`. `no-stale-adr-date` is left out
+there (ADR adr-format). That input follows the Git hooks and is not a promised interface, so a CI
+pins a Release.
 
 ## Considered options
 
@@ -87,11 +88,11 @@ Release.
 - Passing pre-push's remote name to `linear-history`, so it tells the remote pushed to from another
   — changes `baloo check linear-history` and the README's CI recipe for a false positive nobody
   has hit yet.
-- A Hook per Check — a run of the binary per Check on every Bash call, each reading the Config.
+- A Hook per Check — a Python start per Check on every Bash call, each reading the Config.
 - Leaving `no-ai-coauthor` alone to catch the trailer — Claude Code adds it by default, so each
   commit fails once and is written again.
 - `attribution.pr` too — the Check reads commits, not pull requests.
-- Taking the attribution out where `no-ai-coauthor` goes off — the binary can't tell its value
+- Taking the attribution out where `no-ai-coauthor` goes off — the plugin can't tell its value
   from one the user wrote.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
 - `no-destructive-commands` (until 2026-10-07), denying a Bash command that destroys work beyond

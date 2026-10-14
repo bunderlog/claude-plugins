@@ -45,11 +45,11 @@ file names; ADRs and PRDs are edited in place, so nothing superseded piles up in
 Measures to weigh:
 
 - Session start lists the titles of the ADRs, terms and PRDs, and Claude reads a file by its path.
-- The binary picks what a task needs from the files it touches, once ADRs and acceptance criteria
+- The plugin picks what a task needs from the files it touches, once ADRs and acceptance criteria
   link to code.
 - Reading many ADRs goes to an agent of its own, as the verifier does, which returns only its
   report.
-- The binary counts the tokens session start adds and says when they pass a budget.
+- The plugin counts the tokens session start adds and says when they pass a budget.
 - A kind that only grows, such as Compound Engineering's `docs/solutions/` of solved problems,
   gets a search and a cleanup before baloo adds it, and what it archives stays out of every
   listing.
@@ -138,9 +138,27 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 Claude Code loads a plugin only when its process starts, and `/clear` doesn't reload it, so a
 session started before a background update keeps running the older Release until a restart. On
 2026-10-14 a session ran 0.21.1 for hours with 0.25.1 installed: `doctor` found no problem, since
-it compares only the running binary with the link's target (ADR doctor), and both were 0.21.1; its
+it compares only the running version with the link's target (ADR doctor), and both were 0.21.1; its
 Session review followed 0.21.1's prompt and edited `.about/` directly; and once 0.21.1 was deleted
 from `~/.claude/plugins/cache/`, that session's Hooks failed and the Git hooks' link pointed at a
 missing binary until a restart. Settled by deciding whether `doctor`, or session start, compares
 the running version with the installed one Claude Code records locally (still no call to GitHub)
 and tells the user to restart, or that a restart after an update stays the user's to know.
+
+## Session start doesn't name the uncommitted edits in .about/
+
+2026-10-14 · port to Python
+
+ADR about-folder decides that session start names the files in `.about/` with changes git hasn't
+committed, and ADR binary lists it among session start's parts, but neither the Go binary nor the
+Python port ever built it. Settled by building it as one more part of session start, a function in
+`baloo/session_start.py` and its line in `PARTS`, or by dropping the decision from both ADRs.
+
+## The README's CI recipe trusts a tag's archive without checking it
+
+2026-10-14 · port to Python
+
+With the binary, the recipe checked the download against the Release's `SHA256SUMS`; it now runs
+`run.py` from GitHub's archive of the pinned tag over HTTPS, and a tag can be moved. Settled by
+deciding whether the recipe pins a commit's SHA instead, or the Release workflow publishes a
+checksum of the archive to check, or the tag over HTTPS is enough.

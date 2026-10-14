@@ -1,6 +1,6 @@
 # baloo keeps what a measurement of its use confirmed, and drops what only added friction
 
-Date: 2026-10-07
+Date: 2026-10-14
 
 baloo was built on the thesis that enforcing the rules in code, in Hooks and Git hooks, is a niche
 of its own beside the project's knowledge. A measurement of how baloo was actually used checked
@@ -61,7 +61,7 @@ So:
 - With the thesis unconfirmed, there is no plugin per role (ADR plugin).
 
 A Config that still has a removed setting, `stop-check` or `claude-hooks.no-destructive-commands`,
-works as without it: the binary ignores it, session start says nothing of it, and `doctor` names
+works as without it: the plugin ignores it, session start says nothing of it, and `doctor` names
 it for the user to delete (ADR config, ADR doctor).
 
 ## Considered options

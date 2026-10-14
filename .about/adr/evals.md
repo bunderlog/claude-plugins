@@ -2,12 +2,12 @@
 
 Date: 2026-10-14
 
-Nothing measured whether a skill's text makes Claude follow it: the Go tests cover the binary, and
-the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was used,
-not whether a skill works. So the skills, the agent and the Guidelines get eval suites, run by
+Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
+and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
+used, not whether a skill works. So the skills, the agent and the Guidelines get eval suites, run by
 Claude Code's `claude plugin eval`, which scores each case with the plugin and without it, so a
-suite shows what the plugin adds. `adr` comes first: its rule never to contradict an ADR silently
-is the easiest to grade, given a proposal that breaks one.
+suite shows what the plugin adds. `adr` comes first: its rule never to contradict an ADR silently is
+the easiest to grade, given a proposal that breaks one.
 
 The suites live in `evals/` at the repo root, run with `--eval-dir`, outside the plugin: an install
 doesn't carry them, and a change to one needs no Release (ADR releases). They run by hand, as

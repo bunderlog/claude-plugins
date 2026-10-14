@@ -1,6 +1,6 @@
 # A Verification is the plugin's one agent, run by the `verify` skill when the user asks
 
-Date: 2026-10-07
+Date: 2026-10-14
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -27,9 +27,9 @@ user's model, as the Session review does (ADR session-review). No Config key tur
 plugin's agent and skill can't be hidden from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
-the agent alone (`^baloo:verifier$`): the binary's `subagent-start` gives it the same Guidelines
-index session start prints. Where the binary is missing or fails, the agent starts without it and
-says it couldn't check the Guidelines.
+the agent alone (`^baloo:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
+index session start prints. Where `python3` is missing or the plugin fails, the agent starts
+without it and says it couldn't check the Guidelines.
 
 ## Considered options
 

@@ -1,6 +1,6 @@
 # The Stop check is removed: it never caught a failure the agent would have left
 
-Date: 2026-10-07
+Date: 2026-10-14
 
 baloo has no Stop check: nothing runs the project's checks when Claude ends a turn. A failure is
 caught by the project's own Git hooks and CI, and "Done is verifiable" in `principles` asks Claude
@@ -25,5 +25,7 @@ and `doctor` names it for the user to delete (ADR measurement).
 ## Consequences
 
 - A turn can end with a check red; the commit's Git hooks or CI then fail on it.
-- The `UserPromptSubmit` Hook stays, for the Loader's download after an update (ADR binary).
+- The `UserPromptSubmit` Hook stays, for a session the plugin was updated in: where the link in
+  its data folder doesn't point at the running version, it runs that version's session start first
+  (ADR binary).
 - Revisit when sessions show turns ending red that a check at the turn's end would have caught.

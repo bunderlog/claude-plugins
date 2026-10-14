@@ -1,27 +1,28 @@
-# The binary's `doctor` shows the plugin's state, run by the `doctor` skill, and changes nothing
+# The plugin's `doctor` shows its state, run by the `doctor` skill, and changes nothing
 
-Date: 2026-10-07
+Date: 2026-10-14
 
 Session start says what it changed and what went wrong, but not what is on: which Checks run and
-why, which Git hook runs which binary, which version runs. A Git hook running a link to an older
-binary, with nothing saying so, went unnoticed in this repo. So the binary has `doctor`, which shows
-the plugin's state in the repo it runs in, its problems first, each with what fixes it: the binary
-running and the link the Git hooks and the Status line run (ADR git-hooks), the Config's settings,
-whether a Session review runs and how many Proposals wait or disagree with their files (ADR
-session-review), each Check on or off and whether by its key or by default (ADR checks), each Git
-hook, and the Guidelines on and off; a setting an earlier Release had and this one removed is one of
-its problems, for the user to delete, which session start leaves out (ADR measurement). It exits 1
-when it finds a problem, 0 otherwise, and prints the same text for the user and for Claude.
+why, which Git hook runs which version, which version runs. A Git hook running a link to an older
+binary, with nothing saying so, went unnoticed in this repo. So the plugin has `doctor`, which shows
+its state in the repo it runs in, its problems first, each with what fixes it: the plugin's folder
+and version running and the link the Git hooks and the Status line run (ADR git-hooks), the Config's
+settings, whether a Session review runs and how many Proposals wait or disagree with their files
+(ADR session-review), each Check on or off and whether by its key or by default (ADR checks), each
+Git hook, and the Guidelines on and off; a setting an earlier Release had and this one removed is
+one of its problems, for the user to delete, which session start leaves out (ADR measurement). It
+exits 1 when it finds a problem, 0 otherwise, and prints the same text for the user and for Claude.
 
-It only reads: what fixes a problem is the next session start, or a file or a Config key that is
-the user's to change, which it names. The versions it compares are local, the running binary's
-with the link's target; it asks GitHub for nothing.
+It only reads: what fixes a problem is the next session start, or a file or a Config key that is the
+user's to change, which it names. The versions it compares are local, the running plugin's with the
+link's target; it asks GitHub for nothing.
 
-The binary isn't on the PATH, so the `doctor` skill runs it through the Loader, as `retro` runs
-`condense`, and answers the user's question from its output; Claude can run the skill when the
-user asks what is on or why something didn't run. With `doctor` showing the version, session start
-no longer shows it to the user (until 2026-10-03 its `systemMessage`, `baloo <version>`), and
-prints nothing where it has nothing to tell Claude.
+The plugin isn't on the PATH, so the `doctor` skill runs it as `python3 -E -s
+<plugin>/scripts/run.py doctor`, as `retro` runs `condense` (ADR binary), and answers the user's
+question from its output; Claude can run the skill when the user asks what is on or why something
+didn't run. With `doctor` showing the version, session start no longer shows it to the user (until
+2026-10-03 its `systemMessage`, `baloo <version>`), and prints nothing where it has nothing to tell
+Claude.
 
 ## Considered options
 

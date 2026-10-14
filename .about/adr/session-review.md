@@ -1,14 +1,14 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-09
+Date: 2026-10-14
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
-closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the binary's
+closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the plugin's
 `session-end`, which starts a Session review and returns at once: a separate headless `claude -p`,
-detached so that Claude Code's exit never waits for it, run at the repo's root with the
-`glossary` and `adr` skills. It loads the plugin from its own folder too, since the review's
-session may not have it otherwise, as where the ended session had it from `--plugin-dir`. A new
-Config turns it on; without the key it is off, since it didn't exist before the key (ADR config).
+detached so that Claude Code's exit never waits for it, run at the repo's root with the `glossary`
+and `adr` skills. It loads the plugin from its own folder too, since the review's session may not
+have it otherwise, as where the ended session had it from `--plugin-dir`. A new Config turns it on;
+without the key it is off, since it didn't exist before the key (ADR config).
 
 The review reads only the user's and Claude's text, masked as a Retro's is (ADR transcripts),
 and at most the last 200,000 characters of it: no tool call or result. It skips a session shorter
@@ -25,7 +25,7 @@ started and the first eight characters of the ended session's id, such as
 `## <P1> · <target> · <kind> · <path> · <title>` heading each, the target `inbox`, `glossary`,
 `adr` or `prd`, the kind `add`, `edit` or `delete`, a line of why, and the ready edit, the text it
 changes under `Before:` and the text it puts there under `After:`, each in a `~~~` fence, which the
-binary also reads as a ``` one, as a reviewer sometimes writes it anyway. Its tools
+plugin also reads as a ``` one, as a reviewer sometimes writes it anyway. Its tools
 are reading and writing that folder only; anything not allowed is denied rather than asked, and it
 never commits. The folder goes into the repo's `info/exclude`, not into git: a Proposal is a
 retelling of the conversation the user hasn't agreed to yet, and a commit of "everything" would
@@ -39,15 +39,15 @@ then. Each session is shown a Proposal once. An accepted one is applied through 
 for adding one item. Its After stays as the review proposed it: where the applied text differs,
 Claude adds an `Applied:` block of that text to the Proposal and logs it `accepted-edited`, which
 counts as accepted, and the checks below read Applied where it is there. Claude logs each answer
-with the binary's `review-decision`, through the Loader. A Proposal waits until it is accepted or
-rejected: deferred, it comes back in the next session, at most twice; then only accept or reject are
-offered. When the Before of an edit or a delete is no longer in its file, the Proposal is stale: it
-can be accepted only once fixed by hand, and rejecting it is recommended. A Proposal whose log and
-file disagree, accepted but not in its file, or in its file with no decision logged, is shown as a
-mismatch, and `doctor` counts it. Once each of its Proposals is accepted or rejected and in its file
-as decided, the file moves out of the repo into the plugin's data folder, the repo's `decided/`
-there, and is kept for good: what a review proposed, beside what was applied, is what a later
-measurement judges its quality by.
+with the plugin's `review-decision`, run with `python3` as session start's line shows it. A Proposal
+waits until it is accepted or rejected: deferred, it comes back in the next session, at most twice;
+then only accept or reject are offered. When the Before of an edit or a delete is no longer in its
+file, the Proposal is stale: it can be accepted only once fixed by hand, and rejecting it is
+recommended. A Proposal whose log and file disagree, accepted but not in its file, or in its file
+with no decision logged, is shown as a mismatch, and `doctor` counts it. Once each of its Proposals
+is accepted or rejected and in its file as decided, the file moves out of the repo into the plugin's
+data folder, the repo's `decided/` there, and is kept for good: what a review proposed, beside what
+was applied, is what a later measurement judges its quality by.
 
 Nothing is shown in a headless session, such as a project's own `claude -p` in a Git hook: Claude
 Code sets `CLAUDE_CODE_ENTRYPOINT` to `sdk-cli` there, `cli` with the user, which both a

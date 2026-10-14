@@ -1,12 +1,12 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-07
+Date: 2026-10-14
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
 `dependencies` for one with a package manager's manifest, `go`, `typescript`, `vue` and `tailwind`
 for their stacks. Each turns on with a key of its own in the Config, under `guidelines`. At session
-start the binary prints, for each Guideline turned on, one line: when to read it and its path.
+start the plugin prints, for each Guideline turned on, one line: when to read it and its path.
 Claude reads the file itself when a task calls for it. `principles` also carries the few rules
 that must hold on every task, and those are printed whole, with the rules zsh needs where the Bash
 tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
@@ -58,7 +58,7 @@ The files are in the plugin's folder, outside the project, where the Read tool a
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
 `PreToolUse` for the Read tool, that allows reading a file in the plugin's `guidelines/`, and
 Claude reads one without a prompt. The user's own deny and ask rules still win over it. The Hook
-never stops a Read: where the binary is missing or fails, it says nothing.
+never stops a Read: where `python3` is missing or the plugin fails, it says nothing.
 
 A plugin's skill can't be hidden from one project: Claude Code's `skillOverrides` doesn't apply to
 a plugin's skills, and a SessionStart Hook runs after the skill listing is built. So a Guideline
@@ -75,9 +75,9 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 - Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
   a Guideline before an edit on its subject in 5 of 79 cases (ADR measurement).
 - The project's own rules, `.claude/rules/*.md` with `paths:`, which Claude Code loads when Claude
-  reads or edits a matching file — a plugin can't ship rules, so the binary would write files into
+  reads or edits a matching file — a plugin can't ship rules, so the plugin would write files into
   every repo, and a rule linked from outside the repo loads only without `paths:`.
-- The user's rules, `~/.claude/rules/*.md` with `paths:` — the binary would write into Claude
+- The user's rules, `~/.claude/rules/*.md` with `paths:` — the plugin would write into Claude
   Code's own folder, which it never does (ADR config), a rule there applies to every project
   whatever its Config says, and Claude Code's docs don't say `paths:` works there. Revisit when
   Claude Code lets a plugin ship rules, or documents `paths:` in the user's rules: Claude Code's
@@ -99,7 +99,7 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 - Every Guideline on in a new Config, as the Checks are — every stack in every repo, the context
   cost this is meant to avoid.
 - A rule allowing `Read` of the folder in `.claude/settings.local.json` — the plugin's folder
-  changes with every version, and that file is Claude Code's to write, not the binary's.
+  changes with every version, and that file is Claude Code's to write, not the plugin's.
 - Leaving the prompt — the user is asked on every session's first Guideline, for the plugin's
   own read-only text.
 - Detecting the stacks at every session start, with no keys — a project can't turn off a
@@ -113,14 +113,14 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 - Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
   one is a file and a key.
 - The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the
-  Loader runs the binary only for a path with `/guidelines/` in it.
-- Reading a Guideline asks the user where the binary isn't there to allow it, and where their
+  Hook's `sh` starts Python only for a path with `/guidelines/` in it (ADR binary).
+- Reading a Guideline asks the user where `python3` isn't there to allow it, and where their
   own ask rule covers the file.
 - The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's
   own text, and reading one is Claude's step, not the context's cost.
 - `typescript`, `vue` and `testing` come only after a Write that creates a file: a new test,
   written test-first, or a new component is written without them.
-- Every Read runs the binary once more, and one of the three Guidelines adds up to about 4,000
+- Every Read runs the Hook's `sh` once more, and one of the three Guidelines adds up to about 4,000
   characters to a session once its subject comes up.
 - Whether one of the other Guidelines is read is Claude's call; a rule that must always hold goes
   among the ones `principles` prints whole.

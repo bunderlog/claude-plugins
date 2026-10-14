@@ -1,19 +1,21 @@
-# The plugin writes the Git hooks at session start, each running the binary through a fixed link
+# The plugin writes the Git hooks at session start, each running its code through a fixed link
 
-Date: 2026-10-09
+Date: 2026-10-14
 
-At session start the binary writes `pre-commit`, `commit-msg` and `pre-push` into the folder
-`git rev-parse --git-path hooks` names, each where the Config turns at least one of its Checks on
-(ADR checks) or sets its command, and takes out its own where it does neither. A Git hook it wrote is a short `sh` script
-marked `# managed by baloo` that runs `baloo git-hook <hook>` by the absolute path of a link in the
-plugin's data folder, which session start points at the running binary: the path stays the same
-from one version to the next, and git clients that run Git hooks with a minimal PATH find it. The
-binary reads the Config at each run and runs the Git hook's Checks it turns on, all of them, failing
-when one fails; where the link is gone, the Git hook says so and passes.
+At session start the plugin writes `pre-commit`, `commit-msg` and `pre-push` into the folder `git
+rev-parse --git-path hooks` names, each where the Config turns at least one of its Checks on (ADR
+checks) or sets its command, and takes out its own where it does neither. A Git hook it wrote is a
+short `sh` script marked `# managed by baloo` that runs `python3 -E -s <link>/scripts/run.py
+git-hook <hook>`, by the absolute path of a link in the plugin's data folder, which session start
+points at the running version's plugin folder (ADR binary): the path stays the same from one
+version to the next. The plugin reads the Config at each run and runs the Git hook's Checks it
+turns on, all of them, failing when one fails. Where the link is gone, or `python3` isn't on the
+Git hook's PATH, or is older than 3.9, the Git hook says so on stderr and passes: a commit is never
+stopped for want of the plugin, as it isn't in a clone without it.
 
 A Git hook also runs the project's own command the Config sets for it under `git-hook-commands`,
 such as `pre-commit: mise run test`, so a repo needs no husky just to run its tests before a commit:
-the binary runs it with `sh -c` in the repo once the Git hook's Checks all pass, with git's
+the plugin runs it with `sh -c` in the repo once the Git hook's Checks all pass, with git's
 arguments as `$1` on and, for pre-push, the pushed refs on stdin, read once for `linear-history` and
 the command both. The commit or push fails when the command does, named
 `baloo:git-hook-commands.<hook>`, and it has no time limit, as a husky Git hook has none. It is not
@@ -36,9 +38,11 @@ A Session review's session writes no Git hook: the repo's are the user's session
 
 - The Checks' own commands in the Git hook, `baloo check <name>` for each — a Git hook for each
   set of Checks, rewritten at each change to the Config.
-- A path into one version's binary — the Git hooks break with each update until the next session
-  start.
-- The binary found on PATH — git GUI clients run Git hooks with a minimal one.
+- A path into one version's plugin folder — the Git hooks break with each update until the next
+  session start.
+- The plugin's command found on PATH — git GUI clients run Git hooks with a minimal one.
+- Failing the commit where `python3` is missing — every commit in a repo with the Git hooks would
+  fail for a missing tool, where a missing link already passes.
 - Overwriting a Git hook of someone else's, or chaining to it — another tool's, or a person's,
   file changed behind their back.
 - With husky: writing into `.husky/_`, which husky rewrites at every install; the Checks'
@@ -65,8 +69,10 @@ A Session review's session writes no Git hook: the repo's are the user's session
   command of the project's own after it reads none; one under `git-hook-commands` gets it.
 - A command under `git-hook-commands` runs only where the plugin's Git hooks do: a contributor
   without the plugin, or a clone before its first session, doesn't run it, where husky, installed
-  by `npm install`, would. CI is what runs it for everyone, and `baloo check` runs no command. Husky 8, lefthook and pre-commit are Git hooks
-  of someone else's.
+  by `npm install`, would. CI is what runs it for everyone, and `baloo check` runs no command.
+  Husky 8, lefthook and pre-commit are Git hooks of someone else's.
+- A git client whose PATH has no `python3` runs no Check, and says so on each commit: the link's
+  absolute path was enough for the binary, which needed nothing else.
 - Local Git hooks can be bypassed (`--no-verify`, a clone without the plugin):
   `no-git-hook-bypass` stops Claude from doing so, and CI running `baloo check` is the real
   enforcement (ADR checks).

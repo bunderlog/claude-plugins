@@ -3,8 +3,8 @@
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
 language, decisions and requirements explicit, write its Issues, go through its Inbox, run a
 Retro or a Verification, or show the plugin's state; a Session review; Guidelines of working
-rules; Checks in one Go binary that Hooks and Git hooks trigger; an Output style for Claude's
-replies; and a Status line.
+rules; Checks in the plugin's Python code that Hooks and Git hooks trigger; an Output style for
+Claude's replies; and a Status line.
 
 ## Distribution
 
@@ -13,17 +13,11 @@ A version of the plugin reaching its users: a tagged commit with the new version
 `plugin.json` and its section in `CHANGELOG.md`. Installed copies update only to a new Release, so
 a change made without one reaches nobody.
 _Avoid_: deploy, publish; "Release" for the GitHub Release
-_In code_: `src/release`
+_In code_: `src/release/release.py`
 
 **GitHub Release**:
-The page on GitHub for a Release's tag, holding its binaries and their `SHA256SUMS` for the
-Loader to download.
+The page on GitHub for a Release's tag, with its `CHANGELOG.md` section as its notes.
 _Avoid_: "Release" alone
-
-**Loader**:
-The plugin's `sh` script, `scripts/loader`, that downloads this machine's binary into the plugin's
-data folder, checks its sha256, and runs it.
-_Avoid_: installer, bootstrap
 
 ## Hooks
 
@@ -37,7 +31,7 @@ project
 A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit
 or push, whether you or Claude made it. The plugin's run the Git hook Checks the Config turns on.
 _Avoid_: "hook" alone
-_In code_: `src/baloo/internal/githooks`
+_In code_: `baloo/githooks.py`
 
 **Config**:
 A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
@@ -45,34 +39,34 @@ start with every Check on and the Guidelines that fit the repo. Each Check and e
 turns on with a key of its own there; a wrong setting is reported at session start, and its
 default applies.
 _Avoid_: settings, which are Claude Code's `settings.json`
-_In code_: `src/baloo/internal/config`
+_In code_: `baloo/config.py`
 
 **Check**:
-Code in the binary that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`,
+Code in the plugin that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`,
 turned on or off by a key of its own in the Config. Each runs either in a Hook or in a Git hook,
 called "a Check a Hook runs" and "a Check a Git hook runs" (for short, "a Hook Check" and "a Git
 hook Check").
 _Avoid_: built-in check; "a Check on Claude's tool calls"
-_In code_: `src/baloo/internal/checks`; `HookChecks`, `GitHookChecks`
+_In code_: `baloo/checks/`; `HOOK_CHECKS`, `GIT_HOOK_CHECKS`
 
 **Format on edit**:
 The plugin's run of the project's own formatter, named in the Config, on each file Claude edits,
 saying nothing of how it went; not a Check.
 _Avoid_: "lint on edit"; a Check
-_In code_: `format-on-edit`, `cmd/baloo/format.go`
+_In code_: `format-on-edit`, `post_tool_use` in `baloo/cli.py`
 
 **Git hook command**:
 The project's own command, named by Git hook under `git-hook-commands` in the Config, that the
 plugin's Git hook runs once its Checks pass, such as `mise run test` before a commit; not a Check.
 _Avoid_: a Check; "hook command", which could be a Hook's
-_In code_: `git-hook-commands`, `GitHookCommands`, `cmd/baloo/checks.go`
+_In code_: `git-hook-commands`, `names.GIT_HOOK_COMMANDS`, `git_hook` in `baloo/cli.py`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
 with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that Claude
 reads when a task calls for it; one the Config turns on is named to Claude at session start.
 _Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
-_In code_: `src/baloo/internal/guidelines`
+_In code_: `baloo/guidelines.py`
 
 **Output style**:
 Instructions for how Claude writes its replies, such as `short-replies`, that the plugin ships
@@ -82,10 +76,10 @@ _Avoid_: "style" alone; tone
 
 **Status line**:
 The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars, the
-Cache bar and the model, is drawn by the binary, and set in the project's local settings where the
+Cache bar and the model, is drawn by the plugin, and set in the project's local settings where the
 Config turns it on.
 _Avoid_: "status" alone, which is a PRD's Status
-_In code_: `src/baloo/internal/statusline`
+_In code_: `baloo/statusline.py`
 
 **Usage bar**:
 One of the Status line's three bars showing how much is used: the context window, and the 5-hour
@@ -130,7 +124,7 @@ _Avoid_: log, history
 A review the user asks for of how past sessions went: their Stalls, and the change to the Setup
 that would have spared each. It looks at how the work went, not at what it produced.
 _Avoid_: retrospective, post-mortem
-_In code_: the `retro` skill; `src/baloo/internal/condense`
+_In code_: the `retro` skill; `baloo/condense.py`
 
 **Stall**:
 A point in a session that cost the user something the Setup could have spared: a failed or
@@ -151,14 +145,13 @@ edit, in `.about/proposals/<review>.md`; it reaches `.about/` only once the user
 waits while they defer it; once decided, it is kept in the plugin's data folder. Stale when the
 text it changes is gone; a mismatch when the log of decisions and its file disagree.
 _Avoid_: suggestion, draft
-_In code_: `src/baloo/internal/review`
-_In code_: `src/baloo/internal/review`
+_In code_: `baloo/review.py`
 
 **Inbox**:
 The file `.about/inbox.md` of what is still to consider: a decision or term still open, a bug or a
 finding left for later. An item stays until something settles it, and is then deleted.
 _Avoid_: todo, backlog, proposed ADR
-_In code_: `names.Inbox`; the `inbox` skill goes through it
+_In code_: `baloo/inbox.py`, `names.INBOX`; the `inbox` skill goes through it
 
 **Issue**:
 Work agreed to do, a bug to fix or a task: a page in the tracker the project names, or else
@@ -172,6 +165,11 @@ A comparison the user asks for of a change with what the project agreed: its ADR
 Guidelines the Config turns on, and the acceptance criteria of its Issue or PRD. The plugin's
 agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
 nothing. Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't
-run the change; unlike a Check, it isn't the binary's code.
+run the change; unlike a Check, it isn't the plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
-_In code_: the `verify` skill; `agents/verifier.md`; `names.Verifier`
+_In code_: the `verify` skill; `agents/verifier.md`; `names.VERIFIER`
+
+## Retired terms
+
+- **Loader** — the `sh` script that downloaded the plugin's Go binary and ran it, until
+  2026-10-14; the Hooks now run `scripts/hook`, which runs the plugin's Python code (ADR binary).

@@ -3,8 +3,9 @@
 Date: 2026-10-14
 
 The marketplace installs `baloo` from this repo's `main`, and an installed copy updates only to a
-new version, so a change to `plugins/baloo/` reaches users only with a Release; its tests and
-`schema.json`, which editors read from `main`, need none.
+new version, so a change to `plugins/baloo/` reaches users only with a Release; its
+`schema.json`, which editors read from `main`, needs none, and the tests, in `tests/`, are outside
+it.
 `mise run release` makes one from the commits since the last `v*` tag that change what needs a
 Release, so a commit only to the release tool, a test or the schema is never in a Release's
 version or notes. The commits follow Conventional Commits: below 1.0 a breaking change or a `feat`
@@ -15,8 +16,8 @@ section to `CHANGELOG.md`, commits them as `chore(release): <version>` and tags 
 workflow, which publishes the CHANGELOG section as the GitHub Release. With nothing to build or
 download (ADR binary), a copy that updates before the workflow has run misses only the notes page.
 
-The release tool, in `src/release/`, is Python like the plugin, outside it, so a change to it
-needs no Release.
+The release tool, `src/release/release.py`, is Python like the plugin, outside it, so a change to
+it needs no Release.
 
 ## Considered options
 
