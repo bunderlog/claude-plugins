@@ -64,6 +64,7 @@
     "strerror",
     "subshell",
     "subtests",
+    "surrogateescape",
     "symref",
     "testdata",
     "testkit",
