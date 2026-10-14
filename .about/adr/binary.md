@@ -17,6 +17,13 @@ the script's own folder from the import path. The `SessionStart` Hook first chec
 Claude Code shows to the user. Every other Hook fails silently instead, since exit 2 there would
 stop a tool call, a prompt or a turn's end (ADR guidelines, ADR checks).
 
+In the port, each part session start reports on (the Config, the Output style, the attribution,
+the Status line, the Git hooks, the Session review, the Inbox, the Guidelines, the uncommitted
+edits in `.about/`) returns its own lines, and session start only gathers them; the Inbox's parsing
+is a module of its own. In Go, `sessionStart` wrote every part's lines itself, so each new part
+edited `main.go` and its 857-line test. The Go code isn't reshaped first, since the port replaces
+it.
+
 The repo, `bunderlog/claude-plugins`, is public, since everything a user's machine fetches from it
 must work without a token: the Config's `$schema` from `raw.githubusercontent.com`, and Claude
 Code installing and updating the plugin in the background.

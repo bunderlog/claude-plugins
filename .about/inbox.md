@@ -32,18 +32,6 @@ steering split into product, tech and structure. Settled once a project keeps a 
 tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
 a skill finds it, and rewrite ADR about-folder.
 
-## Session start knows every part of the plugin
-
-2026-10-04 · plugin review · kept 2026-10-04
-
-`sessionStart` in `src/baloo/cmd/baloo/main.go`, about 100 lines, calls each part in turn
-(Config, Output style, attribution, Status line, Git hooks, Session review, Inbox, Guidelines)
-and writes each one's lines for Claude itself; the Inbox's parsing, `inboxItems`, lives there
-too, with no package of its own. So a new part edits `main.go` and `main_test.go` (857 lines).
-Settled by deciding whether each package returns its own report lines and `main` only gathers
-them, with the Inbox's parsing moved to a package of its own, or the orchestration stays as is.
-Kept to decide when the next part joins session start.
-
 ## Project knowledge reaches the context only as a task needs it
 
 2026-10-06 · user
