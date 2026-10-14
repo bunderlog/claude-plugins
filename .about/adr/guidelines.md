@@ -13,18 +13,33 @@ tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a 
 `=` fails the whole command there. A Guideline that is off puts nothing in the context. How Claude
 writes its replies is not a Guideline but an Output style (ADR output-styles).
 
-`typescript`, `vue` and `testing` don't wait for Claude to read them: a Guideline was read before an
-edit on its subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement). A
-`PostToolUse` Hook on Read, Edit, Write and MultiEdit gives Claude the whole file, as the Hook's
-added context, the first time in a session that it reads or edits a file in the repo of its subject:
-`.ts`, `.tsx`, `.mts`, `.cts` and `.vue` for `typescript`, `.vue` for `vue`, and a test for
-`testing` (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under
-`__tests__/`). Claude reads a file before it edits it, so the Guideline is in context before the
-first edit of it. The same call logs a line in the plugin's data folder,
-`guidelines/guidelines.log`, its fields split by tabs: when, in UTC, the session, the Guideline and
-the file, from the repo's root; so a measurement tells whether it came before an edit without
-guessing. Session start's index leaves the three out. A Guideline tied to a task rather than a file,
-such as `debugging`, `ci` or `design`, stays in the index, Claude's to read (Inbox).
+Only `go` and `tailwind` wait for Claude to read them: a Guideline was read before an edit on its
+subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement); in a week of 2026-10
+it was 0 of 30 for `debugging` and the others tied to a task, while those a Hook gives came before
+the first edit of their subject in 15 of 22 cases, after it in the rest. A Hook gives Claude the
+whole file, as its added context, the first time in a session that a signal of its subject or
+task comes:
+- `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
+  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, a test for `testing` (`*_test.go`,
+  `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under `__tests__/`), and a text an agent
+  reads for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
+  under `.claude/agents/`, `commands/` or `skills/`). Claude reads a file before it edits it, so
+  the Guideline is in context before the first edit of it.
+- The same, but on an edit only: a package manager's manifest for `dependencies`, which a Read
+  alone doesn't give, as a `package.json` is read for its scripts too.
+- A Write that creates a code file, but a test (its result's `type` is `create`), for `design` and
+  `principles`: a new module is where they apply first.
+- `PostToolUse` and `PostToolUseFailure` on Bash, for the command: a run of tests or checks
+  (`pytest`, `vitest`, `go test`, `npm run test:…`, `mise run check`…) that failed, by its exit or
+  by what it printed, since a pipe into `tail` exits 0, for `debugging`; a look at a CI run (`gh
+  run`, `gh pr checks`, `glab ci`, a pipeline's API) for `ci`; a change to the dependencies (`npm
+  install <package>`, `npm update`, `go get`, `cargo update`…) for `dependencies`.
+
+Each one given logs a line in the plugin's data folder, `guidelines/guidelines.log`, its fields
+split by tabs: when, in UTC, the session, the Guideline, and the file, from the repo's root, or `$ `
+and the command; so a measurement tells whether it came before an edit without guessing. Session
+start's index leaves out every Guideline a Hook gives but `principles` and `design`: a refactor of
+files already there creates none, so their line stays for Claude to read.
 
 What the next measurement checks of the three is a rule each whose breach shows, with no judgment,
 in the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
@@ -74,6 +89,13 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 - Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
   a Guideline before an edit on its subject in 5 of 79 cases (ADR measurement).
+- Only the index line for the Guidelines tied to a task (until 2026-10-14) — Claude read
+  `principles` before the first edit in 2 of 30 sessions, `design` in 1, `debugging` and the
+  others in none.
+- `principles` and `design` at the first edit of code in a session — they would come with nearly
+  every session, about 8,000 characters, a trivial edit's too.
+- A prompt's words as the signal for `ci` or `debugging` ("CI is red", "fix the bug") — a
+  language's words each, and the commands Claude runs first say it anyway.
 - The project's own rules, `.claude/rules/*.md` with `paths:`, which Claude Code loads when Claude
   reads or edits a matching file — a plugin can't ship rules, so the plugin would write files into
   every repo, and a rule linked from outside the repo loads only without `paths:`.
@@ -120,9 +142,15 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   own text, and reading one is Claude's step, not the context's cost.
 - `typescript`, `vue` and `testing` come only after a Write that creates a file: a new test,
   written test-first, or a new component is written without them.
-- Every Read runs the Hook's `sh` once more, and one of the three Guidelines adds up to about 4,000
-  characters to a session once its subject comes up.
-- Whether one of the other Guidelines is read is Claude's call; a rule that must always hold goes
-  among the ones `principles` prints whole.
-- Revisit when Claude Code lets a project hide a plugin's skills, and `debugging` as a skill when
-  Claude doesn't open it on a bug by itself.
+- A file Claude reads with `cat` in Bash gives nothing: its Guideline comes with the first edit of
+  it, after that edit.
+- `debugging` comes too where a test fails on purpose, as the red step of test-first does; `ci`
+  and `dependencies` come after the command that signals them, before what follows it.
+- A refactor of files already there gets `principles` and `design` only where Claude reads them.
+- Every Bash command runs the Hook's Python once more after it.
+- Every Read runs the Hook's `sh` once more, and a Guideline a Hook gives adds 2,000 to 6,000
+  characters to a session once its subject or task comes up.
+- Whether `go` and `tailwind` are read is Claude's call; a rule that must always hold goes among
+  the ones `principles` prints whole.
+- Revisit when Claude Code lets a project hide a plugin's skills, when a measurement finds a
+  Guideline given where its task never came, or when Claude Code lets a plugin ship rules.

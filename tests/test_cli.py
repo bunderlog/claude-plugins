@@ -407,6 +407,20 @@ class PostToolUse(unittest.TestCase):
         self.assertNotIn("testing Guideline", got)
         self.assertEqual(call("Edit", "src/b.ts"), "")
 
+    # A Bash command that failed, which Claude Code hands to PostToolUseFailure, gives Claude the
+    # Guideline of its task in that Hook's answer.
+    def test_gives_guidelines_by_command(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, names.CONFIG), "guidelines:\n  debugging: true\n")
+        stdin = json.dumps({
+            "session_id": "s1", "hook_event_name": "PostToolUseFailure", "tool_name": "Bash",
+            "tool_input": {"command": "go test ./..."}, "error": "Exit code 1\nFAIL x",
+        })
+        code, out, err = run("post-tool-use", stdin=stdin)
+        self.assertEqual((code, err), (0, ""))
+        self.assertIn('"hookEventName":"PostToolUseFailure"', out)
+        self.assertIn("The debugging Guideline applies to", out)
+
 
 if __name__ == "__main__":
     unittest.main()

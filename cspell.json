@@ -11,7 +11,9 @@
     "baloo",
     "binlink",
     "bunderlog",
+    "bunx",
     "cerr",
+    "clippy",
     "commitlint",
     "commondir",
     "cowork",
@@ -29,6 +31,7 @@
     "getuid",
     "getwd",
     "gitdir",
+    "glab",
     "goccy",
     "gofmt",
     "gomod",
@@ -50,10 +53,13 @@
     "nullglob",
     "obra",
     "outputstyle",
+    "phpunit",
     "pinia",
+    "pnpx",
     "prds",
     "pycache",
     "pyproject",
+    "pytest",
     "pythonpath",
     "rdap",
     "reflog",
@@ -78,6 +84,7 @@
     "toplevel",
     "trailofbits",
     "trimpath",
+    "vitest",
     "wcag",
     "wday",
     "webui",
@@ -85,5 +92,10 @@
     "wronly",
     "wshobson"
   ],
-  "overrides": [{ "filename": "**/scripts/hook", "languageId": "shellscript" }]
+  "overrides": [
+    {
+      "filename": "**/scripts/hook",
+      "languageId": "shellscript"
+    }
+  ]
 }

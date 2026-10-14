@@ -200,6 +200,76 @@ class ForFile(unittest.TestCase):
         self.assertTrue(lines[0].endswith("\ts1\ttypescript\tsrc/App.vue"), lines)
         self.assertTrue(lines[1].endswith("\ts1\tvue\tsrc/App.vue"), lines)
 
+    # A text an agent reads gives writing-for-agents when read or edited; a package manager's
+    # manifest gives dependencies only when edited, as it is read for its scripts too; a code file
+    # Claude creates, but a test, gives design and principles, as a new module is designed.
+    def test_by_tool(self):
+        plugin = temp(self)
+        names = ["writing-for-agents", "dependencies", "design", "principles", "testing"]
+        write(plugin, {f"guidelines/{n}.md": f"# {n}\n" for n in names})
+        on = {n: True for n in names}
+        for tool, rel, created, want in [
+            ("Read", "CLAUDE.md", False, ["writing-for-agents"]),
+            ("Edit", "plugins/p/skills/a/SKILL.md", False, ["writing-for-agents"]),
+            ("Read", ".claude/agents/reviewer.md", False, ["writing-for-agents"]),
+            ("Read", "docs/agents.md", False, []),
+            ("Read", "web/package.json", False, []),
+            ("Edit", "web/package.json", False, ["dependencies"]),
+            ("Write", "go.mod", False, ["dependencies"]),
+            ("Write", "src/store.ts", True, ["design", "principles"]),
+            ("Write", "src/store.ts", False, []),
+            ("Write", "src/store.spec.ts", True, ["testing"]),
+            ("Write", "notes.md", True, []),
+        ]:
+            with self.subTest(tool=tool, rel=rel, created=created):
+                text = guidelines.for_file(plugin, temp(self), "", rel, on, tool, created)
+                got = [n for n in names if f"The {n} Guideline applies to {rel}" in text]
+                self.assertEqual(got, want)
+
+
+class ForCommand(unittest.TestCase):
+    # A command gives the Guideline of the task it shows: debugging a failed run of tests or
+    # checks, by its exit or by what it printed, as a pipe to tail exits 0; ci a look at a CI run;
+    # dependencies a change to the dependencies. Each comes once a session, and is logged.
+    def test_for_command(self):
+        plugin = temp(self)
+        names = ["debugging", "ci", "dependencies"]
+        write(plugin, {f"guidelines/{n}.md": f"# {n}\n" for n in names})
+        on = {n: True for n in names}
+        for command, failed, output, want in [
+            ("go test ./...", True, "", ["debugging"]),
+            ("cd web && npm run test:unit 2>&1 | tail -5", False, "Tests  1 failed | 4 passed", ["debugging"]),
+            ("python3 -m unittest tests.test_a", False, "FAILED (failures=2)", ["debugging"]),
+            ("mise run check", True, "", ["debugging"]),
+            ("npx vitest run", True, "", ["debugging"]),
+            ("go test ./...", False, "ok  \tx\t0.1s", []),
+            ("ls missing", True, "", []),
+            ("grep -c FAIL log.txt", False, "FAIL", []),
+            ("gh run view 123 --log-failed", False, "", ["ci"]),
+            ("gh pr checks 42", True, "", ["ci"]),
+            ("curl -s https://api.bitbucket.org/2.0/repositories/a/b/pipelines/", False, "", ["ci"]),
+            ("gh pr view 42", False, "", []),
+            ("npm install vue@latest", False, "", ["dependencies"]),
+            ("pnpm update", False, "", ["dependencies"]),
+            ("go get example.com/x@latest", False, "", ["dependencies"]),
+            ("npm install", False, "", []),
+            ("npm ci", False, "", []),
+        ]:
+            with self.subTest(command):
+                text = guidelines.for_command(plugin, temp(self), "", command, failed, output, on)
+                got = [n for n in names if f"The {n} Guideline applies to" in text]
+                self.assertEqual(got, want)
+
+        data = temp(self)
+        text = guidelines.for_command(plugin, data, "s1", "go test ./...", True, "", on)
+        self.assertIn("go test ./...", text)
+        self.assertEqual(guidelines.for_command(plugin, data, "s1", "pytest", True, "", on), "")
+        self.assertEqual(
+            guidelines.for_command(plugin, data, "s2", "pytest", True, "", {"debugging": False}), ""
+        )
+        with open(os.path.join(data, "guidelines", "guidelines.log")) as f:
+            self.assertTrue(f.read().endswith("\ts1\tdebugging\t$ go test ./...\n"))
+
     # What a session was given is forgotten after a week, so the Guideline comes again.
     def test_forgets_after_a_week(self):
         plugin, data = temp(self), temp(self)

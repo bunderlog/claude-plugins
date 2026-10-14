@@ -6,9 +6,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+
+from baloo.checks.shell import Program, programs
 
 
 class _Manifests:
@@ -149,14 +152,14 @@ IN_ZSH = "## In zsh"
 
 def index(plugin: str, on: Dict[str, bool], shell: str) -> Tuple[str, Optional[str]]:
     """What session start tells Claude of the Guidelines `on` in the plugin at `plugin`: a line for
-    each, when to read it and its path, but those given by the file Claude works on (see
-    for_file), after the rules for every task when principles is on, and the rules zsh needs where
+    each, when to read it and its path, but those a Hook gives (see for_file and for_command),
+    after the rules for every task when principles is on, and the rules zsh needs where
     `shell`, the Bash tool's, is zsh. With none on it is "". When the rules can't be read, it is
     the lines without them, and why; else why is None."""
     lines = [
         f"- {g.when}: {_path(plugin, g.name)}"
         for g in ALL
-        if on.get(g.name) and g.name not in BY_PATH
+        if on.get(g.name) and g.name not in _GIVEN
     ]
     if not lines:
         return "", None
@@ -242,26 +245,156 @@ def _is_test(rel: str) -> bool:
     )
 
 
-# The Guidelines that reach Claude by the file it works on, not by its own choice (ADR
+def _for_agents(rel: str) -> bool:
+    """Whether the file at `rel` is a text an agent reads: a skill, a CLAUDE.md or AGENTS.md, or
+    an agent's or a command's file in a .claude/ folder."""
+    parts = rel.replace(os.sep, "/").split("/")
+    if parts[-1] in ("SKILL.md", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md"):
+        return True
+    return parts[-1].endswith(".md") and any(
+        a == ".claude" and b in ("agents", "commands", "skills") for a, b in zip(parts, parts[1:])
+    )
+
+
+# The Guidelines that reach Claude by the file it reads or edits, not by its own choice (ADR
 # guidelines): each says whether a file, by its path from the repo's root, is one of its subject.
-# Session start's index leaves them out.
 BY_PATH: Dict[str, Callable[[str], bool]] = {
     "typescript": _has_ext(".ts", ".tsx", ".mts", ".cts", ".vue"),
     "vue": _has_ext(".vue"),
     "testing": _is_test,
+    "writing-for-agents": _for_agents,
 }
+
+# The Guidelines that reach Claude by a file it edits, but not one it only reads: a manifest is
+# read for its scripts too.
+BY_EDIT: Dict[str, Callable[[str], bool]] = {
+    "dependencies": lambda rel: os.path.basename(rel) in PACKAGE_MANIFESTS,
+}
+
+# The files of code whose creation gives design and principles, as a new module is designed.
+_CODE = {
+    ".go", ".py", ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".vue", ".svelte",
+    ".rs", ".java", ".kt", ".swift", ".rb", ".php", ".cs", ".c", ".h", ".cc", ".cpp", ".hpp",
+    ".scala", ".dart", ".ex", ".exs",
+}
+
+# The Guidelines a code file Claude creates gives, but a test.
+ON_CREATE = ["design", "principles"]
+
+# The Guidelines that reach Claude by a Bash command it runs (see for_command).
+BY_COMMAND = ["debugging", "ci", "dependencies"]
+
+# Session start's index leaves out the Guidelines a Hook gives: all but those given only when a
+# file is created, which a refactor of files already there never does.
+_GIVEN = set(BY_PATH) | set(BY_EDIT) | set(BY_COMMAND)
 
 # How long what a session was given is kept: a week.
 KEPT = 7 * 24 * 3600
 
 
-def for_file(plugin: str, data: str, session: str, rel: str, on: Dict[str, bool]) -> str:
+def for_file(
+    plugin: str, data: str, session: str, rel: str, on: Dict[str, bool], tool: str = "Read",
+    created: bool = False,
+) -> str:
     """What Claude is to be told of the Guidelines `on` whose subject the file at `rel`, from the
-    repo's root, is, and that the session `session` hasn't been given yet: each one's whole text,
-    from the plugin at `plugin`. Each one given is marked for the session and logged in the
-    plugin's data folder `data`, a line each: when, in UTC, the session, the Guideline and `rel`.
-    It is "" where none is due. A file it can't read or write raises OSError."""
-    due = [g.name for g in ALL if g.name in BY_PATH and on.get(g.name) and BY_PATH[g.name](rel)]
+    repo's root, is, now that the tool `tool` read or changed it, `created` where a Write made it
+    new (see give)."""
+    due = [n for n, f in BY_PATH.items() if f(rel)]
+    if tool != "Read":
+        due += [n for n, f in BY_EDIT.items() if f(rel)]
+    if created and os.path.splitext(rel)[1] in _CODE and not _is_test(rel):
+        due += ON_CREATE
+    verb = "created" if created else "read or changed"
+    return give(plugin, data, session, due, on, f"{rel}, which you just {verb}", rel)
+
+
+# A run's output that shows a test or a check failed, though the command exited 0, as one piped
+# into tail does.
+_FAILED = re.compile(
+    r"\b(FAIL|FAILED|FAILURES?)\b|\b\d+ (failed|failing)\b|\bfailures=\d|\berror TS\d+|\(\d+ errors?\b"
+)
+# Programs that run tests or checks, and the names of a task runner's tasks that do.
+_RUNNERS = {"pytest", "vitest", "jest", "mocha", "playwright", "tsc", "eslint", "phpunit", "rspec"}
+_TASKS = {"test", "check", "lint", "vet", "typecheck", "clippy"}
+_TASK_RUNNERS = {"npm", "pnpm", "yarn", "bun", "deno", "mise", "task"}
+# Package managers and the subcommands that change the dependencies, with an install that names a
+# package, not one that installs the lockfile's.
+_UPDATES = {
+    "npm": {"update", "up", "upgrade", "outdated"}, "pnpm": {"add", "update", "up", "outdated"},
+    "yarn": {"add", "upgrade", "up", "outdated"}, "bun": {"add", "update", "outdated"},
+    "go": {"get"}, "cargo": {"add", "update", "upgrade"}, "poetry": {"add", "update"},
+    "uv": {"add"}, "ncu": set(), "npm-check-updates": set(),
+}
+
+
+def _runs_checks(p: Program) -> bool:
+    """Whether the program `p` runs tests or checks."""
+    a = p.args
+    if p.name in _RUNNERS or (p.name in ("npx", "pnpx", "bunx") and a and a[0] in _RUNNERS):
+        return True
+    if a and a[0] in _TASKS:
+        return True
+    if p.name in _TASK_RUNNERS and len(a) > 1 and a[0] == "run":
+        return any(t in a[1] for t in _TASKS)
+    if p.name.startswith("python") and "-m" in a:
+        return a[a.index("-m") + 1 :][:1] in (["pytest"], ["unittest"])
+    return False
+
+
+def _looks_at_ci(p: Program) -> bool:
+    """Whether the program `p` looks at a CI run: gh's runs and checks, glab's ci, or a pipeline's
+    or a workflow run's API."""
+    a = p.args
+    if p.name == "gh":
+        return a[:1] in (["run"], ["workflow"]) or a[:2] == ["pr", "checks"]
+    if p.name == "glab":
+        return a[:1] == ["ci"]
+    return p.name in ("curl", "wget") and any("/pipelines" in x or "/actions/runs" in x for x in a)
+
+
+def _updates(p: Program) -> bool:
+    """Whether the program `p` changes the project's dependencies."""
+    subs = _UPDATES.get(p.name)
+    if subs is None:
+        return False
+    a = p.args
+    if not subs or (a and a[0] in subs):
+        return True
+    named = [x for x in a[1:] if not x.startswith("-")]
+    return p.name in ("npm", "pnpm", "yarn", "bun") and a[:1] in (["install"], ["i"]) and bool(named)
+
+
+def for_command(
+    plugin: str, data: str, session: str, command: str, failed: bool, output: str,
+    on: Dict[str, bool],
+) -> str:
+    """What Claude is to be told of the Guidelines `on` whose task the Bash command `command` shows,
+    `failed` where it exited with an error, after it printed `output` (see give): debugging for a
+    run of tests or checks that failed, ci for a look at a CI run, dependencies for a change to
+    the dependencies."""
+    found = programs(command)
+    due = []
+    if any(_runs_checks(p) for p in found) and (failed or _FAILED.search(output)):
+        due.append("debugging")
+    if any(_looks_at_ci(p) for p in found):
+        due.append("ci")
+    if any(_updates(p) for p in found):
+        due.append("dependencies")
+    short = " ".join(command.split())
+    short = short if len(short) <= 80 else short[:79] + "…"
+    return give(plugin, data, session, due, on, f"`{short}`, which you just ran", "$ " + short)
+
+
+def give(
+    plugin: str, data: str, session: str, due: List[str], on: Dict[str, bool], about: str,
+    logged: str,
+) -> str:
+    """What Claude is to be told of the Guidelines `due` that `on` turns on and the session
+    `session` hasn't been given yet: each one's whole text, from the plugin at `plugin`, as
+    applying to `about`. Each one given is marked for the session and logged in the plugin's data
+    folder `data`, a line each: when, in UTC, the session, the Guideline and `logged`, the file
+    or the command. It is "" where none is due. A file it can't read or write raises OSError."""
+    due = [g.name for g in ALL if g.name in due and on.get(g.name)]
     if not due or not data:  # without its data folder, it can't give each one only once
         return ""
     folder = os.path.join(data, "guidelines")
@@ -277,8 +410,8 @@ def for_file(plugin: str, data: str, session: str, rel: str, on: Dict[str, bool]
         with open(_path(plugin, name), encoding="utf-8") as f:
             body = f.read()
         text.append(
-            f"The {name} Guideline applies to {rel}, which you just read or changed; follow it "
-            f"for the rest of this session:\n\n{body.strip()}"
+            f"The {name} Guideline applies to {about}; follow it for the rest of this "
+            f"session:\n\n{body.strip()}"
         )
         new.append(name)
     if not new:
@@ -291,7 +424,7 @@ def for_file(plugin: str, data: str, session: str, rel: str, on: Dict[str, bool]
     fd = os.open(log_path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
     with os.fdopen(fd, "a", encoding="utf-8") as log:
         for name in new:
-            log.write(f"{at}\t{session}\t{name}\t{rel.replace(os.sep, '/')}\n")
+            log.write(f"{at}\t{session}\t{name}\t{logged.replace(os.sep, '/')}\n")
     return "\n\n".join(text)
 
 

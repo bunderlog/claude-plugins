@@ -257,9 +257,10 @@ _FORMAT_TIMEOUT = 50
 
 
 def post_tool_use(text: str, stdout: TextIO) -> int:
-    """The PostToolUse Hook on Claude's reads and edits. For a file in the repo, it gives Claude the
-    Guidelines whose subject the file is, once a session (ADR guidelines), and after an Edit, Write
-    or MultiEdit it runs the Config's format-on-edit command in the repo's root on the file (ADR
+    """The PostToolUse Hook on Claude's reads, edits and Bash commands, and the PostToolUseFailure
+    Hook on its Bash commands. For a file in the repo, or a command, it gives Claude the Guidelines
+    of its subject or its task, once a session (ADR guidelines), and after an Edit, Write or
+    MultiEdit it runs the Config's format-on-edit command in the repo's root on the file (ADR
     format-on-edit), saying nothing of how that went. In a Session review's session it does
     nothing."""
     if os.environ.get(review.ENV, ""):
@@ -269,26 +270,50 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         dir = hook.project()
         if call is None:
             return 0
+        event = hook.text(call, "hook_event_name") or "PostToolUse"
         session = hook.text(call, "session_id")
         tool = hook.text(call, "tool_name")
-        path = hook.text(hook.object_(call, "tool_input"), "file_path")
+        given_input = hook.object_(call, "tool_input")
+        path = hook.text(given_input, "file_path")
+        command = hook.text(given_input, "command")
     except (OSError, hook.Mismatch):
         return 0
+    # The tool's response differs from tool to tool and isn't all documented: a field of another
+    # shape counts as missing.
+    response = call.get("tool_response")
+    response = response if isinstance(response, dict) else {}
+    created = response.get("type") == "create"
+    output = "\n".join(
+        v for v in (call.get("error"), response.get("stdout"), response.get("stderr"))
+        if isinstance(v, str)
+    )
     c = config.read(dir)
-    if not c.root or not os.path.isabs(path):
+    plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
+    if not c.root:
+        return 0
+    if tool == "Bash":
+        failed = event == "PostToolUseFailure"
+        try:
+            given = guidelines.for_command(
+                plugin, data, session, command, failed, output, c.guidelines
+            )
+        except OSError:
+            given = ""
+        if given:
+            hook.context(stdout, event, f"{names.PLUGIN}:\n{given}\n")
+        return 0
+    if not os.path.isabs(path):
         return 0
     rel = os.path.relpath(path, c.root)
     if rel == ".." or rel.startswith(".." + os.sep):
         return 0
     try:
-        given = guidelines.for_file(
-            os.environ.get("CLAUDE_PLUGIN_ROOT", ""), os.environ.get("CLAUDE_PLUGIN_DATA", ""),
-            session, rel, c.guidelines,
-        )
+        given = guidelines.for_file(plugin, data, session, rel, c.guidelines, tool, created)
     except OSError:
         given = ""
     if given:
-        hook.context(stdout, "PostToolUse", f"{names.PLUGIN}:\n{given}\n")
+        hook.context(stdout, event, f"{names.PLUGIN}:\n{given}\n")
     if not c.format_on_edit or tool == "Read":
         return 0
     try:

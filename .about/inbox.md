@@ -61,21 +61,6 @@ Loading on a task's demand is itself an open question, not a confirmed approach:
 of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
 `.about/` read before an edit to code in 8 of 28 sessions.
 
-## Guidelines tied to a task, not a file, still wait to be read
-
-2026-10-07 · user · kept 2026-10-14
-
-`debugging`, `ci`, `design`, `principles`, `writing-for-agents` and `dependencies` reach Claude
-only as a line of session start's index, for Claude to read when their task comes up; the
-measurement of 2026-10-07 found a Guideline read before an edit on its subject in 5 of 79 cases,
-and in one project in 0 of 29 (ADR measurement). The file Claude touches can't tell their task,
-so the Hook that gives `typescript`, `vue` and `testing` (ADR guidelines) doesn't reach them.
-Settled by finding a signal that does tell the task, such as a failing test run for `debugging`
-or a CI run named in the prompt for `ci`, or deciding they stay Claude's to read.
-It was kept to settle with the port to Python (ADR binary), which ended in 0.26.0 without settling
-it, so it needs a new reason to stay or goes; an eval suite (ADR evals) can measure whether a
-signal makes Claude read them.
-
 ## The Release workflow's runner moves to Ubuntu 26
 
 2026-10-06 · session review · kept 2026-10-14
