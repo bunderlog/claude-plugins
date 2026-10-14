@@ -103,6 +103,16 @@ app, with Claude making the commits, and a repo of knowledge alone, since they h
 try first: one ad manager on a real task for a week in Claude Code's desktop app; where git gets in
 the way and `.about/` goes unused, it is Cowork.
 
+`.about/` reached from Cowork through an MCP server that writes to GitHub, weighed 2026-10-14:
+they would need no git, and each change would still be a commit or a PR, with its history. It
+doesn't bring baloo: its skills read and edit `.about/` as local files, so each would need
+rewriting for the server's tools; Hooks in Cowork are unreliable and no session's end runs a
+Session review; someone has to review the PRs, or changes land on `main` unread; and a token that
+writes to the repo lives in Cowork's connector. Whether Cowork has a GitHub connector that writes
+is unchecked. ADR about-folder rejected such a server because every role works in a clone, which
+ad managers in Cowork wouldn't. Worth building only if they stay in Cowork, as their own plugin of
+skills for the server, not as baloo.
+
 The port to Python (ADR binary) makes a second plugin cheap: no binaries to build per plugin.
 Settled once a first real ad manager has a task for it: then decide which way, what repo they
 clone if any, the plugin's skills, the repo's layout for two plugins, and rewrite ADR plugin, and
