@@ -130,3 +130,17 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
   (anthropics/claude-code #88663), and `claude plugin eval` loads no dependency.
 - An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
   in the marketplace becomes a copy: shared Python code can live once and be linked into each.
+
+## A session on an older Release than the installed one goes unnoticed
+
+2026-10-14 · session review
+
+Claude Code loads a plugin only when its process starts, and `/clear` doesn't reload it, so a
+session started before a background update keeps running the older Release until a restart. On
+2026-10-14 a session ran 0.21.1 for hours with 0.25.1 installed: `doctor` found no problem, since
+it compares only the running binary with the link's target (ADR doctor), and both were 0.21.1; its
+Session review followed 0.21.1's prompt and edited `.about/` directly; and once 0.21.1 was deleted
+from `~/.claude/plugins/cache/`, that session's Hooks failed and the Git hooks' link pointed at a
+missing binary until a restart. Settled by deciding whether `doctor`, or session start, compares
+the running version with the installed one Claude Code records locally (still no call to GitHub)
+and tells the user to restart, or that a restart after an update stays the user's to know.
