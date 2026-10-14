@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.26.1 — 2026-10-14
+
+### Fixes
+
+- stop no-secrets-in-context denying commands that print no secret (6e0ecc7)
+
 ## 0.26.0 — 2026-10-14
 
 ### Breaking changes
