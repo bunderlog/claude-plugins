@@ -6,8 +6,8 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "session-start"],
-            "timeout": 180
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "session-start"],
+            "timeout": 60
           }
         ]
       }
@@ -18,7 +18,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "session-end"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "session-end"],
             "timeout": 10
           }
         ]
@@ -30,8 +30,8 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "user-prompt-submit"],
-            "timeout": 180
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "user-prompt-submit"],
+            "timeout": 60
           }
         ]
       }
@@ -43,7 +43,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "post-tool-use"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "post-tool-use"],
             "timeout": 60
           }
         ]
@@ -56,7 +56,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "subagent-start"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "subagent-start"],
             "timeout": 10
           }
         ]
@@ -69,7 +69,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "pre-tool-use"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "pre-tool-use"],
             "timeout": 10
           }
         ]
@@ -80,7 +80,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/loader", "allow-guideline"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook", "allow-guideline"],
             "timeout": 10
           }
         ]

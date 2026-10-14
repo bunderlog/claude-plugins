@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # The Loader downloads the binary of the version in plugin.json, so the tag must match it.
+      # The notes are the CHANGELOG section of the version in plugin.json, so the tag must match it.
       - name: Check the tag against plugin.json
         run: |
           version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' plugins/baloo/.claude-plugin/plugin.json)
@@ -20,13 +20,11 @@ jobs:
             echo "the tag is $GITHUB_REF_NAME, but plugin.json says $version"
             exit 1
           fi
-      - uses: jdx/mise-action@v5
-      - run: mise run build
       - name: Publish the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=${GITHUB_REF_NAME#v}
           awk -v v="$version" '/^## / { p = index($0, "## " v " ") == 1; next } p' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" dist/baloo_* dist/SHA256SUMS \
+          gh release create "$GITHUB_REF_NAME" \
             --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md

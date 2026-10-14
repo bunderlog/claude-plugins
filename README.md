@@ -12,6 +12,9 @@ claude plugin marketplace add bunderlog/claude-plugins
 claude plugin install baloo@bunderlog
 ```
 
+Its Hooks and Git hooks run its Python code, so they need `python3` 3.9 or later, which a Mac gets
+with the Command Line Tools and most Linux distributions have; nothing else is installed.
+
 Why things are the way they are is in [.about/adr/](.about/adr/).
 
 ## Git hooks
@@ -43,38 +46,34 @@ and says nothing of how it went.
 ## Doctor
 
 `/baloo:doctor`, or asking Claude what baloo has on or why a Check didn't run, shows the plugin's
-state in the repo: its problems first, each with what fixes it, then the binary and the link the
-Git hooks run, the Config's settings, each Check on or off, the Git hooks and the Guidelines. It
-changes nothing.
+state in the repo: its problems first, each with what fixes it, then the plugin's version and the
+link the Git hooks run, the Config's settings, each Check on or off, the Git hooks and the
+Guidelines. It changes nothing.
 
 ## CI
 
 The Checks that Git hooks run can run in a project's CI too, for commits made where the Git
-hooks didn't: without the plugin, or in GitHub's web editor. Download the binary of a pinned
-Release, check it against the Release's `SHA256SUMS`, and give each Check the input its Git hook
-would, with `$BASE` the commit the checked commits start from and `$BRANCH` the branch they go to:
+hooks didn't: without the plugin, or in GitHub's web editor. Download a pinned Release's source,
+run its `run.py` with `python3` 3.9 or later, and give each Check the input its Git hook would,
+with `$BASE` the commit the checked commits start from and `$BRANCH` the branch they go to:
 
 ```sh
 set -e
 version=0.25.1
-file=baloo_${version}_linux_amd64
 dir=$(mktemp -d)
-for f in "$file" SHA256SUMS; do
-  curl -fsSL -o "$dir/$f" "https://github.com/bunderlog/claude-plugins/releases/download/v$version/$f"
-done
-(cd "$dir" && grep " $file\$" SHA256SUMS | sha256sum -c -)
-baloo=$dir/$file
-chmod +x "$baloo"
+curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/refs/tags/v$version.tar.gz" |
+  tar -xz -C "$dir"
+baloo() { python3 -E -s "$dir/claude-plugins-$version/plugins/baloo/scripts/run.py" "$@"; }
 for sha in $(git rev-list "$BASE"..HEAD); do
   git log -1 --format=%B "$sha" > "$dir/msg"
-  "$baloo" check conventional-commits "$dir/msg"
-  "$baloo" check no-ai-coauthor "$dir/msg"
+  baloo check conventional-commits "$dir/msg"
+  baloo check no-ai-coauthor "$dir/msg"
 done
-echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | "$baloo" check linear-history
+echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | baloo check linear-history
 git reset -q --soft "$BASE" # the checked commits' changes, staged
-"$baloo" check no-secrets-in-commits
-"$baloo" check no-conflict-markers
-"$baloo" check no-large-files
+baloo check no-secrets-in-commits
+baloo check no-conflict-markers
+baloo check no-large-files
 ```
 
 - Check out the head with its full history, not a merge commit. In GitHub Actions that is
@@ -92,6 +91,7 @@ git reset -q --soft "$BASE" # the checked commits' changes, staged
 
 This repo uses its own plugin: `.claude/settings.json` installs `baloo` from GitHub, so a session
 here runs its last Release. To try an edit to a skill, the agent, a Guideline or a Hook before a
-Release, start a session with `claude --plugin-dir plugins/baloo`; the binary is still the last
-Release's. Its source is in `src/baloo/`, and `mise run check` checks its formatting, vets it and
-tests it. To make a Release and push it, run `mise run release`.
+Release, start a session with `claude --plugin-dir plugins/baloo`: its Hooks, and the Git hooks
+and Status line from then on, run this checkout's code. The code is in `plugins/baloo/scripts/`,
+its tests in `tests/`, and `mise run check` runs them on Python 3.9, lints the Hooks' `sh` and
+spell-checks the repo. To make a Release and push it, run `mise run release`.

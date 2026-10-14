@@ -1,0 +1,35 @@
+#!/bin/sh
+# What the plugin's Hooks run (ADR binary): `hook <command>` runs the plugin's run.py with python3,
+# `-E -s` so a user's PYTHONPATH and user site don't change what runs. Where python3 is missing,
+# session start says why on stderr and exits 2, which Claude Code shows to the user; every other
+# Hook says nothing and exits 0, as it does when run.py fails, since exit 2 there would stop the tool
+# call, the prompt or the turn's end. run.py itself checks that python3 is 3.9 or later.
+set -u
+
+run=$(dirname "$0")/run.py
+
+if ! command -v python3 >/dev/null 2>&1; then
+  [ "${1:-}" = session-start ] || exit 0
+  echo "baloo: python3 is missing, so no Check runs this session: install Python 3.9 or later" >&2
+  exit 2
+fi
+
+case ${1:-} in
+  session-start)
+    exec python3 -E -s "$run" "$@"
+    ;;
+  allow-guideline)
+    # Nearly every Read is of another file: it ends here, before Python starts.
+    call=$(cat)
+    case $call in
+      */guidelines/*) ;;
+      *) exit 0 ;;
+    esac
+    printf '%s\n' "$call" | python3 -E -s "$run" "$@" 2>/dev/null
+    exit 0
+    ;;
+  *)
+    python3 -E -s "$run" "$@" 2>/dev/null
+    exit 0
+    ;;
+esac

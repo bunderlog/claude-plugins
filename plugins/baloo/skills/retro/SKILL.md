@@ -11,7 +11,7 @@ fix belongs in the setup, so the next session doesn't pay it.
 ## Read
 
 From the project folder, run
-`CLAUDE_PLUGIN_DATA='${CLAUDE_PLUGIN_DATA}' sh '${CLAUDE_PLUGIN_ROOT}/scripts/loader' condense`: no
+`python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' condense`: no
 argument for the latest session (the current one, if it is running), `--last <n>` for more,
 or session ids. Read its output in full: prompts, commands, interrupts and failed tool calls with
 their `[line]`, repeated calls, expensive calls, and for several sessions a summary of failures by

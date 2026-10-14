@@ -85,5 +85,5 @@
     "wronly",
     "wshobson"
   ],
-  "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]
+  "overrides": [{ "filename": "**/scripts/hook", "languageId": "shellscript" }]
 }

@@ -15,11 +15,8 @@ jobs:
       - uses: actions/checkout@v5
       - uses: jdx/mise-action@v5
       - run: mise run check
-      # Every platform builds from one OS, as the Release workflow builds them.
-      - if: runner.os == 'Linux'
-        run: mise run build
 
-  # The README's CI recipe, with the binary built from the checked commit in place of a Release's.
+  # The README's CI recipe, with the checked commit's plugin in place of a Release's.
   git-hook-checks:
     runs-on: ubuntu-latest
     steps:
@@ -36,15 +33,14 @@ jobs:
           set -e
           if [ -n "$PR_BASE" ]; then BASE=$(git merge-base "$PR_BASE" HEAD); else BASE=$PUSH_BASE; fi
           dir=$(mktemp -d)
-          baloo=$dir/baloo
-          go -C src/baloo build -o "$baloo" ./cmd/baloo
+          baloo() { python3 -E -s "$GITHUB_WORKSPACE/plugins/baloo/scripts/run.py" "$@"; }
           for sha in $(git rev-list "$BASE"..HEAD); do
             git log -1 --format=%B "$sha" > "$dir/msg"
-            "$baloo" check conventional-commits "$dir/msg"
-            "$baloo" check no-ai-coauthor "$dir/msg"
+            baloo check conventional-commits "$dir/msg"
+            baloo check no-ai-coauthor "$dir/msg"
           done
-          echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | "$baloo" check linear-history
+          echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | baloo check linear-history
           git reset -q --soft "$BASE"
-          "$baloo" check no-secrets-in-commits
-          "$baloo" check no-conflict-markers
-          "$baloo" check no-large-files
+          baloo check no-secrets-in-commits
+          baloo check no-conflict-markers
+          baloo check no-large-files
