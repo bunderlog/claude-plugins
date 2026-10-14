@@ -1,6 +1,6 @@
 # The Config is `.claude/baloo.yml`, created at session start with every Check on
 
-Date: 2026-10-09
+Date: 2026-10-14
 
 A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
 settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
@@ -17,13 +17,16 @@ one, and nothing is written in Claude Code's own folder. A new Config's first li
 Schema, `plugins/baloo/schema.json` on `main`, for editors, and its comments say how the settings
 work. A Config that is there is never written to.
 
-The binary reads it with `go.yaml.in/yaml/v3`, the YAML organization's maintained copy of
-`gopkg.in/yaml.v3`, and goes through its top-level keys itself. A key that isn't a setting, or a
-value that doesn't decode, is a problem, one line with its line number, and that setting keeps its
-default while the others apply; a setting an earlier Release had and this one removed is no problem,
-but is ignored, and only `doctor` names it, for the user to delete (ADR measurement); a file that
-isn't YAML or isn't a map of settings is one problem, and none of it applies. At session start the
-binary prints, for Claude, a Config it created and the problems.
+The plugin reads it with a reader of its own, in the standard library alone (ADR binary), for the
+subset of YAML a Config is written in: block and flow maps and lists, plain and quoted scalars, and
+comments; what is outside it, such as an anchor, a tag or a block scalar, is a file that isn't YAML.
+It goes through the top-level keys itself. Until the port to Python lands, the Go binary reads it
+with `go.yaml.in/yaml/v3`, the YAML organization's maintained copy of `gopkg.in/yaml.v3`. A key that
+isn't a setting, or a value that doesn't decode, is a problem, one line with its line number, and
+that setting keeps its default while the others apply; a setting an earlier Release had and this one
+removed is no problem, but is ignored, and only `doctor` names it, for the user to delete (ADR
+measurement); a file that isn't YAML or isn't a map of settings is one problem, and none of it
+applies. At session start the binary prints, for Claude, a Config it created and the problems.
 
 ## Considered options
 
@@ -38,6 +41,10 @@ binary prints, for Claude, a Config it created and the problems.
   plugin update would need `init` again.
 - JSON with comments, or the same keys in either format — a parser or an editing step of our own
   for each format.
+- A YAML package such as PyYAML copied into the plugin — all of YAML, but thousands of lines of
+  someone else's code to ship and keep up, for a file that uses a small part of it.
+- TOML, read with `tomllib` — no parser of our own, but `tomllib` needs Python 3.11 where the
+  plugin supports 3.9, and every Config would change format.
 - `gopkg.in/yaml.v3` — archived, so a fix would never come.
 - `goccy/go-yaml` — better error messages, but a bigger API and more code in the binary.
 - Decoding the whole file with `KnownFields` — the problems would be the library's messages,
@@ -66,5 +73,8 @@ binary prints, for Claude, a Config it created and the problems.
   the installed Release.
 - The path says Claude, though the Checks Git hooks run act on every commit, Claude's or not.
 - Only the first YAML document is read; a second one is ignored silently.
+- A Config written in YAML outside the subset, such as one using an anchor, is one problem, and
+  none of it applies, though another YAML reader would take it; the reader grows when a Config
+  needs more.
 - Revisit when a repo the plugin reaches gets Checks nobody asked for, a repo needs settings that
   differ per folder, or one Config for many repos.
