@@ -59,7 +59,7 @@ with `$BASE` the commit the checked commits start from and `$BRANCH` the branch 
 
 ```sh
 set -e
-commit=ca278ce0458b7a5483c94a6888bec664d402f004 # v0.27.0
+commit=cb6d982917bc7551701963f684e71841c1b88599 # v0.28.0
 dir=$(mktemp -d)
 curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/$commit.tar.gz" | tar -xz -C "$dir"
 baloo() { python3 -E -s "$dir/claude-plugins-$commit/plugins/baloo/scripts/run.py" "$@"; }
