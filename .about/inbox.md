@@ -149,19 +149,6 @@ With the binary, the recipe checked the download against the Release's `SHA256SU
 deciding whether the recipe pins a commit's SHA instead, or the Release workflow publishes a
 checksum of the archive to check, or the tag over HTTPS is enough.
 
-## The data folder's link flips between installed versions, and the old binary is never pruned
-
-2026-10-14 · upgrade to 0.26.0
-
-The plugin's data folder is shared by every version installed, so with 0.26.0 here and 0.25.1 in
-other projects, each session start points `baloo` in it anew: 0.25.1 at its Go binary, 0.26.0 at its
-plugin folder. Whichever started last wins, and the other's Git hooks and Status line find the
-wrong thing (0.26.0's Git hooks skip the Checks with "is missing"). The 0.25.1 Loader pruned old
-`baloo_*` binaries; 0.26.0 has no Loader, so `baloo_0.25.1_linux_amd64` and its `.sha256` stay
-forever once no project runs 0.25.1. Settled by session start removing `baloo_*` files when no
-installed version needs them, or by deciding upgrading every project and deleting them by hand is
-enough.
-
 ## No test covers run.py on a python3 older than 3.9
 
 2026-10-14 · session review
