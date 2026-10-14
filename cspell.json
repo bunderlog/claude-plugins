@@ -15,6 +15,7 @@
     "commitlint",
     "commondir",
     "cowork",
+    "creat",
     "deepenings",
     "direnv",
     "diskutil",
@@ -47,6 +48,7 @@
     "outputstyle",
     "pinia",
     "prds",
+    "pycache",
     "pyproject",
     "pythonpath",
     "rdap",
@@ -56,6 +58,7 @@
     "shellcheck",
     "sqlc",
     "statusline",
+    "strerror",
     "subshell",
     "subtests",
     "symref",
@@ -70,6 +73,7 @@
     "wcag",
     "webui",
     "worktrees",
+    "wronly",
     "wshobson"
   ],
   "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]
