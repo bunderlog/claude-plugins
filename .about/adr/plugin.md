@@ -28,6 +28,10 @@ failure to the `issue` skill, and a second plugin would need its own tags, CHANG
   built; dropped 2026-10-07) — it rested on enforcement in code being a niche of its own, which
   the measurement didn't confirm (ADR measurement): what is left beside the knowledge is too
   little to split.
+- baloo split into smaller plugins, so each audience installs only what it needs (weighed again
+  2026-10-14) — no user of such a set exists yet, and the Config already turns off each Check and
+  Guideline; only the skills and the Hooks stay for everyone. The Inbox keeps the first candidate,
+  ad managers.
 - A second plugin for fixing a failed CI run — installed without baloo, but it would find the
   local command to reproduce a failure on its own, and the release tool, tags and CHANGELOG
   would have to handle two plugins.
