@@ -2,6 +2,13 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.26.2 — 2026-10-14
+
+### Fixes
+
+- let no-secrets-in-context allow a grep of names or counts, and output into a file (ba003ef)
+- leave what is still to do on a ticket out of the Session review's Inbox items (a9c5db2)
+
 ## 0.26.1 — 2026-10-14
 
 ### Fixes
