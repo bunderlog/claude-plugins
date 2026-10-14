@@ -2,6 +2,13 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.28.0 — 2026-10-14
+
+### Features
+
+- session start names the files in .about/ that git hasn't committed (0f03c3d)
+- doctor and the next prompt say when a newer version is installed than the session runs (dbbbe32)
+
 ## 0.27.0 — 2026-10-14
 
 ### Features
