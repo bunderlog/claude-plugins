@@ -25,6 +25,7 @@
     "editmsg",
     "envrc",
     "errorf",
+    "esac",
     "evals",
     "fatalf",
     "getpid",

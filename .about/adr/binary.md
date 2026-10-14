@@ -24,7 +24,8 @@ every Read starts no Python.
 `run.py` is written for any `python3`, so one older than 3.9 says so rather than failing on newer
 syntax: on stderr with exit 2 for session start and for a command run by hand or by a skill, such
 as `doctor`; with exit 0 for a Git hook, so the commit goes through (ADR git-hooks); and not at all
-for the other Hooks and the Status line.
+for the other Hooks and the Status line. CI's `old-python` job checks it on Python 3.6, where
+`:=` and other newer syntax fail before the check could run.
 
 Each part session start reports on (the Config, the Output style, the attribution, the Status
 line, the Git hooks, the Session review, the Inbox, the Guidelines, the uncommitted edits in
