@@ -42,6 +42,7 @@
     "nohup",
     "nosystem",
     "nullglob",
+    "obra",
     "outputstyle",
     "pinia",
     "pyproject",
@@ -62,10 +63,12 @@
     "throughs",
     "tomllib",
     "toplevel",
+    "trailofbits",
     "trimpath",
     "wcag",
     "webui",
-    "worktrees"
+    "worktrees",
+    "wshobson"
   ],
   "overrides": [{ "filename": "**/scripts/loader", "languageId": "shellscript" }]
 }

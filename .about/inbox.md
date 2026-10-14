@@ -82,3 +82,41 @@ suite (ADR evals) can measure whether a signal makes Claude read them.
 The `ubuntu-latest` label that CI and the Release workflow run on moves to Ubuntu 26 from
 2026-10-19; the v0.21.1 Release run warned of it. Settled by pinning the runner, or by seeing a
 run on Ubuntu 26 pass after 2026-10-19.
+
+## A plugin for another audience, such as ad managers
+
+2026-10-14 · user
+
+baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
+2026-10-14 for installing by choice and different audiences, and not done: no such user exists
+yet. The first candidates are ad managers, two ways:
+- moved to Claude Code, working in a git clone: ADR about-folder holds, baloo with its Hooks works
+  for them as it is, and what they lack is skills of their own domain, a plugin beside baloo or
+  skills in it;
+- left in Cowork or claude.ai, with no git or terminal, which ADR about-folder rules out for
+  baloo: a plugin of their own, skills only and no Hooks, with their knowledge outside `.about/`.
+
+Which way turns on what they need more: their daily work (reports, creatives, campaigns through
+connectors) fits Cowork, with a plugin of skills only; knowledge the team builds and checks
+together (a glossary, decisions, playbooks, with history and review) fits Claude Code's desktop
+app, with Claude making the commits, and a repo of knowledge alone, since they have no code. To
+try first: one ad manager on a real task for a week in Claude Code's desktop app; where git gets in
+the way and `.about/` goes unused, it is Cowork.
+
+The port to Python (ADR binary) makes a second plugin cheap: no binaries to build per plugin.
+Settled once a first real ad manager has a task for it: then decide which way, what repo they
+clone if any, the plugin's skills, the repo's layout for two plugins, and rewrite ADR plugin, and
+ADR about-folder for the second way.
+
+Found in a survey of plugin repos on 2026-10-14, for that layout:
+- One owner's plugins live in one repo under `plugins/<name>/`, by relative path (anthropics/
+  claude-code, trailofbits/skills, wshobson/agents); obra/superpowers alone keeps a repo each.
+  superpowers split its skills out and merged them back, and compound-engineering went from
+  several plugins to one (PR #967); wshobson's fine split left 7 differing copies of one agent.
+- Claude Code resolves a plugin's `dependencies`, semver ranges, against tags
+  `<plugin>--v<version>` (`claude plugin tag --push`), so a second plugin means those tags, not
+  `v*`; a plugin with only `dependencies` is a bundle, so baloo could become one over smaller
+  plugins. No surveyed marketplace uses `dependencies` yet, `update` doesn't resolve new ones
+  (anthropics/claude-code #88663), and `claude plugin eval` loads no dependency.
+- An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
+  in the marketplace becomes a copy: shared Python code can live once and be linked into each.
