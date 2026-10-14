@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import List
+from typing import List, Tuple
 
 from baloo.checks.secrets import ALLOW_SECRET, is_env_file
 from baloo.checks.shell import Program, has_flag, programs, split, split_git
@@ -16,7 +16,8 @@ _KEY_FILE = re.compile(r"(^|/)id_(rsa|dsa|ecdsa|ed25519)[^/]*\Z|\.(pem|key)\Z")
 _SECRET_PART = re.compile(
     r"\w*KEY|\w*TOKEN|\w*SECRET|PASSWORD|PASSWD|PASS|CREDENTIALS?|PAT", re.A
 )
-_VARIABLE = re.compile(r"\$\{?([A-Za-z_]\w*)", re.A)
+# A variable whose value the shell puts in: not `${NAME:+word}`, which puts in the word.
+_VARIABLE = re.compile(r"\$(?:\{([A-Za-z_]\w*)(?!\w|:?\+)|([A-Za-z_]\w*))", re.A)
 _HOME = re.compile(r"^(~|\$HOME|\$\{HOME\})(/|\Z)")
 
 # Files that hold Secrets, by their path from the home folder or any other.
@@ -61,12 +62,7 @@ def no_secrets_in_context(call: dict, dir: str) -> str:
         command = _str(given.get("command"))
         if _marks(command):
             return _MARK_ADVICE
-        found = programs(command)
-        for i, p in enumerate(found):
-            why = _shows(p, dir)
-            if why and not (_dumps_env(p) and _keeps_names(found[i:])):
-                break
-            why = ""
+        why = _leak(command, dir)
     elif tool == "Read":
         why = _secret_file(_str(given.get("file_path")), dir)
     elif tool == "Grep":
@@ -82,6 +78,37 @@ def no_secrets_in_context(call: dict, dir: str) -> str:
         why + ": showing it would put a secret into this session. If it's really needed, ask the "
         "user to look in their own terminal, not with `!`, whose output enters the session."
     )
+
+
+def _leak(command: str, dir: str) -> str:
+    """Why the shell command `command`, run in `dir`, would show a Secret, or "" when it wouldn't:
+    the first of its programs that would, but an env whose pipeline keeps only the names."""
+    found = programs(command)
+    for i, p in enumerate(found):
+        why = _shows(p, dir)
+        if why and not (_dumps_env(p) and _keeps_names(found[i:])):
+            return why
+    return ""
+
+
+def _substituted(arg: str) -> Tuple[str, List[str]]:
+    """The argument `arg` without its command substitutions, `$(…)`, and the commands they run:
+    what a program is given in their place is their output, not their text."""
+    kept: List[str] = []
+    inner: List[str] = []
+    i = 0
+    while i < len(arg):
+        if arg.startswith("$(", i):
+            depth, j = 1, i + 2
+            while j < len(arg) and depth:
+                depth += {"(": 1, ")": -1}.get(arg[j], 0)
+                j += 1
+            inner.append(arg[i + 2 : j - 1] if depth == 0 else arg[i + 2 :])
+            i = j
+        else:
+            kept.append(arg[i])
+            i += 1
+    return "".join(kept), inner
 
 
 def _marks(command: str) -> bool:
@@ -160,7 +187,14 @@ def _shows(p: Program, dir: str) -> str:
         if not args:
             return "set prints every shell variable"
     elif p.name in ("echo", "printf", "print"):
-        s = secret([m[1] for a in args for m in _VARIABLE.finditer(a)])
+        shown: List[str] = []
+        for a in args:
+            text, inner = _substituted(a)
+            why = next((w for w in (_leak(c, dir) for c in inner) if w), "")
+            if why:
+                return why
+            shown.append(text)
+        s = secret([m[1] or m[2] for a in shown for m in _VARIABLE.finditer(a)])
         if s:
             return f"{p.name} ${s} prints a secret"
     elif p.name == "gh":
@@ -246,9 +280,27 @@ def _names_only(p: Program) -> bool:
         return (
             (has_flag(p.args, "-o") or "--only-matching" in p.args)
             and len(patterns) == 1
-            and bool(_NAME_MATCH.fullmatch(patterns[0]))
+            and all(_NAME_MATCH.fullmatch(a) for a in _alternatives(patterns[0]))
         )
     return False
+
+
+def _alternatives(pattern: str) -> List[str]:
+    """The grep pattern `pattern` split on its `|` and `\\|` outside parentheses: each of them
+    matches on its own."""
+    found = [""]
+    depth = 0
+    i = 0
+    while i < len(pattern):
+        c = pattern[i]
+        if depth == 0 and (c == "|" or pattern.startswith("\\|", i)):
+            found.append("")
+            i += 1 if c == "|" else 2
+            continue
+        depth += {"(": 1, ")": -1}.get(c, 0)
+        found[-1] += c
+        i += 1
+    return found
 
 
 def _secret_name(name: str) -> bool:
