@@ -1,6 +1,6 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-09
+Date: 2026-10-14
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
@@ -39,6 +39,15 @@ file's markers only where one of them is `<<<<<<<` or `>>>>>>>`, since git count
 heading underlined with seven `=` too. `no-large-files` looks only at files a commit adds: one
 already committed passes when it changes or is renamed, since it was let in once.
 
+`linear-history` looks for merges in what a push sends that the destination doesn't already
+have. Where the remote has the branch and its commit is here, that is the pushed commit's history
+less the remote's commit and each remote's default branch (`refs/remotes/*/HEAD`), which holds the
+merges a branch rebased or fast-forwarded onto it brings along; the tracking ref of the branch
+pushed to never counts, since the push replaces it, so a force-push in CI, where it already points
+at the pushed commit, is still checked. A push that creates a branch, or whose remote commit isn't
+here, is checked against every remote-tracking ref. CI passes the branch the commits go to as the
+remote ref.
+
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the binary's
 `pre-tool-use`, which reads the Config once and runs the Checks it turns on. Where the binary is
 missing or fails, it says nothing, and the call runs: session start has already said that no Check
@@ -70,6 +79,14 @@ Release.
   none — a change to how `git pull` works that nobody asked for, overriding the user's own global
   setting, and git since 2.33 won't merge on a pull anyway until `pull.rebase` or `pull.ff` is
   set.
+- `linear-history` checking `<remote commit>..<local>` (until 2026-10-06) — a branch rebased or
+  fast-forwarded onto main lists main's merges, already on the remote, and the push is refused.
+- `linear-history` leaving out every remote-tracking ref (`--not --remotes`) — in CI the
+  destination's tracking ref already holds the pushed commit, so a force-push passes, and a merge
+  on any other remote branch, reset or rebased onto, goes through.
+- Passing pre-push's remote name to `linear-history`, so it tells the remote pushed to from another
+  — changes `baloo check linear-history` and the README's CI recipe for a false positive nobody
+  has hit yet.
 - A Hook per Check — a run of the binary per Check on every Bash call, each reading the Config.
 - Leaving `no-ai-coauthor` alone to catch the trailer — Claude Code adds it by default, so each
   commit fails once and is written again.
@@ -111,6 +128,12 @@ Release.
 - Nothing in the plugin stops a command that destroys work: Claude Code's permissions and its
   auto mode do.
 - Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
+- A CI recipe that passes a placeholder remote ref, as the README's did before 2026-10-06, lets a
+  force-push's merges through once `origin/HEAD` exists; it has to name the branch pushed to.
+- `linear-history` reports upstream's merges where a fork's main tracks `upstream/main`, is
+  synced from it and pushed to `origin`: it can't tell `upstream/main` from the branch pushed to.
+  It blocks the push rather than letting a merge through; revisit, by passing the remote name,
+  when a fork hits it.
 - Revisit when a false alarm makes people turn a Check a Hook runs off wholesale, a committed
   Config that turns one off leads to a Leak, or a session shows work destroyed that a Check
   would have stopped.
