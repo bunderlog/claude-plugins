@@ -112,3 +112,11 @@ and in one project in 0 of 29 (ADR measurement). The file Claude touches can't t
 so the Hook that gives `typescript`, `vue` and `testing` (ADR guidelines) doesn't reach them.
 Settled by finding a signal that does tell the task, such as a failing test run for `debugging`
 or a CI run named in the prompt for `ci`, or deciding they stay Claude's to read.
+
+## The Release workflow's runner moves to Ubuntu 26
+
+2026-10-06 · session review
+
+The `ubuntu-latest` label that CI and the Release workflow run on moves to Ubuntu 26 from
+2026-10-19; the v0.21.1 Release run warned of it. Settled by pinning the runner, or by seeing a
+run on Ubuntu 26 pass after 2026-10-19.
