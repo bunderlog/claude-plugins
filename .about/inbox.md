@@ -5,8 +5,8 @@
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. Settled by deciding
 which stacks get one, each with its stack detection for a new Config, or none. Kept to write
-each when a project in that stack takes up baloo: `python` now, since this repo is in Python from
-0.26.0 (ADR binary) and the port left it unwritten.
+each when a project in that stack takes up baloo; `python`, this repo's stack from 0.26.0 (ADR
+binary), waits until a measurement shows the Guidelines a Hook gives from 0.27.0 are followed.
 
 ## Guidelines for concerns across stacks
 
@@ -16,7 +16,7 @@ each when a project in that stack takes up baloo: `python` now, since this repo 
 `observability` (logs, errors, metrics) as Guidelines. Settled by deciding which earn a Guideline
 of their own rather than rules in `principles` or `design`, and whether a new Config turns them on.
 `principles` already asks that a change be observable in production, and the Checks keep Secrets
-out of commits and Claude's context; kept until a session shows a gap they leave.
+out of commits and Claude's context; kept until a session shows a gap they leave, which a week of three projects in 2026-10 didn't.
 
 ## Where each kind of project knowledge lives
 
@@ -31,7 +31,9 @@ for a kind kept in an outside tool goes to the local Inbox, for a person to move
 Sancrisoft's risk register handed from spec to QA, Squad's opportunity solution tree, Kiro's
 steering split into product, tech and structure. Settled once a project keeps a kind in an outside
 tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
-a skill finds it, and rewrite ADR about-folder.
+a skill finds it, and rewrite ADR about-folder. One project keeps its tasks and bugs in Jira, and
+from 0.26.2 the Session review leaves what is still to do on a ticket to the ticket (ADR
+session-review); decide once a skill has to write there, not only read.
 
 ## Project knowledge reaches the context only as a task needs it
 
@@ -59,7 +61,9 @@ which measures earn their cost.
 
 Loading on a task's demand is itself an open question, not a confirmed approach: the measurement
 of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
-`.about/` read before an edit to code in 8 of 28 sessions.
+`.about/` read before an edit to code in 8 of 28 sessions, and a week of 2026-10 in one project
+in 12 of 30. For the Guidelines, 0.27.0 gives each by a signal of its task instead (ADR
+guidelines); `.about/` still waits to be read.
 
 ## The Release workflow's runner moves to Ubuntu 26
 
@@ -71,7 +75,7 @@ run on Ubuntu 26 pass after 2026-10-19.
 
 ## A plugin for another audience, such as ad managers
 
-2026-10-14 · user
+2026-10-14 · user · kept 2026-10-14
 
 baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
 2026-10-14 for installing by choice and different audiences, and not done: no such user exists
@@ -116,56 +120,3 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
   (anthropics/claude-code #88663), and `claude plugin eval` loads no dependency.
 - An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
   in the marketplace becomes a copy: shared Python code can live once and be linked into each.
-
-## A session on an older Release than the installed one goes unnoticed
-
-2026-10-14 · session review
-
-Claude Code loads a plugin only when its process starts, and `/clear` doesn't reload it, so a
-session started before a background update keeps running the older Release until a restart. On
-2026-10-14 a session ran 0.21.1 for hours with 0.25.1 installed: `doctor` found no problem, since
-it compares only the running version with the link's target (ADR doctor), and both were 0.21.1; its
-Session review followed 0.21.1's prompt and edited `.about/` directly; and once 0.21.1 was deleted
-from `~/.claude/plugins/cache/`, that session's Hooks failed and the Git hooks' link pointed at a
-missing binary until a restart. Settled by deciding whether `doctor`, or session start, compares
-the running version with the installed one Claude Code records locally (still no call to GitHub)
-and tells the user to restart, or that a restart after an update stays the user's to know.
-
-## Session start doesn't name the uncommitted edits in .about/
-
-2026-10-14 · port to Python
-
-ADR about-folder decides that session start names the files in `.about/` with changes git hasn't
-committed, and ADR binary lists it among session start's parts, but neither the Go binary nor the
-Python port ever built it. Settled by building it as one more part of session start, a function in
-`baloo/session_start.py` and its line in `PARTS`, or by dropping the decision from both ADRs.
-
-## The README's CI recipe trusts a tag's archive without checking it
-
-2026-10-14 · port to Python
-
-With the binary, the recipe checked the download against the Release's `SHA256SUMS`; it now runs
-`run.py` from GitHub's archive of the pinned tag over HTTPS, and a tag can be moved. Settled by
-deciding whether the recipe pins a commit's SHA instead, or the Release workflow publishes a
-checksum of the archive to check, or the tag over HTTPS is enough.
-
-## No test covers run.py on a python3 older than 3.9
-
-2026-10-14 · session review
-
-ADR binary decides that `run.py` on a python3 older than 3.9 says so: exit 2 for session start,
-`doctor` and `check`, exit 0 for a Git hook, nothing for the other Hooks and the Status line. The
-port checked it once by hand on a real Python 3.8, but `mise run check` and CI run only 3.9, so
-newer syntax slipping into what `run.py` runs before its version check would go unnoticed.
-Settled by a test that runs `run.py` under an older `python3`, in CI or faked as the `hook`
-wrapper's tests fake `python3`, or by deciding the hand check is enough.
-
-## Nothing formats or lints the plugin's Python
-
-2026-10-14 · session review
-
-The Go code had `gofmt` and `vet` in `mise run check`; since the port, the Python in
-`plugins/baloo/scripts/` and `src/release/` has neither, only the tests, `shellcheck` and `cspell`.
-A dev tool such as `ruff` would run in `mise run check` and CI, and as this repo's
-`format-on-edit`, without becoming a plugin dependency (ADR binary). Settled by choosing a
-formatter and linter for the repo, or deciding the tests and Pyright are enough.
