@@ -72,17 +72,6 @@ Loading on a task's demand is itself an open question, not a confirmed approach:
 of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
 `.about/` read before an edit to code in 8 of 28 sessions.
 
-## No evals for the skills
-
-2026-10-07 · session review
-
-Nothing in the repo measures whether the skills, the agent and the Guidelines make Claude follow
-their rules: the Go tests cover the binary, not the prompts, so a change to a skill's text can
-weaken it unseen. Settled by deciding whether skills get evals, a set of tasks run against a skill
-with its result checked, and which skills first, or that sessions and `retro` are enough. The
-measurement of 2026-10-07 (ADR measurement) read sessions, not prompts: it shows whether a part was
-used, not whether a skill's text works.
-
 ## Guidelines tied to a task, not a file, still wait to be read
 
 2026-10-07 · user
