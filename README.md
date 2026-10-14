@@ -93,5 +93,5 @@ This repo uses its own plugin: `.claude/settings.json` installs `baloo` from Git
 here runs its last Release. To try an edit to a skill, the agent, a Guideline or a Hook before a
 Release, start a session with `claude --plugin-dir plugins/baloo`: its Hooks, and the Git hooks
 and Status line from then on, run this checkout's code. The code is in `plugins/baloo/scripts/`,
-its tests in `tests/`, and `mise run check` runs them on Python 3.9, lints the Hooks' `sh` and
-spell-checks the repo. To make a Release and push it, run `mise run release`.
+its tests in `tests/`, and `mise run check` runs them on Python 3.9, lints the Python and the Hooks'
+`sh`, and spell-checks the repo. To make a Release and push it, run `mise run release`.
