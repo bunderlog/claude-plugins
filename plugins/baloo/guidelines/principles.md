@@ -31,20 +31,15 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 
 ## 1. Frame the problem before the solution
 
-- State the user, the problem and the job to be done _before_ proposing a solution.
-- Say why now: what changed, and the evidence or trigger.
-- Tell the symptom ("the button is slow") from the problem ("users abandon checkout").
+- State the user, the problem and the job to be done before proposing a solution; tell the
+  symptom ("the button is slow") from the problem ("users abandon checkout").
 - Look for prior art in the codebase before designing something new.
 
 **Test:** someone who didn't write it can restate who this helps and what changes for them.
 
-## 2. Surface assumptions and ambiguity
+## 2. Surface assumptions
 
 - List assumptions before coding; mark each _validated_, _assumed_ or _unknown_.
-- If a request reads more than one way, present the readings with their trade-offs.
-- Name your confidence in non-obvious choices (_high_, _medium_, _low_).
-- Push back when a simpler approach would serve the goal better.
-- Stop on confusion: name what's unclear and ask.
 - Validate against the source that owns the fact (the official docs, the code, the spec), not
   someone's account of it.
 - Say "none", "all" or a number only from a count that covered everything; otherwise say what
@@ -56,14 +51,7 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 
 ## 3. Name the trade-offs
 
-| Dimension       | Question                                  |
-| --------------- | ----------------------------------------- |
-| **Value**       | What outcome does this unlock?            |
-| **Cost**        | Time, complexity, ongoing maintenance     |
-| **Risk**        | What breaks if we're wrong? Who pays?     |
-| **Alternative** | What did we consider and reject, and why? |
-
-- Frame options as "optimize for X vs Y", not "right vs wrong".
+- Frame options as "optimize for X vs Y", with what was rejected and why.
 - Call out irreversible costs: data migrations, public APIs, UX patterns users learn. For a
   one-way door, get explicit sign-off before proceeding.
 - If there's no trade-off, say so: the choice is obvious, or the thinking is shallow.
@@ -72,10 +60,6 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 
 ## 4. Minimum viable scope
 
-- Cut to the smallest change that tests the hypothesis or solves the stated problem.
-- No features beyond what was asked, no "while we're here".
-- No abstractions for single-use code; no configurability nobody asked for.
-- No error handling for impossible cases.
 - If it could be 50 lines and it's 200, rewrite it.
 - When only running code can settle a question, prototype for that one question: no tests, no
   error handling. Decide first what result would prove your assumption wrong; report what the
@@ -85,9 +69,6 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 
 ## 5. Surgical edits
 
-- Touch only what the task requires; match the existing style even if you'd do it differently.
-- Don't refactor or "improve" adjacent code, comments or formatting that isn't broken.
-- Remove the orphans _your_ change created (unused imports, variables, functions).
 - Leave pre-existing dead code alone: mention it, don't delete it.
 - Before removing code or config, find every consumer: runtime, build, CI, deploy scripts.
   Where config is layered per context, compare what each context renders before and after.
@@ -101,50 +82,26 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 
 ## 6. Define done as verifiable goals
 
-Done is "the user can do the thing, and it works", not "merged".
+Done is "the user can do the thing, and it works", not "merged": "a failing test reproduces the
+bug and passes after the fix", not "fix the bug".
 
-| Weak             | Strong                                                                     |
-| ---------------- | -------------------------------------------------------------------------- |
-| "Add validation" | "Invalid inputs are rejected with a clear message; tests cover each case"  |
-| "Fix the bug"    | "A failing test reproduces it and passes after the fix; nothing regresses" |
-| "Refactor X"     | "Behavior identical before and after (tests green on both sides)"          |
-
-Acceptance criteria cover:
-
-- **Functional** — tests pass, edge cases handled.
-- **User-facing** — a real user flow completes end to end.
-- **Operational** — it's observable in production (logs, errors, analytics).
-
-Check with what the project itself runs: its CI, Git hooks and scripts, not every tool with a
-config in the repo. A failure that was there before your change: name it, don't chase it. A
-script you commit runs from a clean checkout, on dependencies the repo declares, not on your
-scratch folder or a global install.
-
+- Check with what the project itself runs: its CI, Git hooks and scripts, not every tool with a
+  config in the repo. A failure that was there before your change: name it, don't chase it.
+- A script you commit runs from a clean checkout, on dependencies the repo declares, not on your
+  scratch folder or a global install.
 - Before a deliverable of several parts (variants, files, platforms), list every one you'll make;
   after, check each exists.
 - A fix is done when the installed or running thing shows it, not when its source changed:
   reinstall or rerun, and read the live state.
-
-For multi-step work, give each step the check that shows it's done.
-
-If acceptance criteria can't be written, the work isn't ready to start.
+- If acceptance criteria can't be written, the work isn't ready to start.
 
 **Test:** someone else can check whether the work is done without asking.
 
 ## 7. Instrument before you ship
 
-For a user-facing or behavior-changing change, define up front:
-
-- **North-star metric** — the one number expected to move.
-- **Baseline** — its current value, from data.
-- **Expected direction and size** — e.g. +5% conversion, –20% latency.
-- **Time horizon** — when we check (7 days? 30?).
-- **Guardrail metrics** — what must _not_ get worse (error rate, adjacent funnels, cost).
-- **How we'll read it** — A/B test, before and after, cohort, qualitative.
-
-Ship the instrumentation in the _same change_ as the feature. If no metric can be defined,
-write down the qualitative signal that would show it's working; if nothing will move,
-reconsider building it.
+For a user-facing or behavior-changing change, name up front the one number expected to move,
+its baseline from data, when you'll check it, and what must not get worse; ship the
+instrumentation in the same change. If nothing will move, reconsider building it.
 
 **Test:** on day N after launch, "did this work?" has an answer from data, not opinion.
 
