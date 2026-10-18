@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import subprocess
@@ -25,6 +26,15 @@ ENV = names.PLUGIN.upper() + "_SESSION_REVIEW"
 _MIN_CHARS = 2_000  # a shorter conversation can't have settled a term or a decision
 _MAX_CHARS = 200_000  # of a longer one, the review reads the end
 _KEPT = 7 * 24 * 3600
+_SHOWN = 50  # the most rejected Proposals a review is told of
+
+# What a review may spend, in US dollars, as `claude -p --max-budget-usd` counts it: about three
+# times the dearest of 40 reviews up to 2026-10-17, about $0.81 at Claude Opus 5.5's prices, so a
+# dearer default model fits too. A review that reaches it fails, and is told so.
+_BUDGET = "3"
+
+# The line between what an earlier review of a resumed session read and what it didn't.
+_SEAM = "----- reviewed before: above this line only for context -----"
 
 
 class Error(Exception):
@@ -37,9 +47,22 @@ def headless() -> bool:
     return condense.headless(os.environ.get("CLAUDE_CODE_ENTRYPOINT", ""))
 
 
-def _prompt(id: str, file: str) -> str:
-    """What the review of `id` is asked: to write its Proposals to `file`."""
+def _prompt(id: str, file: str, rejected: List[str], earlier: bool) -> str:
+    """What the review of `id` is asked: to write its Proposals to `file`, given the Proposals the
+    user rejected before, and whether an earlier review read the conversation's start."""
     p = names.PLUGIN
+    before = ""
+    if earlier:
+        before += (
+            f'An earlier review read the conversation down to the line "{_SEAM}": propose only '
+            "from what follows it.\n"
+        )
+    if rejected:
+        before += (
+            "The user rejected these proposals before; propose none of them again:\n- "
+            + "\n- ".join(rejected)
+            + "\n"
+        )
     return (
         """The conversation that just ended is on stdin. Find what it settled or left open that
 .about/ doesn't say yet, and propose each change to .about/ in """
@@ -58,8 +81,13 @@ left open, and a bug or problem it found but didn't fix, is an Inbox item to add
 what would settle it. What is still to do or check on a ticket the conversation worked on (a check
 on a device, a PR to merge, a wait on firmware) stays with that ticket: propose nothing for it. An
 item the conversation settled is one to delete. A PRD changes only where
-the conversation agreed what the feature is for or how it is checked.
-
+the conversation agreed what the feature is for or how it is checked. Propose nothing already
+waiting in """
+        + names.PROPOSALS
+        + """.
+"""
+        + before
+        + """
 Write nothing when there is nothing to propose. Otherwise write the file as:
 
 # Session review """
@@ -114,13 +142,22 @@ def start(
     the `claude` given and the plugin in the folder `plugin`, whose skills it uses, at the repo's
     root `root`, keeping its files in the plugin's data folder `data`.
     It returns once the review runs, detached, and says whether one started: none does for a
-    headless session, or one too short to have settled much. What fails raises OSError."""
+    headless session, or one too short to have settled much. Of a resumed session, it reads only
+    what an earlier review didn't, with what that one read before it for context. What fails raises
+    OSError."""
     if condense.condense(transcript, "").headless:
         return False
-    conversation = condense.conversation(transcript, _MAX_CHARS)
-    if len(conversation) < _MIN_CHARS:
-        return False
     folder = _folder(root, data)
+    to = transcript.rfind(b"\n" if isinstance(transcript, bytes) else "\n") + 1
+    at = _from(folder, session, to)
+    added = condense.conversation(transcript[at:to], len(transcript))
+    if len(added) < _MIN_CHARS:
+        return False
+    read = min(len(added), _MAX_CHARS)
+    conversation = added[len(added) - read :]
+    earlier = condense.conversation(transcript[:at], _MAX_CHARS - read) if at else ""
+    if earlier:
+        conversation = earlier + "\n\n" + _SEAM + "\n\n" + conversation
     os.makedirs(folder, mode=0o700, exist_ok=True)
     # The Proposals are the user's to decide, not to commit by accident with the rest.
     settings.exclude(root, os.path.join(root, names.PROPOSALS))
@@ -138,7 +175,8 @@ def start(
                 # had it from somewhere the review's doesn't, such as --plugin-dir.
                 file = "./" + names.PROPOSALS + id + ".md"
                 cmd = [
-                    claude, "-p", _prompt(id, file), "--plugin-dir", plugin,
+                    claude, "-p", _prompt(id, file, _rejected(root, data, _SHOWN), bool(earlier)),
+                    "--plugin-dir", plugin, "--output-format", "json", "--max-budget-usd", _BUDGET,
                     "--tools", "Read,Glob,Grep,Edit,Write,Skill", "--permission-mode", "dontAsk",
                     "--allowedTools", "Read", "Glob", "Grep", "Skill",
                     "Edit(./" + names.PROPOSALS + "**)",
@@ -160,6 +198,8 @@ def start(
         pass
     # Reaps it should this process outlive it, as a test's does.
     threading.Thread(target=proc.wait, daemon=True).start()
+    _mark(folder, session, id, at, to)
+    _log_run(data, repo(root), id, "started", "", f"read {read} of {len(added)} characters")
     return True
 
 
@@ -174,8 +214,8 @@ def _write(path: str, text: str) -> None:
 
 def running(root: str, data: str) -> bool:
     """Whether a Session review of the repo at `root` still runs. It also deletes the files of
-    reviews that ended more than a week ago, and those Releases before reviews had ids kept, one
-    per repo."""
+    reviews that ended more than a week ago, with where they stopped reading their session, and
+    those Releases before reviews had ids kept, one per repo."""
     reviews = os.path.join(data, "session-review")
     for name in _names(reviews):
         if re.fullmatch(r"[^/]{16}\.txt.*", name, re.S):
@@ -202,6 +242,7 @@ def running(root: str, data: str) -> bool:
             base = pid[: -len(".pid")]
             for ext in (".pid", ".txt", ".err"):
                 _remove(base + ext)
+    _forget(os.path.join(folder, "sessions"))
     return is_running
 
 
@@ -587,9 +628,11 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
     """What to tell Claude of the Proposals waiting in the repo at `root`, and of where the log and
     the files disagree, that the session `session` hasn't been told yet; none when nothing is new.
     `decide` is the command that logs a decision. A headless session is told nothing, and showing
-    consumes nothing: a Proposal waits until it is decided."""
+    consumes nothing: a Proposal waits until it is decided. First come the reviews that failed or
+    read only part of their session since a session last looked, each told once."""
     if headless():
         return []
+    ended = _ended(root, data)
     folder = os.path.join(data, "session-review", "shown")
     _forget(folder)
     seen = os.path.join(folder, session)
@@ -608,8 +651,8 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
             proposals.append("  " + _line(it))
             keys.append(key)
     if not keys:
-        return []
-    lines: List[str] = []
+        return ended
+    lines: List[str] = ended
     if proposals:
         p = names.PLUGIN
         lines.append(
@@ -663,3 +706,171 @@ def _forget(folder: str) -> None:
                 os.remove(path)
         except OSError:
             pass
+
+
+def _runs_file(data: str) -> str:
+    """The log of the reviews' runs, in the plugin's data folder `data`: a line an event, its fields
+    split by tabs: when (UTC), the repo, the review, the event (started, ok or failed), what it cost
+    in US dollars, "" where unknown, and a detail: for started, how much of the conversation it
+    read; for failed, why."""
+    return os.path.join(data, "session-review", "runs.log")
+
+
+_RUN_FIELDS = 6
+
+
+def _log_run(data: str, repo: str, id: str, event: str, cost: str, detail: str) -> None:
+    """Adds the event `event` of the review `id` in the repo `repo` to the log of runs."""
+    file = _runs_file(data)
+    os.makedirs(os.path.dirname(file), mode=0o700, exist_ok=True)
+    at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    line = "\t".join([at, repo, id, event, cost, _flat(detail)])
+    fd = os.open(file, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    with os.fdopen(fd, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+def _runs(data: str, repo: str) -> List[List[str]]:
+    """The fields of each line of the log of runs in the repo `repo`."""
+    out = []
+    for line in _log_lines(_runs_file(data)):
+        field = line.split("\t")
+        if len(field) == _RUN_FIELDS and field[1] == repo:
+            out.append(field)
+    return out
+
+
+def _outcome(folder: str, id: str) -> Tuple[bool, str, str]:
+    """How the review `id`, whose files are in `folder`, ended, read from its reply: whether it
+    ended, why it failed, "" where it didn't, and what it cost, "" where unknown. A reply that isn't
+    JSON is an earlier Release's, which ended well; one that is gone was deleted a week after."""
+    base = os.path.join(folder, id)
+    try:
+        if _alive(int(_read(base + ".pid").strip())):
+            return False, "", ""
+    except ValueError:
+        pass
+    if not os.path.exists(base + ".txt"):
+        return True, "", ""
+    reply = _read(base + ".txt")
+    if not reply.strip():
+        first = _read(base + ".err").strip().split("\n")[0]
+        return True, _flat(first) or "it ended with no reply", ""
+    try:
+        r = json.loads(reply)
+    except ValueError:
+        return True, "", ""
+    if not isinstance(r, dict):
+        return True, "", ""
+    cost = r.get("total_cost_usd")
+    cost = f"{cost:.2f}" if isinstance(cost, (int, float)) else ""
+    errors = r.get("errors")
+    if not r.get("is_error"):
+        failed = ""
+    elif r.get("subtype") == "error_max_budget_usd":
+        failed = "it reached its budget of $" + _BUDGET
+    elif isinstance(errors, list) and errors and isinstance(errors[0], str):
+        failed = errors[0]
+    else:
+        failed = str(r.get("result") or r.get("subtype") or "it failed")
+    return True, _flat(failed), cost
+
+
+def _ended(root: str, data: str) -> List[str]:
+    """Logs the end of each review of the repo at `root` that ended since, and returns what to tell
+    the user of them: a review that failed, and one that read only the end of a conversation. Each
+    is told once, to the first session that looks."""
+    name, folder = repo(root), _folder(root, data)
+    started: Dict[str, str] = {}
+    for field in _runs(data, name):
+        if field[3] == "started":
+            started[field[2]] = field[5]
+        else:
+            started.pop(field[2], None)
+    lines: List[str] = []
+    for id, detail in started.items():
+        done, failed, cost = _outcome(folder, id)
+        if not done:
+            continue
+        try:
+            _log_run(data, name, id, "failed" if failed else "ok", cost, failed)
+        except OSError:
+            continue
+        m = re.fullmatch(r"read (\d+) of (\d+) characters", detail)
+        read, of = (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+        if failed:
+            lines.append(
+                f"the Session review {id} failed, so nothing of its session is proposed: {failed}: "
+                "tell the user"
+            )
+        elif read < of:
+            lines.append(
+                f"the Session review {id} read only the last {read} of the {of} characters of its "
+                "session's conversation, so nothing settled before them is proposed: tell the user"
+            )
+    return lines
+
+
+def week(root: str, data: str) -> Tuple[int, float]:
+    """How many reviews of the repo at `root` failed in the last week, and what those that ended
+    cost, in US dollars, as far as their replies said."""
+    since = datetime.now(timezone.utc).timestamp() - _KEPT
+    failed, cost = 0, 0.0
+    for field in _runs(data, repo(root)):
+        try:
+            at = datetime.strptime(field[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if at.timestamp() < since or field[3] == "started":
+            continue
+        if field[3] == "failed":
+            failed += 1
+        try:
+            cost += float(field[4])
+        except ValueError:
+            pass
+    return failed, cost
+
+
+def _from(folder: str, session: str, size: int) -> int:
+    """Where in the Transcript of the session `session`, `size` long, its review starts reading,
+    its reviews' files in `folder`: where the last review of it stopped, as a resumed session keeps
+    its Transcript; where that one started, if it failed; the start, for a session not reviewed yet
+    or a Transcript shorter than what was read."""
+    field = _read(os.path.join(folder, "sessions", os.path.basename(session))).split()
+    try:
+        to, at, id = int(field[0]), int(field[1]), field[2]
+    except (IndexError, ValueError):
+        return 0
+    if to > size:
+        return 0
+    done, failed, _ = _outcome(folder, id)
+    return at if done and failed else to
+
+
+def _mark(folder: str, session: str, id: str, at: int, to: int) -> None:
+    """Records that the review `id` of the session `session` read its Transcript from `at` to
+    `to`."""
+    sessions = os.path.join(folder, "sessions")
+    try:
+        os.makedirs(sessions, mode=0o700, exist_ok=True)
+        _write(os.path.join(sessions, os.path.basename(session)), f"{to} {at} {id}\n")
+    except OSError:
+        pass
+
+
+def _rejected(root: str, data: str, most: int) -> List[str]:
+    """The Proposals of the repo at `root` the user rejected, as "<target>: <title>", the last
+    `most` of them, oldest first."""
+    logged = _decisions(data, repo(root))
+    files = []
+    for folder in (os.path.join(_folder(root, data), "decided"), os.path.join(root, names.PROPOSALS)):
+        files += [os.path.join(folder, n) for n in _names(folder) if n.endswith(".md")]
+    files.sort(key=os.path.basename)
+    out = []
+    for file in files:
+        review = os.path.basename(file)[: -len(".md")]
+        for p in parse(review, _read(file)):
+            if logged.get(p.review + "/" + p.id, ("", 0))[0] == REJECTED:
+                out.append(p.target + ": " + p.title)
+    return out[-most:] if most else []

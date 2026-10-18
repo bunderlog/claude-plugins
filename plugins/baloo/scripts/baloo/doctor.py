@@ -85,9 +85,11 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
                 )
             elif it.pending:
                 waiting += 1
+        failed, cost = review.week(c.root, data)
         w.write(
             f"\nSession review:\n  running\t{_bool(review.running(c.root, data))}\n"
             f"  proposals waiting\t{waiting}\n  mismatches\t{mismatches}\n"
+            f"  failed this week\t{failed}\n  cost this week\t${cost:.2f}\n"
         )
 
     for title, group in [

@@ -89,6 +89,8 @@ class Start(unittest.TestCase):
             "--plugin-dir\n/plugins/baloo\n",
             "--tools\nRead,Glob,Grep,Edit,Write,Skill\n",
             "--permission-mode\ndontAsk\n",
+            "--output-format\njson\n",
+            "--max-budget-usd\n3\n",
             "Edit(./.about/proposals/**)\n",
             "./.about/proposals/" + replies[1][: -len(".txt")] + ".md",
         ]:
@@ -123,6 +125,86 @@ class Start(unittest.TestCase):
                 self.assertEqual(started, want)
                 wait(self, root, data)
                 self.assertEqual(os.path.exists(os.path.join(seen, "args")), want)
+
+
+def turn(text):
+    """A line of a Transcript: the user's prompt `text`."""
+    return '{"type":"user","message":{"content":"' + text + '"}}\n'
+
+
+class Runs(unittest.TestCase):
+    def setUp(self):
+        entrypoint(self, "cli")
+        self.root = os.path.realpath(repo_with(self))
+        self.data = testkit.tempdir(self)
+
+    def start(self, reply, transcript, session="s1"):
+        """Starts the review of `transcript` with a `claude` that replies `reply`, and waits for
+        its end; returns whether it started and the folder of what `claude` was run with."""
+        claude, seen = fake_claude(self, reply)
+        started = review.start(claude, "/plugins/baloo", self.root, self.data, session, transcript)
+        wait(self, self.root, self.data)
+        return started, seen
+
+    # A resumed session's review reads only what the last one didn't, after what that one read
+    # for context; with too little new, none starts.
+    def test_a_resumed_session_is_reviewed_from_where_the_last_review_stopped(self):
+        first = turn("a" * 3000)
+        self.start("{}", first)
+        started, seen = self.start("{}", first + turn("b" * 3000))
+        self.assertTrue(started)
+        before, seam, after = read(seen, "stdin").partition(review._SEAM)
+        self.assertTrue(seam, "want the line between what was read and what wasn't")
+        self.assertIn("aaa", before)
+        self.assertNotIn("bbb", before)
+        self.assertIn("bbb", after)
+        self.assertNotIn("aaa", after)
+        self.assertIn("propose only from what follows it", read(seen, "args"))
+        started, _ = self.start("{}", first + turn("b" * 3000) + turn("c" * 10))
+        self.assertFalse(started, "too little new to review")
+
+    # A review that failed is told once, with why; the next review of its session reads again what
+    # it didn't, and the week's failures and cost add up.
+    def test_a_failed_review_is_told_once_and_read_again(self):
+        first = turn("a" * 3000)
+        self.start('{"is_error":true,"subtype":"error_max_budget_usd","total_cost_usd":3.1}', first)
+        got = show(self.root, self.data, "s9")
+        self.assertIn("failed, so nothing of its session is proposed: it reached its budget of $3", got)
+        self.assertNotIn("failed", show(self.root, self.data, "s10"), "told once")
+        started, seen = self.start("{}", first + turn("b" * 10))
+        self.assertTrue(started)
+        self.assertNotIn(review._SEAM, read(seen, "stdin"), "want the failed part read again")
+        self.assertEqual(review.week(self.root, self.data), (1, 3.1))
+
+    # Why a review failed comes from its reply, or, without one, its errors; an earlier Release's
+    # reply, plain text, and one that succeeded tell nothing.
+    def test_why_a_review_failed(self):
+        for reply, want in [
+            ('{"is_error":true,"result":"Not logged in"}', "proposed: Not logged in: tell"),
+            ('{"is_error":true,"errors":["API Error: 529"]}', "proposed: API Error: 529: tell"),
+            ("", "proposed: it ended with no reply: tell"),
+            ("P1 adds Order.", ""),
+            ('{"is_error":false,"result":"P1 adds Order."}', ""),
+        ]:
+            with self.subTest(reply):
+                self.data = testkit.tempdir(self)
+                self.start(reply, turn("a" * 3000))
+                got = show(self.root, self.data, "s")
+                if want:
+                    self.assertIn(want, got)
+                else:
+                    self.assertNotIn("the Session review", got)
+
+    # A conversation longer than a review reads is told, once it ended, with how much was read.
+    def test_a_conversation_read_only_in_part_is_told(self):
+        self.start("{}", turn("a" * 210_000))
+        self.assertIn("read only the last 200000 of the 210006 characters", show(self.root, self.data, "s"))
+
+    # The review is told what the user rejected before, so it proposes none of it again.
+    def test_a_review_is_told_what_the_user_rejected(self):
+        review.decide(self.root, self.data, "R1", "P1", review.REJECTED)
+        _, seen = self.start("{}", turn("a" * 3000))
+        self.assertIn("propose none of them again:\n- inbox: No evals\n", read(seen, "args"))
 
 
 PROPOSALS = """# Session review R1

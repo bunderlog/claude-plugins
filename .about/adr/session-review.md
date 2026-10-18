@@ -1,6 +1,6 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-14
+Date: 2026-10-18
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
 closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the plugin's
@@ -20,6 +20,15 @@ one to delete (ADR inbox). What is still to do or check on a ticket the conversa
 check on a device, a PR to merge, a wait on firmware, stays with that ticket and gets no Proposal:
 in one project's week, 14 of the review's 37 Inbox items were such, and 44 of the 48 items added
 that week never came up again outside going through the Proposals and the Inbox.
+
+A resumed session keeps its id and its Transcript, so its end starts a review of what an earlier
+review read already. The plugin keeps, per session, where in the Transcript its last review
+stopped, in `sessions/<session>` in the repo's folder, a week as a review's files are: the next
+review reads only what follows, under a line that marks what came before as read for context
+alone, and skips it as short where it adds less than 2,000 characters. Where the last review
+failed, the next one reads again from where that one started. The review is also told the last 50
+Proposals the user rejected in the repo, to propose none of them again, and to propose nothing
+already waiting in `.about/proposals/`.
 
 It edits nothing in `.about/` itself: it writes Proposals, each a change to the Inbox, the
 glossary, an ADR or a PRD that the user accepts, rejects or defers. Each review has an id, when it
@@ -67,11 +76,22 @@ same way, so the share of Proposals accepted is counted without guessing. Each r
 process id and errors are files of its own id in the repo's folder beside the log, deleted a week
 after it ended; `decided/` is in that folder too.
 
+A review that fails must not look like one that found nothing. It replies in JSON (`--output-format
+json`), and `runs.log` beside the decisions' log keeps a line per event, split by tabs as that one
+is: when, the repo, the review's id, `started`, `ok` or `failed`, its cost in US dollars as Claude
+Code counted it, and a detail: how much of the conversation it read, or why it failed, from its
+reply or, with none, the first line of its errors. The first session with the user after a review
+ended logs its end and is told, once, of a review that failed or that read only the end of its
+conversation, to tell the user; `doctor` shows how many failed in the last week and what they cost.
+
 Its session changes nothing else either: there session start creates no Config, picks no Output
 style, sets no Status line and writes no Git hook, and no Format on edit runs. A review starts as
 the user may be opening their next session, whose session start writes the same settings files.
 The Checks a Hook runs still run there, so a tool call of the review's can't show it a Secret;
-session start still names the Guidelines. It runs with the user's default model.
+session start still names the Guidelines. It runs with the user's default model, and may spend
+$3 (`--max-budget-usd`): 40 reviews up to 2026-10-17 cost about $0.45 each, $0.81 the dearest, at
+Claude Opus 5.5's prices, and the rest leaves room for a dearer default model. A review that
+reaches it fails, and is told as any other failure.
 
 ## Considered options
 
@@ -113,6 +133,18 @@ session start still names the Guidelines. It runs with the user's default model.
 - A cheaper model, pinned — less cost per session, but a subtle decision is more likely missed or
   recorded badly.
 - A key for the model — one more setting, for a choice nobody has asked to make.
+- Each review reading the last 200,000 characters of its Transcript (until 2026-10-18) — the review
+  of a resumed session read again what an earlier one had, and proposed again what the user had
+  already decided.
+- Only what an earlier review didn't read, without what came before — an agreement in it that
+  refers back, "as we said", loses its subject.
+- A failure only in the review's errors file (until 2026-10-18) — on 2026-10-17 two reviews in one
+  project failed, on a session limit and on a `claude` logged out, and nothing told them from a
+  review that proposed nothing.
+- No budget (until 2026-10-18) — a review stuck in a loop spends without a bound, and nothing showed
+  what reviews cost.
+- A key for the budget — one more setting, as for the model; the costs `runs.log` collects tell
+  where to move the constant.
 - Its state in the system's temporary folder under predictable names — shared with every other
   user and process on the machine.
 
@@ -127,5 +159,14 @@ session start still names the Guidelines. It runs with the user's default model.
   mismatch until its Applied is added.
 - The decided files grow in the plugin's data folder with every review, and are lost with it.
 - A decision the conversation masked (a long id) can't be proposed exactly.
-- Revisit when a review proposes something wrong or about another repo, when its cost shows, or
-  when the share accepted stays low.
+- The budget is Claude Code's list price, notional on a subscription, where a review spends the
+  session's limit instead (ADR transcripts counts in tokens for that reason); on a dearer default
+  model a long review may reach it.
+- A session resumed after its mark is deleted, a week on, is read whole again; the rejected
+  Proposals and the waiting ones keep most of that from coming back.
+- Where a resumed session ends while the review of its earlier part still runs, the new review
+  starts where that one stops; if that one then fails, its failure is told but its part is not read
+  again.
+- `runs.log` grows with every review, as the decisions' log does.
+- Revisit when a review proposes something wrong or about another repo, when the costs in
+  `runs.log` show the budget far from what reviews spend, or when the share accepted stays low.
