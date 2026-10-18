@@ -121,6 +121,22 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 - An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
   in the marketplace becomes a copy: shared Python code can live once and be linked into each.
 
+## Facts from outside the repo go stale unseen
+
+2026-10-18 · user
+
+A project's docs and pages quote facts it doesn't own: a competitor's price or free tier, a
+vendor's limit, a tool's version. They go stale without any change to the repo, so neither a
+review nor `tidy` notices. One project already dates each competitor fact (`asOf` and
+`sources` beside it), but nothing ever asks for a recheck. The idea, from the community guide
+Claude Code: Everything You Need to Know (an expiry marker per claim checked daily in CI, and a
+workflow, `stale-docs-audit.js`, that sorts each claim as stale, unverifiable or ok against its
+source): a marker for an outside fact with its check date and
+source; session start reporting how many are past due, as it does for the Inbox; and a skill
+that rechecks each against its source in a separate agent and proposes the edits. Settled by
+choosing the marker's shape, a project-wide recheck interval or one per marker, and whether
+the recheck is a skill of its own or part of `tidy`, or by dropping the idea.
+
 ## Guidelines in a headless session
 
 2026-10-08 · session review
