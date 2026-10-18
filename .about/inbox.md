@@ -120,3 +120,24 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
   (anthropics/claude-code #88663), and `claude plugin eval` loads no dependency.
 - An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
   in the marketplace becomes a copy: shared Python code can live once and be linked into each.
+
+## Guidelines in a headless session
+
+2026-10-08 · session review
+
+Session start still names the Guidelines in a Headless session, and the Hook that gives a
+Guideline by the file Claude edits still runs there, while Proposals and the Session review skip
+it (ADR session-review). They may help a project's reviewer of commits in a Git hook, but cost
+tokens in every `claude -p` of every tool. Settled by deciding whether a Headless session gets the
+Guidelines, and if not, recording it in ADR guidelines.
+
+## The Agent SDK's entrypoint in a Transcript is unchecked
+
+2026-10-08 · session review
+
+`review.start` and the Retro tell a Headless session by the `entrypoint` its Transcript records.
+For `claude -p` a live run showed `sdk-cli`; for the Agent SDK, `sdk-ts` and `sdk-py` were only
+planted in tests, and no real Agent SDK session was run. If it writes another value, or none, its
+sessions still get a Session review. Settled by running one Agent SDK session, TypeScript and
+Python, with baloo loaded, and checking its Transcript's entrypoint and that no Proposals file
+with its id appears.
