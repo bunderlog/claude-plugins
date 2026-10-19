@@ -123,7 +123,7 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 
 ## Facts from outside the repo go stale unseen
 
-2026-10-18 · user
+2026-10-18 · user · kept 2026-10-19
 
 A project's docs and pages quote facts it doesn't own: a competitor's price or free tier, a
 vendor's limit, a tool's version. They go stale without any change to the repo, so neither a
@@ -135,25 +135,18 @@ source): a marker for an outside fact with its check date and
 source; session start reporting how many are past due, as it does for the Inbox; and a skill
 that rechecks each against its source in a separate agent and proposes the edits. Settled by
 choosing the marker's shape, a project-wide recheck interval or one per marker, and whether
-the recheck is a skill of its own or part of `tidy`, or by dropping the idea.
+the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Kept
+until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
+them and none had asked.
 
-## Guidelines in a headless session
+## A Session review's JSON reply, budget and runs.log are unchecked live
 
-2026-10-08 · session review
+2026-10-18 · session review
 
-Session start still names the Guidelines in a Headless session, and the Hook that gives a
-Guideline by the file Claude edits still runs there, while Proposals and the Session review skip
-it (ADR session-review). They may help a project's reviewer of commits in a Git hook, but cost
-tokens in every `claude -p` of every tool. Settled by deciding whether a Headless session gets the
-Guidelines, and if not, recording it in ADR guidelines.
-
-## The Agent SDK's entrypoint in a Transcript is unchecked
-
-2026-10-08 · session review
-
-`review.start` and the Retro tell a Headless session by the `entrypoint` its Transcript records.
-For `claude -p` a live run showed `sdk-cli`; for the Agent SDK, `sdk-ts` and `sdk-py` were only
-planted in tests, and no real Agent SDK session was run. If it writes another value, or none, its
-sessions still get a Session review. Settled by running one Agent SDK session, TypeScript and
-Python, with baloo loaded, and checking its Transcript's entrypoint and that no Proposals file
-with its id appears.
+From e24838a a Session review runs `claude -p` with `--output-format json` and
+`--max-budget-usd 3` and logs each run to `runs.log` (ADR session-review), but its reply was
+parsed only from a fake `claude` in tests, as were `doctor`'s lines for the week's failures and
+cost (`test_session_review_week`); the JSON shape and a run that reaches the budget were seen once
+in a separate probe. Settled by a session run with `claude --plugin-dir plugins/baloo` and closed:
+on the next start `session-review/runs.log` holds a `started` and an `ok` line with a cost, and
+`/baloo:doctor` shows the week's cost.

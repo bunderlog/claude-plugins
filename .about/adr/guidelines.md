@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-14
+Date: 2026-10-19
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -40,6 +40,12 @@ split by tabs: when, in UTC, the session, the Guideline, and the file, from the 
 and the command; so a measurement tells whether it came before an edit without guessing. Session
 start's index leaves out every Guideline a Hook gives but `principles` and `design`: a refactor of
 files already there creates none, so their line stays for Claude to read.
+
+A headless session, `claude -p`'s or the Agent SDK's, a Session review's own too, gets the
+Guidelines as any other does: session start's index and the Hooks that give them. Session start's
+part is at most about 2,000 characters, under 1% of a Session review's cost, and a Hook gives a
+whole Guideline only once its subject or task comes up, which is where a headless agent edits code
+with nobody to correct it.
 
 What the next measurement checks of the three is a rule each whose breach shows, with no judgment,
 in the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
@@ -114,6 +120,9 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 - `ci` as a skill (until 2026-10-03) — `/baloo:ci` calls it by name, and it commits and asks the
   user before a push, but its description was in every session, a project with no CI too, and
   it leans on `debugging`, which a project may have turned off.
+- No Guidelines in a headless session, as no Proposals are shown there, or only session start's
+  index there — it saves about 2,000 characters a session, and leaves an agent that edits code
+  unattended without the rules it needs most.
 - Printing each Guideline turned on whole — simpler, but every session pays for the rules of
   tasks it never gets to.
 - The rules for every task printed always, with no key — the one part of the plugin in the
