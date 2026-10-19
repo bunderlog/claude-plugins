@@ -148,3 +148,12 @@ them and none had asked.
 context of every run with the plugin: a problem nobody there can fix, and text the run without
 the plugin doesn't get. Settled by session start treating `/dev/null` as Git hooks turned off and
 saying nothing, or by deciding the line is harmless in an eval.
+
+## The next Release's notes miss the testing fix
+
+2026-10-19 · user
+
+2870af2 went in as `docs(about)`, but it also holds a fix to the plugin: the `testing` Guideline
+is given when a test is edited, not when it is read (ADR guidelines). Its subject puts it outside
+the CHANGELOG's fixes. Settled by adding "give testing when a test is edited, not when it is
+read" to the notes of the Release after 0.29.0.
