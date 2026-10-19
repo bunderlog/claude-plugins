@@ -2,8 +2,8 @@ import json
 import os
 import unittest
 
-from baloo import doctor, names, version
-from tests import commands, testkit
+from baloo import doctor, names, review, version
+from tests import commands, test_review, testkit
 from tests.commands import PLUGIN, in_repo, read, run, start, write
 
 
@@ -60,6 +60,25 @@ class Doctor(unittest.TestCase):
         ]:
             self.assertIn(want, out)
         self.assertFalse(os.path.lexists(link), "doctor put the link back")
+
+    # Once session start has seen the Session reviews end, doctor shows how many failed this week
+    # and what they all cost.
+    def test_session_review_week(self):
+        test_review.entrypoint(self, "cli")
+        dir = in_repo(self)
+        data = os.environ["CLAUDE_PLUGIN_DATA"]
+        for session, reply in [
+            ("s1", '{"is_error":true,"subtype":"error_max_budget_usd","total_cost_usd":3.1}'),
+            ("s2", '{"is_error":false,"result":"P1 adds Order.","total_cost_usd":0.45}'),
+        ]:
+            claude, _ = test_review.fake_claude(self, reply)
+            transcript = test_review.turn("a" * 3000)
+            self.assertTrue(review.start(claude, PLUGIN, dir, data, session, transcript))
+            test_review.wait(self, dir, data)
+        self.assertEqual(start(self)[0], 0)
+        code, out = doctor_run(self)
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"\n  failed this week +1\n  cost this week +\$3\.55\n")
 
     # A newer version installed for this project than the one running is a problem a restart
     # fixes: Claude Code loads a plugin only when it starts. Another project's install, an older
