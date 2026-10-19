@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.29.0 — 2026-10-19
+
+### Features
+
+- say when a Session review failed, cap it at $3, and review a resumed session only anew (e24838a)
+
 ## 0.28.0 — 2026-10-14
 
 ### Features
