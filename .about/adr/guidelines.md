@@ -20,13 +20,17 @@ the first edit of their subject in 15 of 22 cases, after it in the rest. A Hook 
 whole file, as its added context, the first time in a session that a signal of its subject or
 task comes:
 - `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
-  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, a test for `testing` (`*_test.go`,
-  `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under `__tests__/`), and a text an agent
-  reads for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
+  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, and a text an agent reads for
+  `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
   under `.claude/agents/`, `commands/` or `skills/`). Claude reads a file before it edits it, so
   the Guideline is in context before the first edit of it.
 - The same, but on an edit only: a package manager's manifest for `dependencies`, which a Read
-  alone doesn't give, as a `package.json` is read for its scripts too.
+  alone doesn't give, as a `package.json` is read for its scripts too; and a test for `testing`
+  (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under `__tests__/`), as a
+  test is read to answer a question too, and `testing` given then turned the answer into code: in
+  an eval of 2026-10-19, Claude Sonnet asked whether to change a design read a test, was given
+  `testing`, and wrote a test-first change instead of checking the ADRs, in 6 of 8 runs; with
+  `testing` given on an edit only, in 0 of 5.
 - A Write that creates a code file, but a test (its result's `type` is `create`), for `design` and
   `principles`: a new module is where they apply first.
 - `PostToolUse` and `PostToolUseFailure` on Bash, for the command: a run of tests or checks
@@ -93,6 +97,9 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 ## Considered options
 
+- `testing` on a Read of a test too (until 2026-10-19) — in context before the first edit of a
+  test, but a test read to answer a question about a design gave it, and Claude Sonnet then
+  coded instead of answering (see above).
 - Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
   a Guideline before an edit on its subject in 5 of 79 cases (ADR measurement).
 - Only the index line for the Guidelines tied to a task (until 2026-10-14) — Claude read
@@ -149,8 +156,9 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   own ask rule covers the file.
 - The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's
   own text, and reading one is Claude's step, not the context's cost.
-- `typescript`, `vue` and `testing` come only after a Write that creates a file: a new test,
-  written test-first, or a new component is written without them.
+- `typescript` and `vue` come only after a Write that creates a file: a new component is written
+  without them. `testing` comes after the first edit or Write of a test in a session, so that
+  edit is made without it.
 - A file Claude reads with `cat` in Bash gives nothing: its Guideline comes with the first edit of
   it, after that edit.
 - `debugging` comes too where a test fails on purpose, as the red step of test-first does; `ci`

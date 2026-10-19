@@ -138,3 +138,13 @@ choosing the marker's shape, a project-wide recheck interval or one per marker, 
 the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Kept
 until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
 them and none had asked.
+
+## Session start reports a problem with the Git hooks in every eval run
+
+2026-10-19 · eval
+
+`claude plugin eval` sets `core.hooksPath` to `/dev/null` for each run, so session start puts
+`could not write the Git hooks: [Errno 20] Not a directory: '/dev/null/commit-msg'` into the
+context of every run with the plugin: a problem nobody there can fix, and text the run without
+the plugin doesn't get. Settled by session start treating `/dev/null` as Git hooks turned off and
+saying nothing, or by deciding the line is harmless in an eval.

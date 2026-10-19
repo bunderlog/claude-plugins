@@ -172,10 +172,10 @@ class ForFile(unittest.TestCase):
         for rel, want in [
             ("src/a.ts", ["typescript"]),
             ("src/App.vue", ["typescript", "vue"]),
-            ("x/a_test.go", ["testing"]),
-            ("src/a.test.ts", ["typescript", "testing"]),
-            ("tests/test_a.py", ["testing"]),
-            ("src/__tests__/a.js", ["testing"]),
+            ("x/a_test.go", []),
+            ("src/a.test.ts", ["typescript"]),
+            ("tests/test_a.py", []),
+            ("src/__tests__/a.js", []),
             ("src/a.go", []),
             ("README.md", []),
             ("src/testing.ts", ["typescript"]),
@@ -201,8 +201,9 @@ class ForFile(unittest.TestCase):
         self.assertTrue(lines[1].endswith("\ts1\tvue\tsrc/App.vue"), lines)
 
     # A text an agent reads gives writing-for-agents when read or edited; a package manager's
-    # manifest gives dependencies only when edited, as it is read for its scripts too; a code file
-    # Claude creates, but a test, gives design and principles, as a new module is designed.
+    # manifest gives dependencies only when edited, as it is read for its scripts too, and a test
+    # testing, as it is read to answer a question too; a code file Claude creates, but a test,
+    # gives design and principles, as a new module is designed.
     def test_by_tool(self):
         plugin = temp(self)
         names = ["writing-for-agents", "dependencies", "design", "principles", "testing"]
@@ -216,6 +217,10 @@ class ForFile(unittest.TestCase):
             ("Read", "web/package.json", False, []),
             ("Edit", "web/package.json", False, ["dependencies"]),
             ("Write", "go.mod", False, ["dependencies"]),
+            ("Read", "tests/test_a.py", False, []),
+            ("Edit", "tests/test_a.py", False, ["testing"]),
+            ("Edit", "x/a_test.go", False, ["testing"]),
+            ("Edit", "src/__tests__/a.js", False, ["testing"]),
             ("Write", "src/store.ts", True, ["design", "principles"]),
             ("Write", "src/store.ts", False, []),
             ("Write", "src/store.spec.ts", True, ["testing"]),

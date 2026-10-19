@@ -25,3 +25,9 @@ run = '''
 python src/release/release.py
 git push --atomic origin main "$(git describe --tags --abbrev=0 --match 'v*')"
 '''
+
+# By hand, not in CI: each run makes real model calls (ADR evals). From the repo's root, since a
+# case loads only a plugin under the folder the run starts in.
+[tasks.eval]
+description = "Run the eval suites in evals/ with this checkout's plugin and without it"
+run = "claude plugin eval . --scaffold --no-publish --allow-tools Write Edit"

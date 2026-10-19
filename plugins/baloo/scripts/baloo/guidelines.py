@@ -261,14 +261,15 @@ def _for_agents(rel: str) -> bool:
 BY_PATH: Dict[str, Callable[[str], bool]] = {
     "typescript": _has_ext(".ts", ".tsx", ".mts", ".cts", ".vue"),
     "vue": _has_ext(".vue"),
-    "testing": _is_test,
     "writing-for-agents": _for_agents,
 }
 
 # The Guidelines that reach Claude by a file it edits, but not one it only reads: a manifest is
-# read for its scripts too.
+# read for its scripts too, and a test to answer a question, where testing's rules turn the answer
+# into code.
 BY_EDIT: Dict[str, Callable[[str], bool]] = {
     "dependencies": lambda rel: os.path.basename(rel) in PACKAGE_MANIFESTS,
+    "testing": _is_test,
 }
 
 # The files of code whose creation gives design and principles, as a new module is designed.
