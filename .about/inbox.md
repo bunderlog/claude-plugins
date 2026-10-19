@@ -138,15 +138,3 @@ choosing the marker's shape, a project-wide recheck interval or one per marker, 
 the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Kept
 until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
 them and none had asked.
-
-## A Session review's JSON reply, budget and runs.log are unchecked live
-
-2026-10-18 · session review
-
-From e24838a a Session review runs `claude -p` with `--output-format json` and
-`--max-budget-usd 3` and logs each run to `runs.log` (ADR session-review), but its reply was
-parsed only from a fake `claude` in tests, as were `doctor`'s lines for the week's failures and
-cost (`test_session_review_week`); the JSON shape and a run that reaches the budget were seen once
-in a separate probe. Settled by a session run with `claude --plugin-dir plugins/baloo` and closed:
-on the next start `session-review/runs.log` holds a `started` and an `ok` line with a cost, and
-`/baloo:doctor` shows the week's cost.
