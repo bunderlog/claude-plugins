@@ -47,6 +47,8 @@ def write(root: str, data: str, on: Callable[[str], bool]) -> Tuple[Report, Opti
         dir, husky = _locate(root)
     except (OSError, checks.Error) as e:
         return Report(), e
+    if dir == os.devnull:  # git runs no Git hooks, as in a run of `claude plugin eval`
+        return Report(), None
     r = Report(dir=dir)
     try:
         _write(r, root, data, on, husky)

@@ -202,6 +202,12 @@ class Write(unittest.TestCase):
             read(os.path.join(root, ".husky", "pre-push")), "#!/usr/bin/env sh\nnpm run lint\n"
         )
 
+    # core.hooksPath at /dev/null, as `claude plugin eval` sets it, turns the Git hooks off: write
+    # writes nothing and reports no error.
+    def test_hooks_path_at_dev_null(self):
+        testkit.git(self.root, "config", "core.hooksPath", os.devnull)
+        self.assertEqual(githooks.write(self.root, self.data, all_on), (githooks.Report(), None))
+
     # Outside a repo, write says why and writes nothing.
     def test_outside_a_repo(self):
         r, err = githooks.write(testkit.tempdir(self), self.data, all_on)
