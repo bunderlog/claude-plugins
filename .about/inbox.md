@@ -148,3 +148,15 @@ them and none had asked.
 context of every run with the plugin: a problem nobody there can fix, and text the run without
 the plugin doesn't get. Settled by session start treating `/dev/null` as Git hooks turned off and
 saying nothing, or by deciding the line is harmless in an eval.
+
+## The adr skill doesn't load on a design proposal
+
+2026-10-20 · adr evals
+
+On 2026-10-20, with the plugin, `adr` loaded in none of the runs of `contradicts-adr`,
+`code-contradicts-adr` and `open-question` on Opus or Sonnet, prompts that propose a design
+rather than ask to record one; what the plugin adds there comes from the Guidelines, not the
+skill. `code-contradicts-adr` also scored 0.00 without the plugin on Sonnet, where it scored
+1.00 the day before, so whether it shows anything is unclear. Settled by a `description` that
+loads `adr` on these prompts without loading it on any design question (ADR evals rejected that),
+then the cases rerun; or by deciding these cases test the Guidelines, and saying so in ADR evals.
