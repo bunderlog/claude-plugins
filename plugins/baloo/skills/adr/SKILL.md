@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Challenge and record the project's decisions while designing — a business rule, boundary, ownership, integration or technology choice being made or revisited, or a proposal that may contradict an earlier decision. Checks against .about/adr/, surfaces implicit decisions, probes alternatives and cost, and writes an ADR when a decision is hard to reverse, not obvious without an explanation, and a real trade-off. Not for merely reading ADRs for context.
+description: Challenge and record the project's decisions — while designing, or when the user asks to record or write down a decision — a business rule, boundary, ownership, integration, naming or technology choice being made or revisited, or a proposal that may contradict an earlier decision. Checks against the project's ADRs (.about/adr/ unless it keeps its own), surfaces implicit decisions, probes alternatives and cost, and writes an ADR when a decision is hard to reverse, not obvious without an explanation, and a real trade-off. Not for merely reading ADRs for context.
 ---
 
 # ADR
@@ -10,10 +10,12 @@ and justified; don't just agree.
 
 ## Files
 
-`.about/adr/<subject>.md` at the git repo's root — one subject per file, its decisions as they
-stand now ([format](format.md)). Read the existing titles and the items in `.about/inbox.md`
-before you start; create the folder with the first ADR. The project's own conventions (numbered
-files, another path, an ADR template or skill) win.
+First look for the ADRs the project already keeps (`docs/adr/`, `doc/adr/`, `docs/decisions/`,
+an ADR template or skill): if it has them, read and write there, in their numbering and
+template, and create no `.about/adr/`. Otherwise `.about/adr/<subject>.md` at the git repo's
+root — one subject per file, its decisions as they stand now ([format](format.md)); create the
+folder with the first ADR. Read the existing titles and the items in `.about/inbox.md` before
+you start.
 
 ## Check
 
@@ -50,6 +52,10 @@ Check the code as well: a decision the code already contradicts is the most valu
 is a finding — don't paper over it: raise it, and if it stays open, record it in the Inbox.
 Ask a few pointed questions at a time, not a questionnaire.
 
+A decision the user says is already agreed gets recorded first: write it, then in the same reply
+name the ADR it overturns and the questions the probe raises, and put one still open into the
+Inbox.
+
 ## Record
 
 Write an ADR only when all three hold — otherwise the conversation is the record:
@@ -57,6 +63,9 @@ Write an ADR only when all three hold — otherwise the conversation is the reco
 2. **Not obvious without an explanation** — someone who wasn't in the discussion would ask
    "why this way?" or take it for a mistake and "fix" it.
 3. **A real trade-off** — genuine alternatives existed and one won for stated reasons.
+
+When the user asks to record a decision that fails one of them, write none and tell them in one
+line which one fails: "No ADR: the retry count is one constant, easy to change back."
 
 - A decision goes into the ADR on its subject, a new file only for a new subject. Still open →
   an item in `.about/inbox.md` with the options: a `## <title>`, a line `<YYYY-MM-DD> · adr`,
