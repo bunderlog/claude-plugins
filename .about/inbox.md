@@ -141,7 +141,7 @@ them and none had asked.
 
 ## The adr skill doesn't load on a design proposal
 
-2026-10-20 · adr evals
+2026-10-20 · adr evals · kept 2026-10-20
 
 On 2026-10-20, with the plugin, `adr` loaded in none of the runs of `contradicts-adr`,
 `code-contradicts-adr` and `open-question` on Opus or Sonnet, prompts that propose a design
