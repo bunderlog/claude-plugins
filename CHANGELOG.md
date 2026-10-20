@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.29.1 — 2026-10-20
+
+### Fixes
+
+- adr: write into a project's own ADRs, and say why when a decision gets none (9bd57dd)
+
 ## 0.29.0 — 2026-10-19
 
 ### Features
