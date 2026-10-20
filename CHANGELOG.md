@@ -7,6 +7,7 @@ The baloo plugin's Releases, newest first.
 ### Fixes
 
 - adr: write into a project's own ADRs, and say why when a decision gets none (9bd57dd)
+- give the testing Guideline when a test is edited, not when it is read (2870af2)
 
 ## 0.29.0 — 2026-10-19
 
