@@ -184,4 +184,4 @@ for module in accounts carts coupons invoices inventory pricing promotions revie
 done
 
 git add -A
-git -c user.name=eval -c user.email=eval@example.com commit -q -m "feat: place, charge and ship orders"
+git -c gc.auto=0 -c maintenance.auto=false -c user.name=eval -c user.email=eval@example.com commit -q -m "feat: place, charge and ship orders"
