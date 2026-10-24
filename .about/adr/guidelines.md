@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-19
+Date: 2026-10-24
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -36,8 +36,10 @@ task comes:
 - `PostToolUse` and `PostToolUseFailure` on Bash, for the command: a run of tests or checks
   (`pytest`, `vitest`, `go test`, `npm run test:…`, `mise run check`…) that failed, by its exit or
   by what it printed, since a pipe into `tail` exits 0, for `debugging`; a look at a CI run (`gh
-  run`, `gh pr checks`, `glab ci`, a pipeline's API) for `ci`; a change to the dependencies (`npm
-  install <package>`, `npm update`, `go get`, `cargo update`…) for `dependencies`.
+  run`, `gh pr checks`, `glab ci`, a pipeline's API) whose output shows a failure (a failed run,
+  check or step, an `##[error]` line) for `ci`, by the output alone, as `gh pr checks` exits
+  non-zero on a pending check too; a change to the dependencies (`npm install <package>`, `npm
+  update`, `go get`, `cargo update`…) for `dependencies`.
 
 Each one given logs a line in the plugin's data folder, `guidelines/guidelines.log`, its fields
 split by tabs: when, in UTC, the session, the Guideline, and the file, from the repo's root, or `$ `
@@ -97,6 +99,9 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 ## Considered options
 
+- `ci` on any look at a CI run (until 2026-10-24) — in a week of 2026-10 across two projects it
+  came 8 times, never for a failed run: each was a look at green checks before a merge or after a
+  Release, about 5,000 characters each.
 - `testing` on a Read of a test too (until 2026-10-19) — in context before the first edit of a
   test, but a test read to answer a question about a design gave it, and Claude Sonnet then
   coded instead of answering (see above).
@@ -161,7 +166,10 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   edit is made without it.
 - A file Claude reads with `cat` in Bash gives nothing: its Guideline comes with the first edit of
   it, after that edit.
-- `debugging` comes too where a test fails on purpose, as the red step of test-first does; `ci`
+- `debugging` comes too where a test fails on purpose, as the red step of test-first does: in a
+  week of 2026-10 that was nearly all of its 5 times, a cost accepted, since a command doesn't say
+  whether its failure is meant. `ci` also comes where the output names a failure the task isn't
+  about, a run list's old failed run or a PR titled with "fail"; `ci`
   and `dependencies` come after the command that signals them, before what follows it.
 - A refactor of files already there gets `principles` and `design` only where Claude reads them.
 - Every Bash command runs the Hook's Python once more after it.

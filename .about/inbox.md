@@ -65,14 +65,6 @@ of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 
 in 12 of 30. For the Guidelines, 0.27.0 gives each by a signal of its task instead (ADR
 guidelines); `.about/` still waits to be read.
 
-## The Release workflow's runner moves to Ubuntu 26
-
-2026-10-06 · session review · kept 2026-10-14
-
-The `ubuntu-latest` label that CI and the Release workflow run on moves to Ubuntu 26 from
-2026-10-19; the v0.21.1 Release run warned of it. Settled by pinning the runner, or by seeing a
-run on Ubuntu 26 pass after 2026-10-19.
-
 ## A plugin for another audience, such as ad managers
 
 2026-10-14 · user · kept 2026-10-14
