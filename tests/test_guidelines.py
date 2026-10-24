@@ -234,7 +234,8 @@ class ForFile(unittest.TestCase):
 
 class ForCommand(unittest.TestCase):
     # A command gives the Guideline of the task it shows: debugging a failed run of tests or
-    # checks, by its exit or by what it printed, as a pipe to tail exits 0; ci a look at a CI run;
+    # checks, by its exit or by what it printed, as a pipe to tail exits 0; ci a look at a CI run
+    # that shows a failure, not at green or pending checks;
     # dependencies a change to the dependencies. Each comes once a session, and is logged.
     def test_for_command(self):
         plugin = temp(self)
@@ -250,9 +251,13 @@ class ForCommand(unittest.TestCase):
             ("go test ./...", False, "ok  \tx\t0.1s", []),
             ("ls missing", True, "", []),
             ("grep -c FAIL log.txt", False, "FAIL", []),
-            ("gh run view 123 --log-failed", False, "", ["ci"]),
-            ("gh pr checks 42", True, "", ["ci"]),
-            ("curl -s https://api.bitbucket.org/2.0/repositories/a/b/pipelines/", False, "", ["ci"]),
+            ("gh run view 123 --log-failed", False, "##[error]Process completed with exit code 1.", ["ci"]),
+            ("gh pr checks 42", True, "build\tfail\t1m\thttps://x", ["ci"]),
+            ("gh pr checks 42", False, "build\tpass\t1m\thttps://x", []),
+            ("gh pr checks 42", True, "build\tpending\t0\thttps://x", []),
+            ("gh run list -L 1", False, "completed\tfailure\tfeat: x\tCI\tmain", ["ci"]),
+            ("gh run list -L 1", False, "completed\tsuccess\tfeat: x\tCI\tmain", []),
+            ("curl -s https://api.bitbucket.org/2.0/repositories/a/b/pipelines/", False, '"name": "FAILED"', ["ci"]),
             ("gh pr view 42", False, "", []),
             ("npm install vue@latest", False, "", ["dependencies"]),
             ("pnpm update", False, "", ["dependencies"]),

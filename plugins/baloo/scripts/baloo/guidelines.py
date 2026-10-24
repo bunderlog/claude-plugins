@@ -314,6 +314,11 @@ def for_file(
 _FAILED = re.compile(
     r"\b(FAIL|FAILED|FAILURES?)\b|\b\d+ (failed|failing)\b|\bfailures=\d|\berror TS\d+|\(\d+ errors?\b"
 )
+# A look at a CI run that shows a failed run, job, check or step, whatever the command exited with:
+# `gh pr checks` exits non-zero on pending checks too.
+_CI_FAILED = re.compile(
+    r"\b(fail|failed|failure|failing|timed_out|startup_failure)\b|##\[error\]", re.I
+)
 # Programs that run tests or checks, and the names of a task runner's tasks that do.
 _RUNNERS = {"pytest", "vitest", "jest", "mocha", "playwright", "tsc", "eslint", "phpunit", "rspec"}
 _TASKS = {"test", "check", "lint", "vet", "typecheck", "clippy"}
@@ -371,13 +376,13 @@ def for_command(
 ) -> str:
     """What Claude is to be told of the Guidelines `on` whose task the Bash command `command` shows,
     `failed` where it exited with an error, after it printed `output` (see give): debugging for a
-    run of tests or checks that failed, ci for a look at a CI run, dependencies for a change to
-    the dependencies."""
+    run of tests or checks that failed, ci for a look at a CI run that shows a failure,
+    dependencies for a change to the dependencies."""
     found = programs(command)
     due = []
     if any(_runs_checks(p) for p in found) and (failed or _FAILED.search(output)):
         due.append("debugging")
-    if any(_looks_at_ci(p) for p in found):
+    if any(_looks_at_ci(p) for p in found) and _CI_FAILED.search(output):
         due.append("ci")
     if any(_updates(p) for p in found):
         due.append("dependencies")
