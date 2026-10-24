@@ -9,7 +9,7 @@ jobs:
   check:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -19,7 +19,7 @@ jobs:
   # run.py on a python3 older than 3.9 says so rather than failing on newer syntax (ADR binary):
   # exit 2 for a command, 0 for a Git hook, and nothing for a Hook.
   old-python:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - run: |
@@ -34,7 +34,7 @@ jobs:
 
   # The README's CI recipe, with the checked commit's plugin in place of a Release's.
   git-hook-checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
