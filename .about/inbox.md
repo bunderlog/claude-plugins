@@ -142,3 +142,83 @@ skill. `code-contradicts-adr` also scored 0.00 without the plugin on Sonnet, whe
 1.00 the day before, so whether it shows anything is unclear. Settled by a `description` that
 loads `adr` on these prompts without loading it on any design question (ADR evals rejected that),
 then the cases rerun; or by deciding these cases test the Guidelines, and saying so in ADR evals.
+
+## `numbered-adrs` passes without the plugin, yet stays
+
+2026-10-21 · session review
+
+`evals/adr/numbered-adrs` scored 1.00 without the plugin in every run on Opus and Sonnet, on
+2026-10-19 and 2026-10-20. It failed only with the plugin: on Opus, in 4 of 8 runs, `adr` wrote
+into `.about/adr/` beside the repo's `docs/adr/`, until 0.29.1 had it write into a project's own
+ADRs. The case was committed as a guard against that regression. But ADR evals keeps a case only
+once it fails without the plugin, and lists a case kept though it passes without on every model
+as a rejected option. Settled by dropping the case, or by amending ADR evals to keep a case that
+caught a regression of the plugin itself.
+
+## Something in the plugin besides `adr` led Sonnet to put a trivial decision in an ADR
+
+2026-10-21 · session review
+
+On 2026-10-20 `trivial-decision` on Sonnet scored 0.47 with the plugin and 0.93 without. In all 5
+runs with it, `adr` didn't load, and Sonnet added the helper's name to the existing `money.md` ADR,
+which the bare model mostly left alone; a run on 2026-10-19 did the same in 1 of 3. Once `adr`'s
+description loaded it on a request to record a decision, the case scored 1.00, and the cause went
+unseen: the harness had deleted the runs' traces. Where `adr` doesn't load, the same push may
+still write trivial decisions into ADRs. Settled by finding, from a trace kept with
+`--keep-temp` of a run where `adr` doesn't load, which Guideline or session start text Sonnet
+followed, and fixing it; or by dropping the item if no session shows it.
+
+## `changes-decision` doesn't grade the questions asked after the record
+
+2026-10-21 · session review
+
+From 0.29.1, `adr` records a decision the user says is agreed first, then names the ADR it
+overturns and the questions its Probe found, and puts those left open in the Inbox. The case's
+graders check only the ADR, so the rest was checked by reading 4 runs' answers on 2026-10-20:
+each asked about the double charge through `ChargeOnOrderPlaced` after the record, and the Opus
+runs added it to `.about/inbox.md`. By ADR evals, a line no case fails without is a candidate for
+deletion. Settled by a grader on the answer or on `.about/inbox.md` that fails without the rule,
+or by dropping the rule's second half.
+
+## `.about/proposals/` breaks a project's Markdown lint
+
+2026-10-24 · session review
+
+In a week of 2026-10, the untracked files a Session review writes to `.about/proposals/` failed
+another project's `make test` at its Markdown linter. The folder is kept out of git through the
+repo's `info/exclude` (ADR session-review), but a linter that walks the files on disk reads it
+anyway, and a Proposal isn't written to that project's rules. Settled by a Proposal that passes
+common Markdown lint rules, by the folder moving where a project's linters don't look, or by
+session start or `doctor` telling the user to exclude it in their linter's config, then updating
+ADR session-review.
+
+## `retro`'s recommendations were all rejected
+
+2026-10-24 · session review
+
+In a measurement of 2026-10-16 to 2026-10-24 across three projects, the user rejected all 4 of
+the changes `/baloo:retro` recommended, while 72% of the Session review's Proposals were
+accepted. On 2026-10-29, in another project, the user rejected all 4 of a Retro's recommendations
+again. Why each was rejected wasn't looked into. Settled by reading, in those sessions'
+Transcripts, why each was turned down and changing what `retro` recommends, or by later Retros
+whose picks the user takes up.
+
+## A Config made in an empty repo leaves the stack's Guidelines off
+
+2026-10-29 · measurement of 2026-10-19 to 2026-10-29
+
+Session start turns a stack's Guideline on only where the repo had that stack when it made the
+Config. In one project, made before any code, `go`, `vue`, `typescript` and `dependencies` stayed
+off until the user asked where the Config was, and `tailwind` until they asked again a day later.
+Nothing told either of them once the stack showed. Settled by session start or `doctor` naming a
+Guideline that is off while the repo now has its stack, or by deciding the user turns them on.
+
+## The debugging Guideline comes on a test made red on purpose
+
+2026-10-29 · measurement of 2026-10-19 to 2026-10-29
+
+All 4 times the debugging Guideline came after a run of tests from 2026-10-19 to 2026-10-29, the
+run was red on purpose: code broken or stashed to see a test fail, as the testing Guideline asks,
+or a new test run before its fix. Each time about 670 words went into the context for no bug.
+Settled by giving debugging only where a run fails that passed earlier in the session, or another
+sign of a bug that a red-first step doesn't show, then updating ADR guidelines.
