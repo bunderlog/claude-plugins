@@ -371,23 +371,38 @@ def user_prompt_submit(text: str, stdout: TextIO) -> int:
     runs (ADR doctor). It says nothing else, and nothing in a Session review's session.
     In a session the plugin was updated in, which no SessionStart Hook ran for, the link in the
     plugin's data folder still points at the version before (see binlink): it runs this version's
-    session start first, which points it here, and says nothing of what fails there."""
+    session start first, which points it here, and says nothing of what fails there. What both
+    tell goes in one JSON: Claude Code drops a Hook's output that holds two."""
     if os.environ.get(review.ENV, ""):
         return 0
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
-    if data and os.path.realpath(os.path.join(data, names.PLUGIN)) != binlink.PLUGIN:
-        session_start.run_hook("UserPromptSubmit", text, stdout, io.StringIO())
     prompt = hook.decode(text)
     try:
+        session = hook.text(prompt, "session_id") if prompt is not None else ""
+    except hook.Mismatch:
+        session = ""
+    told = io.StringIO()
+    if data and os.path.realpath(os.path.join(data, names.PLUGIN)) != binlink.PLUGIN:
+        if session_start.run(session, told, io.StringIO()) != 0:
+            told = io.StringIO()
+    if prompt is not None and session:
+        lines = _prompt_lines(data, session)
+        if lines:
+            told.write(f"{names.PLUGIN}:\n" + "\n".join(lines) + "\n")
+    if told.getvalue():
+        hook.context(stdout, "UserPromptSubmit", told.getvalue())
+    return 0
+
+
+def _prompt_lines(data: str, session: str) -> List[str]:
+    """What a prompt of the session `session` tells Claude, apart from session start."""
+    try:
         dir = hook.project()
-        if prompt is None:
-            return 0
-        session = hook.text(prompt, "session_id")
-    except (OSError, hook.Mismatch):
-        return 0
+    except OSError:
+        return []
     c = config.read(dir)
     if not c.root:
-        return 0
+        return []
     lines = review.show(c.root, data, session, hook.decide_command())
     newer = version.newer_installed(c.root) if not review.headless() else ""
     if newer and once.first(data, "restart", session):
@@ -395,9 +410,7 @@ def user_prompt_submit(text: str, stdout: TextIO) -> int:
             f"this session runs {names.PLUGIN} {version.read()}, but {newer} is installed for this "
             "project: tell the user to restart Claude Code to run it"
         )
-    if lines:
-        hook.context(stdout, "UserPromptSubmit", f"{names.PLUGIN}:\n" + "\n".join(lines) + "\n")
-    return 0
+    return lines
 
 
 def review_decision(args: List[str], stdout: TextIO, stderr: TextIO) -> int:

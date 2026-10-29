@@ -288,6 +288,24 @@ class PromptAfterUpdate(unittest.TestCase):
         self.assertEqual(os.path.realpath(os.path.join(data, names.PLUGIN)), PLUGIN)
         self.assertEqual(run("user-prompt-submit", stdin='{"session_id":"s1"}'), (0, "", ""))
 
+    # What session start tells and what the prompt tells reach Claude in one JSON: Claude Code
+    # drops a Hook's output that holds two.
+    def test_tells_in_one_answer(self):
+        dir = in_repo(self)
+        data = os.environ["CLAUDE_PLUGIN_DATA"]
+        os.symlink(commands.testkit.tempdir(self), os.path.join(data, names.PLUGIN))
+        write(
+            os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+            json.dumps({"plugins": {names.PLUGIN_ID: [
+                {"scope": "local", "projectPath": dir, "version": "99.0.0"}
+            ]}}),
+        )
+        code, out, err = run("user-prompt-submit", stdin='{"session_id":"s1"}')
+        self.assertEqual((code, err), (0, ""))
+        told = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("created " + os.path.join(dir, names.CONFIG), told)
+        self.assertIn("but 99.0.0 is installed for this project", told)
+
 
 if __name__ == "__main__":
     unittest.main()
