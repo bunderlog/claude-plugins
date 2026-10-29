@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-10-19
+Date: 2026-10-29
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -22,6 +22,13 @@ candidate for deletion.
 Opus, which checks `.about/adr/` on its own; it stays, as the regression the suite caught. Its
 second, a decision that changes an earlier one, failed without the plugin on both: the bare model
 wrote a new ADR beside the old one.
+
+A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
+`open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
+none of their runs on Opus or Sonnet, and the plugin's Guidelines and session start still scored
+1.00, where each case fell below that without the plugin on one model or both. `adr` loading
+there is not a goal, so `skill-fired` in them only reports; a case that has failed without the
+plugin on one model, as `code-contradicts-adr` did on Sonnet, stays.
 
 The suites live in `evals/` at the repo root, outside the plugin: an install doesn't carry them,
 and a change to one needs no Release (ADR releases). `--eval-dir` takes no path outside the plugin,
@@ -46,6 +53,9 @@ need an API key.
   scored 1.00 both ways on Opus, which shows nothing the plugin adds.
 - A description that loads `adr` on any design question — it fired in 1 of 3 runs instead of 0,
   and the answer was right either way.
+- A case on a design proposal where only `adr`'s Probe gets the answer right — it would test the
+  skill's Check and Probe, which no case does, but waits for a session where Claude took a
+  design unchecked.
 
 ## Consequences
 
