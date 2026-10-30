@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.32.0 — 2026-10-31
+
+### Features
+
+- tell Claude at session start the commit message conventional-commits takes (61ac850)
+
 ## 0.31.1 — 2026-10-31
 
 ### Fixes
