@@ -20,8 +20,8 @@ so and stop. Read a changed file whole where the diff alone doesn't show what th
 
 ## 2. What was agreed
 
-At the git repo's root; a project that keeps these elsewhere (`docs/adr/`, `CONTEXT.md`) keeps its
-own.
+At the git repo's root. A project not yet moved to `.about/` may still keep numbered ADRs
+(`docs/adr/`) or a `CONTEXT.md`: read those too.
 
 - **ADRs**, `.about/adr/`: every one whose subject the change touches, read whole. A change that
   contradicts one is a finding; so is a decision the change makes that is hard to reverse and no

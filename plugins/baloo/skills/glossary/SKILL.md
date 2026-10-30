@@ -11,8 +11,12 @@ You are changing the project's language, not consuming it. Make it sharper; don'
 
 `.about/glossary.md` at the git repo's root ([format](format.md)). Read it before you start;
 create it with the first entry. With several contexts (a monorepo's projects among them),
-record a term under the `## Context: <name>` the discussion is about; ask if unclear. The
-project's own conventions win over these defaults.
+record a term under the `## Context: <name>` the discussion is about; ask if unclear.
+
+If the project keeps its vocabulary in a `CONTEXT.md` (or `CONTEXT-MAP.md` with one per context),
+read it too, and offer once to move it into `.about/glossary.md`. Say what the move breaks: links
+and tools that read the old file. Move it only if the user agrees; either way, record a new term
+in `.about/glossary.md`.
 
 ## Check
 

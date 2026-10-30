@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Challenge and record the project's decisions — while designing, or when the user asks to record or write down a decision — a business rule, boundary, ownership, integration, naming or technology choice being made or revisited, or a proposal that may contradict an earlier decision. Checks against the project's ADRs (.about/adr/ unless it keeps its own), surfaces implicit decisions, probes alternatives and cost, and writes an ADR when a decision is hard to reverse, not obvious without an explanation, and a real trade-off. Not for merely reading ADRs for context.
+description: Challenge and record the project's decisions — while designing, or when the user asks to record or write down a decision — a business rule, boundary, ownership, integration, naming or technology choice being made or revisited, or a proposal that may contradict an earlier decision. Checks against the project's ADRs in .about/adr/ (offering to move numbered ones there), surfaces implicit decisions, probes alternatives and cost, and writes an ADR when a decision is hard to reverse, not obvious without an explanation, and a real trade-off. Not for merely reading ADRs for context.
 ---
 
 # ADR
@@ -10,12 +10,15 @@ and justified; don't just agree.
 
 ## Files
 
-First look for the ADRs the project already keeps (`docs/adr/`, `doc/adr/`, `docs/decisions/`,
-an ADR template or skill): if it has them, read and write there, in their numbering and
-template, and create no `.about/adr/`. Otherwise `.about/adr/<subject>.md` at the git repo's
-root — one subject per file, its decisions as they stand now ([format](format.md)); create the
-folder with the first ADR. Read the existing titles and the items in `.about/inbox.md` before
-you start.
+`.about/adr/<subject>.md` at the git repo's root — one subject per file, its decisions as they
+stand now ([format](format.md)), never numbered; create the folder with the first ADR. Read the
+existing titles and the items in `.about/inbox.md` before you start.
+
+If the project also keeps numbered ADRs (`docs/adr/`, `doc/adr/`, `docs/decisions/`), read them
+as decisions too, and offer once to move them all into `.about/adr/`: one file per subject, a
+superseded decision under Considered options. Say what the move breaks: the numbers cited in code,
+commits and other repos, and the tool that keeps them (adr-tools, log4brains). Move them only if
+the user agrees; either way, write a new decision to `.about/adr/<subject>.md`.
 
 ## Check
 
