@@ -32,6 +32,8 @@ _READERS = [
 # Readers whose first argument is a pattern or a script, not a file, unless it is given with an
 # option.
 _PATTERN_FIRST = ["grep", "egrep", "fgrep", "rg", "ag", "sed", "awk", "jq", "yq"]
+# jq's options that take a name and a value before its program (`--arg p "$p"`).
+_JQ_PAIRS = ["--arg", "--argjson", "--slurpfile", "--rawfile"]
 
 _MARK_ADVICE = (
     f"only the user marks an env file as holding no secrets ({ALLOW_SECRET}). If it really holds "
@@ -154,7 +156,15 @@ def _shows(p: Program, dir: str) -> str:
     pattern = -1
     with_option = has_flag(args, "-e", "-f", "--regexp", "--file", "--expression")
     if p.name in _PATTERN_FIRST and not with_option:
-        pattern = next((i for i, a in enumerate(args) if not a.startswith("-")), -1)
+        values = 0
+        for i, a in enumerate(args):
+            if values:
+                values -= 1
+            elif p.name in ("jq", "yq") and a in _JQ_PAIRS:
+                values = 2
+            elif not a.startswith("-"):
+                pattern = i
+                break
     for i, a in enumerate(args):
         file = ""
         if a.startswith("<"):
