@@ -1,0 +1,1 @@
+A conversation that only restates a decision .about/ already holds proposes nothing and writes no file.

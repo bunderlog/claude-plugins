@@ -31,3 +31,9 @@ git push --atomic origin main "$(git describe --tags --abbrev=0 --match 'v*')"
 [tasks.eval]
 description = "Run the eval suites in evals/ with this checkout's plugin and without it"
 run = "claude plugin eval . --scaffold --no-publish --allow-tools Write Edit"
+
+# The Session review's prompt is the plugin's text in either arm, so its cases run with the plugin
+# only, as a guard against a regression of the prompt (ADR evals).
+[tasks.eval-review]
+description = "Run the Session review's cases in evals/session-review/ with this checkout's plugin only"
+run = "claude plugin eval . --scaffold --no-publish --allow-tools Write Edit --case 'review-*' --ablation none"

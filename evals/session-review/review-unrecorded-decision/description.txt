@@ -1,0 +1,1 @@
+A decision the conversation agreed and .about/ lacks becomes an ADR proposal, and .about/ itself stays as it was.
