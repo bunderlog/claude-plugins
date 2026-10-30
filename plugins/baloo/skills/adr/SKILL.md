@@ -55,9 +55,7 @@ Check the code as well: a decision the code already contradicts is the most valu
 is a finding — don't paper over it: raise it, and if it stays open, record it in the Inbox.
 Ask a few pointed questions at a time, not a questionnaire.
 
-A decision the user says is already agreed gets recorded first: write it, then in the same reply
-name the ADR it overturns and the questions the probe raises, and put one still open into the
-Inbox.
+A decision the user says is already agreed gets recorded first, before any question about it.
 
 ## Record
 
