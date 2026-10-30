@@ -200,6 +200,14 @@ class Runs(unittest.TestCase):
         self.start("{}", turn("a" * 210_000))
         self.assertIn("read only the last 200000 of the 210006 characters", show(self.root, self.data, "s"))
 
+    # The Proposals' layout leaves a blank line before each fence, as a project's Markdown linter
+    # wants (MD031), since it reads the folder on disk though git leaves it out.
+    def test_a_review_writes_fences_a_linter_takes(self):
+        _, seen = self.start("{}", turn("a" * 3000))
+        args = read(seen, "args")
+        self.assertIn("Before:\n\n~~~markdown\n", args)
+        self.assertIn("After:\n\n~~~markdown\n", args)
+
     # The review is told what the user rejected before, so it proposes none of it again.
     def test_a_review_is_told_what_the_user_rejected(self):
         review.decide(self.root, self.data, "R1", "P1", review.REJECTED)
