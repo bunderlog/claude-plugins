@@ -1,5 +1,5 @@
 ---
-description: A project that numbers its ADRs in docs/adr/ gets the next numbered file there, not the skill's own .about/adr/<subject>.md.
+description: A project that numbers its ADRs in docs/adr/ gets its new decision in .about/adr/<subject>.md, not a next numbered file, and is offered to move the numbered ADRs.
 plugins: ["../../../plugins/baloo"]
 max_turns: 30
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
