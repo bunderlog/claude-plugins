@@ -1,6 +1,6 @@
 ---
 name: glossary
-description: Build and sharpen the project's domain vocabulary while designing — naming or renaming a concept, two words in play for one thing, a vague or overloaded term, an unclear boundary between concepts. Challenges terms against .about/glossary.md, stress-tests them with edge cases and the code, and records entries the moment they settle. Not for merely reading the glossary for vocabulary.
+description: Build and sharpen the project's domain vocabulary — while designing, or when the user asks to record or define a term in the glossary — naming or renaming a concept, two words in play for one thing, a vague or overloaded term, an unclear boundary between concepts. Challenges terms against .about/glossary.md, stress-tests them with edge cases and the code, and records entries the moment they settle. Not for merely reading the glossary for vocabulary.
 ---
 
 # Glossary
