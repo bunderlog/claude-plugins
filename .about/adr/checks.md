@@ -1,6 +1,6 @@
 # Each Check has a key under the Hook or the Git hooks that run it, and a Hook's are on without one
 
-Date: 2026-10-14
+Date: 2026-10-31
 
 Each Check turns on or off with a key of its own in the Config, named as the Check without the
 plugin's prefix and grouped by what runs it: under `claude-hooks`, the Checks a Hook runs,
@@ -32,6 +32,12 @@ Where `no-ai-coauthor` is on, session start also sets Claude Code's `attribution
 as it picks an Output style (ADR output-styles): where the plugin is enabled, in the settings file
 that enables it, and only where none of Claude Code's settings files sets `attribution` or
 `includeCoAuthoredBy`, to any value. It never takes it out.
+
+Where `conventional-commits` is on, session start likewise tells Claude, in one line, the message
+the Check takes: its types and longest line as the Config sets them. In 2026-09-29 to 2026-10-30
+it rejected 16 of Claude's commits in five projects, each written again at once: 12 for a line
+over the limit, the header 8 times and the body 4, 3 for a description in uppercase, 1 with no
+type.
 
 `no-conflict-markers` takes the markers from git's own `diff --check`, so a file whose
 `conflict-marker-size` in `.gitattributes` is longer, such as a test fixture, passes; it names a
@@ -92,6 +98,10 @@ pins a Release.
 - Leaving `no-ai-coauthor` alone to catch the trailer — Claude Code adds it by default, so each
   commit fails once and is written again.
 - `attribution.pr` too — the Check reads commits, not pull requests.
+- No limit on the body's lines by default — spares 4 of the 16 rejections, leaves the header's
+  12, and departs from config-conventional, which the Check follows.
+- The rule only in the rejection, as before 2026-10-31 — each one costs Claude a commit written
+  again.
 - Taking the attribution out where `no-ai-coauthor` goes off — the plugin can't tell its value
   from one the user wrote.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
@@ -129,6 +139,8 @@ pins a Release.
 - Nothing in the plugin stops a command that destroys work: Claude Code's permissions and its
   auto mode do.
 - Turning `no-ai-coauthor` off leaves the attribution off, until someone takes it out.
+- Every session where `conventional-commits` is on carries its line, about 300 characters, a
+  session that never commits too.
 - A CI recipe that passes a placeholder remote ref, as the README's did before 2026-10-06, lets a
   force-push's merges through once `origin/HEAD` exists; it has to name the branch pushed to.
 - `linear-history` reports upstream's merges where a fork's main tracks `upstream/main`, is
