@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.31.1 — 2026-10-31
+
+### Fixes
+
+- checks: don't take a jq program for a private key file when --arg comes before it (f44f3a0)
+
 ## 0.31.0 — 2026-10-30
 
 ### Features
