@@ -1,6 +1,6 @@
 # Project knowledge lives in `.about/` at the repo root
 
-Date: 2026-10-14
+Date: 2026-10-30
 
 The skills keep a project's glossary, ADRs, PRDs, Inbox and Issues in `.about/glossary.md`,
 `.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/issues/` (ADR issues), at
@@ -9,8 +9,18 @@ knowledge for people and for any agent, so it belongs neither in one vendor's co
 folder other tools already claim; `.about` is short, unclaimed, and sorts first. A monorepo has one
 glossary, with a context per project, and one ADR log. The Session review runs at the same root and
 proposes changes only to what is there, in `.about/proposals/` (ADR session-review). A project with
-its own conventions (`CONTEXT.md`, `docs/adr/`, numbered ADRs) keeps them: the skills follow the
-project.
+its own place for PRDs or Issues keeps it: the skills follow the project.
+
+The ADRs and the glossary are the exception: they live only in `.about/adr/<subject>.md` (ADR
+adr-format) and `.about/glossary.md`, never in a project's numbered ADRs (`docs/adr/0001-….md`) or
+a `CONTEXT.md` at the root. The plugin's code knows only those two paths, so a numbered ADR or a
+`CONTEXT.md` gets neither `no-stale-adr-date` nor a Session review's Proposals, and numbered ADRs
+superseding one another can't be edited in place. Where the `adr` or `glossary` skill finds the
+project's own, it offers to move them all at once (for ADRs, one file per subject, a superseded
+decision under Considered options) and names what the move breaks: the tools that keep them
+(adr-tools, log4brains) and the numbers or paths cited in code, commits and other repos. The user
+decides. Without the move, the skills and the verifier read the old files as they are, and a new
+decision or term goes to `.about/` all the same.
 
 Every role, product and testing too, works with this knowledge through git alone, in a clone of
 the code repo: there are no roles without git, and no MCP server or other store holds it. baloo
@@ -26,6 +36,12 @@ shows, and a headless session is shown nothing, as with the Proposals.
 
 ## Considered options
 
+- ADRs in the project's own numbered files, numbering and template, and the glossary in its
+  `CONTEXT.md` (until 2026-10-30) — the skills wrote there, `adr` from 0.29.1, but those files were
+  outside every Check and Session review, and a decision changed by a new numbered file is spread
+  over a chain, not edited in place.
+- Moving numbered ADRs or a `CONTEXT.md` without asking — a large diff in a team's repo that breaks its tools and
+  every cited number; that cost is the user's to take.
 - `docs/` — mixes the glossary and ADRs with general documentation.
 - `.claude/` — Claude Code's own configuration; ties the knowledge to one tool.
 - `.agents/` — neutral, but shared with Codex, Copilot and others, which claim parts of it.

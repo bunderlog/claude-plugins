@@ -131,18 +131,6 @@ the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Ke
 until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
 them and none had asked.
 
-## `numbered-adrs` passes without the plugin, yet stays
-
-2026-10-21 · session review
-
-`evals/adr/numbered-adrs` scored 1.00 without the plugin in every run on Opus and Sonnet, on
-2026-10-19 and 2026-10-20. It failed only with the plugin: on Opus, in 4 of 8 runs, `adr` wrote
-into `.about/adr/` beside the repo's `docs/adr/`, until 0.29.1 had it write into a project's own
-ADRs. The case was committed as a guard against that regression. But ADR evals keeps a case only
-once it fails without the plugin, and lists a case kept though it passes without on every model
-as a rejected option. Settled by dropping the case, or by amending ADR evals to keep a case that
-caught a regression of the plugin itself.
-
 ## Something in the plugin besides `adr` led Sonnet to put a trivial decision in an ADR
 
 2026-10-21 · session review
@@ -221,3 +209,14 @@ case where the user's two fixes in the wrong function failed passed without the 
 Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
 Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
 from it that fails without the line, or by dropping the idea.
+
+## A question gets an answer: a line no case fails without
+
+2026-10-30 · evals
+
+`principles` says a question ("which X?", "should I?", "why?") gets an answer, and Claude acts only
+when asked. Two cases tried it on 2026-10-30: "should we rename `BillingClient`?" passed without
+the plugin on Opus and Sonnet, 3 runs each; "why does this test fail?" passed without it in 10 of
+11 runs (Sonnet fixed the code once in 8, Opus never in 3). By ADR evals the line is a candidate
+for deletion, and it costs context in every session. Settled by a session where Claude acted on a
+question, then a case built from it that fails without the line, or by deleting the line.
