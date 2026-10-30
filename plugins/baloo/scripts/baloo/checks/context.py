@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import os
 import re
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from baloo.checks.secrets import ALLOW_SECRET, is_env_file
-from baloo.checks.shell import Program, has_flag, programs, split, split_git
+from baloo.checks.shell import Program, base, has_flag, programs, split, split_git
 
 _KEY_FILE = re.compile(r"(^|/)id_(rsa|dsa|ecdsa|ed25519)[^/]*\Z|\.(pem|key)\Z")
+# A name that says the key is public: `id_ed25519.pub`, `cgs.pub.mock.pem`, `server-public.pem`.
+_PUBLIC_KEY = re.compile(r"(^|[._-])pub(lic)?([._-]|\Z)")
 # A part of a variable's name that says it holds a Secret: API_KEY, GITHUB_TOKEN, DB_PASSWORD…
 _SECRET_PART = re.compile(
     r"\w*KEY|\w*TOKEN|\w*SECRET|PASSWORD|PASSWD|PASS|CREDENTIALS?|PAT", re.A
@@ -84,13 +86,47 @@ def no_secrets_in_context(call: dict, dir: str) -> str:
 
 def _leak(command: str, dir: str) -> str:
     """Why the shell command `command`, run in `dir`, would show a Secret, or "" when it wouldn't:
-    the first of its programs that would, but an env whose pipeline keeps only the names."""
+    the first of its programs that would, but an env whose pipeline keeps only the names, and a
+    command whose output a variable takes, unless an echo or a printf then prints that variable."""
+    command, held = _captured(command, dir)
     found = programs(command)
     for i, p in enumerate(found):
-        why = _shows(p, dir)
+        why = _shows(p, dir) or _prints_held(p, held)
         if why and not (_dumps_env(p) and _keeps_names(found[i:])):
             return why
     return ""
+
+
+# A variable assigned a command's output, `T=$(…)` or `T="$(…)"`, at the start of a word.
+_CAPTURE = re.compile(r"(?:^|(?<=[\s;&|(]))([A-Za-z_]\w*)=\"?\$\(", re.A)
+
+
+def _captured(command: str, dir: str) -> Tuple[str, Dict[str, str]]:
+    """The shell command `command` without the command substitutions whose output a variable
+    takes, and why each such variable, run in `dir`, holds a Secret: the output is the variable's,
+    not the context's, until something prints it."""
+    held: Dict[str, str] = {}
+    while True:
+        m = _CAPTURE.search(command)
+        if not m:
+            return command, held
+        start = m.end() - 2
+        depth, j = 1, m.end()
+        while j < len(command) and depth:
+            depth += {"(": 1, ")": -1}.get(command[j], 0)
+            j += 1
+        why = _leak(command[m.end() : j - 1], dir)
+        if why:
+            held[m[1]] = why
+        command = command[:start] + command[j:]
+
+
+def _prints_held(p: Program, held: Dict[str, str]) -> str:
+    """Why the program `p` prints a variable that holds a Secret, `held` by name, or ""."""
+    if not held or p.name not in ("echo", "printf", "print") or _to_file(p.args):
+        return ""
+    names = [m[1] or m[2] for a in p.args for m in _VARIABLE.finditer(a)]
+    return next((held[n] for n in names if n in held), "")
 
 
 def _substituted(arg: str) -> Tuple[str, List[str]]:
@@ -141,7 +177,7 @@ def _secret_file(path: str, dir: str) -> str:
         except OSError:
             first = ""
         return "" if ALLOW_SECRET in first else path + " is an env file"
-    if _KEY_FILE.search(p) and not p.endswith(".pub"):
+    if _KEY_FILE.search(p) and not _PUBLIC_KEY.search(base(p)):
         return path + " holds a private key"
     if any(p == f or p.endswith("/" + f) for f in _SECRET_FILES):
         return path + " holds secrets"
@@ -171,7 +207,7 @@ def _shows(p: Program, dir: str) -> str:
             file = a[1:]
             if not file and i + 1 < len(args):
                 file = args[i + 1]
-        elif p.name in _READERS and i != pattern:
+        elif p.name in _READERS and i != pattern and not a.startswith("-"):
             file = a
         why = _secret_file(file, dir)
         if why and not _hides_values(p, i):
@@ -246,6 +282,7 @@ def _shows(p: Program, dir: str) -> str:
     return ""
 
 
+_GREPS = ("grep", "egrep", "fgrep")
 # grep's flags that print no line: a count, the files' names, or nothing.
 _NO_LINES = (
     "-c", "-l", "-L", "-q", "--count", "--files-with-matches", "--files-without-match", "--quiet",
@@ -257,7 +294,7 @@ def _hides_values(p: Program, at: int) -> bool:
     """Whether the program `p` shows no value of the file its argument at `at` names: a grep that
     prints only a count or the files' names, or only the names before `=`. Another reader, as
     `cut -d= -f1`, prints a line with no `=` whole, as the next line of a value over several is."""
-    if p.name not in ("grep", "egrep", "fgrep"):
+    if p.name not in _GREPS:
         return False
     drop = 2 if p.args[at] == "<" else 1
     rest = Program(p.name, p.args[:at] + p.args[at + drop :])
@@ -289,10 +326,11 @@ def _dumps_env(p: Program) -> bool:
 
 def _keeps_names(p: List[Program]) -> bool:
     """Whether a later program of the pipeline that starts at `p[0]` keeps only the variables'
-    names of what it is given, as `cut -d= -f1` does."""
+    names of what it is given, as `cut -d= -f1` does, or prints no line of it, as `grep -c`."""
     i = 0
     while i + 1 < len(p) and p[i].piped:
-        if _names_only(p[i + 1]):
+        n = p[i + 1]
+        if _names_only(n) or (n.name in _GREPS and has_flag(n.args, *_NO_LINES)):
             return True
         i += 1
     return False
@@ -323,11 +361,13 @@ def _names_only(p: Program) -> bool:
             and parts[2] in ("", "g")
         )
     if p.name == "grep":
-        patterns = [a for a in p.args if not a.startswith("-")]
+        # The pattern is the first word but a flag, where no -e or -f gives it: the rest are files.
+        words = [a for a in p.args if not a.startswith("-")]
         return (
             (has_flag(p.args, "-o") or "--only-matching" in p.args)
-            and len(patterns) == 1
-            and all(_NAME_MATCH.fullmatch(a) for a in _alternatives(patterns[0]))
+            and not has_flag(p.args, "-e", "-f", "--regexp", "--file")
+            and len(words) >= 1
+            and all(_NAME_MATCH.fullmatch(a) for a in _alternatives(words[0]))
         )
     return False
 
