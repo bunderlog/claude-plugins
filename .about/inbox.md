@@ -65,6 +65,12 @@ of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 
 in 12 of 30. For the Guidelines, 0.27.0 gives each by a signal of its task instead (ADR
 guidelines); `.about/` still waits to be read.
 
+The usefulness check of 2026-09-29 to 2026-10-30 found `.about/` read, or named, before an edit to
+code in 24 of 71 sessions in webui, though 67 of them had it, against 28 of 29 in three other
+projects. Size alone doesn't explain it: webui's ADRs, glossary, Inbox and PRDs are about 118 KB,
+64 KB of it the Inbox, and one of the three, read before every edit, has about 87 KB. The next
+step is reading webui's sessions that edited code without it, for what their tasks had in common.
+
 ## A plugin for another audience, such as ad managers
 
 2026-10-14 · user · kept 2026-10-14
@@ -141,3 +147,14 @@ case where the user's two fixes in the wrong function failed passed without the 
 Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
 Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
 from it that fails without the line, or by dropping the idea.
+
+## verify is never run
+
+2026-10-31 · usefulness check of 2026-09-29 to 2026-10-30
+
+In five projects other than this one, about 200 interactive sessions called `adr` 28 times,
+`glossary` 15 and `prd` 5, but `/baloo:verify` and the `verifier` agent never ran, by the user or
+by Claude. Either nobody needs a check against the ADRs and criteria apart from writing the change,
+or nobody thinks of it when it would help. Settled by a session where a change departed from an ADR
+or a PRD's criterion unnoticed until later, which says when to offer it, or by dropping the skill
+and the agent if the next measurement shows no use either.
