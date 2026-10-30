@@ -123,6 +123,17 @@ def fitting(root: str) -> List[str]:
     return [g.name for g in ALL if g.fits is None or g.fits(m)]
 
 
+def fitting_but_off(root: str, on: Dict[str, bool]) -> List[str]:
+    """The names of the Guidelines tied to what a repo has (a stack, a CI, a package manager) that
+    fit the repo at `root` but `on` doesn't turn on, as where its Config was made before the stack
+    came. The repo is walked only where such a Guideline is off."""
+    tied = [g.name for g in ALL if g.fits is not None and not on.get(g.name)]
+    if not tied:
+        return []
+    fit = set(fitting(root))
+    return [n for n in tied if n in fit]
+
+
 def _dependencies(path: str) -> List[str]:
     """The packages the package.json at `path` depends on, of any kind; one that can't be read
     names none."""

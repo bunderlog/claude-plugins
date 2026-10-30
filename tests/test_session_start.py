@@ -272,6 +272,26 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(os.path.realpath(link), PLUGIN)
 
 
+class StackGuidelines(unittest.TestCase):
+    # A stack the repo took up after its Config was made, with its Guideline off there, is named
+    # once, for the user to turn it on. A headless session isn't told, so it doesn't use that up.
+    def test_names_a_stack_whose_guideline_is_off(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, names.CONFIG), "guidelines:\n  dependencies: true\n  go: false\n  vue: false\n")
+        write(os.path.join(dir, "go.mod"), "module example.com/x\n")
+        want = (
+            "the repo has what the go Guideline covers, but " + names.CONFIG + " turns it off: "
+            "tell the user, and that turning it on there is theirs"
+        )
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
+        self.assertNotIn(want, start(self)[1])
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
+        out = start(self)[1]
+        self.assertIn(want, out)
+        self.assertNotIn("vue Guideline", out)
+        self.assertNotIn(want, start(self)[1])
+
+
 class PromptAfterUpdate(unittest.TestCase):
     # In a session the plugin was updated in, the first prompt runs this version's session start,
     # which no SessionStart Hook ran for; once it has run, a prompt runs none.

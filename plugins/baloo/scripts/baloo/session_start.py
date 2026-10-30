@@ -15,6 +15,7 @@ part is a function and its place there."""
 
 from __future__ import annotations
 
+import hashlib
 import io
 import os
 from dataclasses import dataclass, field
@@ -25,6 +26,7 @@ from baloo import (
     checks,
     config,
     githooks,
+    guidelines,
     hook,
     inbox,
     names,
@@ -192,6 +194,37 @@ def _session_review(s: Start) -> Lines:
     return out
 
 
+def _stack_off(s: Start) -> Lines:
+    """The Guidelines the repo now has the stack of but the Config turns off, each named once a
+    repo, for the user to turn on: not where session start just made the Config, which fits the
+    repo already, and nothing in a headless session, which nobody reads."""
+    if not s.config.root or s.created or not s.data or review.headless():
+        return Lines()
+    digest = hashlib.sha256(s.config.root.encode()).hexdigest()[:16]
+    folder = os.path.join(s.data, "guidelines", "stack-told", digest)
+    try:
+        told = set(os.listdir(folder))
+    except OSError:
+        told = set()
+    on = {n: bool(s.config.guidelines.get(n)) or n in told for n in guidelines.names()}
+    new = guidelines.fitting_but_off(s.config.root, on)
+    if not new:
+        return Lines()
+    try:
+        os.makedirs(folder, mode=0o700, exist_ok=True)
+        for name in new:
+            with open(os.path.join(folder, name), "w"):
+                pass
+    except OSError as e:
+        return Lines(problems=[f"guidelines of the repo's stack: {e}"])
+    one = len(new) == 1
+    return Lines([
+        f"the repo has what the {', '.join(new)} Guideline{'' if one else 's'} "
+        f"cover{'s' if one else ''}, but {names.CONFIG} turns {'it' if one else 'them'} off: tell "
+        f"the user, and that turning {'it' if one else 'them'} on there is theirs"
+    ])
+
+
 def _inbox(s: Start) -> Lines:
     return Lines(inbox.lines(s.config.root) if s.config.root else [])
 
@@ -227,6 +260,7 @@ def _uncommitted_about(s: Start) -> Lines:
 # comes after them all.
 PARTS: List[Callable[[Start], Lines]] = [
     _config,
+    _stack_off,
     _output_style,
     _attribution,
     _status_line,

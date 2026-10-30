@@ -123,6 +123,9 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     w.write(
         f"\nGuidelines:\n  on\t{_or_none(', '.join(on))}\n  off\t{_or_none(', '.join(off))}\n"
     )
+    fitting = guidelines.fitting_but_off(c.root, c.guidelines) if c.root else []
+    if fitting:
+        w.write(f"  off, though fitting\t{', '.join(fitting)}\n")
 
     stdout.write(f"{names.PLUGIN} {version.read()} doctor in {dir}\n\n")
     if not problems:

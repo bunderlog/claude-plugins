@@ -34,6 +34,16 @@ class Doctor(unittest.TestCase):
         ]:
             self.assertIn(want, out)
 
+    # doctor names the Guidelines off in the Config though the repo has their stack.
+    def test_guidelines_off_though_fitting(self):
+        dir = in_repo(self)
+        self.assertEqual(start(self)[0], 0)
+        write(os.path.join(dir, names.CONFIG), "guidelines:\n  dependencies: true\n  go: false\n  vue: false\n")
+        write(os.path.join(dir, "go.mod"), "module example.com/x\n")
+        out = doctor_run(self)[1]
+        line = next(s for s in out.splitlines() if "off, though fitting" in s)
+        self.assertTrue(line.rstrip().endswith("go"), line)
+
     # doctor names each problem, first, with what fixes it, and fails; it changes nothing.
     def test_problems(self):
         dir = in_repo(self)
