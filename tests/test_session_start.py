@@ -90,6 +90,39 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn("attribution", out)
 
+    # Where conventional-commits is on, session start tells Claude the message it takes, so Claude
+    # writes one the Check doesn't reject.
+    def test_commit_rules(self):
+        dir = in_repo(self)
+        config = os.path.join(dir, names.CONFIG)
+        write(config, "git-hooks:\n  conventional-commits: true\n")
+        self.assertIn(
+            "\nwrite a commit message as git-hooks.conventional-commits in .claude/baloo.yml takes "
+            "it: `type(scope): description`, the type one of build, chore, ci, docs, feat, fix, "
+            "perf, refactor, revert, style, test, the description starting in lowercase and not "
+            "ending in `.`, a blank line before the body, and no line over 100 characters, the "
+            "body's too\n",
+            start(self)[1],
+        )
+
+        write(
+            config,
+            "git-hooks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 0\n",
+        )
+        self.assertIn(
+            ": `type(scope): description`, the type one of feat, fix, the description starting in "
+            "lowercase and not ending in `.`, and a blank line before the body\n",
+            start(self)[1],
+        )
+
+        write(config, "git-hooks:\n  conventional-commits:\n    types: any\n")
+        self.assertIn(
+            ": `type(scope): description`, the description starting", start(self)[1]
+        )
+
+        write(config, "git-hooks:\n  conventional-commits: false\n")
+        self.assertNotIn("commit message", start(self)[1])
+
     # Where the plugin is enabled, a new Config sets the Status line in the project's
     # settings.local.json, once.
     def test_status_line(self):

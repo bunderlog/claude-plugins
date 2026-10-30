@@ -1,7 +1,8 @@
 """Session start, the SessionStart Hook's part (ADR binary): it creates the repo's Config when it
 has none (ADR config), reads it, picks the Output style it names where Claude Code's settings pick
 none (ADR output-styles), turns off Claude Code's commit attribution where no-ai-coauthor is on and
-they set none (ADR checks), sets the Status line or takes it out (ADR status-line), and writes the
+they set none, tells Claude the commit message conventional-commits takes where it is on (ADR
+checks), sets the Status line or takes it out (ADR status-line), and writes the
 Git hooks or takes them out (ADR git-hooks). What it prints Claude Code adds to Claude's context, so
 it prints only what Claude should know: a Config it created, an Output style, an attribution or a
 Status line it set, the Git hooks it wrote, took out, changed in husky or left alone, a Hook Check
@@ -35,6 +36,7 @@ from baloo import (
     settings,
     statusline,
 )
+from baloo.checks.commit import COMMIT_TYPES, MAX_LINE
 from baloo.checks.git import Error as GitError, git
 
 
@@ -115,6 +117,26 @@ def _attribution(s: Start) -> Lines:
     )
     out.setting(path, enabled, line, err, "could not turn off the commit attribution")
     return out
+
+
+def _commit_rules(s: Start) -> Lines:
+    c = s.config
+    if not c.root or not c.check_on("conventional-commits"):
+        return Lines()
+    rules = c.commit_rules
+    types = COMMIT_TYPES if rules.types is None else rules.types
+    longest = MAX_LINE if rules.max_length is None else rules.max_length
+    parts = ["`type(scope): description`"]
+    if not rules.any_type:
+        parts.append("the type one of " + ", ".join(types))
+    parts.append("the description starting in lowercase and not ending in `.`")
+    parts.append("a blank line before the body")
+    if longest:
+        parts.append(f"no line over {longest} characters, the body's too")
+    return Lines([
+        f"write a commit message as git-hooks.conventional-commits in {names.CONFIG} takes it: "
+        + ", ".join(parts[:-1]) + ", and " + parts[-1]
+    ])
 
 
 def _status_line(s: Start) -> Lines:
@@ -263,6 +285,7 @@ PARTS: List[Callable[[Start], Lines]] = [
     _stack_off,
     _output_style,
     _attribution,
+    _commit_rules,
     _status_line,
     _git_hooks,
     _hook_checks_off,
