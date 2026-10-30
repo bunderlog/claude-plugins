@@ -1,6 +1,6 @@
 # baloo keeps what a measurement of its use confirmed, and drops what only added friction
 
-Date: 2026-10-14
+Date: 2026-10-31
 
 baloo was built on the thesis that enforcing the rules in code, in Hooks and Git hooks, is a niche
 of its own beside the project's knowledge. A measurement of how baloo was actually used checked
@@ -41,8 +41,14 @@ What it found:
 - `no-destructive-commands`' denials: Claude reached the same effect another way twice, and
   Claude Code's auto mode classifier refuses the same commands itself.
 - Working: the Git hooks (`conventional-commits`, `linear-history`, `no-stale-adr-date` each
-  caught a commit that was then fixed), `no-secrets-in-context`, and `no-git-hook-bypass`, which
-  stopped a push that would have skipped the Git hooks.
+  caught a commit that was then fixed) and `no-git-hook-bypass`, which stopped a push that would
+  have skipped the Git hooks.
+- `no-secrets-in-context` was counted as working here, each denial a Secret kept out. A recount
+  of its 36 denials in other projects up to 2026-10-31 found about 3 real, such as `cat .env`
+  with only part of a value masked, and about 30 false: names only, counts, a value taken into a
+  variable and passed on unprinted, a pattern such as `--include=*.env`. Replayed through 0.32.1,
+  14 are still denied: about 2 real, and most of the rest an Env file printed masked by `sed`,
+  which the Check denies on purpose.
 - The Guidelines were read before an edit on their subject in 5 of 79 cases, and in one project
   in 0 of 29, though session start named them all.
 - The Session review: of its 80 changes in other repos, 64 were Inbox items; it wrote them
@@ -56,8 +62,9 @@ So:
 - `no-destructive-commands` is removed, and so is every question a Check asked: a Check only
   denies (ADR checks).
 - The Git hooks, `no-secrets-in-context`, `no-git-hook-bypass`, the knowledge skills, the Session
-  review and the Guidelines stay; the Session review's approval and report, and how the
-  Guidelines reach Claude, are reworked on their own.
+  review and the Guidelines stay; `no-secrets-in-context` for the few Secrets it keeps out, with
+  its false alarms narrowed as they are found; the Session review's approval and report, and how
+  the Guidelines reach Claude, are reworked on their own.
 - With the thesis unconfirmed, there is no plugin per role (ADR plugin).
 
 A Config that still has a removed setting, `stop-check` or `claude-hooks.no-destructive-commands`,
@@ -88,4 +95,5 @@ it for the user to delete (ADR config, ADR doctor).
   deletes them.
 - The measurement is one user's, on their own projects; its figures are small.
 - Revisit when a session shows work destroyed, a Leak, or a red turn that a removed part would
-  have stopped, or when the measurement is run again.
+  have stopped, when the measurement is run again, or when `no-secrets-in-context`'s denials are
+  still mostly false after 0.32.1.
