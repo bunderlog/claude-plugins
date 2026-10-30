@@ -249,6 +249,12 @@ class ForCommand(unittest.TestCase):
             ("mise run check", True, "", ["debugging"]),
             ("npx vitest run", True, "", ["debugging"]),
             ("go test ./...", False, "ok  \tx\t0.1s", []),
+            ("git stash push -q a.go && go test ./...", True, "", []),
+            ("cp a.go /tmp/a.go && sed -i '' 's/>/>=/' a.go && go test ./...", True, "", []),
+            ("git show HEAD:a.go > a.go; go test ./...", True, "", []),
+            ("cat > a_test.go <<'EOF'\npackage a\nEOF\ngo test ./...", True, "", []),
+            ("go test ./... 2>&1 | tail -5; git stash pop", True, "", ["debugging"]),
+            ("go test ./... > out.txt", True, "", ["debugging"]),
             ("ls missing", True, "", []),
             ("grep -c FAIL log.txt", False, "FAIL", []),
             ("gh run view 123 --log-failed", False, "##[error]Process completed with exit code 1.", ["ci"]),
@@ -279,6 +285,23 @@ class ForCommand(unittest.TestCase):
         )
         with open(os.path.join(data, "guidelines", "guidelines.log")) as f:
             self.assertTrue(f.read().endswith("\ts1\tdebugging\t$ go test ./...\n"))
+
+    # A run that fails right after Claude edited a test is the red step of test-first, not a bug:
+    # debugging comes only once code that isn't a test was edited since.
+    def test_no_debugging_for_the_red_step(self):
+        plugin, data = temp(self), temp(self)
+        write(plugin, {"guidelines/debugging.md": "# debugging\n"})
+        on = {"debugging": True}
+
+        def run():
+            return guidelines.for_command(plugin, data, "s1", "go test ./...", True, "", on)
+
+        guidelines.for_file(plugin, data, "s1", "a_test.go", on, "Write", True)
+        self.assertEqual(run(), "")
+        guidelines.for_file(plugin, data, "s1", "README.md", on, "Edit")
+        self.assertEqual(run(), "")
+        guidelines.for_file(plugin, data, "s1", "a.go", on, "Edit")
+        self.assertIn("The debugging Guideline applies to", run())
 
     # What a session was given is forgotten after a week, so the Guideline comes again.
     def test_forgets_after_a_week(self):

@@ -305,8 +305,34 @@ def for_file(
         due += [n for n, f in BY_EDIT.items() if f(rel)]
     if created and os.path.splitext(rel)[1] in _CODE and not _is_test(rel):
         due += ON_CREATE
+    if tool != "Read":
+        _mark_red_step(data, session, rel)
     verb = "created" if created else "read or changed"
     return give(plugin, data, session, due, on, f"{rel}, which you just {verb}", rel)
+
+
+def _red_step(data: str, session: str) -> str:
+    """The file whose being there says the session's last edit of code was to a test, so a run that
+    fails now is the red step of test-first; "" without a session."""
+    if not data or not session:
+        return ""
+    return os.path.join(data, "guidelines", "red", session)
+
+
+def _mark_red_step(data: str, session: str, rel: str) -> None:
+    """Notes an edit of the file at `rel`: a test's starts a red step, other code's ends it."""
+    marker = _red_step(data, session)
+    if not marker:
+        return
+    if _is_test(rel):
+        os.makedirs(os.path.dirname(marker), mode=0o700, exist_ok=True)
+        _forget(os.path.dirname(marker))
+        _write(marker, "")
+    elif os.path.splitext(rel)[1] in _CODE:
+        try:
+            os.remove(marker)
+        except FileNotFoundError:
+            pass
 
 
 # A run's output that shows a test or a check failed, though the command exited 0, as one piped
@@ -347,6 +373,35 @@ def _runs_checks(p: Program) -> bool:
     return False
 
 
+# git's commands that change the working tree, as a stash before a run takes a fix out to see a
+# test fail without it.
+_GIT_WRITES = {"stash", "checkout", "restore", "apply"}
+
+
+def _writes(p: Program) -> bool:
+    """Whether the program `p` changes files: git's stash, checkout, restore or apply, cp, mv,
+    patch, sed -i, or any program whose output goes into a file with > or >>."""
+    a = p.args
+    if p.name == "git" and a[:1] != [] and a[0] in _GIT_WRITES:
+        return True
+    if p.name in ("cp", "mv", "patch"):
+        return True
+    if p.name == "sed" and any(x.startswith("-i") for x in a):
+        return True
+    return ">" in a or ">>" in a
+
+
+def _failure_meant(found: List[Program], data: str, session: str) -> bool:
+    """Whether a failed run of tests among the programs `found` is meant to fail: the command
+    changes files before it, as one that breaks code to see a test go red, or the session's last
+    edit of code was to a test, the red step of test-first."""
+    first = next(i for i, p in enumerate(found) if _runs_checks(p))
+    if any(_writes(p) for p in found[:first]):
+        return True
+    marker = _red_step(data, session)
+    return bool(marker) and os.path.exists(marker)
+
+
 def _looks_at_ci(p: Program) -> bool:
     """Whether the program `p` looks at a CI run: gh's runs and checks, glab's ci, or a pipeline's
     or a workflow run's API."""
@@ -376,11 +431,15 @@ def for_command(
 ) -> str:
     """What Claude is to be told of the Guidelines `on` whose task the Bash command `command` shows,
     `failed` where it exited with an error, after it printed `output` (see give): debugging for a
-    run of tests or checks that failed, ci for a look at a CI run that shows a failure,
-    dependencies for a change to the dependencies."""
+    run of tests or checks that failed, but one meant to fail (see _failure_meant), ci for a look
+    at a CI run that shows a failure, dependencies for a change to the dependencies."""
     found = programs(command)
     due = []
-    if any(_runs_checks(p) for p in found) and (failed or _FAILED.search(output)):
+    if (
+        any(_runs_checks(p) for p in found)
+        and (failed or _FAILED.search(output))
+        and not _failure_meant(found, data, session)
+    ):
         due.append("debugging")
     if any(_looks_at_ci(p) for p in found) and _CI_FAILED.search(output):
         due.append("ci")
