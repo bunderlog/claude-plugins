@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.32.1 — 2026-10-31
+
+### Fixes
+
+- checks: let no-secrets-in-context pass counts, captured values, flags and public keys (11008fd)
+
 ## 0.32.0 — 2026-10-31
 
 ### Features
