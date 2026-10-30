@@ -131,19 +131,6 @@ the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Ke
 until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
 them and none had asked.
 
-## Something in the plugin besides `adr` led Sonnet to put a trivial decision in an ADR
-
-2026-10-21 · session review
-
-On 2026-10-20 `trivial-decision` on Sonnet scored 0.47 with the plugin and 0.93 without. In all 5
-runs with it, `adr` didn't load, and Sonnet added the helper's name to the existing `money.md` ADR,
-which the bare model mostly left alone; a run on 2026-10-19 did the same in 1 of 3. Once `adr`'s
-description loaded it on a request to record a decision, the case scored 1.00, and the cause went
-unseen: the harness had deleted the runs' traces. Where `adr` doesn't load, the same push may
-still write trivial decisions into ADRs. Settled by finding, from a trace kept with
-`--keep-temp` of a run where `adr` doesn't load, which Guideline or session start text Sonnet
-followed, and fixing it; or by dropping the item if no session shows it.
-
 ## `changes-decision` doesn't grade the questions asked after the record
 
 2026-10-21 · session review
@@ -155,18 +142,6 @@ each asked about the double charge through `ChargeOnOrderPlaced` after the recor
 runs added it to `.about/inbox.md`. By ADR evals, a line no case fails without is a candidate for
 deletion. Settled by a grader on the answer or on `.about/inbox.md` that fails without the rule,
 or by dropping the rule's second half.
-
-## `.about/proposals/` breaks a project's Markdown lint
-
-2026-10-24 · session review
-
-In a week of 2026-10, the untracked files a Session review writes to `.about/proposals/` failed
-another project's `make test` at its Markdown linter. The folder is kept out of git through the
-repo's `info/exclude` (ADR session-review), but a linter that walks the files on disk reads it
-anyway, and a Proposal isn't written to that project's rules. Settled by a Proposal that passes
-common Markdown lint rules, by the folder moving where a project's linters don't look, or by
-session start or `doctor` telling the user to exclude it in their linter's config, then updating
-ADR session-review.
 
 ## `retro`'s recommendations were all rejected
 
@@ -191,7 +166,7 @@ Guideline that is off while the repo now has its stack, or by deciding the user 
 
 ## Question the premise after two failed fixes
 
-2026-10-30 · ub-mode, Robert C. Martin's skill
+2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-10-30
 
 ub-mode's "Attack the Premise": once two fixes that share one premise fail the same check, write
 the premise in one sentence and question it before a third fix. Not added to `debugging`: an eval
@@ -199,14 +174,3 @@ case where the user's two fixes in the wrong function failed passed without the 
 Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
 Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
 from it that fails without the line, or by dropping the idea.
-
-## A question gets an answer: a line no case fails without
-
-2026-10-30 · evals
-
-`principles` says a question ("which X?", "should I?", "why?") gets an answer, and Claude acts only
-when asked. Two cases tried it on 2026-10-30: "should we rename `BillingClient`?" passed without
-the plugin on Opus and Sonnet, 3 runs each; "why does this test fail?" passed without it in 10 of
-11 runs (Sonnet fixed the code once in 8, Opus never in 3). By ADR evals the line is a candidate
-for deletion, and it costs context in every session. Settled by a session where Claude acted on a
-question, then a case built from it that fails without the line, or by deleting the line.
