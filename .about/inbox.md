@@ -150,11 +150,12 @@ from it that fails without the line, or by dropping the idea.
 
 ## verify is never run
 
-2026-10-31 · usefulness check of 2026-09-29 to 2026-10-30
+2026-10-31 · usefulness check of 2026-09-29 to 2026-10-30 · kept 2026-10-31
 
 In five projects other than this one, about 200 interactive sessions called `adr` 28 times,
 `glossary` 15 and `prd` 5, but `/baloo:verify` and the `verifier` agent never ran, by the user or
 by Claude. Either nobody needs a check against the ADRs and criteria apart from writing the change,
 or nobody thinks of it when it would help. Settled by a session where a change departed from an ADR
 or a PRD's criterion unnoticed until later, which says when to offer it, or by dropping the skill
-and the agent if the next measurement shows no use either.
+and the agent if the next measurement shows no use either. Zero runs is partly by design: ADR
+verify runs it only when the user asks, so Claude never offers it.
