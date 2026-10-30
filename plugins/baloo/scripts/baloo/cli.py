@@ -35,7 +35,8 @@ USAGE = (
     "usage: baloo version | doctor | session-start [UserPromptSubmit] | allow-guideline | "
     "subagent-start | status-line |\n"
     "  pre-tool-use | post-tool-use | session-end | user-prompt-submit |\n"
-    "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n  "
+    "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n"
+    "  proposals |\n  "
     + " |\n  ".join(checks.usage())
     + " |\n"
     "  git-hook " + "|".join(sorted(checks.GIT_HOOKS)) + " <git's arguments> |\n"
@@ -90,6 +91,8 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         return session_start.run_hook(args[1], _read(stdin), stdout, stderr)
     if len(args) == 4 and args[0] == "review-decision":
         return review_decision(args[1:], stdout, stderr)
+    if args == ["proposals"]:
+        return proposals(stdout, stderr)
     if args and args[0] == "condense":
         code = condense_sessions(args[1:], stdout, stderr)
         if code is not None:
@@ -436,6 +439,23 @@ def review_decision(args: List[str], stdout: TextIO, stderr: TextIO) -> int:
     stdout.write(f"logged {args[0]} {args[1]} {args[2]}\n")
     if todo:
         stdout.write(todo + "\n")
+    return 0
+
+
+def proposals(stdout: TextIO, stderr: TextIO) -> int:
+    """Lists the Proposals still waiting for the user's decision, a line each, where the inbox
+    skill finds those for the Inbox (ADR session-review)."""
+    try:
+        dir = hook.project()
+    except OSError as e:
+        stderr.write(f"{names.PLUGIN} proposals: {e}\n")
+        return 1
+    c = config.read(dir)
+    if not c.root:
+        stderr.write(f"{names.PLUGIN} proposals: {dir} is not in a repo\n")
+        return 1
+    for line in review.waiting(c.root, os.environ.get("CLAUDE_PLUGIN_DATA", "")):
+        stdout.write(line + "\n")
     return 0
 
 

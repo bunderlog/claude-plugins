@@ -349,16 +349,20 @@ class Show(unittest.TestCase):
             with self.subTest(entry):
                 entrypoint(self, entry)
                 got = show(repo_with(self), testkit.tempdir(self), "s")
-                self.assertEqual("R1 P1 inbox add" in got, want, got)
+                self.assertEqual("R1 P2 glossary edit" in got, want, got)
 
-    # The Proposals are shown once a session, until each is decided; the log gets a line a
-    # decision, with the repo's origin; the file goes once each is decided and applied.
+    # The Proposals are shown once a session, until each is decided, those for the Inbox only
+    # counted, for the inbox skill; the log gets a line a decision, with the repo's origin; the
+    # file goes once each is decided and applied.
     def test_show_and_decide(self):
         root, data = repo_with(self), testkit.tempdir(self)
         got = show(root, data, "s1")
+        self.assertNotIn("No evals", got)
+        self.assertEqual(review.waiting(root, data)[0], "R1 P1 inbox add .about/inbox.md: No evals")
         for want in [
+            "1 Session review proposal for .about/inbox.md waits in .about/proposals/: tell the "
+            "user, and that /baloo:inbox goes through them\n",
             "`decide <review> <id> accepted|accepted-edited|rejected|deferred`",
-            "  R1 P1 inbox add .about/inbox.md: No evals\n",
             "  R1 P2 glossary edit .about/glossary.md: Order\n",
             "  R1 P3 adr delete .about/adr/gone.md: Gone\n",
             "  R1 P4: can't be read, its target is",

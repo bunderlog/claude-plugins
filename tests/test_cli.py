@@ -344,6 +344,20 @@ class SessionEnd(unittest.TestCase):
                 run("session-end", stdin=end)
                 self.assertNotIn("Session review", start(self)[1])
 
+    # proposals lists the Proposals still waiting, a line each, for the inbox skill; outside a repo
+    # it fails and says why.
+    def test_proposals(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, names.PROPOSALS, "T.md"), (
+            "# Session review T\n\n## P1 · inbox · add · .about/inbox.md · Flaky suite\n\n"
+            "After:\n~~~markdown\n## Flaky suite\n~~~\n"
+        ))
+        self.assertEqual(run("proposals"), (0, "T P1 inbox add .about/inbox.md: Flaky suite\n", ""))
+        os.environ["CLAUDE_PROJECT_DIR"] = commands.outside_repo(self)
+        self.assertEqual(run("proposals"), (
+            1, "", "baloo proposals: " + os.environ["CLAUDE_PROJECT_DIR"] + " is not in a repo\n"
+        ))
+
     # review-decision outside a repo, or of a Proposal there isn't, fails and says why.
     def test_review_decision_fails(self):
         dir = in_repo(self)

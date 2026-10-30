@@ -630,8 +630,9 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
     """What to tell Claude of the Proposals waiting in the repo at `root`, and of where the log and
     the files disagree, that the session `session` hasn't been told yet; none when nothing is new.
     `decide` is the command that logs a decision. A headless session is told nothing, and showing
-    consumes nothing: a Proposal waits until it is decided. First come the reviews that failed or
-    read only part of their session since a session last looked, each told once."""
+    consumes nothing: a Proposal waits until it is decided. Those for the Inbox are only counted,
+    for the inbox skill to go through. First come the reviews that failed or read only part of
+    their session since a session last looked, each told once."""
     if headless():
         return []
     ended = _ended(root, data)
@@ -642,6 +643,7 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
     proposals: List[str] = []
     mismatches: List[str] = []
     keys: List[str] = []
+    inbox = 0  # the Inbox's Proposals waiting
     for it in items(root, data):
         key = it.review + "/" + it.id
         if it.mismatch:
@@ -649,12 +651,24 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
             if key not in known:
                 mismatches.append(f"  mismatch: {it.review} {it.id}, {it.mismatch}")
                 keys.append(key)
+        elif it.pending and it.target == "inbox":
+            inbox += 1
+            if key not in known:
+                keys.append(key)
         elif it.pending and key not in known:
             proposals.append("  " + _line(it))
             keys.append(key)
     if not keys:
         return ended
     lines: List[str] = ended
+    if inbox:
+        lines.append(
+            f"{inbox} Session review "
+            + ("proposal for " + names.INBOX + " waits" if inbox == 1 else
+               "proposals for " + names.INBOX + " wait")
+            + f" in {names.PROPOSALS}: tell the user, and that "
+            f"/{names.PLUGIN}:inbox goes through them"
+        )
     if proposals:
         p = names.PLUGIN
         lines.append(
@@ -662,11 +676,10 @@ def show(root: str, data: str, session: str, decide: str) -> List[str]:
             + names.PROPOSALS
             + "<review>.md: show the user this list and ask, for each, accept, reject or defer, "
             "after reading its file for the full edit; recommend reject for a stale one, and "
-            "offer no defer for one deferred twice. Apply each accepted one: a glossary, adr or prd "
-            "one through the " + p + ":glossary, " + p + ":adr or " + p + ":prd skill, an inbox "
-            "one by its edit as written; where what you applied differs from its After, add to "
-            "the Proposal an Applied: block of the text you applied, fenced as After is, and log "
-            "accepted-edited. Then log each answer with `"
+            "offer no defer for one deferred twice. Apply each accepted one through its skill, "
+            + p + ":glossary, " + p + ":adr or " + p + ":prd; where what you applied differs "
+            "from its After, add to the Proposal an Applied: block of the text you applied, "
+            "fenced as After is, and log accepted-edited. Then log each answer with `"
             + decide
             + " <review> <id> accepted|accepted-edited|rejected|deferred`"
         )
@@ -696,6 +709,12 @@ def _line(it: Item) -> str:
     if it.deferred > 0:
         text += f" (deferred {it.deferred}×)"
     return text
+
+
+def waiting(root: str, data: str) -> List[str]:
+    """The Proposals waiting in the repo at `root`, a line each as Claude is shown them, where the
+    inbox skill finds those for the Inbox."""
+    return [_line(it) for it in items(root, data) if it.pending]
 
 
 def _forget(folder: str) -> None:
