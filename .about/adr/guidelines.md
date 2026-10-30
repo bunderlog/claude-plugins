@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-24
+Date: 2026-10-30
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -35,7 +35,10 @@ task comes:
   `principles`: a new module is where they apply first.
 - `PostToolUse` and `PostToolUseFailure` on Bash, for the command: a run of tests or checks
   (`pytest`, `vitest`, `go test`, `npm run test:…`, `mise run check`…) that failed, by its exit or
-  by what it printed, since a pipe into `tail` exits 0, for `debugging`; a look at a CI run (`gh
+  by what it printed, since a pipe into `tail` exits 0, for `debugging`, but a run meant to fail:
+  one the same command changes files before (`git stash`, `cp`, `sed -i`, a `>` into a file), as
+  breaking code to see a test go red does, and one after the session's last edit of code was to a
+  test, the red step of test-first; a look at a CI run (`gh
   run`, `gh pr checks`, `glab ci`, a pipeline's API) whose output shows a failure (a failed run,
   check or step, an `##[error]` line) for `ci`, by the output alone, as `gh pr checks` exits
   non-zero on a pending check too; a change to the dependencies (`npm install <package>`, `npm
@@ -99,6 +102,12 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 ## Considered options
 
+- `debugging` on any failed run of tests (until 2026-10-30) — from 2026-10-14 to 2026-10-30 it
+  came 8 times where the command is known, 7 of them for a run meant to fail: 5 broke the code in
+  the same command (`git stash`, `cp` and `sed -i`, `git show … >`, `cat >` a new test), and 2
+  ran a test just written; about 670 words each. The rule above leaves out all 7 and keeps the 8th.
+- `debugging` only for a run that fails after it passed earlier in the session — a run that breaks
+  code to see a test fail passed before it too.
 - `ci` on any look at a CI run (until 2026-10-24) — in a week of 2026-10 across two projects it
   came 8 times, never for a failed run: each was a look at green checks before a merge or after a
   Release, about 5,000 characters each.
@@ -166,9 +175,8 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   edit is made without it.
 - A file Claude reads with `cat` in Bash gives nothing: its Guideline comes with the first edit of
   it, after that edit.
-- `debugging` comes too where a test fails on purpose, as the red step of test-first does: in a
-  week of 2026-10 that was nearly all of its 5 times, a cost accepted, since a command doesn't say
-  whether its failure is meant. `ci` also comes where the output names a failure the task isn't
+- `debugging` still comes where a test fails on purpose in a way the command doesn't show, such
+  as a fix taken out by a Python script, or a red step after an edit of code that isn't a test. `ci` also comes where the output names a failure the task isn't
   about, a run list's old failed run or a PR titled with "fail"; `ci`
   and `dependencies` come after the command that signals them, before what follows it.
 - A refactor of files already there gets `principles` and `design` only where Claude reads them.

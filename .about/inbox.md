@@ -189,16 +189,6 @@ off until the user asked where the Config was, and `tailwind` until they asked a
 Nothing told either of them once the stack showed. Settled by session start or `doctor` naming a
 Guideline that is off while the repo now has its stack, or by deciding the user turns them on.
 
-## The debugging Guideline comes on a test made red on purpose
-
-2026-10-29 · measurement of 2026-10-19 to 2026-10-29
-
-All 4 times the debugging Guideline came after a run of tests from 2026-10-19 to 2026-10-29, the
-run was red on purpose: code broken or stashed to see a test fail, as the testing Guideline asks,
-or a new test run before its fix. Each time about 670 words went into the context for no bug.
-Settled by giving debugging only where a run fails that passed earlier in the session, or another
-sign of a bug that a red-first step doesn't show, then updating ADR guidelines.
-
 ## Question the premise after two failed fixes
 
 2026-10-30 · ub-mode, Robert C. Martin's skill
