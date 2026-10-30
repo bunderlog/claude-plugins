@@ -1,6 +1,6 @@
 # What is still to consider waits in `.about/inbox.md` until something settles it
 
-Date: 2026-10-07
+Date: 2026-10-31
 
 A decision or a term still open, and a bug or a finding left for later, had no common place: a
 proposed ADR, the glossary's `## Unresolved`, or nowhere, and Claude's auto-memory took some,
@@ -24,7 +24,9 @@ with the user. The `interview` skill reads the Inbox before its questions, so an
 becomes one of its open decisions; it writes nothing, so the change that settles the item deletes
 it.
 
-The `inbox` skill ranks every item by its text, by what waiting costs, then goes through a few at a
+The `inbox` skill first asks of the Session review's Proposals for the Inbox, which session start
+only counts, whether to accept, reject or defer each (ADR session-review); an accepted one adds an
+item nobody has gone through yet, or changes or deletes one. It then ranks every item by its text, by what waiting costs, then goes through a few at a
 time: it drops those the code, an ADR, the glossary or the Guidelines already settle, and asks of
 the rest whether to decide it now, fix it now, file an Issue (ADR issues), keep it or drop it,
 applying each round's answers before the next. So a user with 200 items and time for six can stop,

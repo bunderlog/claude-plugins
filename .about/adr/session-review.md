@@ -1,6 +1,6 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-30
+Date: 2026-10-31
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
 closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the plugin's
@@ -46,12 +46,17 @@ never commits. The folder goes into the repo's `info/exclude`, not into git: a P
 retelling of the conversation the user hasn't agreed to yet, and a commit of "everything" would
 take it in unread.
 
-Session start shows Claude the Proposals still waiting, a line each, and tells it to show the user
-the list and ask, for each, accept, reject or defer, reading the file for the full edit; it says so
-too where a review is still running, and the first prompt after that review ends shows its Proposals
-then. Each session is shown a Proposal once. An accepted one is applied through its skill,
-`glossary`, `adr` or `prd`, or, for the Inbox, by its edit as written, since the `inbox` skill isn't
-for adding one item. Its After stays as the review proposed it: where the applied text differs,
+Session start shows Claude the Proposals still waiting for the glossary, an ADR or a PRD, a line
+each, and tells it to show the user the list and ask, for each, accept, reject or defer, reading the
+file for the full edit; it says so too where a review is still running, and the first prompt after
+that review ends shows its Proposals then. Each session is shown a Proposal once. Those for the
+Inbox it only counts, in a line that names the `inbox` skill: the skill asks of them first, before
+the items, and applies each accepted one by its edit as written, so it joins the items nobody has
+gone through yet; the plugin's `proposals` lists the ones waiting for it. Listed at every session
+start, they were left unanswered: in one project, 14 waited from 2026-10-20 on, all for the Inbox,
+and Claude named them at the end of its reply in each of the 10 sessions after, where the user
+answered the task and not them. An accepted one is applied through its skill, `glossary`, `adr` or
+`prd`. Its After stays as the review proposed it: where the applied text differs,
 Claude adds an `Applied:` block of that text to the Proposal and logs it `accepted-edited`, which
 counts as accepted, and the checks below read Applied where it is there. Claude logs each answer
 with the plugin's `review-decision`, run with `python3` as session start's line shows it. A Proposal
@@ -115,6 +120,11 @@ reaches it fails, and is told as any other failure.
   came from one accepted only after a change, and the review's own text, what its quality is
   judged by, would be lost.
 - Deleting a decided file — git keeps what was applied, but nothing keeps what was proposed.
+- The Inbox's Proposals added to the Inbox with no answer, as items nobody has gone through yet —
+  the `inbox` skill asks of them anyway, but the Inbox grows with what the user would have
+  rejected, and in that project 36 of 79 items accepted from a review were never touched again.
+- A Proposal no longer shown after three sessions without an answer — it stops getting in the way,
+  but nothing ever brings it back to be decided.
 - An `expired` decision after a time — a fourth value in the log for what the user never decided.
 - Telling a headless session by its Transcript's entrypoint — the Transcript may not be written
   yet at session start, where the environment already says it.
@@ -156,6 +166,7 @@ reaches it fails, and is told as any other failure.
 - Every session with a new Config costs a headless run when it ends, most of them proposing
   nothing.
 - Nothing reaches `.about/` without the user's answer, at the cost of a question per Proposal.
+- A Proposal for the Inbox waits until the user goes through the Inbox, which may be weeks.
 - A Proposal deferred on one machine waits only there; what was accepted reaches the other
   through git.
 - A text match decides stale and mismatch: an accepted Proposal whose skill reworded it is a
