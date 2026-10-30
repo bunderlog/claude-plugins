@@ -31,6 +31,9 @@ follows win.
   An internal error gets a generic message, never its detail.
 - Request and response bodies are their own small structs with `json` tags; database rows are
   mapped to them, never encoded directly.
+- A handler parses its input once into typed values: a field with a fixed set of values is a
+  type of its own with a constant per value (`type Currency string`), checked where it's
+  parsed. The functions behind the handler take those types and don't check them again.
 
 **Test:** no handler encodes a response body itself; an empty `204` is the only direct write.
 
