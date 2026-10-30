@@ -49,8 +49,10 @@ stalls such a check would have caught.
 
 A failure that is part of the work (a red test mid-change), a denial that was right, or a prompt
 that is the user's own call each time ("commit it") is not a stall. Rank stalls by cost: how
-often, times what each cost the user (a retry, a mode switch, a wrong turn undone). Mention a
-one-off only if it was severe.
+often, times what each cost the user (a retry, a mode switch, a wrong turn undone). A fix costs
+too: a line every session reads, a file to keep up, a step in every commit. Recommend one only
+for a stall that recurred or cost real work, where the fix costs less; a one-off is not a
+finding. Nothing worth a fix is a result: say so in a line.
 
 ## Fix where it holds
 
@@ -59,9 +61,12 @@ Prefer the fix that works without Claude remembering it:
    A mistake with a fixed pattern (a banned API, an import shape, a file in the wrong place)
    always gets one, never a written line.
 2. **Configured**: a permission rule or a setting of Claude Code.
-3. **Written**: the shortest line that changes behavior — in CLAUDE.md for this project,
-   `~/.claude/CLAUDE.md` for every project, or a skill. Cut an instruction the transcripts show
-   had no effect.
+3. **Written**: the shortest line that changes behavior — in CLAUDE.md for this project, or a
+   skill. Cut an instruction the transcripts show had no effect.
+
+Fix the project, not the user's own setup: their dotfiles and `~/.claude/` only when they ask.
+What the user set on purpose (a rule they wrote in CLAUDE.md, a setting they chose) is theirs:
+where it caused a stall, say what it cost in a line and ask, rather than rewrite it.
 
 Say where each fix lives: this project, or a plugin or Claude Code itself. A fix to baloo (a
 Check's false alarm, a skill's rule) is an issue to file on `bunderlog/claude-plugins`, written
@@ -70,8 +75,8 @@ is a report to send. Neither is a change to their installed copy.
 
 ## Report
 
-A ranked list of stalls; for each: what happened (session, `[line]`, how often), what it cost,
-the fix (which file, what change). Ask which to apply, apply only those, and run the project's
-checks. Each fix not picked, unless the user drops it, becomes an item in `.about/inbox.md`: a
-`## <title>`, a line `<YYYY-MM-DD> · retro`, then the stall and the fix. Don't commit. Replace
-secrets you quote with `*****`.
+At most three stalls, ranked, two or three lines each: what happened (session, `[line]`, how
+often), what it cost, the fix (which file, what change). Ask which to apply, apply only those, and
+run the project's checks. A fix not picked goes into `.about/inbox.md` only if the user asks to
+keep it: a `## <title>`, a line `<YYYY-MM-DD> · retro`, then the stall and the fix. Don't commit.
+Replace secrets you quote with `*****`.
