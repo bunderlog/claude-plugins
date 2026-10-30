@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.33.0 — 2026-10-31
+
+### Features
+
+- inbox: go through the Session review's Inbox proposals in /baloo:inbox, not at session start (9af8b1f)
+
 ## 0.32.1 — 2026-10-31
 
 ### Fixes
