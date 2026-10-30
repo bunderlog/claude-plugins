@@ -81,8 +81,13 @@ repo holds a package manager's manifest (`go.mod`, `package.json`, `Cargo.toml`,
 `package.json` depending on `typescript` for `typescript`, one depending on `vue` for `vue`, one
 depending on `tailwindcss` for `tailwind`. Manifests and stacks are found at any depth outside
 hidden folders, other projects' code (`node_modules`, `vendor`), test fixtures (`testdata`) and
-build output (`build`, `dist`, `out`, `target`). They are looked for only then; from then on the
-Config is the user's, like every other setting in it (ADR config).
+build output (`build`, `dist`, `out`, `target`). The Config is the user's from then on, like every
+other setting in it (ADR config): nothing turns a key on for them. But a repo often takes up its
+stack after its Config was made, and one project's `go`, `vue`, `typescript` and `tailwind` stayed
+off unnoticed in 2026-10. So where a Guideline that fits the repo is off, session start names it
+once a repo, for Claude to tell the user, and `doctor` names it every time ("off, though
+fitting"). A headless session isn't told, so it doesn't use up the telling, nor is a Config session
+start just made, which fits the repo already.
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
@@ -154,6 +159,8 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   changes with every version, and that file is Claude Code's to write, not the plugin's.
 - Leaving the prompt — the user is asked on every session's first Guideline, for the plugin's
   own read-only text.
+- Turning a fitting Guideline's key on at session start — the Config is the user's, and a key
+  written `false` at creation can't be told from one turned off on purpose.
 - Detecting the stacks at every session start, with no keys — a project can't turn off a
   Guideline for a stack it has, and a repo about to start one can't turn it on.
 
@@ -161,7 +168,10 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
 
 - Outside a repo, and in Claude Code's own folder, there is no Config, so no Guideline is on.
 - A repo that takes up a stack, a CI or a package manager after its Config was made gets its
-  Guideline only when someone turns its key on.
+  Guideline only when someone turns its key on; session start says so once, then only `doctor`.
+- A Guideline turned off on purpose, though the repo fits it, is named once all the same.
+- Session start walks the repo while a Guideline tied to a stack is off and not yet named: a few
+  milliseconds in a repo of these sizes, more in a large one.
 - Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
   one is a file and a key.
 - The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the

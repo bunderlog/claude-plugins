@@ -154,16 +154,6 @@ again. Why each was rejected wasn't looked into. Settled by reading, in those se
 Transcripts, why each was turned down and changing what `retro` recommends, or by later Retros
 whose picks the user takes up.
 
-## A Config made in an empty repo leaves the stack's Guidelines off
-
-2026-10-29 · measurement of 2026-10-19 to 2026-10-29
-
-Session start turns a stack's Guideline on only where the repo had that stack when it made the
-Config. In one project, made before any code, `go`, `vue`, `typescript` and `dependencies` stayed
-off until the user asked where the Config was, and `tailwind` until they asked again a day later.
-Nothing told either of them once the stack showed. Settled by session start or `doctor` naming a
-Guideline that is off while the repo now has its stack, or by deciding the user turns them on.
-
 ## Question the premise after two failed fixes
 
 2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-10-30
