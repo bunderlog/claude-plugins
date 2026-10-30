@@ -2,6 +2,17 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.31.0 — 2026-10-30
+
+### Features
+
+- name a Guideline the repo fits but the Config turns off, at session start and in doctor (bc371dc)
+
+### Fixes
+
+- session-review: leave a blank line before each fence of a Proposal, as Markdown linters want (0ffafc8)
+- retro: recommend at most three fixes worth their cost, in the project, not the user's setup (481b071)
+
 ## 0.30.0 — 2026-10-30
 
 ### Features
