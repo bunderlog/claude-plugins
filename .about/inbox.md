@@ -131,18 +131,6 @@ the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Ke
 until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
 them and none had asked.
 
-## `changes-decision` doesn't grade the questions asked after the record
-
-2026-10-21 · session review
-
-From 0.29.1, `adr` records a decision the user says is agreed first, then names the ADR it
-overturns and the questions its Probe found, and puts those left open in the Inbox. The case's
-graders check only the ADR, so the rest was checked by reading 4 runs' answers on 2026-10-20:
-each asked about the double charge through `ChargeOnOrderPlaced` after the record, and the Opus
-runs added it to `.about/inbox.md`. By ADR evals, a line no case fails without is a candidate for
-deletion. Settled by a grader on the answer or on `.about/inbox.md` that fails without the rule,
-or by dropping the rule's second half.
-
 ## Question the premise after two failed fixes
 
 2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-10-30
