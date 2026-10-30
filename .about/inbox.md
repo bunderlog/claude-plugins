@@ -143,17 +143,6 @@ runs added it to `.about/inbox.md`. By ADR evals, a line no case fails without i
 deletion. Settled by a grader on the answer or on `.about/inbox.md` that fails without the rule,
 or by dropping the rule's second half.
 
-## `retro`'s recommendations were all rejected
-
-2026-10-24 · session review
-
-In a measurement of 2026-10-16 to 2026-10-24 across three projects, the user rejected all 4 of
-the changes `/baloo:retro` recommended, while 72% of the Session review's Proposals were
-accepted. On 2026-10-29, in another project, the user rejected all 4 of a Retro's recommendations
-again. Why each was rejected wasn't looked into. Settled by reading, in those sessions'
-Transcripts, why each was turned down and changing what `retro` recommends, or by later Retros
-whose picks the user takes up.
-
 ## Question the premise after two failed fixes
 
 2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-10-30
