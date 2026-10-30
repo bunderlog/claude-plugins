@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-10-29
+Date: 2026-10-30
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -30,6 +30,16 @@ none of their runs on Opus or Sonnet, and the plugin's Guidelines and session st
 there is not a goal, so `skill-fired` in them only reports; a case that has failed without the
 plugin on one model, as `code-contradicts-adr` did on Sonnet, stays.
 
+The Session review's prompt is the exception to keeping a case only once it fails without the
+plugin: the prompt is the plugin's text, built by its code, and a case gives it to Claude in either
+arm, so the arm without the plugin would measure the `adr` and `glossary` skills, not the prompt.
+Its cases in `evals/session-review/`, named `review-*`, run with the plugin only (`mise run
+eval-review`, `--ablation none`) as a guard against a regression of the prompt: a decision agreed
+and not recorded is proposed as an ADR, one already recorded proposes nothing, a choice left open
+is an Inbox item. Each case's `prompt.md` is written by `evals/session-review/prompts.py` from
+`review._prompt` and the case's `conversation.md`, so it asks what a review is asked; run it after
+the prompt changes.
+
 The suites live in `evals/` at the repo root, outside the plugin: an install doesn't carry them,
 and a change to one needs no Release (ADR releases). `--eval-dir` takes no path outside the plugin,
 so they run from the repo's root, each case naming the plugin in its `plugins:`, which may only
@@ -57,9 +67,14 @@ need an API key.
   skill's Check and Probe, which no case does, but waits for a session where Claude took a
   design unchecked.
 
+- The Session review's prompt measured against a short prompt in a second arm ("propose changes
+  to .about/") — it would show what the prompt adds, for twice the runs and a baseline nobody uses.
+
 ## Consequences
 
 - Nothing makes anyone run the suites: a skill's text can change without them.
 - A score depends on the model: a drop after a model changes is not a regression of the text.
 - A run of the suite costs about $0.50 to $1 a case on each model.
+- `mise run eval` runs the `review-*` cases too, with an arm without the plugin that measures
+  nothing: `--case` takes no pattern to leave them out.
 - Revisit when a regression a suite would have caught reaches a Release, or CI can run them cheaply.
