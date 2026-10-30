@@ -6,8 +6,6 @@ These bias toward caution over speed; scale them to the change (see the end).
 
 For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremony and just do it.
 
-- A question ("which X?", "should I?", "why?") gets an answer: install, edit, commit, push or log
-  in only when asked.
 - Touch only what the task needs and match the existing style; remove only the orphans your
   change made.
 - A commit holds only this task's changes: leave other pending changes unstaged, or ask.
