@@ -2,6 +2,21 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.30.0 — 2026-10-30
+
+### Features
+
+- guidelines: have a Go handler parse its input once into types the code behind trusts (cabb59c)
+- keep ADRs and the glossary only in .about/, offering to move numbered ADRs and CONTEXT.md (28f449e)
+
+### Fixes
+
+- git-hooks: stay quiet at session start when core.hooksPath is /dev/null, as in an eval run (01ebb27)
+- guidelines: give the ci Guideline only when a look at CI shows a failure, not at green checks (b812ab8)
+- tell Claude at the first prompt after an update, not drop it as two JSON answers (f74a8d5)
+- glossary: load the skill when the user asks to record or define a term (3381902)
+- guidelines: give debugging for a failed test run, but not one meant to fail (c1a89d7)
+
 ## 0.29.1 — 2026-10-20
 
 ### Fixes
