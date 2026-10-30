@@ -26,11 +26,13 @@ Write nothing when there is nothing to propose. Otherwise write the file as:
 Why: <one line: what in the conversation it comes from>
 
 Before:
+
 ~~~markdown
 <the text it changes or deletes, copied exactly from the file>
 ~~~
 
 After:
+
 ~~~markdown
 <the text it adds, or the text that replaces Before>
 ~~~
