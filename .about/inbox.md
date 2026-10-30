@@ -210,3 +210,14 @@ run was red on purpose: code broken or stashed to see a test fail, as the testin
 or a new test run before its fix. Each time about 670 words went into the context for no bug.
 Settled by giving debugging only where a run fails that passed earlier in the session, or another
 sign of a bug that a red-first step doesn't show, then updating ADR guidelines.
+
+## Question the premise after two failed fixes
+
+2026-10-30 · ub-mode, Robert C. Martin's skill
+
+ub-mode's "Attack the Premise": once two fixes that share one premise fail the same check, write
+the premise in one sentence and question it before a third fix. Not added to `debugging`: an eval
+case where the user's two fixes in the wrong function failed passed without the plugin on Opus and
+Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
+Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
+from it that fails without the line, or by dropping the idea.
