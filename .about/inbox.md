@@ -68,8 +68,18 @@ guidelines); `.about/` still waits to be read.
 The usefulness check of 2026-09-29 to 2026-10-30 found `.about/` read, or named, before an edit to
 code in 24 of 71 sessions in webui, though 67 of them had it, against 28 of 29 in three other
 projects. Size alone doesn't explain it: webui's ADRs, glossary, Inbox and PRDs are about 118 KB,
-64 KB of it the Inbox, and one of the three, read before every edit, has about 87 KB. The next
-step is reading webui's sessions that edited code without it, for what their tasks had in common.
+64 KB of it the Inbox, and one of the three, read before every edit, has about 87 KB.
+
+What webui's sessions had in common, read on 2026-10-31: of 52 that edited its code, 41 began with
+a Jira ticket, and 1 of those 41 read an ADR, the glossary or a PRD before the first edit, against
+6 of the other 11. A ticket was named in `.about/` before its session in 3 of 40; 6 of webui's 10
+ADRs are about its process, not its code, and most tickets fix a legacy screen that no ADR or PRD
+covers. Where one did, Claude read it: RPG-6249, a menu regression, read ADR vue-migration before
+its fix and updated it after, and the project's own skills link to ADRs such as
+device-capabilities. No webui2 edit compared a device's type outside `entities/deviceConfig/`, the
+one rule of an ADR checked. So the count misleads: it judges a session by its first edit, where a
+webui session often works through several tickets. The next measurement counts, for each edit to
+code, whether an ADR or PRD on its subject was read before it.
 
 ## A plugin for another audience, such as ad managers
 
@@ -159,3 +169,17 @@ or nobody thinks of it when it would help. Settled by a session where a change d
 or a PRD's criterion unnoticed until later, which says when to offer it, or by dropping the skill
 and the agent if the next measurement shows no use either. Zero runs is partly by design: ADR
 verify runs it only when the user asks, so Claude never offers it.
+
+## A Guideline often comes after the first edit it is for
+
+2026-10-31 · usefulness check of 2026-09-29 to 2026-10-31
+
+From 2026-10-08, a Guideline a Hook gives came before the first edit of its subject in 40 of 83
+cases (`typescript` 18 of 34, `vue` 10 of 24, `testing` 10 of 25, `writing-for-agents` 2 of 9).
+Each first edit of a file Claude had opened with Read got it first, 22 of 22; the 43 late ones
+were 25 edits of files read only with `cat` or `sed` in Bash and 18 new files made with Write. ADR
+guidelines accepts both as the cost of giving a Guideline by its task. Unknown is whether it
+costs anything: whether those first edits break a rule of the Guideline that came after them.
+Settled by checking the 43 against their Guidelines' rules: if they break them more often than the
+edits made after the Guideline, give it on a Bash read of a file of its subject and before a Write
+creates one; if not, drop the item.
