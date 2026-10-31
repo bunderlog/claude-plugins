@@ -70,9 +70,9 @@ class StatusLine(unittest.TestCase):
                             "seven_day": {"used_percentage": 81}},
         })
         _, out, err = run("status-line", stdin=stdin)
-        self.assertEqual(
-            COLORS.sub("", out).strip(), "7d ████████░░ 81% Ctx █░░░░░░░░░ 12%", err
-        )
+        line = COLORS.sub("", out).strip()
+        self.assertTrue(line.startswith(os.path.basename(dir) + " "), line)
+        self.assertTrue(line.endswith("7d ████████░░ 81% Ctx █░░░░░░░░░ 12%"), (line, err))
 
 
 def pre_tool_use(test, stdin):

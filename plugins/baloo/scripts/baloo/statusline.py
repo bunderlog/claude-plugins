@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 import re
+import os
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -88,6 +89,8 @@ class Input:
     """What Claude Code gives a status line command on stdin, the part the Status line shows."""
 
     current_dir: str = ""
+    # The folder Claude Code runs in, which a command's cd doesn't change.
+    project_dir: str = ""
     model: str = ""
     effort: str = ""
     # None before Claude Code has one.
@@ -119,8 +122,10 @@ class Input:
                 _num(c.get("recache_tokens_if_cold")),
             )
         limits = _obj(v.get("rate_limits"))
+        workspace = _obj(v.get("workspace"))
         return cls(
-            _str(_obj(v.get("workspace")).get("current_dir")),
+            _str(workspace.get("current_dir")),
+            _str(workspace.get("project_dir")),
             _str(_obj(v.get("model")).get("display_name")),
             _str(_obj(v.get("effort")).get("level")),
             context,
@@ -279,11 +284,13 @@ class Layout:
         return " ".join(parts)
 
     def render(self, in_: Input, branch: str, columns: int) -> str:
-        """The Status line for a terminal `columns` wide: the branch on the left, the bars
-        centered, and the model with its effort flush with the right edge. When the line is too
-        narrow it shrinks the bars, then drops the reset times, then the model."""
+        """The Status line for a terminal `columns` wide: the project's folder and the branch on
+        the left, the bars centered, and the model with its effort flush with the right edge. When
+        the line is too narrow it shrinks the bars, then drops the reset times, then the model."""
         width = max(40, columns - _MARGIN)
-        left = _paint("01;35", branch) if branch else ""
+        folder = os.path.basename((in_.project_dir or in_.current_dir).rstrip("/"))
+        parts = (_paint("01;36", folder) if folder else "", _paint("01;35", branch) if branch else "")
+        left = " ".join(p for p in parts if p)
         r = _right(in_)
 
         def fits(mid: str) -> bool:

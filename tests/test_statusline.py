@@ -275,6 +275,16 @@ class Render(unittest.TestCase):
         got = plain(default().render(parse('{"model": {"display_name": "Opus 5.5"}}'), "", 120))
         self.assertTrue(got.endswith(" Opus 5.5"), got)
 
+    # The project's folder comes before the branch, so it's clear which project a terminal shows:
+    # the one Claude Code runs in, not the folder a command moved to.
+    def test_folder(self):
+        in_ = parse('{"workspace": {"current_dir": "/w/shop/apps/web", "project_dir": "/w/shop"}}')
+        colored = default().render(in_, "main", 120)
+        self.assertTrue(plain(colored).startswith("shop main"), plain(colored))
+        self.assertIn(statusline._paint("01;36", "shop") + " " + statusline._paint("01;35", "main"), colored)
+        in_ = parse('{"workspace": {"current_dir": "/w/notes"}}')
+        self.assertEqual(plain(default().render(in_, "", 120)).strip(), "notes")
+
     # When narrow, the line shrinks the bars, then drops the reset time, then the model.
     def test_narrow(self):
         in_ = usage(MODEL)
