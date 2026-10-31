@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.34.0 — 2026-10-31
+
+### Features
+
+- status-line: show the project's folder before the branch (2f4ae6a)
+
 ## 0.33.0 — 2026-10-31
 
 ### Features
