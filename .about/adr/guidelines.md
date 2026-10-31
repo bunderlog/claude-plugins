@@ -1,6 +1,6 @@
 # Guidelines are files the Config turns on one by one, not skills
 
-Date: 2026-10-30
+Date: 2026-10-31
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -185,6 +185,11 @@ Guidelines a project can turn them off, and one with no CI never gets `ci`'s lin
   edit is made without it.
 - A file Claude reads with `cat` in Bash gives nothing: its Guideline comes with the first edit of
   it, after that edit.
+- Those late first edits cost little so far: from 2026-10-08 to 2026-10-31, the first edits of a
+  file made before its Guideline came broke a rule a pattern can find (`any`, `enum`, a class, a
+  Node built-in without `node:`, the Options API, untyped props) in 1 of 8, those made after it in
+  1 of 81, and a test was run before the next edit of code in 13 of 13 and 14 of 14. Revisit if a
+  session shows a late edit breaking its Guideline.
 - `debugging` still comes where a test fails on purpose in a way the command doesn't show, such
   as a fix taken out by a Python script, or a red step after an edit of code that isn't a test. `ci` also comes where the output names a failure the task isn't
   about, a run list's old failed run or a PR titled with "fail"; `ci`
