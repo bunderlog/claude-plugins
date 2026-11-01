@@ -26,10 +26,15 @@ keep asking the rest meanwhile.
 
 ## 2. Ask
 
+When the plan can be built more than one way, ask the approach first: two or three, each with
+what in the code it builds on and what it trades off. Its answer settles or drops many of the
+other decisions.
+
 In each round, ask the ready decisions a few at a time, most consequential first, with the
 AskUserQuestion tool: each question says in a line why it matters; each option, two or three
 concrete ones, gives its trade-off; your recommendation comes first, marked "(Recommended)".
-Without the tool, write each as:
+Options that would look different (a layout, an API's shape, a config) each show it in their
+preview: an ASCII sketch or a few lines of code. Without the tool, write each as:
 
 ```
 **Q1. <title>** — why it matters, in a line or two; two or three concrete options.
