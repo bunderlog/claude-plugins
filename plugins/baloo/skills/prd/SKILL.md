@@ -1,6 +1,6 @@
 ---
 name: prd
-description: Write and keep a feature's PRD — the problem it solves and for whom, how success shows, its scope and non-goals, and the acceptance criteria it is tested against — when the user asks for a PRD, requirements or acceptance criteria, a feature's agreed purpose or scope changes, or a feature is built and its criteria need checking against its tests. Challenges vague goals and criteria no test could check, checks them against the glossary and ADRs in .about/, and keeps one .about/prd/<feature>.md per feature, or a page in the tracker the project names, edited in place. Not for how to build it, or for settling a plan's decisions.
+description: Write and keep a feature's PRD — the problem it solves and for whom, how success shows, its scope and non-goals, and the acceptance criteria it is tested against — when the user asks for a PRD, requirements or acceptance criteria, agrees a PRD, a feature's agreed purpose or scope changes, or a feature is built and its criteria need checking against its tests. Challenges vague goals and criteria no test could check, checks them against the glossary and ADRs in .about/, and keeps one .about/prd/<feature>.md per feature, or a page in the tracker the project names, edited in place. Not for how to build it, or for settling a plan's decisions.
 ---
 
 # PRD
