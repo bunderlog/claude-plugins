@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-10-30
+Date: 2026-11-01
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -22,6 +22,11 @@ candidate for deletion.
 Opus, which checks `.about/adr/` on its own; it stays, as the regression the suite caught. Its
 second, a decision that changes an earlier one, failed without the plugin on both: the bare model
 wrote a new ADR beside the old one.
+
+On 2026-11-01 `prd`, `issue`, `interview` and `tidy` got cases, each failing without the plugin on
+Opus and Sonnet. `architecture`'s, a pass-through an ADR keeps on purpose, scored 1.00 both ways on
+both and was dropped: Claude reads `.about/adr/` before proposing a refactor anyway. `prd`'s
+fresh read found the gap on Sonnet in 1 of 3 runs, where Opus found it in 3 of 3.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

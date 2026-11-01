@@ -169,3 +169,18 @@ or nobody thinks of it when it would help. Settled by a session where a change d
 or a PRD's criterion unnoticed until later, which says when to offer it, or by dropping the skill
 and the agent if the next measurement shows no use either. Zero runs is partly by design: ADR
 verify runs it only when the user asks, so Claude never offers it.
+
+## Eval cases for verify, doctor and retro
+
+2026-11-01 · evals
+
+Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
+scripts), and `claude plugin eval` grants no Bash on a machine where `~/.docker/contexts` is a
+link, as Docker Desktop's WSL integration makes it, even with `DOCKER_CONFIG` elsewhere. Drafted
+and never run: `verify`, a branch calling an Order a "purchase", a word the glossary avoids, with
+an Issue criterion no test checks; `doctor`, a `commit-msg` Git hook of the user's own in the
+plugin's way; `retro`, a session resumed through `context.history_file` where the user corrects
+the same import of Billing in Ordering three times, the fix being a lint rule or test, not a
+CLAUDE.md line. Settled by a machine that can grant Bash: `mise run eval` then grants
+`Bash(git *)`, `Bash(python3 *)` and `Bash(CLAUDE_PLUGIN_DATA=*)`, and each case is kept only
+once it fails without the plugin (ADR evals).
