@@ -32,7 +32,8 @@ Challenge each part until it holds:
 - **Success signal** — what moves, from what to what, by when; or the qualitative signal when
   nothing can be measured. "Users like it" is neither.
 - **Scope** — the smallest version that solves the problem. Name the Non-goals: what someone
-  will assume is included and isn't.
+  will assume is included and isn't; and the Anti-goals: what would make the feature a failure
+  even if it works as specified ("support stops retyping, but now waits a day for the export").
 - **Acceptance criteria** — each one a test can pass or fail: the situation, the action, the
   expected outcome ("an export of 10,000 rows finishes within 5 s"). Rewrite "fast", "simple"
   or "robust" as one.
@@ -40,6 +41,15 @@ Challenge each part until it holds:
 Test the criteria with borderline cases: nothing, too much, a failure halfway, someone who may
 not do this. A word the glossary lacks or uses differently, or a criterion that contradicts an
 ADR, is a finding: name both sides and ask which holds.
+
+## Fresh read
+
+Before you drop the Status line, have a subagent that didn't see the conversation read the PRD
+(its path, or a tracker page's text) as the engineer who must build and test the feature from it
+alone. It reports, most important first, each place where it would have to guess and a wrong
+guess would change what gets built, and each criterion no test could pass or fail. Write into
+the PRD what the conversation or the code already answers, settle a minor point yourself and say
+so, and ask the user the rest in one round.
 
 ## Built
 

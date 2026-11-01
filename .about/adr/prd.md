@@ -1,6 +1,6 @@
 # PRDs have a skill of their own, one per feature in `.about/prd/` or the project's tracker
 
-Date: 2026-10-07
+Date: 2026-11-01
 
 The `prd` skill writes and keeps a PRD per feature in `.about/prd/<feature>.md`, beside the
 glossary and ADRs it is checked against (ADR about-folder). It probes the problem, the success
@@ -28,6 +28,12 @@ can't claim more than the tests do. A tracker's PRD can span repos, so its links
 and `prd` checks those of the repo it runs in. When `prd` is used on a built feature, it checks
 every link and names a criterion with no test, a link to a test that's gone, or code that does
 something else, asking which is wrong rather than rewriting the criterion to match the code.
+
+Before a PRD is agreed, a subagent that didn't see the conversation reads it as the engineer who
+must build and test the feature from it alone, and names where it would have to guess and each
+criterion no test could pass or fail: the skill that wrote the criteria reads them with the
+assumptions it wrote them with. What the conversation or the code already answers goes into the
+PRD, a minor point the skill settles and says so, and the rest goes to the user in one round.
 
 The Session review may propose a change to a PRD, which applies only once the user accepts it
 through `prd` (ADR session-review): a PRD is an agreement with the user about what to build, and a
@@ -61,6 +67,8 @@ change nobody saw costs more there than in a term or a decision record.
   acceptance criteria.
 - A `Planned` trailer, removed once the feature ships — one line, but it goes stale the day
   someone forgets it, where a missing test link shows itself.
+- `prd` checking its own criteria (until 2026-11-01) — no subagent's cost, but the gaps a reader
+  without the conversation would hit stay unseen until someone builds from the PRD.
 - A Check failing a commit whose PRD names a test that doesn't exist — enforced, but test names
   are written differently in each language.
 

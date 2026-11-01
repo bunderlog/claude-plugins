@@ -29,6 +29,10 @@ Status: proposed
 
 - {What someone will assume is included, and isn't.}
 
+## Anti-goals
+
+- {What would make it a failure even if it works as specified.}
+
 ## Acceptance criteria
 
 - {Situation, action, expected outcome: one a test can pass or fail.}
