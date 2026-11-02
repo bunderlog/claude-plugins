@@ -14,9 +14,10 @@ so the user has `/baloo:verify`; Claude can also run the agent by its name. Both
 user asks or agrees, as a Verification is a whole run's tokens. Claude offers one, in a line and
 once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit
 or PR: there it has criteria to check against, and few tasks have one. The skill's description
-says so, being in every session already; a line in `principles` would be read only before
-non-trivial work, and the Guidelines are read before an edit on their subject in 5 of 79 cases
-(ADR measurement). By default it looks at the current branch's
+says so, and a line in `principles`' On every task, which session start prints in every session
+(ADR guidelines): on 2026-11-02 the description alone made Claude offer it in 3 of 3 runs on
+Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without the plugin in none
+(`evals/verify/offer`). By default it looks at the current branch's
 commits since the default branch, plus the working tree; a commit range, a branch or a PR given
 overrides that. It checks the criteria of the Issue or PRD it is given, or else of the one the
 branch's name, its commits or its files point to, and says so when it finds none rather than
