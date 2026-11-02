@@ -37,7 +37,7 @@ session-review); decide once a skill has to write there, not only read.
 
 ## Project knowledge reaches the context only as a task needs it
 
-2026-10-06 · user · kept 2026-10-14
+2026-10-06 · user · kept 2026-11-02
 
 After a few weeks, this repo's `.about/` is about 25k tokens (20 ADRs about 82 KB, the glossary
 and the Inbox about 15 KB) and the Guidelines another 10k, and both only grow; the more of it a
@@ -78,8 +78,15 @@ covers. Where one did, Claude read it: RPG-6249, a menu regression, read ADR vue
 its fix and updated it after, and the project's own skills link to ADRs such as
 device-capabilities. No webui2 edit compared a device's type outside `entities/deviceConfig/`, the
 one rule of an ADR checked. So the count misleads: it judges a session by its first edit, where a
-webui session often works through several tickets. The next measurement counts, for each edit to
-code, whether an ADR or PRD on its subject was read before it.
+webui session often works through several tickets.
+
+Counted per edit on 2026-11-02, on this machine's sessions from 2026-10-01: of 545 edits to code in
+81 sessions in six projects, 52 had an ADR or PRD that names the edited file, or a path of two or
+more segments ending in its folder, such as `entities/deviceConfig`, and for 20 of them it was read
+earlier in the session or a subagent of it; in webui 0 of 22, in the others 20 of 30. `.about/` was
+read at all before 341 of the 545, before 82 of webui's 260. So the ADRs that name code are few, 52
+of 545 edits, and in webui none of those reached the edit; an ADR that names no path is missed by
+the count, which needs a link from ADRs to code to judge the rest.
 
 ## A plugin for another audience, such as ad managers
 
@@ -160,15 +167,23 @@ from it that fails without the line, or by dropping the idea.
 
 ## Eval cases for verify, doctor and retro
 
-2026-11-01 · evals
+2026-11-01 · evals · kept 2026-11-02
 
 Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
-scripts), and `claude plugin eval` grants no Bash on a machine where `~/.docker/contexts` is a
-link, as Docker Desktop's WSL integration makes it, even with `DOCKER_CONFIG` elsewhere. Drafted
-and never run: `verify`, a branch calling an Order a "purchase", a word the glossary avoids, with
-an Issue criterion no test checks; `doctor`, a `commit-msg` Git hook of the user's own in the
-plugin's way; `retro`, a session resumed through `context.history_file` where the user corrects
-the same import of Billing in Ordering three times, the fix being a lint rule or test, not a
-CLAUDE.md line. Settled by a machine that can grant Bash: `mise run eval` then grants
-`Bash(git *)`, `Bash(python3 *)` and `Bash(CLAUDE_PLUGIN_DATA=*)`, and each case is kept only
-once it fails without the plugin (ADR evals).
+scripts). On 2026-11-02 Bash was granted by moving every link out of `~/.docker` for the run
+(`contexts` and `features.json`, both Docker Desktop's WSL links; moving them within `~/.docker`
+isn't enough) and back after it, with `--allow-tools 'Bash(git *)' 'Bash(python3 *)'
+'Bash(CLAUDE_PLUGIN_DATA=*)'`. What the runs then showed:
+- The sandbox can't read the home folder, so a `python3` installed there (mise's) fails to start;
+  a run needs `PATH=/usr/bin:/bin` and `claude` by its full path, for the system's python3.
+- The harness runs git with `core.hooksPath=/dev/null`, so no Git hook runs in a case and doctor's
+  case of the team's `commit-msg` hook is about the harness, not the plugin: 0.67 with and 0.67
+  without on Opus, 0.00 both ways on Sonnet, most replies naming `/dev/null`.
+- `verify`'s case (`cancel_purchase` where the glossary avoids "purchase", a criterion without a
+  test) found the word without the plugin too, and its judge split on the same reply: 0.67 with,
+  0.33 without on Opus; 0.67 with, 0.00 without on Sonnet. Some of the verifier's git calls were
+  denied.
+- `retro` reads Transcripts from Claude Code's config, which the sandbox hides; a case for it can't
+  run under `claude plugin eval` as it is.
+Settled by a sandbox that runs Git hooks and lets a skill read the session's Transcript, or by
+dropping these cases; each is kept only once it fails without the plugin (ADR evals).
