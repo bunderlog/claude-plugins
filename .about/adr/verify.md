@@ -1,6 +1,6 @@
-# A Verification is the plugin's one agent, run by the `verify` skill when the user asks
+# A Verification is the plugin's one agent, run by the `verify` skill when the user asks or agrees
 
-Date: 2026-10-14
+Date: 2026-11-02
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -10,8 +10,13 @@ change to see it work; neither knows anything of `.about/`. So the plugin ships 
 departure with `file:line`. It doesn't hunt bugs, which the code review does.
 
 The `verify` skill runs it with `context: fork` and `agent: baloo:verifier`, waiting for its reply,
-so the user has `/baloo:verify`; Claude can also run the agent by its name. Both are for when the
-user asks: a Verification is a whole run's tokens. By default it looks at the current branch's
+so the user has `/baloo:verify`; Claude can also run the agent by its name. Both run only when the
+user asks or agrees, as a Verification is a whole run's tokens. Claude offers one, in a line and
+once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit
+or PR: there it has criteria to check against, and few tasks have one. The skill's description
+says so, being in every session already; a line in `principles` would be read only before
+non-trivial work, and the Guidelines are read before an edit on their subject in 5 of 79 cases
+(ADR measurement). By default it looks at the current branch's
 commits since the default branch, plus the working tree; a commit range, a branch or a PR given
 overrides that. It checks the criteria of the Issue or PRD it is given, or else of the one the
 branch's name, its commits or its files point to, and says so when it finds none rather than
@@ -42,6 +47,11 @@ without it and says it couldn't check the Guidelines.
   (ADR issues).
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
+- Run only when the user asks, never offered (until 2026-11-02) — in about 200 sessions in five
+  projects up to 2026-10-30 neither the skill nor the agent ever ran, by the user or by Claude.
+- Offered after every non-trivial edit of code — catches more, but offered nearly every session,
+  it soon goes unread.
+- Offered before a PR only — never, in a project that commits straight to `main`.
 - Only the agent, with no skill — no `/baloo:verify`; the user would have to know
   `@agent-baloo:verifier`.
 - Only a skill forked onto `general-purpose` — no agent file, but its tools can't be limited.
@@ -61,5 +71,8 @@ without it and says it couldn't check the Guidelines.
   not.
 - A Verification can still write through Bash if its prompt is ignored; the user's permission
   rules are what stop it.
-- Revisit when Claude Code lets a plugin's agent set its permissions, or users ask to verify every
-  change without asking.
+- A task that serves an Issue or PRD ends with one more line, the offer, though the user may
+  decline it every time.
+- Revisit when Claude Code lets a plugin's agent set its permissions, users ask to verify every
+  change without asking, or a measurement finds the offer declined nearly every time or never
+  made.
