@@ -1,6 +1,6 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-10-14
+2026-10-03 · user · kept 2026-11-02
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. Settled by deciding
@@ -10,7 +10,7 @@ binary), waits until a measurement shows the Guidelines a Hook gives from 0.27.0
 
 ## Guidelines for concerns across stacks
 
-2026-10-03 · user · kept 2026-10-14
+2026-10-03 · user · kept 2026-11-02
 
 `security` (input, authorization, Secrets in code), `api-design` (versions, compatibility) and
 `observability` (logs, errors, metrics) as Guidelines. Settled by deciding which earn a Guideline
@@ -20,7 +20,7 @@ out of commits and Claude's context; kept until a session shows a gap they leave
 
 ## Where each kind of project knowledge lives
 
-2026-10-05 · user · kept 2026-10-14
+2026-10-05 · user · kept 2026-11-02
 
 A project can keep part of its knowledge outside the repo, in a tool such as Jira, Confluence,
 GitHub Issues or a wiki. Agreed so far: the project names where each kind lives (requirements, bugs,
@@ -83,7 +83,7 @@ code, whether an ADR or PRD on its subject was read before it.
 
 ## A plugin for another audience, such as ad managers
 
-2026-10-14 · user · kept 2026-10-14
+2026-10-14 · user · kept 2026-11-02
 
 baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
 2026-10-14 for installing by choice and different audiences, and not done: no such user exists
@@ -131,7 +131,7 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 
 ## Facts from outside the repo go stale unseen
 
-2026-10-18 · user · kept 2026-10-19
+2026-10-18 · user · kept 2026-11-02
 
 A project's docs and pages quote facts it doesn't own: a competitor's price or free tier, a
 vendor's limit, a tool's version. They go stale without any change to the repo, so neither a
@@ -149,7 +149,7 @@ them and none had asked.
 
 ## Question the premise after two failed fixes
 
-2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-10-30
+2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-11-02
 
 ub-mode's "Attack the Premise": once two fixes that share one premise fail the same check, write
 the premise in one sentence and question it before a third fix. Not added to `debugging`: an eval
@@ -157,18 +157,6 @@ case where the user's two fixes in the wrong function failed passed without the 
 Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
 Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
 from it that fails without the line, or by dropping the idea.
-
-## verify is never run
-
-2026-10-31 · usefulness check of 2026-09-29 to 2026-10-30 · kept 2026-10-31
-
-In five projects other than this one, about 200 interactive sessions called `adr` 28 times,
-`glossary` 15 and `prd` 5, but `/baloo:verify` and the `verifier` agent never ran, by the user or
-by Claude. Either nobody needs a check against the ADRs and criteria apart from writing the change,
-or nobody thinks of it when it would help. Settled by a session where a change departed from an ADR
-or a PRD's criterion unnoticed until later, which says when to offer it, or by dropping the skill
-and the agent if the next measurement shows no use either. Zero runs is partly by design: ADR
-verify runs it only when the user asks, so Claude never offers it.
 
 ## Eval cases for verify, doctor and retro
 
