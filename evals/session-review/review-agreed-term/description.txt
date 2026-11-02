@@ -1,0 +1,1 @@
+A term the conversation defined and agreed becomes a glossary proposal, not an ADR.

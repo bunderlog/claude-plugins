@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-01
+Date: 2026-11-02
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -28,6 +28,12 @@ Opus and Sonnet. `architecture`'s, a pass-through an ADR keeps on purpose, score
 both and was dropped: Claude reads `.about/adr/` before proposing a refactor anyway. `prd`'s
 fresh read found the gap on Sonnet in 1 of 3 runs, where Opus found it in 3 of 3.
 
+On 2026-11-02 `glossary` got a case where the code names a term differently, failing without the
+plugin on Opus and Sonnet: the bare model records the term but not the code's name in `_In code_`.
+Two were dropped, scoring 1.00 both ways on both: `tidy` asking which of two clashing ADRs holds,
+and `glossary` calling out a word the glossary lists under another term's `_Avoid_`; Claude does
+both unasked.
+
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
 none of their runs on Opus or Sonnet, and the plugin's Guidelines and session start still scored
@@ -41,9 +47,10 @@ arm, so the arm without the plugin would measure the `adr` and `glossary` skills
 Its cases in `evals/session-review/`, named `review-*`, run with the plugin only (`mise run
 eval-review`, `--ablation none`) as a guard against a regression of the prompt: a decision agreed
 and not recorded is proposed as an ADR, one already recorded proposes nothing, a choice left open
-is an Inbox item. Each case's `prompt.md` is written by `evals/session-review/prompts.py` from
-`review._prompt` and the case's `conversation.md`, so it asks what a review is asked; run it after
-the prompt changes.
+is an Inbox item, a term agreed is a glossary proposal, and an Inbox item the conversation
+settled is proposed for deletion. Each case's `prompt.md` is written by
+`evals/session-review/prompts.py` from `review._prompt` and the case's `conversation.md`, so it
+asks what a review is asked; run it after the prompt changes.
 
 The suites live in `evals/` at the repo root, outside the plugin: an install doesn't carry them,
 and a change to one needs no Release (ADR releases). `--eval-dir` takes no path outside the plugin,
