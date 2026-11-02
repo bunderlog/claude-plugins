@@ -32,7 +32,9 @@ On 2026-11-02 `glossary` got a case where the code names a term differently, fai
 plugin on Opus and Sonnet: the bare model records the term but not the code's name in `_In code_`.
 Two were dropped, scoring 1.00 both ways on both: `tidy` asking which of two clashing ADRs holds,
 and `glossary` calling out a word the glossary lists under another term's `_Avoid_`; Claude does
-both unasked.
+both unasked. `verify` got a case where a task that serves an Issue ends with an offer of a
+Verification, never made without the plugin; the cases for `verify` itself, `doctor` and `retro`
+can't run in the sandbox as it is (Inbox).
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
