@@ -32,6 +32,18 @@ jobs:
             [ -z "$(echo "{}" | python -E -s $r post-tool-use 2>&1)" ]
           '
 
+  # hathi's commit and repo Checks on what the push or pull request brings.
+  hathi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: github:bunderlog/hathi
+      - run: hathi check ci
+
   # The README's CI recipe, with the checked commit's plugin in place of a Release's.
   git-hook-checks:
     runs-on: ubuntu-24.04
