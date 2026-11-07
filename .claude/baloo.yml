@@ -30,6 +30,15 @@ session-review: false
 # with false.
 # format-on-edit: npx prettier --write
 
+# The project's own commands, by Git hook (pre-commit, commit-msg, pre-push), that the plugin's Git
+# hook runs with sh after its Checks pass, with git's arguments as $1 and, for pre-push, the pushed
+# refs on stdin; the commit or push fails when the command does. Off without it, or with false.
+# hathi, which mise.toml pins, runs the commit and repo Checks it took over from the plugin.
+git-hook-commands:
+  commit-msg: hathi check commit-msg "$1"
+  pre-commit: hathi check pre-commit
+  pre-push: hathi check pre-push
+
 # Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
 # Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
 # whole the first time it reads or edits a file of their subject in a session. A stack's is on
@@ -59,11 +68,12 @@ claude-hooks:
 # where at least one of their Checks is on. conventional-commits also takes its settings instead
 # of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
 # max-length: 0 any length. no-large-files takes { max-size: 5000 }, in KB; 1024 without it.
+# hathi runs all but no-stale-adr-date, through git-hook-commands above.
 git-hooks:
-  conventional-commits: true
-  linear-history: true
-  no-ai-coauthor: true
-  no-conflict-markers: true
-  no-large-files: true
-  no-secrets-in-commits: true
+  conventional-commits: false
+  linear-history: false
+  no-ai-coauthor: false
+  no-conflict-markers: false
+  no-large-files: false
+  no-secrets-in-commits: false
   no-stale-adr-date: true
