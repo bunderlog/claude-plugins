@@ -19,6 +19,37 @@ _In code_: `src/release/release.py`
 The page on GitHub for a Release's tag, with its `CHANGELOG.md` section as its notes.
 _Avoid_: "Release" alone
 
+## The plugins and `hathi`
+
+These are planned (PRD harness); until each ships, baloo does its part as described below.
+
+**bagheera**:
+The plugin each person turns on once, for every session: Checks in Hooks beyond Claude Code's
+deny rules, the Status line and `doctor`, the Session review and Retro, the `short-replies` Output
+style, and setting a project up.
+_Avoid_: "baloo" for these parts once bagheera ships
+
+**louie**:
+The plugin a project turns on to build: a Guideline per stack, given when a file of its stack is
+first touched, templates for a new product, and the Workflows from an Issue to a pull request,
+`verify` among them.
+
+**`hathi`**:
+The Go CLI a project's Git hooks and CI run on each commit: its message format, Secrets, an AI
+co-author, linear history and an ADR's Date; it runs without Claude. Its own terms are in its repo.
+_Avoid_: hathi as a plugin
+
+**Workflow**:
+A Claude Code dynamic workflow: a script a plugin ships that runs many agents, such as
+`/louie:ticket`; a project turns them on in its `.claude/settings.json`.
+_Avoid_: pipeline
+
+**Set up**:
+Said of a project whose checked-out commit holds what the PRD setting a project up lists, its
+`.claude/settings.json` turning baloo on among it; a clone of it is set up too, its Git hooks
+turned on or not.
+_Avoid_: installed, which is a plugin's on a machine
+
 ## Hooks
 
 **Hook**:
@@ -117,8 +148,8 @@ _Avoid_: harness, which is all the projects' Setups and the person's own rules t
 
 **Harness**:
 The projects' Setups together with the own rules for Claude (`~/.claude/`) of each person who
-works in them, baloo and `hathi`: what keeps work in order across projects and within a team (PRD
-harness).
+works in them, bunderlog's plugins and `hathi`: what keeps work in order across projects and
+within a team (PRD harness).
 _Avoid_: Setup, which is one project's; environment
 
 **Transcript**:

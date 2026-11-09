@@ -1,47 +1,74 @@
-# One plugin, `baloo`, in the `bunderlog` marketplace
+# Three plugins in the `bunderlog` marketplace, split by who turns a part on and what it is made of
 
-Date: 2026-10-14
+Date: 2026-11-09
 
-This repo is the `bunderlog` marketplace, and it holds one plugin, `baloo`: skills, an agent
-(ADR verify), Guidelines, Output styles, Hooks and the Python code they run, which ships inside
-the plugin (ADR binary). The skills and the agent always work; each Check, and each Guideline (ADR
-guidelines), turns on with a key of its own in the Config, and an Output style and the Status line
-with Claude Code's own settings, which the Config's keys set where none is (ADR output-styles, ADR
-status-line).
+This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
+project's method — the knowledge skills, Guidelines and one SessionStart Hook in `sh`, no Python;
+`louie`, building — a Guideline per stack given when a file of the stack is first touched,
+templates, and the Workflows `plan`, `ticket`, `batch`, `verify` and `upgrade-all`; and
+`bagheera`, the person's sessions and repos — Checks in Hooks beyond Claude Code's deny rules, the
+Status line and `doctor`, the Session review and Retro, the `short-replies` Output style, and
+setting a project up. A part goes where who turns it on and what it is made of put it: a project
+turns baloo and louie on for everyone in it, and each person turns bagheera on once, for every
+session, the home folder included, so setting a project up is bagheera's, since baloo and louie
+are off until it is done.
 
-Every name the code, the plugin's and the release tool's, uses for the plugin (its name, folders
-and file names) is a constant in one module, so a rename is one edit in the code, plus the
-manifests and the docs.
+No plugin has a Config of its own: Claude Code's `enabledPlugins` is the switch, and a plugin that
+is on is on whole. The plugins share no code and call none of each other's; they work together
+only through files whose layout a PRD sets (`.about/`, Transcripts, the Git hooks), and a helper
+copied into two plugins isn't shared code. They are released together, under one version for the
+marketplace (ADR releases).
 
-New work that leans on what baloo already has is part of baloo, not a plugin of its own: fixing a
-failed CI run is the `ci` Guideline (ADR guidelines), which follows `debugging` and hands a flaky
-failure to the `issue` skill, and a second plugin would need its own tags, CHANGELOG and Releases
-(ADR releases) to read baloo's files anyway.
+Every name the code, a plugin's and the release tool's, uses for a plugin (its name, folders and
+file names) is a constant in one module of that plugin, so a rename is one edit in its code, plus
+the manifests and the docs.
+
+New work that leans on what a plugin already has is part of that plugin, not a plugin of its own:
+fixing a failed CI run is baloo's `ci` Guideline (ADR guidelines), which follows `debugging` and
+hands a flaky failure to the `issue` skill.
+
+The move is made a step at a time, a Release per step, each an Issue in `.about/issues/`; until
+its step ships, a part stays in baloo, working as its own ADR says (config, git-hooks, guidelines,
+output-styles, status-line, doctor, verify).
 
 ## Considered options
 
-- Two plugins, skills and Hooks, each installed on its own — the Hooks do nothing useful without
-  the skills, and where `python3` is missing the one plugin is already only skills.
+- One plugin, baloo, for everything (until 2026-11-09) — a Config, its own YAML parser and a switch
+  for each part, about 2,500 of its 7,100 lines of Python, only to turn on and off what
+  `enabledPlugins` turns on and off; and the parts a project turns on for everyone and the parts
+  a person turns on for every session came in one install.
 - A plugin per role on top of baloo, which would keep only the project's knowledge: `bagheera`
   for developers, `kaa` for testers, `hathi` guarding with the Checks and Git hooks, `mowgli` for
   the person's own setup, `akela` for product managers (agreed in an interview 2026-10-05, never
   built; dropped 2026-10-07) — it rested on enforcement in code being a niche of its own, which
-  the measurement didn't confirm (ADR measurement): what is left beside the knowledge is too
-  little to split.
+  the measurement didn't confirm (ADR measurement). The split taken isn't by role but by who turns
+  a part on, and about 4,000 lines are left beside the knowledge.
 - baloo split into smaller plugins, so each audience installs only what it needs (weighed again
-  2026-10-14) — no user of such a set exists yet, and the Config already turns off each Check and
-  Guideline; only the skills and the Hooks stay for everyone. The Inbox keeps the first candidate,
-  ad managers.
-- A second plugin for fixing a failed CI run — installed without baloo, but it would find the
-  local command to reproduce a failure on its own, and the release tool, tags and CHANGELOG
-  would have to handle two plugins.
+  2026-10-14) — no user of such a set existed, and the Config turned off each Check and Guideline;
+  the Config is gone, and the split taken isn't by audience. A plugin for another audience is still
+  open in the Inbox.
+- Five plugins, the Status line (`chil`) and past sessions (`kaa`) each one of their own — each
+  person turns them on the same way, for every session, so the split would cost two more installs
+  and two more copies of the same helpers.
+- Two plugins, skills and Hooks, each installed on its own — the Hooks do nothing useful without
+  the skills.
+- Workflows in a plugin of their own, or in baloo — building is louie's job, and in baloo they
+  would need code beyond its one session-start Hook.
+- Setting a project up in baloo — baloo is off in a repo until the repo is set up.
+- A second plugin for fixing a failed CI run — it would find the local command to reproduce a
+  failure on its own, which baloo's `ci` Guideline already does.
 
 ## Consequences
 
-- One install, one version, one tag for everything.
-- Whether a change needs a Release depends on one folder, `plugins/baloo/` (ADR releases).
-- The entry script is in `scripts/`, not `bin/`: claude.ai and Cowork don't install a plugin with
-  a top-level `bin/`, and nothing needs `baloo` on the Bash tool's `PATH`, since a skill can name
+- A person installs bagheera once; baloo and louie reach a teammate from the project's committed
+  settings once the folder is trusted, which a clean machine has yet to confirm.
+- bagheera's Checks are off only with bagheera or its Hooks.
+- The release tool has to release several plugins under one version before the first split, and
+  whether a change needs a Release depends on `plugins/` as a whole (ADR releases).
+- Helpers copied into bagheera and louie (reading a Hook's input, state kept for a session) can
+  drift apart; each plugin's tests run on their own.
+- A plugin's entry script is in `scripts/`, not `bin/`: claude.ai and Cowork don't install a plugin
+  with a top-level `bin/`, and nothing needs it on the Bash tool's `PATH`, since a skill can name
   its path under `${CLAUDE_PLUGIN_ROOT}/scripts/`.
-- Revisit when a second plugin would share the code, or when work is wanted without baloo's
-  Hooks and Guidelines.
+- Revisit when a part is wanted on in a way its plugin isn't (a team wanting bagheera's Checks for
+  everyone in a project), or when the copied helpers outgrow a few hundred lines.
