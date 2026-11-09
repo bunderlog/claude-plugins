@@ -29,28 +29,18 @@ class Doctor(unittest.TestCase):
             "  link     " + link + " -> " + PLUGIN + "\n",
             "Config: " + os.path.join(dir, names.CONFIG) + "\n",
             "no-secrets-in-context  on\n",
-            "Guidelines:\n",
+            "\nGuidelines that fit the repo, given by their task's signal or named at session start:\n"
+            "  debugging, design, principles, testing, writing-for-agents\n",
         ]:
             self.assertIn(want, out)
-
-    # doctor names the Guidelines off in the Config though the repo has their stack.
-    def test_guidelines_off_though_fitting(self):
-        dir = in_repo(self)
-        self.assertEqual(start(self)[0], 0)
-        write(os.path.join(dir, names.CONFIG), "guidelines:\n  dependencies: true\n  go: false\n  vue: false\n")
-        write(os.path.join(dir, "go.mod"), "module example.com/x\n")
-        out = doctor_run(self)[1]
-        line = next(s for s in out.splitlines() if "off, though fitting" in s)
-        self.assertTrue(line.rstrip().endswith("go"), line)
 
     # doctor names each problem, first, with what fixes it, and fails; it changes nothing.
     def test_problems(self):
         dir = in_repo(self)
         self.assertEqual(start(self)[0], 0)
         config = os.path.join(dir, names.CONFIG)
-        # The template's own claude-hooks turns the Check off, since a key twice isn't read.
-        text = read(config).replace("  no-git-hook-bypass: true\n", "  no-git-hook-bypass: false\n")
-        write(config, text + "nope: 1\nstop-check: make\ngit-hooks:\n  no-ai-coauthor: true\n")
+        write(config, read(config) + "nope: 1\nstop-check: make\ngit-hooks:\n  no-ai-coauthor: true\n"
+              "claude-hooks:\n  no-git-hook-bypass: false\n")
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         os.remove(link)
         code, out = doctor_run(self)
@@ -61,7 +51,8 @@ class Doctor(unittest.TestCase):
             "nope is not a setting; ignored\n",
             "stop-check is no longer a setting and is ignored: delete it\n",
             "git-hooks is no longer a setting and is ignored: delete it\n",
-            "no-git-hook-bypass     off\n",
+            "claude-hooks is no longer a setting and is ignored: delete it\n",
+            "no-git-hook-bypass     on\n",
         ]:
             self.assertIn(want, out)
         self.assertFalse(os.path.lexists(link), "doctor put the link back")
@@ -141,7 +132,7 @@ class Doctor(unittest.TestCase):
         _, out = doctor_run(self)
         for want in [
             "Config: none, outside a repo",
-            "no-secrets-in-context  on, by default\n",
+            "no-secrets-in-context  on\n",
         ]:
             self.assertIn(want, out)
         self.assertNotIn("Git hooks in ", out)

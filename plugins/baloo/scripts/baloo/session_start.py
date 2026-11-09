@@ -13,7 +13,6 @@ part is a function and its place there."""
 
 from __future__ import annotations
 
-import hashlib
 import io
 import os
 from dataclasses import dataclass, field
@@ -21,9 +20,7 @@ from typing import Callable, List, Optional, TextIO
 
 from baloo import (
     binlink,
-    checks,
     config,
-    guidelines,
     hook,
     inbox,
     names,
@@ -76,8 +73,7 @@ def _config(s: Start) -> Lines:
     if not s.created:
         return Lines()
     return Lines([
-        f"created {s.created} with every check on and the guidelines that fit the repo: tell the "
-        "user, and that the file is theirs to commit and to change"
+        f"created {s.created}: tell the user, and that the file is theirs to commit and to change"
     ])
 
 
@@ -114,17 +110,6 @@ def _status_line(s: Start) -> Lines:
     return out
 
 
-def _hook_checks_off(s: Start) -> Lines:
-    out = Lines()
-    for name in checks.HOOK_CHECKS:
-        if s.config.checks.get(name) is False:
-            out.lines.append(
-                f"claude-hooks.{name}: false in {names.CONFIG} turns off a check in Claude Code's "
-                "hooks: tell the user"
-            )
-    return out
-
-
 def _session_review(s: Start) -> Lines:
     out = Lines()
     if not s.config.root:
@@ -136,37 +121,6 @@ def _session_review(s: Start) -> Lines:
         )
     out.lines.extend(review.show(s.config.root, s.data, s.session, hook.decide_command()))
     return out
-
-
-def _stack_off(s: Start) -> Lines:
-    """The Guidelines the repo now has the stack of but the Config turns off, each named once a
-    repo, for the user to turn on: not where session start just made the Config, which fits the
-    repo already, and nothing in a headless session, which nobody reads."""
-    if not s.config.root or s.created or not s.data or review.headless():
-        return Lines()
-    digest = hashlib.sha256(s.config.root.encode()).hexdigest()[:16]
-    folder = os.path.join(s.data, "guidelines", "stack-told", digest)
-    try:
-        told = set(os.listdir(folder))
-    except OSError:
-        told = set()
-    on = {n: bool(s.config.guidelines.get(n)) or n in told for n in guidelines.names()}
-    new = guidelines.fitting_but_off(s.config.root, on)
-    if not new:
-        return Lines()
-    try:
-        os.makedirs(folder, mode=0o700, exist_ok=True)
-        for name in new:
-            with open(os.path.join(folder, name), "w"):
-                pass
-    except OSError as e:
-        return Lines(problems=[f"guidelines of the repo's stack: {e}"])
-    one = len(new) == 1
-    return Lines([
-        f"the repo has what the {', '.join(new)} Guideline{'' if one else 's'} "
-        f"cover{'s' if one else ''}, but {names.CONFIG} turns {'it' if one else 'them'} off: tell "
-        f"the user, and that turning {'it' if one else 'them'} on there is theirs"
-    ])
 
 
 def _inbox(s: Start) -> Lines:
@@ -204,10 +158,8 @@ def _uncommitted_about(s: Start) -> Lines:
 # comes after them all.
 PARTS: List[Callable[[Start], Lines]] = [
     _config,
-    _stack_off,
     _output_style,
     _status_line,
-    _hook_checks_off,
     _session_review,
     _inbox,
     _uncommitted_about,
@@ -223,7 +175,7 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
         stderr.write(f"{names.PLUGIN}: {e}\n")
         return 1
     if os.environ.get(review.ENV, ""):
-        index, _ = hook.guideline_index(config.read(dir).guidelines)
+        index, _ = hook.guideline_index(config.read(dir).root)
         if index:
             stdout.write(index + "\n")
         return 0
@@ -241,7 +193,7 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
         got = part(s)
         out.lines.extend(got.lines)
         out.problems.extend(got.problems)
-    index, why = hook.guideline_index(c.guidelines)
+    index, why = hook.guideline_index(c.root)
     if why is not None:
         out.problems.append(f"could not name the guidelines: {why}")
     lines = [hook.one_line(line) for line in out.lines + out.problems]

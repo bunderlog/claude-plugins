@@ -1,13 +1,11 @@
-# Each Check a Hook runs has a key under `claude-hooks`, and is on without one
+# Each Check a Hook runs is always on
 
 Date: 2026-11-09
 
-Each Check turns on or off with a key of its own in the Config, named as the Check without the
-plugin's prefix, under `claude-hooks`: `no-git-hook-bypass` and `no-secrets-in-context`. A key is
-`true` or `false`. The Checks are on without their key, outside a repo too, where no Config is
-read, and `false` turns one off: they guard against accidents where nobody set anything up. A
-Config that turns one off is named at every session start, so someone who opens a repo whose
-committed Config does so knows.
+The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are always on, outside a
+repo too: they guard against accidents where nobody set anything up, and turning baloo off is the
+only way to turn them off (PRD no-config). A `claude-hooks` key left in an old Config does nothing,
+and `doctor` names it for the user to delete.
 
 The plugin has no commit Check: those are `hathi`'s, run by a project's own Git hooks and CI (ADR
 git-hooks).
@@ -21,6 +19,10 @@ missing or the plugin fails, it says nothing, and the call runs: session start h
 that no Check runs that session (ADR binary).
 
 ## Considered options
+
+- Each Check turned on or off by its own key under `claude-hooks`, on without it (until
+  2026-11-09) — a committed Config could turn one off for everyone who opened the repo, a Leak
+  waiting to happen, for a switch nobody used but in tests.
 
 - The commit Checks under `git-hooks`, run by the Git hooks the plugin wrote, with `baloo check`
   for CI, and session start turning off Claude Code's commit attribution and telling Claude the
@@ -55,14 +57,11 @@ that no Check runs that session (ADR binary).
 
 ## Consequences
 
-- A Config made before the keys, or with them under `checks`, gets the Checks on; `checks` is
-  reported as not a setting, and `git-hooks` as a removed one.
-- A repo's committed Config can turn a Check off for everyone who opens it; session start says
-  so, but doesn't stop it.
-- Claude can change the Config, or Claude Code's settings, and so turn a Check off, without a
-  question; session start names a Config that turns a Check off.
+- A Config made before 2026-11-09 with `claude-hooks` or `checks` turns nothing off; `doctor` names
+  the first as a removed setting, and the second as not a setting.
+- Claude can turn a Check off only by turning baloo off in Claude Code's settings, without a
+  question.
 - Nothing in the plugin stops a command that destroys work: Claude Code's permissions and its
   auto mode do.
-- Revisit when a false alarm makes people turn a Check off wholesale, a committed Config that
-  turns one off leads to a Leak, or a session shows work destroyed that a Check would have
-  stopped.
+- Revisit when a false alarm would make people turn baloo off wholesale, or a session shows work
+  destroyed that a Check would have stopped.

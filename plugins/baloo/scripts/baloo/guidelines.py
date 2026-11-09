@@ -36,8 +36,7 @@ class Guideline(NamedTuple):
     fits: Optional[Callable[[_Manifests], bool]] = None
 
 
-# The plugin's Guidelines, in the order session start names them. Each is a key under guidelines
-# in the Config and its schema.
+# The plugin's Guidelines, in the order session start names them.
 ALL = [
     Guideline(
         "principles",
@@ -123,15 +122,15 @@ def fitting(root: str) -> List[str]:
     return [g.name for g in ALL if g.fits is None or g.fits(m)]
 
 
-def fitting_but_off(root: str, on: Dict[str, bool]) -> List[str]:
-    """The names of the Guidelines tied to what a repo has (a stack, a CI, a package manager) that
-    fit the repo at `root` but `on` doesn't turn on, as where its Config was made before the stack
-    came. The repo is walked only where such a Guideline is off."""
-    tied = [g.name for g in ALL if g.fits is not None and not on.get(g.name)]
-    if not tied:
-        return []
-    fit = set(fitting(root))
-    return [n for n in tied if n in fit]
+def on_in(root: str) -> Dict[str, bool]:
+    """The Guidelines on in the repo at `root`, for session start's index: each that fits it (see
+    fitting), and none outside a repo, "" (PRD no-config)."""
+    return {name: True for name in fitting(root)} if root else {}
+
+
+# Every Guideline, on: what a Hook gives by its task's signal, whatever the repo's manifests (PRD
+# no-config).
+EVERY: Dict[str, bool] = {g.name: True for g in ALL}
 
 
 def _dependencies(path: str) -> List[str]:

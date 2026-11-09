@@ -74,7 +74,7 @@ class Load(Case):
         _, created, problems = config.load(sub)
         self.assertEqual((created, problems), (os.path.join(root, names.CONFIG), []))
         with open(created, encoding="utf-8") as f:
-            self.assertEqual(f.read(), config._new_config(guidelines.fitting(root)))
+            self.assertEqual(f.read(), config._new_config())
         with open(created, "w") as f:
             f.write("nope: 1\n")
         _, again, problems = config.load(root)
@@ -138,28 +138,6 @@ class Load(Case):
         _, created, problems = config.load(sub)
         self.assertEqual((created, problems), ("", [f"could not create {path}: permission denied"]))
 
-    # A new Config turns on the Guidelines for any project, and a stack's only where the repo has
-    # it.
-    def test_new_config_guidelines(self):
-        root, sub = self.temp_repo()
-        with open(os.path.join(sub, "go.mod"), "w") as f:
-            f.write("module x\n")
-        c, _, problems = config.load(root)
-        want = {
-            "principles": True, "design": True, "testing": True, "debugging": True,
-            "writing-for-agents": True, "ci": False, "dependencies": True, "go": True,
-            "typescript": False, "vue": False, "tailwind": False,
-        }
-        self.assertEqual((c.guidelines, problems), (want, []))
-
-    # A new Config turns every Check on.
-    def test_new_config_checks(self):
-        root, _ = self.temp_repo()
-        c, _, problems = config.load(root)
-        for name in checks.HOOK_CHECKS:
-            self.assertIs(c.checks.get(name), True, name)
-        self.assertEqual(problems, [])
-
 
 class Read(Case):
     # Read reads a Config as Load does, but never creates one.
@@ -170,7 +148,7 @@ class Read(Case):
         self.assertTrue(c.check_on("no-secrets-in-context"))
         self.assertFalse(os.path.exists(os.path.join(root, names.CONFIG)))
         self.write_config(root, "claude-hooks:\n  no-secrets-in-context: false\n")
-        self.assertFalse(config.read(sub).check_on("no-secrets-in-context"))
+        self.assertTrue(config.read(sub).check_on("no-secrets-in-context"))
 
     def test_inspect(self):
         root, sub = self.temp_repo()
@@ -184,7 +162,7 @@ class Read(Case):
 class Parse(Case):
     def test_the_file(self):
         for name, yml, problems in [
-            ("a new config", config._new_config(guidelines.names()), []),
+            ("a new config", config._new_config(), []),
             ("an empty file", "", []),
             ("only comments", "# nothing yet\n", []),
             ("an empty map", "{}\n", []),
@@ -222,17 +200,6 @@ class Parse(Case):
             ".claude/baloo.yml line 3: probe-2: is not true or false; its default applies",
         ])
         self.assertEqual(got, ["true"])
-
-    # A new Config's guidelines and claude-hooks list their keys sorted.
-    def test_new_config_sorted(self):
-        from baloo import yaml
-
-        top = yaml.parse(config._new_config([]))
-        maps = [(k.text, [kk.text for kk, _ in v.pairs]) for k, v in top.pairs if v.tag == "map"]
-        self.assertEqual([k for k, _ in maps], ["guidelines", "claude-hooks"])
-        for key, keys in maps:
-            self.assertEqual(keys, sorted(keys), key)
-
 
 class Settings(Case):
     def test_output_style(self):
@@ -339,34 +306,11 @@ class Settings(Case):
                 ".claude/baloo.yml line 1: session-review: is not true or false; its default"
                 " applies",
             ]),
-            (config._new_config([]), True, []),
+            (config._new_config(), True, []),
         ]:
             with self.subTest(yml):
                 c, got = parse(yml)
                 self.assertEqual((c.session_review, got), (on, problems))
-
-    # Each Guideline turns on with its own key under guidelines, and a wrong entry is a problem at
-    # its own line while the entries beside it apply.
-    def test_guidelines(self):
-        for yml, on, problems in [
-            ("guidelines:\n  principles: true\n  go: true\n  vue: false\n", ["go", "principles"],
-             []),
-            ("guidelines:\n", [], []),
-            ("guidelines:\n  nope: true\n  go: yes please\n  design: true\n", ["design"], [
-                ".claude/baloo.yml line 2: guidelines.nope is not a guideline; ignored",
-                ".claude/baloo.yml line 3: guidelines.go: is not true or false; its default"
-                " applies",
-            ]),
-            ("guidelines: true\n", [], [
-                ".claude/baloo.yml line 1: guidelines: is not a map of guidelines to true or"
-                " false; its default applies",
-            ]),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual(
-                    (sorted(n for n, ok in c.guidelines.items() if ok), got), (on, problems)
-                )
 
     # A setting an earlier Release had is no problem: the Config works as without it, the settings
     # beside it apply, and doctor gets a line naming it to delete (ADR measurement).
@@ -380,18 +324,20 @@ class Settings(Case):
         self.assertEqual(problems, [])
         self.assertEqual(c.removed, [
             ".claude/baloo.yml line 1: stop-check is no longer a setting and is ignored: delete it",
-            ".claude/baloo.yml line 3: claude-hooks.no-destructive-commands is no longer a setting"
-            " and is ignored: delete it",
+            ".claude/baloo.yml line 2: claude-hooks is no longer a setting and is ignored: delete"
+            " it",
             ".claude/baloo.yml line 6: git-hooks is no longer a setting and is ignored: delete it",
             ".claude/baloo.yml line 8: git-hook-commands is no longer a setting and is ignored:"
             " delete it",
         ])
-        self.assertFalse(c.check_on("no-secrets-in-context"))
+        self.assertTrue(c.check_on("no-secrets-in-context"))
         self.assertEqual(c.format_on_edit, "npx prettier --write")
-        self.assertNotIn("stop-check", config._new_config([]))
-        self.assertNotIn("no-destructive-commands", config._new_config([]))
-        self.assertNotIn("git-hooks:", config._new_config([]))
-        self.assertNotIn("git-hook-commands", config._new_config([]))
+        self.assertNotIn("stop-check", config._new_config())
+        self.assertNotIn("no-destructive-commands", config._new_config())
+        self.assertNotIn("git-hooks:", config._new_config())
+        self.assertNotIn("git-hook-commands", config._new_config())
+        self.assertNotIn("claude-hooks", config._new_config())
+        self.assertNotIn("guidelines:", config._new_config())
 
     # format-on-edit names the command run on each file Claude edits; without it, or false, it is
     # off, and a new Config has it only as a comment (ADR format-on-edit).
@@ -403,38 +349,19 @@ class Settings(Case):
                 ".claude/baloo.yml line 1: format-on-edit: is not a command or false; its default"
                 " applies",
             ]),
-            (config._new_config([]), "", []),
+            (config._new_config(), "", []),
         ]:
             with self.subTest(yml):
                 c, got = parse(yml)
                 self.assertEqual((c.format_on_edit, got), (command, problems))
-        self.assertIn("\n# format-on-edit: npx prettier --write\n", config._new_config([]))
+        self.assertIn("\n# format-on-edit: npx prettier --write\n", config._new_config())
 
-    # Each Check a Hook runs turns on or off with its own key under claude-hooks, and is on
-    # without it; a wrong entry is a problem at its own line while the entries beside it apply
-    # (ADR checks).
+    # Each Check a Hook runs is always on, whatever an old Config says (PRD no-config).
     def test_checks(self):
-        hooks = ["no-git-hook-bypass", "no-secrets-in-context"]
-        for yml, on, problems in [
-            ("claude-hooks:\n  no-secrets-in-context: false\n", ["no-git-hook-bypass"], []),
-            ("", hooks, []),
-            ("claude-hooks:\n", hooks, []),
-            ("claude-hooks:\n  nope: true\n  no-git-hook-bypass: yes please\n"
-             "  no-ai-coauthor: true\n", hooks, [
-                ".claude/baloo.yml line 2: claude-hooks.nope is not a check; ignored",
-                ".claude/baloo.yml line 3: claude-hooks.no-git-hook-bypass: is not true or false;"
-                " its default applies",
-                ".claude/baloo.yml line 4: claude-hooks.no-ai-coauthor is not a check; ignored",
-             ]),
-            ("checks:\n  no-secrets-in-context: false\n", hooks, [
-                ".claude/baloo.yml line 1: checks is not a setting; ignored",
-            ]),
-        ]:
+        for yml in ["", "claude-hooks:\n  no-secrets-in-context: false\n  no-git-hook-bypass: false\n"]:
             with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual(
-                    (sorted(n for n in checks.HOOK_CHECKS if c.check_on(n)), got), (on, problems)
-                )
+                c, _ = parse(yml)
+                self.assertTrue(all(c.check_on(n) for n in checks.HOOK_CHECKS))
 
 
 class Plugin(unittest.TestCase):
@@ -459,7 +386,7 @@ class Plugin(unittest.TestCase):
         enum = [v for v in schema()["properties"]["output-style"]["enum"] if isinstance(v, str)]
         self.assertEqual(enum, config.OUTPUT_STYLES)
 
-    # Every Guideline is a file in the plugin's guidelines/, and the schema has a key for each.
+    # Every Guideline is a file in the plugin's guidelines/, and the schema has no key for one.
     def test_guidelines(self):
         folder = os.path.join(PLUGIN, "guidelines")
         files = sorted(
@@ -468,14 +395,7 @@ class Plugin(unittest.TestCase):
         )
         want = sorted(guidelines.names())
         self.assertEqual(files, want)
-        g = schema()["properties"]["guidelines"]
-        self.assertEqual(sorted(g["properties"]), want)
-        self.assertIs(g["additionalProperties"], False)
-
-    # The schema has a key for each Check a Hook runs.
-    def test_checks(self):
-        props = schema()["properties"]
-        self.assertEqual(sorted(props["claude-hooks"]["properties"]), sorted(checks.HOOK_CHECKS))
+        self.assertNotIn("guidelines", schema()["properties"])
 
 
 if __name__ == "__main__":

@@ -120,16 +120,16 @@ class PreToolUse(unittest.TestCase):
             with self.subTest(stdin=stdin):
                 self.assertEqual(pre_tool_use(self, stdin), want)
 
-    # A Check the Config turns off doesn't run.
+    # A Check an old Config turns off still runs (PRD no-config).
     def test_checks_off(self):
         dir = in_repo(self)
         write(
             os.path.join(dir, names.CONFIG),
             "claude-hooks:\n  no-git-hook-bypass: false\n  no-secrets-in-context: false\n",
         )
-        for command in ["git commit --no-verify", "git push -f", "cat .env"]:
+        for command in ["git commit --no-verify", "cat .env"]:
             with self.subTest(command=command):
-                self.assertEqual(pre_tool_use(self, bash(command)), ("", ""))
+                self.assertEqual(pre_tool_use(self, bash(command))[0], "deny")
 
 
 class AllowGuideline(unittest.TestCase):
@@ -170,13 +170,12 @@ class AllowGuideline(unittest.TestCase):
 
 
 class SubagentStart(unittest.TestCase):
-    # The verifier's SubagentStart Hook tells it the Guidelines the Config turns on, and says
-    # nothing to another agent or with none on.
+    # The verifier's SubagentStart Hook tells it the Guidelines that fit the repo, and says
+    # nothing to another agent.
     def test_subagent_start(self):
         dir = in_repo(self)
         verifier = '{"agent_type": "baloo:verifier"}'
-        self.assertEqual(run("subagent-start", stdin=verifier)[:2], (0, ""))
-        write(os.path.join(dir, names.CONFIG), "guidelines:\n  go: true\n")
+        write(os.path.join(dir, "go.mod"), "module x\n")
         for name, stdin, want in [
             ("the verifier", verifier,
              "- Writing Go: " + os.path.join(PLUGIN, "guidelines", "go.md")),
@@ -364,8 +363,8 @@ class PostToolUse(unittest.TestCase):
             stdin = json.dumps({"tool_name": "Edit", "tool_input": {"file_path": path}})
             self.assertEqual(run("post-tool-use", stdin=stdin), (0, "", ""))
 
-        inside = os.path.join(dir, ".claude", "src", "a.vue")
-        outside = os.path.join(testkit.tempdir(self), "b.vue")
+        inside = os.path.join(dir, ".claude", "src", "a.txt")
+        outside = os.path.join(testkit.tempdir(self), "b.txt")
         edit(inside)
         edit(outside)
         self.assertEqual((read(inside), read(outside)), ("formatted", "edited"))
@@ -377,12 +376,10 @@ class PostToolUse(unittest.TestCase):
         edit(inside)  # a failing command is said nothing of, too
 
     # A Read or an edit of a file in the repo gives Claude the Guidelines whose subject it is, once
-    # a session, where the Config turns them on.
+    # a session, whatever an old Config turns off (PRD no-config); a Read gives no testing.
     def test_gives_guidelines(self):
         dir = in_repo(self)
-        write(
-            os.path.join(dir, names.CONFIG), "guidelines:\n  typescript: true\n  testing: false\n"
-        )
+        write(os.path.join(dir, names.CONFIG), "guidelines:\n  typescript: false\n")
 
         def call(tool, file):
             stdin = json.dumps({

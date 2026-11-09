@@ -74,9 +74,8 @@ _Avoid_: settings, which are Claude Code's `settings.json`
 _In code_: `baloo/config.py`
 
 **Check**:
-Code in the plugin that a Hook triggers, such as `baloo:no-secrets-in-context`, turned on or off
-by a key of its own under `claude-hooks` in the Config, and on without it (ADR checks); a commit's
-Checks are `hathi`'s.
+Code in the plugin that a Hook triggers, such as `baloo:no-secrets-in-context`, always on where
+baloo is (ADR checks); a commit's Checks are `hathi`'s.
 _Avoid_: built-in check; "a Check on Claude's tool calls"
 _In code_: `baloo/checks/`; `HOOK_CHECKS`
 
@@ -88,8 +87,8 @@ _In code_: `format-on-edit`, `post_tool_use` in `baloo/cli.py`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
-with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that Claude
-reads when a task calls for it; one the Config turns on is named to Claude at session start.
+with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that a Hook
+gives Claude by its task's signal, or session start names where it fits the repo (ADR guidelines).
 _Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
 _In code_: `baloo/guidelines.py`
 

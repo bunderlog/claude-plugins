@@ -92,22 +92,15 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             f"  failed this week\t{failed}\n  cost this week\t${cost:.2f}\n"
         )
 
-    for title, group in [("Checks in Claude Code's hooks (claude-hooks):", checks.HOOK_CHECKS)]:
-        w.write(f"\n{title}\n")
-        for name in sorted(group):
-            state = "on" if c.check_on(name) else "off"
-            if name not in c.checks:
-                state += ", by default"
-            w.write(f"  {name}\t{state}\n")
+    w.write("\nChecks in Claude Code's hooks, always on:\n")
+    for name in sorted(checks.HOOK_CHECKS):
+        w.write(f"  {name}\ton\n")
 
-    on = sorted(n for n in guidelines.names() if c.guidelines.get(n))
-    off = sorted(n for n in guidelines.names() if not c.guidelines.get(n))
+    listed = sorted(guidelines.on_in(c.root))
     w.write(
-        f"\nGuidelines:\n  on\t{_or_none(', '.join(on))}\n  off\t{_or_none(', '.join(off))}\n"
+        f"\nGuidelines that fit the repo, given by their task's signal or named at session start:\n"
+        f"  {_or_none(', '.join(listed))}\n"
     )
-    fitting = guidelines.fitting_but_off(c.root, c.guidelines) if c.root else []
-    if fitting:
-        w.write(f"  off, though fitting\t{', '.join(fitting)}\n")
 
     stdout.write(f"{names.PLUGIN} {version.read()} doctor in {dir}\n\n")
     if not problems:

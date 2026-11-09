@@ -169,7 +169,7 @@ def subagent_start(text: str, stdout: TextIO) -> int:
         dir = hook.project()
     except (hook.Mismatch, OSError):
         return 0
-    index, _ = hook.guideline_index(config.read(dir).guidelines)
+    index, _ = hook.guideline_index(config.read(dir).root)
     if not index:
         return 0
     hook.write(stdout, {"hookSpecificOutput": {
@@ -288,7 +288,7 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         failed = event == "PostToolUseFailure"
         try:
             given = guidelines.for_command(
-                plugin, data, session, command, failed, output, c.guidelines
+                plugin, data, session, command, failed, output, guidelines.EVERY
             )
         except OSError:
             given = ""
@@ -301,7 +301,9 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
     if rel == ".." or rel.startswith(".." + os.sep):
         return 0
     try:
-        given = guidelines.for_file(plugin, data, session, rel, c.guidelines, tool, created)
+        given = guidelines.for_file(
+            plugin, data, session, rel, guidelines.EVERY, tool, created
+        )
     except OSError:
         given = ""
     if given:

@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
-from baloo import checks, guidelines, names, settings, statusline, yaml
+from baloo import checks, names, settings, statusline, yaml
 from baloo.yaml import Node
 
 
@@ -32,17 +32,11 @@ class Config:
     session_review: bool = False
     # The command run on each file Claude edits, or "" where it is off (ADR format-on-edit).
     format_on_edit: str = ""
-    # The Guidelines turned on, by name (ADR guidelines).
-    guidelines: Dict[str, bool] = field(default_factory=dict)
-    # The Checks the Config turns on or off, by name; see check_on for one it doesn't.
-    checks: Dict[str, bool] = field(default_factory=dict)
     # The settings of _REMOVED, one line each, for doctor to name (see _REMOVED).
     removed: List[str] = field(default_factory=list)
 
     def check_on(self, name: str) -> bool:
-        """Whether the Check `name` is on: as the Config says, and else on (ADR checks)."""
-        if name in self.checks:
-            return self.checks[name]
+        """Whether the Check `name` is on: each the plugin has always is (PRD no-config)."""
         return name in checks.HOOK_CHECKS
 
 
@@ -51,9 +45,7 @@ OUTPUT_STYLES = ["short-replies"]
 
 # The settings earlier Releases had and this one dropped (ADR measurement, ADR git-hooks): a Config
 # that still has one works as without it, and only doctor names it, for the user to delete.
-_REMOVED = [
-    "stop-check", "claude-hooks.no-destructive-commands", "git-hooks", "git-hook-commands",
-]
+_REMOVED = ["stop-check", "git-hooks", "git-hook-commands", "claude-hooks", "guidelines"]
 
 
 def _removed_at(line: int, name: str) -> str:
@@ -118,51 +110,6 @@ def _format_on_edit(c: Config, key: Node, value: Node) -> List[str]:
     if cmd:
         c.format_on_edit = cmd
     return problems
-
-
-def _guidelines(c: Config, key: Node, value: Node) -> List[str]:
-    if value.tag == "null":
-        return []
-    if value.tag != "map":
-        return [_wrong(key.line, key.text, "is not a map of guidelines to true or false")]
-    c.guidelines = {}
-    problems: List[str] = []
-    for name, on in value.pairs:
-        entry = key.text + "." + name.text
-        if name.text not in guidelines.names():
-            problems.append(_at(name.line, entry + " is not a guideline; ignored"))
-            continue
-        if on.tag != "bool":
-            problems.append(_wrong(name.line, entry, "is not true or false"))
-            continue
-        c.guidelines[name.text] = on.value
-    return problems
-
-
-def _check_keys(group: List[str]) -> Callable[[Config, Node, Node], List[str]]:
-    """Decodes a group of Checks' keys, those of the Checks `group`, into a Config."""
-
-    def decode(c: Config, key: Node, value: Node) -> List[str]:
-        if value.tag == "null":
-            return []
-        if value.tag != "map":
-            return [_wrong(key.line, key.text, "is not a map of checks to true or false")]
-        problems: List[str] = []
-        for name, on in value.pairs:
-            entry = key.text + "." + name.text
-            if entry in _REMOVED:
-                c.removed.append(_removed_at(name.line, entry))
-                continue
-            if name.text not in group:
-                problems.append(_at(name.line, entry + " is not a check; ignored"))
-                continue
-            if on.tag != "bool":
-                problems.append(_wrong(name.line, entry, "is not true or false"))
-                continue
-            c.checks[name.text] = on.value
-        return problems
-
-    return decode
 
 
 def _status_layout(entry: str, value: Node) -> Tuple[statusline.Layout, List[str]]:
@@ -245,24 +192,17 @@ _KEYS: Dict[str, Callable[[Config, Node, Node], List[str]]] = {
     "status-line": _status_line,
     "session-review": _session_review,
     "format-on-edit": _format_on_edit,
-    "claude-hooks": _check_keys(checks.HOOK_CHECKS),
-    "guidelines": _guidelines,
 }
 
 
-def _new_config(fit: List[str]) -> str:
-    """A new Config, with the Guidelines `fit` on: it names the schema for editors, and says in
-    plain words how the settings work, for someone who has read neither the schema nor the
-    README. The keys of each section are sorted, so one is found by its name."""
-    listed = "".join(
-        f"  {name}: {'true' if name in fit else 'false'}\n" for name in sorted(guidelines.names())
-    )
-    hook_list = "".join(f"  {name}: true\n" for name in sorted(checks.HOOK_CHECKS))
+def _new_config() -> str:
+    """A new Config: it names the schema for editors, and says in plain words how the settings
+    work, for someone who has read neither the schema nor the README."""
     return (
         "# yaml-language-server: $schema=" + names.SCHEMA + """
 #
-# baloo's settings for this repo. Each Check and each Guideline turns on or off with a key of its
-# own here. A wrong setting is reported at session start, and its default applies.
+# baloo's settings for this repo. Its Checks and Guidelines are always on. A wrong setting is
+# reported at session start, and its default applies.
 
 # The Output style for Claude's replies, picked at session start in the settings file that
 # enables the plugin (the project's .claude/settings.local.json for the user's settings), where no
@@ -285,23 +225,7 @@ session-review: true
 # repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
 # with false.
 # format-on-edit: npx prettier --write
-
-# Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
-# Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
-# whole the first time it reads or edits a file of their subject in a session. A stack's is on
-# where the repo had that stack when this file was made, ci where it had a CI's config, and
-# dependencies where it had a package manager's manifest.
-guidelines:
 """
-        + listed
-        + """
-# Checks, each on with true and off with false.
-#
-# Checks in Claude Code's hooks deny a tool call of Claude's that would bypass the Git hooks or show
-# a secret. They are on without their key too.
-claude-hooks:
-"""
-        + hook_list
     )
 
 
@@ -411,14 +335,12 @@ def parse(data: str) -> Tuple[Config, List[str]]:
 
 
 def _create(root: str) -> str:
-    """Writes a new Config, every Check on and the Guidelines that fit the repo, at the repo root
-    `root` when it has none, and returns its path; with a Config there already, it writes nothing
-    and returns "". The repo is looked through for its stacks before the file is made, so it never
-    sits empty for longer than one write."""
+    """Writes a new Config at the repo root `root` when it has none, and returns its path; with a
+    Config there already, it writes nothing and returns ""."""
     path = os.path.join(root, names.CONFIG)
     if os.path.lexists(path):
         return ""
-    text = _new_config(guidelines.fitting(root))
+    text = _new_config()
     os.makedirs(os.path.dirname(path), mode=0o755, exist_ok=True)
     try:
         f = open(path, "x", encoding="utf-8")

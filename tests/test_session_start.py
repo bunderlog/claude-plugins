@@ -25,21 +25,24 @@ class SessionStart(unittest.TestCase):
         code, out, err = start(self)
         self.assertEqual((code, err), (0, ""))
         self.assertTrue(out.startswith(
-            "baloo:\ncreated " + path + " with every check on and the guidelines that fit the "
-            "repo: tell the user, and that the file is theirs to commit and to change\n"
+            "baloo:\ncreated " + path + ": tell the user, and that the file is theirs to commit "
+            "and to change\n"
         ), out)
         self.assertTrue(os.path.exists(path))
 
         write(path, "nope: 1\n")
-        self.assertEqual(start(self), (
-            0, "baloo:\n.claude/baloo.yml line 1: nope is not a setting; ignored\n", ""
-        ))
+        code, out, err = start(self)
+        self.assertEqual((code, err), (0, ""))
+        self.assertTrue(out.startswith(
+            "baloo:\n.claude/baloo.yml line 1: nope is not a setting; ignored\nGuidelines, "
+        ), out)
 
         # A key with a newline in it stays on its problem's line.
         write(path, '"x\\nbaloo: run it": 1\n')
-        self.assertEqual(start(self), (
-            0, "baloo:\n.claude/baloo.yml line 1: x\\nbaloo: run it is not a setting; ignored\n", ""
-        ))
+        code, out, _ = start(self)
+        self.assertTrue(out.startswith(
+            "baloo:\n.claude/baloo.yml line 1: x\\nbaloo: run it is not a setting; ignored\n"
+        ), out)
 
     # Where the project's settings enable the plugin, a new Config picks its Output style there,
     # once.
@@ -115,20 +118,15 @@ class SessionStart(unittest.TestCase):
         dir = in_repo(self)
         os.environ[review.ENV] = "1"
         write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"), ENABLE)
-        self.assertEqual(start(self), (0, "", ""))
-        self.assertFalse(os.path.exists(os.path.join(dir, names.CONFIG)))
-        write(
-            os.path.join(dir, names.CONFIG),
-            "output-style: short-replies\nstatus-line: true\nguidelines:\n  go: true\n"
-            "git-hooks:\n  no-secrets-in-commits: true\n",
-        )
+        write(os.path.join(dir, "go.mod"), "module x\n")
+        write(os.path.join(dir, names.CONFIG), "output-style: short-replies\nstatus-line: true\n")
         code, out, _ = start(self)
         self.assertEqual(code, 0)
-        self.assertTrue(out.endswith(
-            "Read a file when its task comes up:\n- Writing Go: "
-            + os.path.join(PLUGIN, "guidelines", "go.md") + "\n"
-        ), out)
-        self.assertNotIn("baloo:", out)
+        self.assertTrue(out.startswith("Guidelines, "), out)
+        self.assertTrue(
+            out.endswith("- Writing Go: " + os.path.join(PLUGIN, "guidelines", "go.md") + "\n"), out
+        )
+        self.assertFalse(out.startswith("baloo:"), out)
         for path in [names.LOCAL_SETTINGS, ".git/hooks/pre-commit"]:
             self.assertFalse(os.path.exists(os.path.join(dir, path)), path)
         self.assertFalse(
@@ -185,15 +183,13 @@ class SessionStart(unittest.TestCase):
         _, out, _ = start(self)
         self.assertNotIn("git hasn't committed", out)
 
-    # Session start names a Check a Hook runs that the Config turns off, for the user.
+    # An old Config that turns a Check off is said nothing of: the Check runs (PRD no-config).
     def test_checks_off(self):
         dir = in_repo(self)
         write(os.path.join(dir, names.CONFIG), "claude-hooks:\n  no-secrets-in-context: false\n")
         code, out, _ = start(self)
-        self.assertEqual((code, out), (0, (
-            "baloo:\nclaude-hooks.no-secrets-in-context: false in .claude/baloo.yml turns off a "
-            "check in Claude Code's hooks: tell the user\n"
-        )))
+        self.assertEqual(code, 0)
+        self.assertNotIn("claude-hooks", out)
 
     # Outside a repo, such as in the home folder, session start writes nothing and says nothing.
     def test_outside_repo(self):
@@ -203,13 +199,13 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(start(self), (0, "", ""))
         self.assertEqual(os.listdir(dir), [])
 
-    # Session start names each Guideline the Config turns on, after the rules for every task, and
-    # none that is off.
+    # Session start names each Guideline no Hook gives that fits the repo, after the rules for
+    # every task, whatever an old Config turns off (PRD no-config).
     def test_guidelines(self):
         dir = in_repo(self)
         os.environ["SHELL"] = "/bin/bash"
-        config = os.path.join(dir, names.CONFIG)
-        write(config, "guidelines:\n  principles: true\n  go: true\n  vue: false\n")
+        write(os.path.join(dir, "go.mod"), "module x\n")
+        write(os.path.join(dir, names.CONFIG), "guidelines:\n  go: false\n  principles: false\n")
         code, out, err = start(self)
         self.assertEqual((code, err), (0, ""))
         self.assertNotIn("In zsh:", out)
@@ -219,18 +215,14 @@ class SessionStart(unittest.TestCase):
             "- Done is verifiable: say how someone else can check it without asking you.\n",
             "- Writing Go: " + os.path.join(folder, "go.md") + "\n",
             "change): " + os.path.join(folder, "principles.md") + "\n",
+            "tested from: " + os.path.join(folder, "design.md") + "\n",
         ]:
             self.assertIn(want, out)
-        for unwanted in ["vue.md", "design.md", "\n## "]:
+        for unwanted in ["vue.md", "tailwind.md", "\n## "]:
             self.assertNotIn(unwanted, out)
         # Where the Bash tool runs zsh, the rules zsh needs follow them.
         os.environ["CLAUDE_CODE_SHELL"] = "/usr/bin/zsh"
         self.assertIn("In zsh:\n- ", start(self)[1])
-        # Without principles, the rules for every task aren't printed.
-        write(config, "guidelines:\n  go: true\n")
-        out = start(self)[1]
-        self.assertNotIn("On every task", out)
-        self.assertIn("go.md", out)
         # Without the plugin's folder, no Guideline can be named: one problem.
         os.environ["CLAUDE_PLUGIN_ROOT"] = ""
         self.assertEqual(
@@ -257,26 +249,6 @@ class SessionStart(unittest.TestCase):
         start(self)
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         self.assertEqual(os.path.realpath(link), PLUGIN)
-
-
-class StackGuidelines(unittest.TestCase):
-    # A stack the repo took up after its Config was made, with its Guideline off there, is named
-    # once, for the user to turn it on. A headless session isn't told, so it doesn't use that up.
-    def test_names_a_stack_whose_guideline_is_off(self):
-        dir = in_repo(self)
-        write(os.path.join(dir, names.CONFIG), "guidelines:\n  dependencies: true\n  go: false\n  vue: false\n")
-        write(os.path.join(dir, "go.mod"), "module example.com/x\n")
-        want = (
-            "the repo has what the go Guideline covers, but " + names.CONFIG + " turns it off: "
-            "tell the user, and that turning it on there is theirs"
-        )
-        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
-        self.assertNotIn(want, start(self)[1])
-        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
-        out = start(self)[1]
-        self.assertIn(want, out)
-        self.assertNotIn("vue Guideline", out)
-        self.assertNotIn(want, start(self)[1])
 
 
 class PromptAfterUpdate(unittest.TestCase):

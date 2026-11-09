@@ -1,16 +1,17 @@
-# Guidelines are files the Config turns on one by one, not skills
+# Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-10-31
+Date: 2026-11-09
 
 A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
 `dependencies` for one with a package manager's manifest, `go`, `typescript`, `vue` and `tailwind`
-for their stacks. Each turns on with a key of its own in the Config, under `guidelines`. At session
-start the plugin prints, for each Guideline turned on, one line: when to read it and its path.
+for their stacks. Each is on wherever baloo is, with no switch of its own (PRD no-config). At
+session start the plugin prints, for each Guideline that fits the repo, one line: when to read it
+and its path.
 Claude reads the file itself when a task calls for it. `principles` also carries the few rules
 that must hold on every task, and those are printed whole, with the rules zsh needs where the Bash
 tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
-`=` fails the whole command there. A Guideline that is off puts nothing in the context. How Claude
+`=` fails the whole command there. Outside a repo session start names none. How Claude
 writes its replies is not a Guideline but an Output style (ADR output-styles).
 
 Only `go` and `tailwind` wait for Claude to read them: a Guideline was read before an edit on its
@@ -73,21 +74,17 @@ edit of its subject. A rule's share of breaches, before 0.24 and after, is repor
 other machine's Transcripts, where these stacks are worked on, show 3 or more breaches of it before
 0.24.
 
-A new Config turns on the Guidelines for any project, `ci` only where the repo's root holds a CI's
-config (`.github/workflows/`, `.gitlab-ci.yml`, `bitbucket-pipelines.yml`, `bamboo-specs/`,
-`Jenkinsfile`, `azure-pipelines.yml`, `.circleci/`, `.buildkite/`), `dependencies` only where the
-repo holds a package manager's manifest (`go.mod`, `package.json`, `Cargo.toml`,
-`pyproject.toml`), and a stack's only where the repo's files name that stack: `go.mod` for `go`, a
-`package.json` depending on `typescript` for `typescript`, one depending on `vue` for `vue`, one
-depending on `tailwindcss` for `tailwind`. Manifests and stacks are found at any depth outside
-hidden folders, other projects' code (`node_modules`, `vendor`), test fixtures (`testdata`) and
-build output (`build`, `dist`, `out`, `target`). The Config is the user's from then on, like every
-other setting in it (ADR config): nothing turns a key on for them. But a repo often takes up its
-stack after its Config was made, and one project's `go`, `vue`, `typescript` and `tailwind` stayed
-off unnoticed in 2026-10. So where a Guideline that fits the repo is off, session start names it
-once a repo, for Claude to tell the user, and `doctor` names it every time ("off, though
-fitting"). A headless session isn't told, so it doesn't use up the telling, nor is a Config session
-start just made, which fits the repo already.
+Session start's index names a Guideline only where it fits the repo: those for any project
+always, `ci` only where the repo's root holds a CI's config (`.github/workflows/`, `.gitlab-ci.yml`,
+`bitbucket-pipelines.yml`, `bamboo-specs/`, `Jenkinsfile`, `azure-pipelines.yml`, `.circleci/`,
+`.buildkite/`), `dependencies` only where the repo holds a package manager's manifest (`go.mod`,
+`package.json`, `Cargo.toml`, `pyproject.toml`), and a stack's only where the repo's files name
+that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`, one
+depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`. Session start walks
+the repo for them once each time, at any depth outside hidden folders, other projects' code
+(`node_modules`, `vendor`), test fixtures (`testdata`) and build output (`build`, `dist`, `out`,
+`target`), so a stack the repo takes up is named from the next session on. A Hook gives a
+Guideline by its signal whatever the repo's manifests: a `.ts` file read is the signal.
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
@@ -102,11 +99,15 @@ as a skill would put every stack's description into every session, whatever the 
 So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `issue`,
 `prd`), are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`), or
 run the plugin's agent (`verify`, ADR verify); rules for how to do a kind of task are a
-Guideline, `debugging`, `ci` and `dependencies` among them: they keep no document, and as
-Guidelines a project can turn them off, and one with no CI never gets `ci`'s line.
+Guideline, `debugging`, `ci` and `dependencies` among them: they keep no document, and one with no
+CI never gets `ci`'s line.
 
 ## Considered options
 
+- Each Guideline turned on by its own key under `guidelines` in the Config (until 2026-11-09) — a
+  repo's stack taken up after its Config was made stayed off unnoticed (one project's `go`, `vue`,
+  `typescript` and `tailwind` in 2026-10), and nobody recorded why a Guideline was off; turning
+  baloo off is the switch (PRD no-config).
 - `debugging` on any failed run of tests (until 2026-10-30) — from 2026-10-14 to 2026-10-30 it
   came 8 times where the command is known, 7 of them for a run meant to fail: 5 broke the code in
   the same command (`git stash`, `cp` and `sed -i`, `git show … >`, `cat >` a new test), and 2
