@@ -187,3 +187,38 @@ isn't enough) and back after it, with `--allow-tools 'Bash(git *)' 'Bash(python3
   run under `claude plugin eval` as it is.
 Settled by a sandbox that runs Git hooks and lets a skill read the session's Transcript, or by
 dropping these cases; each is kept only once it fails without the plugin (ADR evals).
+
+## A commit's body and a code comment say why
+
+2026-11-08 · Missing Semester 2026, Beyond the Code
+
+The lecture asks a commit's body for what forced the change, the alternatives weighed, the
+trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
+typo, Problem → Solution → Implications for a subtle fix; an LLM writes it in the session that
+made the change, and asks the user for what it doesn't know. A comment says what the code can't:
+why not the obvious way, a choice correctness rests on, where a constant comes from, a TODO with
+its reason, a lesson a long debugging taught. baloo checks only a commit's format
+(`conventional-commits`) and says nothing of a body or a comment. Settled by an eval case where
+Claude writes a body that only restates the diff, or leaves out a why-not comment a later edit
+undoes, failing without the rules and passing with them (ADR evals): then a Guideline of its own
+or lines in `principles`; or by dropping the idea.
+
+## Property-based tests where no literal can be the expected value
+
+2026-11-08 · Missing Semester 2026, Code Quality
+
+`testing` §3 takes expected values from outside the code and, where nothing independent exists,
+runs the code instead of testing it. A property (a round trip, an invariant, agreement with a
+slow reference), checked with Hypothesis or fast-check, is a third way: an independent check
+with no literal. Settled by an eval case where Claude restates the code's formula as the
+expected value, or leaves logic untested, and the line changes that (ADR evals), or by dropping
+the idea.
+
+## no-git-hook-bypass denies reading core.hooksPath
+
+2026-11-08 · blueprint interview
+
+`git config core.hooksPath` with no value only prints where the Git hooks are, yet the Hook denies
+it as a change ("changes where the Git hooks are"). Seen while checking which projects had their
+Git hooks turned on. Settled by telling a read (no value, `--get`, `--list`) from a write, with a
+test for each, or by the Release that turns the hooks over to `.githooks/` changing the Check.
