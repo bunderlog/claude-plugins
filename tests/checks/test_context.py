@@ -1,5 +1,3 @@
-# cspell:ignore netrc pipefail typeset
-
 import json
 import os
 import unittest
@@ -57,8 +55,8 @@ class NoSecretsInContext(unittest.TestCase):
             "env | grep -o '^.*'": env,
             "env | sed 's/=.*/&/'": env,
             "env | awk -F= '{print $2}'": env,
-            "cat <<EOF\nx\nEOF\nenv": env,  # cspell:disable-line
-            "bash <<EOF\nenv\nEOF": env,  # cspell:disable-line
+            "cat <<EOF\nx\nEOF\nenv": env,
+            "bash <<EOF\nenv\nEOF": env,
             "sudo sh -s <<'EOF'\nprintenv\nEOF": printenv,
             "cat <<-'EOF' >f\n\tset\n\tEOF\nprintenv": printenv,
             "printenv": printenv,
@@ -97,8 +95,8 @@ class NoSecretsInContext(unittest.TestCase):
         for command in [
             """grep -n '"prod.env", ".env.example"' src/a.go""",
             "env | cut -d= -f1",
-            "python3 - <<'EOF'\nprint(sorted(set(words)))\nenv = 1\nEOF",  # cspell:disable-line
-            "cat <<EOF > notes.txt\nset\nenv\nEOF\necho done",  # cspell:disable-line
+            "python3 - <<'EOF'\nprint(sorted(set(words)))\nenv = 1\nEOF",
+            "cat <<EOF > notes.txt\nset\nenv\nEOF\necho done",
             "cat <<< 'here-string' | wc -c",
             "env | sort | cut -d '=' -f 1",
             "env | grep -oE '^(BITBUCKET|JIRA)[A-Z_]*'",

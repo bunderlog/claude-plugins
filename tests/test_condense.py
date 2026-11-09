@@ -1,5 +1,3 @@
-# cspell:ignore AKIA IOSFODNN MIIE
-
 import json
 import os
 import tempfile

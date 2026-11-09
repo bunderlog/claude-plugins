@@ -11,8 +11,8 @@ first.
 an architecture change or a new domain term; don't reopen what it already settled.
 
 `mise run check` runs what CI runs: the tests in `tests/` on Python 3.9, `ruff check` on the
-Python, `shellcheck` on `plugins/baloo/scripts/hook`, and `cspell` on the repo. `mise run release`
-cuts and pushes a Release, but only counts commits under `plugins/baloo/`, the schema aside (ADR
+Python, and `shellcheck` on `plugins/baloo/scripts/hook`. `mise run release` cuts and pushes a
+Release, but only counts commits under `plugins/baloo/`, the schema aside (ADR
 releases); a commit outside it — the tests, this file, the README — just needs a plain push.
 Commit subjects become the CHANGELOG: split unrelated changes into a commit per type, and write
 each subject for users. A commit that changes a feature with a PRD in `.about/prd/` names it in

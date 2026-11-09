@@ -1,5 +1,3 @@
-# cspell:ignore dont ndont AKIA IOSFODNN
-
 import os
 import time
 import unittest
@@ -31,7 +29,7 @@ def fake_claude(test, reply):
 
 def conversation(chars):
     """A Transcript of a session `chars` characters long in all, with a Secret."""
-    text = "AKIA" + "IOSFODNN7EXAMPLE " + "x" * chars  # cspell:disable-line
+    text = "AKIA" + "IOSFODNN7EXAMPLE " + "x" * chars
     return '{"type":"user","message":{"content":"' + text + '"}}\n'
 
 

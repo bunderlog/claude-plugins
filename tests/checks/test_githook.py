@@ -76,7 +76,7 @@ class Run(unittest.TestCase):
     def test_no_secrets_in_commits(self):
         dir = testkit.repo(self)
         self.assertEqual(self.run_check("no-secrets-in-commits", [], Input(dir=dir)), (0, ""))
-        secret = "AKIA" + "IOSFODNN7EXAMPLE"  # cspell:disable-line
+        secret = "AKIA" + "IOSFODNN7EXAMPLE"
         stage(dir, {"a.go": secret})
         self.assertEqual(
             self.run_check("no-secrets-in-commits", [], Input(dir=dir)),

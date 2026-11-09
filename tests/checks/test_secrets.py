@@ -1,5 +1,3 @@
-# cspell:ignore AKIA IOSFODNN xoxb
-
 import os
 import unittest
 

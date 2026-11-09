@@ -1,4 +1,3 @@
-# cspell:ignore AKIA IOSFODNN
 import json
 import os
 import re
