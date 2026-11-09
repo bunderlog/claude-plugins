@@ -19,7 +19,7 @@ Status: proposed
 
 ## Success signal
 
-{What moves, from what to what, by when; or the qualitative signal.}
+{What moves, from what to what; or the qualitative signal. Its due date goes in the plan.}
 
 ## Scope
 

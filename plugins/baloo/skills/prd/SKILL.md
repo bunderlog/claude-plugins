@@ -29,8 +29,9 @@ don't ask them again.
 Challenge each part until it holds:
 - **Problem** — whose pain, in a sentence, apart from any solution: "add CSV export" is a
   solution; "support retypes every report into Excel" is the problem.
-- **Success signal** — what moves, from what to what, by when; or the qualitative signal when
-  nothing can be measured. "Users like it" is neither.
+- **Success signal** — what moves, from what to what; or the qualitative signal when nothing can
+  be measured. "Users like it" is neither. No date: when it is due belongs to the plan, not the
+  PRD.
 - **Scope** — the smallest version that solves the problem. Name the Non-goals: what someone
   will assume is included and isn't; and the Anti-goals: what would make the feature a failure
   even if it works as specified ("support stops retyping, but now waits a day for the export").
