@@ -19,19 +19,16 @@ the Config and write settings.
 
 ## Acceptance criteria
 
-- A PRD for baloo without a Config exists and has no Status line.
-- The Checks in Hooks run with no Config key; a key left for them does nothing, and `doctor`
-  names it for the person to remove.
-- Session start writes no `statusLine` and no `outputStyle` into a project's
-  `.claude/settings.local.json`, and says once per clone how to set them in
-  `~/.claude/settings.json`.
-- Session start puts baloo's always-on Guideline in the context; the other Guidelines are skills,
-  and an eval compares how often they reach Claude with 5 in 79 and 15 in 22.
-- `config.py` and `yaml.py` are gone; a leftover `.claude/baloo.yml` is named by `doctor` for the
-  person to remove, and session start writes nothing into `.claude/`.
+- PRD no-config's criteria hold, each from the Release it names. Done: PRD no-config.
 
 ## Comments
 
 ### 2026-11-09 · order
 
 One Release per criterion after the PRD, in the order above; each leaves baloo working.
+
+### 2026-11-09 · plan changed
+
+The Guidelines stay given by their task's signal instead of becoming skills: a skill waits to be
+called as a Guideline waited to be read, 5 times in 79, against 15 in 22 by a Hook (ADR
+measurement). Only their switch goes. The four Releases are PRD no-config's.
