@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.36.0 — 2026-11-09
+
+### Breaking changes
+
+- leave commits to hathi: write no Git hooks, and let old ones through (97cb23c)
+
 ## 0.35.0 — 2026-11-09
 
 ### Features
