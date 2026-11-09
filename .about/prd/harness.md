@@ -61,12 +61,13 @@ does everything, behind a Config of its own.
   Checks in Hooks and `short-replies` go to bagheera; its Config goes, and its Git hooks and commit
   Checks go to `hathi`.
 - A project is set up once the commit checked out holds what the PRD setting a project up lists,
-  among it: `.claude/settings.json` that adds bunderlog's marketplace and turns on baloo, louie and
-  workflows, and denies Claude reading Env files and keys; a `CLAUDE.md` line that imports the
-  file setting the commit format; and Git hooks that check commits for Secrets. Those files come
-  only from setting the project up, a step whose result someone commits. A clone counts as set up
-  when its committed `.claude/settings.json` turns baloo on; bagheera's `doctor` checks the rest.
-  Setting a project up is bagheera's, since baloo and louie are off until it is done.
+  among it: `.claude/settings.json` that adds bunderlog's marketplace and turns on baloo (louie and
+  Workflows too, once louie ships), and denies Claude reading Env files and keys; a `CLAUDE.md`
+  line that imports the file setting the commit format; and Git hooks that check commits for
+  Secrets. Those files come only from setting the project up, a step whose result someone
+  commits. A clone counts as set up when its committed `.claude/settings.json` turns baloo on;
+  bagheera's `doctor` checks the rest. Setting a project up is bagheera's, since baloo and louie
+  are off until it is done.
 - "Once per clone": each message is given to a clone once, and again only when it is cloned anew.
 - Every kind of fact has one place, where it is read when it matters:
 
@@ -254,8 +255,8 @@ does everything, behind a Config of its own.
 - In `claude-plugins`, `hathi` and `webui`, once set up, bagheera's `doctor` reports no problem with
   what the PRD setting a project up says a project holds. Checked by hand.
 - A project's committed Setup files (`CLAUDE.md`, `.claude/`, its Git hooks) hold no absolute path
-  into a home folder or a plugin's data folder, and its committed settings set no `statusLine` and
-  no `outputStyle`.
+  into a home folder or a plugin's data folder (a deny rule starting `~/` is none), and its
+  committed settings set no `statusLine` and no `outputStyle`.
 - Two people who open the same commit of a project with the same plugin version get the same
   baloo and louie skills, workflows, Guidelines, `.claude/rules/` and deny rules from it, as
   bagheera's `doctor` lists them for each (checked by hand in two clones), except

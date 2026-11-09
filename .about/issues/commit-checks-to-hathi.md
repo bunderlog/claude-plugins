@@ -19,10 +19,10 @@ writes Git hooks at session start.
 
 ## Acceptance criteria
 
-- The PRD setting a project up exists and has no Status line.
+- The PRD setting a project up exists and has no Status line. Done: PRD project-setup.
 - `claude-plugins`, `hathi` and `webui` are set up by it, by hand: Git hooks that run `hathi`
   committed, `CLAUDE.md` importing `@.hathi.yml`, no committed `outputStyle`.
-- `hathi` has the ADR Date Check, in a Release of its own.
+- `hathi` has the ADR Date Check, in a Release of its own. Done: `hathi` 1.2.0.
 - PRD harness: "The Release that takes the commit Checks out of baloo ships only once …" holds.
 - PRD harness: "In `claude-plugins`, `hathi` and `webui`, once set up and with their Git hooks
   turned on, a commit that adds a made-up AWS access key ID … is refused" holds.
@@ -31,8 +31,9 @@ writes Git hooks at session start.
 
 ### 2026-11-09 · order
 
-The PRD setting a project up first, then the three projects by hand, then `hathi`'s ADR Date
-Check, then baloo's Release. The other projects worked on from this machine since 2026-10-01
+The PRD setting a project up first, then `hathi`'s ADR Date Check, since baloo leaves a committed
+hooks folder alone and its own Check stops running there, then the projects by hand, then baloo's
+Release. The other projects worked on from this machine since 2026-10-01
 (Claude Code's Transcripts list them) are set up before that Release too.
 
 ### 2026-11-09 · fix option
