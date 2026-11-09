@@ -1,21 +1,19 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-10-14
+Date: 2026-11-09
 
 The marketplace installs `baloo` from this repo's `main`, and an installed copy updates only to a
-new version, so a change to `plugins/baloo/` reaches users only with a Release; its
-`schema.json`, which editors read from `main`, needs none, and the tests, in `tests/`, are outside
-it.
-`mise run release` makes one from the commits since the last `v*` tag that change what needs a
-Release, so a commit only to the release tool, a test or the schema is never in a Release's
-version or notes. The commits follow Conventional Commits: below 1.0 a breaking change or a `feat`
-raises the minor, anything else the patch; from 1.0 a breaking change raises the major. It writes
-that version to `plugin.json` and a section to `CHANGELOG.md`, commits them as `chore(release):
-<version>` and tags the commit `v<version>`, signed. A commit after it pins the README's CI recipe
-(ADR checks) to the tagged commit's SHA, `docs: pin the README's CI recipe to v<version>`: a tag
-can be moved to other code, and a commit can't name its own SHA. The task then pushes `main` and the tag together; the tag starts the Release
-workflow, which publishes the CHANGELOG section as the GitHub Release. With nothing to build or
-download (ADR binary), a copy that updates before the workflow has run misses only the notes page.
+new version, so a change to `plugins/baloo/` reaches users only with a Release; its `schema.json`,
+which editors read from `main`, needs none, and the tests, in `tests/`, are outside it. `mise run
+release` makes one from the commits since the last `v*` tag that change what needs a Release, so a
+commit only to the release tool, a test or the schema is never in a Release's version or notes. The
+commits follow Conventional Commits: below 1.0 a breaking change or a `feat` raises the minor,
+anything else the patch; from 1.0 a breaking change raises the major. It writes that version to
+`plugin.json` and a section to `CHANGELOG.md`, commits them as `chore(release): <version>` and tags
+the commit `v<version>`, signed. The task then pushes `main` and the tag together; the tag starts
+the Release workflow, which publishes the CHANGELOG section as the GitHub Release. With nothing to
+build or download (ADR binary), a copy that updates before the workflow has run misses only the
+notes page.
 
 The release tool, `src/release/release.py`, is Python like the plugin, outside it, so a change to
 it needs no Release.
@@ -32,6 +30,9 @@ it needs no Release.
   showed in the users' notes, and a `feat` to it raised the plugin's minor.
 - A pre-push check that a push changing the plugin carries a Release — a Release is made when
   someone decides to make one, not with every push.
+- A commit after each Release pinning the README's recipe for running the commit Checks in CI to
+  the tagged commit (until 2026-11-09) — the Checks moved to `hathi`, which CI runs from the
+  version `mise.toml` pins (ADR git-hooks).
 - The recipe pinning the tag (until 2026-10-14) — one commit a Release, but a moved tag would
   run other code in a project's CI.
 - A placeholder for the version in the README's CI recipe — nothing to keep up, but the recipe

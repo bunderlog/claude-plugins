@@ -14,9 +14,8 @@ run = [
   "shellcheck plugins/baloo/scripts/hook",
 ]
 
-# The tag and main, one commit past it with the README pinned to it, are pushed together: with
-# nothing to build, a copy that updates to the new version before the Release workflow has run
-# misses only its notes page (ADR releases).
+# The tag and main are pushed together: with nothing to build, a copy that updates to the new
+# version before the Release workflow has run misses only its notes page (ADR releases).
 [tasks.release]
 description = "Make a Release from the commits since the last one and push it with main"
 run = '''
