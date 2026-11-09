@@ -244,7 +244,7 @@ does everything, behind a Config of its own.
   `hathi check commit-msg` (its `conventional-commits` and `no-ai-coauthor` Checks), run on it
   after the case, with one `git commit` call, in two cases: `.hathi.yml` as set up, and with the
   type the case's change needs renamed (such as `feat` to `feature`).
-- In `claude-plugins`, `hathi` and `webui`, once set up and with their Git hooks turned on, a
+- In `claude-plugins`, `hathi` and `checkmeup`, once set up and with their Git hooks turned on, a
   commit that adds a made-up AWS access key ID (`AKIA` and 16 random characters from A–Z and 2–7,
   not a published example) is refused by the project's Git hooks, whether a person or Claude makes
   it. Checked by hand.
@@ -252,8 +252,8 @@ does everything, behind a Config of its own.
   ~/.aws/credentials` are refused by the project's deny rules, bagheera on or off. With bagheera
   on, so are `env`, `printenv`, `set`, an `echo` of a variable whose name says key, token, secret
   or password, an Allow mark Claude adds, and `git commit --no-verify`.
-- In `claude-plugins`, `hathi` and `webui`, once set up, bagheera's `doctor` reports no problem with
-  what the PRD setting a project up says a project holds. Checked by hand.
+- In `claude-plugins`, `hathi` and `checkmeup`, once set up, bagheera's `doctor` reports no problem
+  with what the PRD setting a project up says a project holds. Checked by hand.
 - A project's committed Setup files (`CLAUDE.md`, `.claude/`, its Git hooks) hold no absolute path
   into a home folder or a plugin's data folder (a deny rule starting `~/` is none), and its
   committed settings set no `statusLine` and no `outputStyle`.
@@ -268,6 +268,7 @@ does everything, behind a Config of its own.
   that line for the person to remove.
 - The Release that takes the commit Checks out of baloo ships only once `hathi` has the ADR Date
   Check and each project worked on from the maintainer's machine since 2026-10-01, as Claude Code's
-  Transcripts list them, is set up for the plugins; from it on, a Git hook baloo wrote lets each
-  commit through, saying that baloo no longer checks it and how to remove the hook, and still lets
-  it through once baloo has no Python.
+  Transcripts list them, is set up for the plugins or named, with why not, in Issue
+  commit-checks-to-hathi; from it on, a Git hook baloo wrote lets each commit through, saying that
+  baloo no longer checks it and how to remove the hook, and still lets it through once baloo has no
+  Python.
