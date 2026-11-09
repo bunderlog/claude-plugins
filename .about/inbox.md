@@ -1,26 +1,28 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-11-02
+2026-10-03 · user · kept 2026-11-09
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
-(migrations, a schema change that stays backward compatible) and `docker`. Settled by deciding
-which stacks get one, each with its stack detection for a new Config, or none. Kept to write
-each when a project in that stack takes up baloo; `python`, this repo's stack from 0.26.0 (ADR
+(migrations, a schema change that stays backward compatible) and `docker`. From 2026-11-09 they
+are louie's (ADR plugin): each is a file whose `paths:` say which files bring it, so no stack is
+detected for a Config. Settled by deciding which stacks get one, or none. Kept to write each when
+a project in that stack takes up the plugins; `python`, this repo's stack from 0.26.0 (ADR
 binary), waits until a measurement shows the Guidelines a Hook gives from 0.27.0 are followed.
 
 ## Guidelines for concerns across stacks
 
-2026-10-03 · user · kept 2026-11-02
+2026-10-03 · user · kept 2026-11-09
 
 `security` (input, authorization, Secrets in code), `api-design` (versions, compatibility) and
-`observability` (logs, errors, metrics) as Guidelines. Settled by deciding which earn a Guideline
-of their own rather than rules in `principles` or `design`, and whether a new Config turns them on.
-`principles` already asks that a change be observable in production, and the Checks keep Secrets
-out of commits and Claude's context; kept until a session shows a gap they leave, which a week of three projects in 2026-10 didn't.
+`observability` (logs, errors, metrics) as baloo's Guidelines. Settled by deciding which earn a
+Guideline of their own rather than rules in `principles` or `design`. `principles` already asks
+that a change be observable in production, and the Checks keep Secrets out of commits and
+Claude's context; kept until a session shows a gap they leave, which a week of three projects in
+2026-10 didn't.
 
 ## Where each kind of project knowledge lives
 
-2026-10-05 · user · kept 2026-11-02
+2026-10-05 · user · kept 2026-11-09
 
 A project can keep part of its knowledge outside the repo, in a tool such as Jira, Confluence,
 GitHub Issues or a wiki. Agreed so far: the project names where each kind lives (requirements, bugs,
@@ -33,11 +35,13 @@ steering split into product, tech and structure. Settled once a project keeps a 
 tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
 a skill finds it, and rewrite ADR about-folder. One project keeps its tasks and bugs in Jira, and
 from 0.26.2 the Session review leaves what is still to do on a ticket to the ticket (ADR
-session-review); decide once a skill has to write there, not only read.
+session-review); decide once a skill has to write there, not only read. louie's `ticket` Workflow
+will read an Issue from the project's tracker (PRD harness), so its PRD may be where this comes up
+first.
 
 ## Project knowledge reaches the context only as a task needs it
 
-2026-10-06 · user · kept 2026-11-02
+2026-10-06 · user · kept 2026-11-09
 
 After a few weeks, this repo's `.about/` is about 25k tokens (20 ADRs about 82 KB, the glossary
 and the Inbox about 15 KB) and the Guidelines another 10k, and both only grow; the more of it a
@@ -88,13 +92,20 @@ read at all before 341 of the 545, before 82 of webui's 260. So the ADRs that na
 of 545 edits, and in webui none of those reached the edit; an ADR that names no path is missed by
 the count, which needs a link from ADRs to code to judge the rest.
 
+On 2026-11-09 PRD harness took the first measure: session start puts the titles of the ADRs and
+PRDs and the glossary's terms in the context, derived each time, not kept in a file of their own.
+It has a PRD of its own (PRD harness, Non-goals); the measurements above move into it, and this
+item goes with them.
+
 ## A plugin for another audience, such as ad managers
 
-2026-10-14 · user · kept 2026-11-02
+2026-10-14 · user · kept 2026-11-09
 
 baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
 2026-10-14 for installing by choice and different audiences, and not done: no such user exists
-yet. The first candidates are ad managers, two ways:
+yet. The split of 2026-11-09 into baloo, louie and bagheera (ADR plugin) is by who turns a part
+on, not by audience, so this stays open; the survey below on tags and shared code serves the
+Release tool for several plugins either way. The first candidates are ad managers, two ways:
 - moved to Claude Code, working in a git clone: ADR about-folder holds, baloo with its Hooks works
   for them as it is, and what they lack is skills of their own domain, a plugin beside baloo or
   skills in it;
@@ -136,38 +147,9 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 - An installed plugin is copied to a cache, so `../shared` isn't found, but a symlink to elsewhere
   in the marketplace becomes a copy: shared Python code can live once and be linked into each.
 
-## Facts from outside the repo go stale unseen
-
-2026-10-18 · user · kept 2026-11-02
-
-A project's docs and pages quote facts it doesn't own: a competitor's price or free tier, a
-vendor's limit, a tool's version. They go stale without any change to the repo, so neither a
-review nor `tidy` notices. One project already dates each competitor fact (`asOf` and
-`sources` beside it), but nothing ever asks for a recheck. The idea, from the community guide
-Claude Code: Everything You Need to Know (an expiry marker per claim checked daily in CI, and a
-workflow, `stale-docs-audit.js`, that sorts each claim as stale, unverifiable or ok against its
-source): a marker for an outside fact with its check date and
-source; session start reporting how many are past due, as it does for the Inbox; and a skill
-that rechecks each against its source in a separate agent and proposes the edits. Settled by
-choosing the marker's shape, a project-wide recheck interval or one per marker, and whether
-the recheck is a skill of its own or part of `tidy`, or by dropping the idea. Kept
-until a project asks for its dated facts to be rechecked; on 2026-10-19 one project dated
-them and none had asked.
-
-## Question the premise after two failed fixes
-
-2026-10-30 · ub-mode, Robert C. Martin's skill · kept 2026-11-02
-
-ub-mode's "Attack the Premise": once two fixes that share one premise fail the same check, write
-the premise in one sentence and question it before a third fix. Not added to `debugging`: an eval
-case where the user's two fixes in the wrong function failed passed without the plugin on Opus and
-Sonnet, 3 runs each, so by ADR evals nothing showed the line would change what Claude does.
-Settled by a session where Claude tries a third fix on the same wrong premise, then a case built
-from it that fails without the line, or by dropping the idea.
-
 ## Eval cases for verify, doctor and retro
 
-2026-11-01 · evals · kept 2026-11-02
+2026-11-01 · evals · kept 2026-11-09
 
 Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
 scripts). On 2026-11-02 Bash was granted by moving every link out of `~/.docker` for the run
@@ -186,11 +168,13 @@ isn't enough) and back after it, with `--allow-tools 'Bash(git *)' 'Bash(python3
 - `retro` reads Transcripts from Claude Code's config, which the sandbox hides; a case for it can't
   run under `claude plugin eval` as it is.
 Settled by a sandbox that runs Git hooks and lets a skill read the session's Transcript, or by
-dropping these cases; each is kept only once it fails without the plugin (ADR evals).
+dropping these cases; each is kept only once it fails without the plugin (ADR evals). From
+2026-11-09 `verify` becomes a louie Workflow and `doctor` and `retro` bagheera's (ADR plugin), so
+each case moves with its part, in the PRD of that move.
 
 ## A commit's body and a code comment say why
 
-2026-11-08 · Missing Semester 2026, Beyond the Code
+2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-09
 
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
@@ -205,7 +189,7 @@ or lines in `principles`; or by dropping the idea.
 
 ## Property-based tests where no literal can be the expected value
 
-2026-11-08 · Missing Semester 2026, Code Quality
+2026-11-08 · Missing Semester 2026, Code Quality · kept 2026-11-09
 
 `testing` §3 takes expected values from outside the code and, where nothing independent exists,
 runs the code instead of testing it. A property (a round trip, an invariant, agreement with a
@@ -213,12 +197,3 @@ slow reference), checked with Hypothesis or fast-check, is a third way: an indep
 with no literal. Settled by an eval case where Claude restates the code's formula as the
 expected value, or leaves logic untested, and the line changes that (ADR evals), or by dropping
 the idea.
-
-## no-git-hook-bypass denies reading core.hooksPath
-
-2026-11-08 · blueprint interview
-
-`git config core.hooksPath` with no value only prints where the Git hooks are, yet the Hook denies
-it as a change ("changes where the Git hooks are"). Seen while checking which projects had their
-Git hooks turned on. Settled by telling a read (no value, `--get`, `--list`) from a write, with a
-test for each, or by the Release that turns the hooks over to `.githooks/` changing the Check.
