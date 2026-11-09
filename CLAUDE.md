@@ -15,7 +15,8 @@ Python, and `shellcheck` on `plugins/baloo/scripts/hook`. `mise run release` cut
 Release, but only counts commits under `plugins/baloo/`, the schema aside (ADR
 releases); a commit outside it — the tests, this file, the README — just needs a plain push.
 Commit subjects become the CHANGELOG: split unrelated changes into a commit per type, and write
-each subject for users. A commit that changes a feature with a PRD in `.about/prd/` names it in
-its body, `PRD <feature>`, so a Verification finds it.
+each subject for users. A `feat` commit under `plugins/baloo/` names the feature's PRD in
+`.about/prd/` in its body, `PRD <feature>`, and a `fix` the PRD, ADR or Issue it brings the code
+back to, so a Verification finds it; a feature without a PRD gets one first (PRD harness).
 
 See README.md for the Git hooks, Format on edit, CI and development in full.

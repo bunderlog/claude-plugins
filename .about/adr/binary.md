@@ -1,6 +1,6 @@
 # The Hooks and Git hooks run the plugin's own Python code, standard library only
 
-Date: 2026-10-14
+Date: 2026-11-09
 
 Claude Code's Hooks and Git hooks are only triggers: each runs `baloo`, the plugin's Python code,
 which runs the Checks the Config turns on (ADR config). The code ships inside the plugin, so what
@@ -44,6 +44,10 @@ Code installing and updating the plugin in the background.
   user's machine and about 2 ms a start against Python's 7, but the binary was opaque where it ran,
   and it took a build per platform, a Loader, a wait for the download after each update, no
   Windows, and no Checks offline.
+- One Go binary sharing `hathi`'s code, so the patterns of Secrets live in one place — what
+  they share is a Retro's masking patterns, an Env file's name and an Allow mark's, while a binary
+  must reach every machine (about 1.5 MB per platform committed with each Release, or a download
+  after each update), is built per platform, and ties each Release to `hathi`'s.
 - Each Hook running `python3` itself from `hooks.json` — no script between, but the check that
   `python3` is there, and the quiet exit, written into every Hook's command.
 - TypeScript run with `bun` — `bun` would have to be on every machine, where `python3` usually is.
@@ -65,7 +69,8 @@ Code installing and updating the plugin in the background.
   download them by their `v*` tag.
 - The repo's tests are in `tests/`, outside the plugin, so a Release doesn't ship them; `mise run
   check` runs them on Python 3.9, the oldest supported, so code that needs a newer one fails there.
-- Windows is untried: it works only where `python3` runs in the shell Claude Code gives Hooks.
+- Windows isn't supported (PRD harness): it works only where `python3` runs in the shell Claude
+  Code gives Hooks.
 - Making the repo private is a one-way door: every installed copy stops updating at once.
   Everything committed, `.about/` included, is public.
 - Revisit when Python's start time or the spread of its versions hurts in use, or a Check needs

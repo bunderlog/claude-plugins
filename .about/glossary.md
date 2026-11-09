@@ -113,7 +113,13 @@ host.
 **Setup**:
 Everything that shapes how Claude works in a project: its CLAUDE.md, the Config, Claude Code's
 settings, and the skills, Hooks and plugins it uses.
-_Avoid_: harness
+_Avoid_: harness, which is all the projects' Setups and the person's own rules together
+
+**Harness**:
+The projects' Setups together with the own rules for Claude (`~/.claude/`) of each person who
+works in them, baloo and `hathi`: what keeps work in order across projects and within a team (PRD
+harness).
+_Avoid_: Setup, which is one project's; environment
 
 **Transcript**:
 The record Claude Code keeps of a session: every prompt, reply and tool call, with the call's full
