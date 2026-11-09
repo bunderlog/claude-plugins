@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.37.0 — 2026-11-09
+
+### Breaking changes
+
+- keep the Checks and Guidelines always on, whatever the Config says (539ab5e)
+
 ## 0.36.0 — 2026-11-09
 
 ### Breaking changes
