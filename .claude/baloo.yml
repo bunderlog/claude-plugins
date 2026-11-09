@@ -6,19 +6,15 @@
 # The Output style for Claude's replies, picked at session start in the settings file that
 # enables the plugin (the project's .claude/settings.local.json for the user's settings), where no
 # settings file of Claude Code's picks one; false picks none.
-output-style: short-replies
+# Off while baloo still has a Config: the Output style and the Status line are each person's own,
+# in ~/.claude/settings.json (PRD project-setup).
+output-style: false
 
 # The plugin's Status line, set at session start in .claude/settings.local.json, where no
 # settings file of Claude Code's but the user's own sets one; false takes it out. Instead of
 # true it also takes its bars, in the order shown, and the percentages at which each turns yellow
 # and red; cache's are of the cache's lifetime left, so red is below yellow.
-status-line:
-  bars: [context, 5h, 7d, cache]
-  thresholds:
-    context: { yellow: 15, red: 20 }
-    5h: { yellow: 70, red: 85 }
-    7d: { yellow: 80, red: 95 }
-    cache: { yellow: 40, red: 20 }
+status-line: false
 
 # The Session review: when a session ends, a separate Claude session proposes, in .about/proposals/,
 # changes to .about/ for what the conversation settled or left open but nobody wrote down; a
@@ -29,15 +25,6 @@ session-review: false
 # repo's root with the file's path at the end, and says nothing of how it went. Off without it, or
 # with false.
 # format-on-edit: npx prettier --write
-
-# The project's own commands, by Git hook (pre-commit, commit-msg, pre-push), that the plugin's Git
-# hook runs with sh after its Checks pass, with git's arguments as $1 and, for pre-push, the pushed
-# refs on stdin; the commit or push fails when the command does. Off without it, or with false.
-# hathi, which mise.toml pins, runs the commit and repo Checks it took over from the plugin.
-git-hook-commands:
-  commit-msg: hathi check commit-msg "$1"
-  pre-commit: hathi check pre-commit
-  pre-push: hathi check pre-push
 
 # Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
 # Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
@@ -68,7 +55,8 @@ claude-hooks:
 # where at least one of their Checks is on. conventional-commits also takes its settings instead
 # of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
 # max-length: 0 any length. no-large-files takes { max-size: 5000 }, in KB; 1024 without it.
-# hathi runs all but no-stale-adr-date, through git-hook-commands above.
+# All off: the committed Git hooks in .githooks/ run hathi, which has every one of them since 1.2.0
+# (PRD project-setup), so the plugin writes no Git hook.
 git-hooks:
   conventional-commits: false
   linear-history: false
@@ -76,4 +64,4 @@ git-hooks:
   no-conflict-markers: false
   no-large-files: false
   no-secrets-in-commits: false
-  no-stale-adr-date: true
+  no-stale-adr-date: false
