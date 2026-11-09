@@ -2,6 +2,20 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.35.0 — 2026-11-09
+
+### Features
+
+- prd: have a fresh subagent read a PRD before it is agreed, and name its Anti-goals (39a4a99)
+- interview: ask the approach first, and show options that look different in a preview (8c0b89b)
+- verify: offer a Verification at the end of a task that serves an Issue or PRD (76a9cc1)
+- principles: end a task that serves an Issue or PRD with an offer of /baloo:verify (f5cb9c9)
+
+### Fixes
+
+- prd: load the skill when the user agrees a PRD, so its fresh read runs (c316d42)
+- prd: keep the due date out of a PRD's Success signal (c82dbe1)
+
 ## 0.34.0 — 2026-10-31
 
 ### Features
