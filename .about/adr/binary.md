@@ -1,14 +1,14 @@
-# The Hooks and Git hooks run the plugin's own Python code, standard library only
+# The Hooks run the plugin's own Python code, standard library only
 
 Date: 2026-11-09
 
-Claude Code's Hooks and Git hooks are only triggers: each runs `baloo`, the plugin's Python code,
-which runs the Checks the Config turns on (ADR config). The code ships inside the plugin, so what
-runs on a user's machine is code they, a reviewer or Claude can read and debug there, and a
-Release has nothing to build per platform or to download. It uses Python's standard library only,
-so nothing is installed, and supports Python 3.9 and later, the `python3` that Xcode's Command
-Line Tools ship and Debian 11 has. Anthropic's own plugins, `hookify` and `security-guidance`, run
-`python3` from their Hooks the same way, so it is a requirement plugins already make.
+Claude Code's Hooks are only triggers: each runs `baloo`, the plugin's Python code, which runs the
+Checks the Config turns on (ADR config). The code ships inside the plugin, so what runs on a user's
+machine is code they, a reviewer or Claude can read and debug there, and a Release has nothing to
+build per platform or to download. It uses Python's standard library only, so nothing is installed,
+and supports Python 3.9 and later, the `python3` that Xcode's Command Line Tools ship and Debian 11
+has. Anthropic's own plugins, `hookify` and `security-guidance`, run `python3` from their Hooks the
+same way, so it is a requirement plugins already make.
 
 The code is the package `baloo` in the plugin's `scripts/`, and its entry script `scripts/run.py`
 takes a command: `session-start`, `pre-tool-use`, `doctor`, `git-hook <hook>` and the rest. Each
@@ -22,16 +22,15 @@ checks). The Read tool's Hook ends in `sh` unless the path has `/guidelines/` in
 every Read starts no Python.
 
 `run.py` is written for any `python3`, so one older than 3.9 says so rather than failing on newer
-syntax: on stderr with exit 2 for session start and for a command run by hand or by a skill, such
-as `doctor`; with exit 0 for a Git hook, so the commit goes through (ADR git-hooks); and not at all
-for the other Hooks and the Status line. CI's `old-python` job checks it on Python 3.6, where
-`:=` and other newer syntax fail before the check could run.
+syntax: on stderr with exit 2 for session start and for a command run by hand or by a skill, such as
+`doctor`; with exit 0 for a Git hook an earlier Release wrote, so the commit goes through (ADR
+git-hooks); and not at all for the other Hooks and the Status line. CI's `old-python` job checks it
+on Python 3.6, where `:=` and other newer syntax fail before the check could run.
 
-Each part session start reports on (the Config, the Output style, the attribution, the Status
-line, the Git hooks, the Session review, the Inbox, the Guidelines, the uncommitted edits in
-`.about/`) returns its own lines, and session start only gathers them; the Inbox's parsing is a
-module of its own. In Go, `sessionStart` wrote every part's lines itself, so each new part edited
-`main.go` and its 857-line test.
+Each part session start reports on (the Config, the Output style, the Status line, the Session
+review, the Inbox, the Guidelines, the uncommitted edits in `.about/`) returns its own lines, and
+session start only gathers them; the Inbox's parsing is a module of its own. In Go, `sessionStart`
+wrote every part's lines itself, so each new part edited `main.go` and its 857-line test.
 
 The repo, `bunderlog/claude-plugins`, is public, since everything a user's machine fetches from it
 must work without a token: the Config's `$schema` from `raw.githubusercontent.com`, and Claude
@@ -63,8 +62,9 @@ Code installing and updating the plugin in the background.
 - The code is written for 3.9: no `match`, no `tomllib`, and newer type syntax only behind
   `from __future__ import annotations`.
 - Each Hook starts Python, about 7 ms here against the Go binary's 2, plus its imports.
-- The Git hooks and the Status line keep their fixed link in `${CLAUDE_PLUGIN_DATA}`, now to the
-  running version's plugin folder (ADR git-hooks, ADR status-line).
+- The Status line, and the Git hooks an earlier Release wrote, keep their fixed link in
+  `${CLAUDE_PLUGIN_DATA}`, now to the running version's plugin folder (ADR git-hooks, ADR
+  status-line).
 - The binaries of Releases before the port stay on GitHub, since copies still on those versions
   download them by their `v*` tag.
 - The repo's tests are in `tests/`, outside the plugin, so a Release doesn't ship them; `mise run

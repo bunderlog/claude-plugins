@@ -3,8 +3,8 @@
 `baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
 language, decisions and requirements explicit, write its Issues, go through its Inbox, run a
 Retro or a Verification, or show the plugin's state; a Session review; Guidelines of working
-rules; Checks in the plugin's Python code that Hooks and Git hooks trigger; an Output style for
-Claude's replies; and a Status line.
+rules; Checks in the plugin's Python code that Hooks trigger; an Output style for Claude's
+replies; and a Status line.
 
 ## Distribution
 
@@ -60,9 +60,10 @@ project
 
 **Git hook**:
 A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit
-or push, whether you or Claude made it. The plugin's run the Git hook Checks the Config turns on.
+or push, whether you or Claude made it. A set-up project's own, committed, run `hathi`; the plugin
+writes none, and one an earlier Release wrote lets each commit through (ADR git-hooks).
 _Avoid_: "hook" alone
-_In code_: `baloo/githooks.py`
+_In code_: `git_hook` in `baloo/cli.py`, for the old ones
 
 **Config**:
 A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
@@ -73,24 +74,17 @@ _Avoid_: settings, which are Claude Code's `settings.json`
 _In code_: `baloo/config.py`
 
 **Check**:
-Code in the plugin that a Hook or a Git hook triggers, such as `baloo:no-secrets-in-commits`,
-turned on or off by a key of its own in the Config. Each runs either in a Hook or in a Git hook,
-called "a Check a Hook runs" and "a Check a Git hook runs" (for short, "a Hook Check" and "a Git
-hook Check").
+Code in the plugin that a Hook triggers, such as `baloo:no-secrets-in-context`, turned on or off
+by a key of its own under `claude-hooks` in the Config, and on without it (ADR checks); a commit's
+Checks are `hathi`'s.
 _Avoid_: built-in check; "a Check on Claude's tool calls"
-_In code_: `baloo/checks/`; `HOOK_CHECKS`, `GIT_HOOK_CHECKS`
+_In code_: `baloo/checks/`; `HOOK_CHECKS`
 
 **Format on edit**:
 The plugin's run of the project's own formatter, named in the Config, on each file Claude edits,
 saying nothing of how it went; not a Check.
 _Avoid_: "lint on edit"; a Check
 _In code_: `format-on-edit`, `post_tool_use` in `baloo/cli.py`
-
-**Git hook command**:
-The project's own command, named by Git hook under `git-hook-commands` in the Config, that the
-plugin's Git hook runs once its Checks pass, such as `mise run test` before a commit; not a Check.
-_Avoid_: a Check; "hook command", which could be a Hook's
-_In code_: `git-hook-commands`, `names.GIT_HOOK_COMMANDS`, `git_hook` in `baloo/cli.py`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
@@ -207,6 +201,10 @@ _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` skill; `agents/verifier.md`; `names.VERIFIER`
 
 ## Retired terms
+
+- **Git hook command** — the project's own command, by Git hook under `git-hook-commands` in the
+  Config, that the plugin's Git hook ran once its Checks passed, until 2026-11-09; a project's own
+  Git hooks run it now (ADR git-hooks).
 
 - **Loader** — the `sh` script that downloaded the plugin's Go binary and ran it, until
   2026-10-14; the Hooks now run `scripts/hook`, which runs the plugin's Python code (ADR binary).

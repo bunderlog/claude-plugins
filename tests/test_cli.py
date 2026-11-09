@@ -132,27 +132,6 @@ class PreToolUse(unittest.TestCase):
                 self.assertEqual(pre_tool_use(self, bash(command)), ("", ""))
 
 
-class Check(unittest.TestCase):
-    # A Git hook's Check the Config turns off passes everything, and conventional-commits takes
-    # its settings from the Config.
-    def test_takes_the_config(self):
-        commands.env(self)
-        dir = testkit.repo(self)
-        commands.chdir(self, dir)
-        message = os.path.join(testkit.tempdir(self), "COMMIT_EDITMSG")
-        write(message, "wip: x\n")
-        for config, want in [
-            ("", 0),  # off without its key
-            ("git-hooks:\n  conventional-commits: true\n", 1),
-            ("git-hooks:\n  conventional-commits:\n    types: [wip]\n", 0),
-            ("git-hooks:\n  conventional-commits: false\n", 0),
-        ]:
-            with self.subTest(config=config):
-                write(os.path.join(dir, names.CONFIG), config)
-                code, _, err = run("check", "conventional-commits", message)
-                self.assertEqual(code, want, err)
-
-
 class AllowGuideline(unittest.TestCase):
     # The Read Hook allows a Guideline file, and says nothing of any other file or call.
     def test_allow_guideline(self):

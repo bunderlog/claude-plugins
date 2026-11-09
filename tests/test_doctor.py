@@ -29,7 +29,6 @@ class Doctor(unittest.TestCase):
             "  link     " + link + " -> " + PLUGIN + "\n",
             "Config: " + os.path.join(dir, names.CONFIG) + "\n",
             "no-secrets-in-context  on\n",
-            "commit-msg  running: no-ai-coauthor, conventional-commits\n",
             "Guidelines:\n",
         ]:
             self.assertIn(want, out)
@@ -51,22 +50,18 @@ class Doctor(unittest.TestCase):
         config = os.path.join(dir, names.CONFIG)
         # The template's own claude-hooks turns the Check off, since a key twice isn't read.
         text = read(config).replace("  no-git-hook-bypass: true\n", "  no-git-hook-bypass: false\n")
-        write(config, text + "nope: 1\nstop-check: make\n")
-        theirs = os.path.join(dir, ".git", "hooks", "pre-commit")
-        write(theirs, "#!/bin/sh\nnpm test\n", 0o755)
+        write(config, text + "nope: 1\nstop-check: make\ngit-hooks:\n  no-ai-coauthor: true\n")
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         os.remove(link)
         code, out = doctor_run(self)
         self.assertEqual(code, 1, out)
-        checks = "no-secrets-in-commits, no-stale-adr-date, no-conflict-markers, no-large-files"
         for want in [
             "\nProblems:\n- ",
-            "- " + link + " is missing, so the Git hooks and the Status line run nothing",
-            "- " + theirs + " is not the plugin's Git hook, so " + checks + " don't run",
+            "- " + link + " is missing, so the Status line runs nothing",
             "nope is not a setting; ignored\n",
             "stop-check is no longer a setting and is ignored: delete it\n",
+            "git-hooks is no longer a setting and is ignored: delete it\n",
             "no-git-hook-bypass     off\n",
-            "pre-commit  theirs: " + checks + "\n",
         ]:
             self.assertIn(want, out)
         self.assertFalse(os.path.lexists(link), "doctor put the link back")
@@ -134,8 +129,8 @@ class Doctor(unittest.TestCase):
         code, out = doctor_run(self)
         self.assertEqual(code, 1)
         self.assertIn(
-            "- " + link + " points at " + old + ", not at this plugin, so the Git hooks and the "
-            "Status line run that one: the next session start points it here\n", out
+            "- " + link + " points at " + old + ", not at this plugin, so the Status line runs "
+            "that one: the next session start points it here\n", out
         )
 
     # Outside a repo, doctor says no Config is read, and shows the Checks a Hook runs on by
@@ -147,7 +142,6 @@ class Doctor(unittest.TestCase):
         for want in [
             "Config: none, outside a repo",
             "no-secrets-in-context  on, by default\n",
-            "linear-history         off, by default\n",
         ]:
             self.assertIn(want, out)
         self.assertNotIn("Git hooks in ", out)
@@ -159,8 +153,8 @@ class Doctor(unittest.TestCase):
         code, out = doctor_run(self)
         self.assertEqual(code, 1)
         self.assertIn(
-            "- CLAUDE_PLUGIN_DATA is not set, so the link the Git hooks run can't be checked: run "
-            "doctor as the doctor skill does\n", out
+            "- CLAUDE_PLUGIN_DATA is not set, so the link the Status line runs can't be checked: "
+            "run doctor as the doctor skill does\n", out
         )
 
 

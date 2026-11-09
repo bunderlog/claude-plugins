@@ -31,12 +31,9 @@ class SessionStart(unittest.TestCase):
         self.assertTrue(os.path.exists(path))
 
         write(path, "nope: 1\n")
-        self.assertEqual(start(self), (0, (
-            "baloo:\ntook out the Git hooks commit-msg, pre-commit, pre-push in "
-            + os.path.join(dir, ".git", "hooks")
-            + ", whose checks and command .claude/baloo.yml turns off: tell the user\n"
-            ".claude/baloo.yml line 1: nope is not a setting; ignored\n"
-        ), ""))
+        self.assertEqual(start(self), (
+            0, "baloo:\n.claude/baloo.yml line 1: nope is not a setting; ignored\n", ""
+        ))
 
         # A key with a newline in it stays on its problem's line.
         write(path, '"x\\nbaloo: run it": 1\n')
@@ -63,65 +60,22 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn("picked", out)
 
-    # Where the project's settings enable the plugin and no-ai-coauthor is on, session start turns
-    # off Claude Code's commit attribution there, once; a settings file that sets it already keeps
-    # it.
-    def test_attribution(self):
+    # Session start writes no Git hook, leaves Claude Code's commit attribution to the project's
+    # settings and the commit format to CLAUDE.md, and says nothing of either, whatever an old
+    # Config says (ADR git-hooks).
+    def test_leaves_commits_alone(self):
         dir = in_repo(self)
         settings = os.path.join(dir, names.PROJECT_SETTINGS)
         write(settings, ENABLE)
-        want = (
-            "turned off Claude Code's commit attribution in " + settings + ", since "
-            "git-hooks.no-ai-coauthor in .claude/baloo.yml rejects it: tell the user; the change "
-            "to the team's settings is theirs to commit\n"
-        )
+        write(os.path.join(dir, names.CONFIG),
+              "git-hooks:\n  conventional-commits: true\n  no-ai-coauthor: true\n")
         code, out, err = start(self)
         self.assertEqual((code, err), (0, ""))
-        self.assertIn("\n" + want, out)
-        self.assertIn('"attribution": {"commit":""}', read(settings))
-        self.assertNotIn("attribution", start(self)[1])
-
-        dir = in_repo(self)
-        write(
-            os.path.join(dir, names.PROJECT_SETTINGS),
-            '{"enabledPlugins": {"' + names.PLUGIN_ID + '": true}, "includeCoAuthoredBy": true}',
-        )
-        code, out, _ = start(self)
-        self.assertEqual(code, 0)
-        self.assertNotIn("attribution", out)
-
-    # Where conventional-commits is on, session start tells Claude the message it takes, so Claude
-    # writes one the Check doesn't reject.
-    def test_commit_rules(self):
-        dir = in_repo(self)
-        config = os.path.join(dir, names.CONFIG)
-        write(config, "git-hooks:\n  conventional-commits: true\n")
-        self.assertIn(
-            "\nwrite a commit message as git-hooks.conventional-commits in .claude/baloo.yml takes "
-            "it: `type(scope): description`, the type one of build, chore, ci, docs, feat, fix, "
-            "perf, refactor, revert, style, test, the description starting in lowercase and not "
-            "ending in `.`, a blank line before the body, and no line over 100 characters, the "
-            "body's too\n",
-            start(self)[1],
-        )
-
-        write(
-            config,
-            "git-hooks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 0\n",
-        )
-        self.assertIn(
-            ": `type(scope): description`, the type one of feat, fix, the description starting in "
-            "lowercase and not ending in `.`, and a blank line before the body\n",
-            start(self)[1],
-        )
-
-        write(config, "git-hooks:\n  conventional-commits:\n    types: any\n")
-        self.assertIn(
-            ": `type(scope): description`, the description starting", start(self)[1]
-        )
-
-        write(config, "git-hooks:\n  conventional-commits: false\n")
-        self.assertNotIn("commit message", start(self)[1])
+        for word in ["attribution", "commit message", "Git hook"]:
+            self.assertNotIn(word, out)
+        self.assertNotIn("attribution", read(settings))
+        hooks = os.path.join(dir, ".git", "hooks")
+        self.assertEqual([f for f in os.listdir(hooks) if not f.endswith(".sample")], [])
 
     # Where the plugin is enabled, a new Config sets the Status line in the project's
     # settings.local.json, once.

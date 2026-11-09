@@ -25,11 +25,8 @@ PRDS = ".about/prd/"
 PROPOSALS = ".about/proposals/"
 # A repo's file of what is still to consider, one `## ` heading per item, from its root.
 INBOX = ".about/inbox.md"
-# The Config's key of the project's own commands the Git hooks run after their Checks;
-# `GIT_HOOK_COMMANDS + "." + <hook>` names one.
-GIT_HOOK_COMMANDS = "git-hook-commands"
 # Marks what the plugin wrote into a file it shares, so it knows it for its own: the statusLine
-# command, a Git hook, husky's line.
+# command, and a Git hook or husky's line an earlier Release wrote.
 MARKER = "# managed by " + PLUGIN
 # Where editors find the Config's JSON Schema, which a new Config names.
 SCHEMA = (

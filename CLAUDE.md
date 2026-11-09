@@ -20,4 +20,4 @@ the feature's PRD in `.about/prd/` in its body, `PRD <feature>`, and a `fix` the
 it brings the code back to, so a Verification finds it; a feature without a PRD gets one first (PRD
 harness).
 
-See README.md for the Git hooks, Format on edit, CI and development in full.
+See README.md for Format on edit, the doctor and development in full.

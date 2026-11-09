@@ -1,6 +1,6 @@
 # The Config is `.claude/baloo.yml`, created at session start with every Check on
 
-Date: 2026-10-14
+Date: 2026-11-09
 
 A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
 settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
@@ -59,21 +59,20 @@ for Claude, a Config it created and the problems.
 ## Consequences
 
 - With a user-scope install, every repo opened gets a Config, and every Check, at its first
-  session: a new file to commit, and Checks such as Git hooks and commit rules it didn't ask for.
+  session: a new file to commit, and Checks it didn't ask for.
 - A deleted Config comes back at the next session start; a repo opts out of a Check by turning
   its key off, not by deleting the file.
 - Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
   the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
   where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
-  it has a package manager's manifest, and `format-on-edit` and `git-hook-commands`, whose
-  commands the template can't know, are comments there (ADR format-on-edit, ADR git-hooks).
-- The template lists the keys of `guidelines`, `claude-hooks` and `git-hooks` sorted, whatever
+  it has a package manager's manifest, and `format-on-edit`, whose command the template can't
+  know, is a comment there (ADR format-on-edit).
+- The template lists the keys of `guidelines` and `claude-hooks` sorted, whatever
   order the code keeps them in, so a key is found by its name; a test checks it.
 - A new key reaches a Config that exists only when its user adds it, so its default must be what
   the Check did before it had the key, unless ADR checks says otherwise.
 - The schema is read from `main`, so an editor can check a Config against settings newer than
   the installed Release.
-- The path says Claude, though the Checks Git hooks run act on every commit, Claude's or not.
 - Only the first YAML document is read; a second one is ignored silently.
 - A key written twice is one problem, and none of the file applies, as YAML that doesn't parse;
   go-yaml took both.

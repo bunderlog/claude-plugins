@@ -1,12 +1,9 @@
 """Session start, the SessionStart Hook's part (ADR binary): it creates the repo's Config when it
 has none (ADR config), reads it, picks the Output style it names where Claude Code's settings pick
-none (ADR output-styles), turns off Claude Code's commit attribution where no-ai-coauthor is on and
-they set none, tells Claude the commit message conventional-commits takes where it is on (ADR
-checks), sets the Status line or takes it out (ADR status-line), and writes the
-Git hooks or takes them out (ADR git-hooks). What it prints Claude Code adds to Claude's context, so
-it prints only what Claude should know: a Config it created, an Output style, an attribution or a
-Status line it set, the Git hooks it wrote, took out, changed in husky or left alone, a Hook Check
-it turns off (ADR checks), a Session review still running and the Proposals waiting for the user
+none (ADR output-styles), and sets the Status line or takes it out (ADR status-line); it writes no
+Git hook (ADR git-hooks). What it prints Claude Code adds to Claude's context, so it prints only
+what Claude should know: a Config it created, an Output style or a Status line it set, a Hook
+Check it turns off (ADR checks), a Session review still running and the Proposals waiting for the user
 (ADR session-review), how many items the Inbox holds (ADR inbox), the files in .about/ git hasn't
 committed (ADR about-folder), and the problems, each on one line; then the Guidelines the Config turns on (ADR guidelines). In a Session review's session it
 only names the Guidelines: that session changes nothing but its Proposals (ADR session-review).
@@ -26,7 +23,6 @@ from baloo import (
     binlink,
     checks,
     config,
-    githooks,
     guidelines,
     hook,
     inbox,
@@ -36,7 +32,6 @@ from baloo import (
     settings,
     statusline,
 )
-from baloo.checks.commit import COMMIT_TYPES, MAX_LINE
 from baloo.checks.git import Error as GitError, git
 
 
@@ -104,41 +99,6 @@ def _output_style(s: Start) -> Lines:
     return out
 
 
-def _attribution(s: Start) -> Lines:
-    c, out = s.config, Lines()
-    if not c.root or not c.check_on("no-ai-coauthor"):
-        return out
-    path, enabled, err = settings.set_unset(
-        s.dir, c.root, ["attribution", "includeCoAuthoredBy"], "attribution", {"commit": ""}
-    )
-    line = (
-        f"turned off Claude Code's commit attribution in {path}, since git-hooks.no-ai-coauthor "
-        f"in {names.CONFIG} rejects it: tell the user"
-    )
-    out.setting(path, enabled, line, err, "could not turn off the commit attribution")
-    return out
-
-
-def _commit_rules(s: Start) -> Lines:
-    c = s.config
-    if not c.root or not c.check_on("conventional-commits"):
-        return Lines()
-    rules = c.commit_rules
-    types = COMMIT_TYPES if rules.types is None else rules.types
-    longest = MAX_LINE if rules.max_length is None else rules.max_length
-    parts = ["`type(scope): description`"]
-    if not rules.any_type:
-        parts.append("the type one of " + ", ".join(types))
-    parts.append("the description starting in lowercase and not ending in `.`")
-    parts.append("a blank line before the body")
-    if longest:
-        parts.append(f"no line over {longest} characters, the body's too")
-    return Lines([
-        f"write a commit message as git-hooks.conventional-commits in {names.CONFIG} takes it: "
-        + ", ".join(parts[:-1]) + ", and " + parts[-1]
-    ])
-
-
 def _status_line(s: Start) -> Lines:
     c, out = s.config, Lines()
     if not c.root or c.status_line is None:
@@ -152,44 +112,6 @@ def _status_line(s: Start) -> Lines:
         )
     out.fail("could not set the status line", err)
     return out
-
-
-def _git_hooks(s: Start) -> Lines:
-    c = s.config
-    if not c.root:
-        return Lines()
-    r, err = githooks.write(c.root, s.data, c.git_hook_runs)
-    out = Lines(git_hooks_report(r))
-    out.fail("could not write the Git hooks", err)
-    return out
-
-
-def git_hooks_report(r: githooks.Report) -> List[str]:
-    """What Claude is told of the Git hooks session start wrote, took out or left alone (ADR
-    git-hooks)."""
-    lines = []
-    if r.written:
-        lines.append(
-            f"wrote the Git hooks {', '.join(r.written)} in {r.dir}, which run the plugin's "
-            "checks, and the commands under git-hook-commands, on every commit and push: tell the "
-            f"user, and that a check's key under git-hooks in {names.CONFIG} turns it off"
-        )
-    if r.removed:
-        lines.append(
-            f"took out the Git hooks {', '.join(r.removed)} in {r.dir}, whose checks and command "
-            f"{names.CONFIG} turns off: tell the user"
-        )
-    if r.husky:
-        lines.append(
-            f"changed {', '.join(r.husky)}, husky's Git hooks, to run the plugin's where their "
-            "checks are on: tell the user, and that the change is theirs to commit"
-        )
-    for b in r.theirs:
-        lines.append(
-            f"{b.path} is not the plugin's Git hook, so {', '.join(b.runs)} don't run: tell the "
-            f"user, and that their keys in {names.CONFIG}, turned off, end this line"
-        )
-    return lines
 
 
 def _hook_checks_off(s: Start) -> Lines:
@@ -284,10 +206,7 @@ PARTS: List[Callable[[Start], Lines]] = [
     _config,
     _stack_off,
     _output_style,
-    _attribution,
-    _commit_rules,
     _status_line,
-    _git_hooks,
     _hook_checks_off,
     _session_review,
     _inbox,

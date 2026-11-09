@@ -156,7 +156,7 @@ class Load(Case):
     def test_new_config_checks(self):
         root, _ = self.temp_repo()
         c, _, problems = config.load(root)
-        for name in checks.GIT_HOOK_CHECKS + checks.HOOK_CHECKS:
+        for name in checks.HOOK_CHECKS:
             self.assertIs(c.checks.get(name), True, name)
         self.assertEqual(problems, [])
 
@@ -223,13 +223,13 @@ class Parse(Case):
         ])
         self.assertEqual(got, ["true"])
 
-    # A new Config's guidelines, claude-hooks and git-hooks list their keys sorted.
+    # A new Config's guidelines and claude-hooks list their keys sorted.
     def test_new_config_sorted(self):
         from baloo import yaml
 
         top = yaml.parse(config._new_config([]))
         maps = [(k.text, [kk.text for kk, _ in v.pairs]) for k, v in top.pairs if v.tag == "map"]
-        self.assertEqual([k for k, _ in maps], ["guidelines", "claude-hooks", "git-hooks"])
+        self.assertEqual([k for k, _ in maps], ["guidelines", "claude-hooks"])
         for key, keys in maps:
             self.assertEqual(keys, sorted(keys), key)
 
@@ -374,6 +374,7 @@ class Settings(Case):
         yml = (
             "stop-check: mise run check\nclaude-hooks:\n  no-destructive-commands: true\n"
             "  no-secrets-in-context: false\nformat-on-edit: npx prettier --write\n"
+            "git-hooks:\n  no-ai-coauthor: true\ngit-hook-commands:\n  pre-commit: mise run test\n"
         )
         c, problems = parse(yml)
         self.assertEqual(problems, [])
@@ -381,11 +382,16 @@ class Settings(Case):
             ".claude/baloo.yml line 1: stop-check is no longer a setting and is ignored: delete it",
             ".claude/baloo.yml line 3: claude-hooks.no-destructive-commands is no longer a setting"
             " and is ignored: delete it",
+            ".claude/baloo.yml line 6: git-hooks is no longer a setting and is ignored: delete it",
+            ".claude/baloo.yml line 8: git-hook-commands is no longer a setting and is ignored:"
+            " delete it",
         ])
         self.assertFalse(c.check_on("no-secrets-in-context"))
         self.assertEqual(c.format_on_edit, "npx prettier --write")
         self.assertNotIn("stop-check", config._new_config([]))
         self.assertNotIn("no-destructive-commands", config._new_config([]))
+        self.assertNotIn("git-hooks:", config._new_config([]))
+        self.assertNotIn("git-hook-commands", config._new_config([]))
 
     # format-on-edit names the command run on each file Claude edits; without it, or false, it is
     # off, and a new Config has it only as a comment (ADR format-on-edit).
@@ -404,115 +410,31 @@ class Settings(Case):
                 self.assertEqual((c.format_on_edit, got), (command, problems))
         self.assertIn("\n# format-on-edit: npx prettier --write\n", config._new_config([]))
 
-    # git-hook-commands names, by Git hook, the project's own command it runs after its Checks; a
-    # hook the plugin doesn't write, or a value that isn't a command or false, is a problem at its
-    # own line while the entries beside it apply, and a new Config has it only as a comment (ADR
-    # git-hooks).
-    def test_git_hook_commands(self):
-        for yml, commands, problems in [
-            ("git-hook-commands:\n  pre-commit: mise run test\n  pre-push: false\n",
-             {"pre-commit": "mise run test"}, []),
-            ("git-hook-commands:\n  post-merge: npm ci\n  pre-commit: [x]\n"
-             "  commit-msg: npx commitlint --edit $1\n",
-             {"commit-msg": "npx commitlint --edit $1"}, [
-                ".claude/baloo.yml line 2: git-hook-commands.post-merge is not a Git hook of the"
-                " plugin's; ignored",
-                ".claude/baloo.yml line 3: git-hook-commands.pre-commit: is not a command or false;"
-                " its default applies",
-             ]),
-            ("git-hook-commands: mise run test\n", {}, [
-                ".claude/baloo.yml line 1: git-hook-commands: is not a map of Git hooks to"
-                " commands; its default applies",
-            ]),
-            (config._new_config([]), {}, []),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual((c.git_hook_commands, got), (commands, problems))
-        self.assertIn("\n# git-hook-commands:\n#   pre-commit: mise run test\n",
-                      config._new_config([]))
-        c, _ = parse("git-hook-commands:\n  pre-commit: mise run test\n")
-        self.assertTrue(c.git_hook_runs("git-hook-commands.pre-commit"))
-        self.assertFalse(c.git_hook_runs("git-hook-commands.pre-push"))
-        self.assertFalse(c.git_hook_runs("conventional-commits"))
-
-    # Each Check turns on or off with its own key under the group that runs it, and a wrong entry
-    # is a problem at its own line while the entries beside it apply. Without its key, a Check a
-    # Hook runs is on and a Git hook's is off (ADR checks).
+    # Each Check a Hook runs turns on or off with its own key under claude-hooks, and is on
+    # without it; a wrong entry is a problem at its own line while the entries beside it apply
+    # (ADR checks).
     def test_checks(self):
         hooks = ["no-git-hook-bypass", "no-secrets-in-context"]
         for yml, on, problems in [
-            ("git-hooks:\n  no-ai-coauthor: true\nclaude-hooks:\n  no-secrets-in-context: false\n",
-             ["no-ai-coauthor", "no-git-hook-bypass"], []),
+            ("claude-hooks:\n  no-secrets-in-context: false\n", ["no-git-hook-bypass"], []),
             ("", hooks, []),
-            ("claude-hooks:\ngit-hooks:\n", hooks, []),
-            ("git-hooks:\n  nope: true\n  linear-history: yes please\n"
-             "  no-secrets-in-context: false\nclaude-hooks:\n  no-git-hook-bypass: false\n"
-             "  no-ai-coauthor: true\n",
-             ["no-secrets-in-context"], [
-                ".claude/baloo.yml line 2: git-hooks.nope is not a check; ignored",
-                ".claude/baloo.yml line 3: git-hooks.linear-history: is not true or false; its"
-                " default applies",
-                ".claude/baloo.yml line 4: git-hooks.no-secrets-in-context is not a check; ignored",
-                ".claude/baloo.yml line 7: claude-hooks.no-ai-coauthor is not a check; ignored",
+            ("claude-hooks:\n", hooks, []),
+            ("claude-hooks:\n  nope: true\n  no-git-hook-bypass: yes please\n"
+             "  no-ai-coauthor: true\n", hooks, [
+                ".claude/baloo.yml line 2: claude-hooks.nope is not a check; ignored",
+                ".claude/baloo.yml line 3: claude-hooks.no-git-hook-bypass: is not true or false;"
+                " its default applies",
+                ".claude/baloo.yml line 4: claude-hooks.no-ai-coauthor is not a check; ignored",
              ]),
-            ("git-hooks: true\n", hooks, [
-                ".claude/baloo.yml line 1: git-hooks: is not a map of checks to true or false; its"
-                " default applies",
-            ]),
-            ("checks:\n  no-ai-coauthor: true\n", hooks, [
+            ("checks:\n  no-secrets-in-context: false\n", hooks, [
                 ".claude/baloo.yml line 1: checks is not a setting; ignored",
             ]),
-            ("git-hooks:\n  conventional-commits:\n    types: any\n",
-             ["conventional-commits", "no-git-hook-bypass", "no-secrets-in-context"], []),
         ]:
             with self.subTest(yml):
                 c, got = parse(yml)
-                every = checks.GIT_HOOK_CHECKS + checks.HOOK_CHECKS
-                self.assertEqual((sorted(n for n in every if c.check_on(n)), got), (on, problems))
-
-    # conventional-commits takes its types, a list or any, and its longest line, 0 for none; a
-    # wrong setting is a problem, and its default applies.
-    def test_conventional_commits(self):
-        rules = checks.CommitRules
-        for yml, want, problems in [
-            ("git-hooks:\n  conventional-commits: true\n", rules(), []),
-            ("git-hooks:\n  conventional-commits:\n    types: [feat, fix]\n    max-length: 72\n",
-             rules(types=["feat", "fix"], max_length=72), []),
-            ("git-hooks:\n  conventional-commits:\n    types: any\n    max-length: 0\n",
-             rules(any_type=True, max_length=0), []),
-            ("git-hooks:\n  conventional-commits:\n    types: some\n    max-length: -1\n"
-             "    nope: 1\n", rules(), [
-                ".claude/baloo.yml line 3: git-hooks.conventional-commits.types: is not a list of"
-                " types or any; its default applies",
-                ".claude/baloo.yml line 4: git-hooks.conventional-commits.max-length: is not a"
-                " length of 0 or more; its default applies",
-                ".claude/baloo.yml line 5: git-hooks.conventional-commits.nope is not a setting of"
-                " conventional-commits; ignored",
-             ]),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual((c.commit_rules, got), (want, problems))
-                self.assertTrue(c.check_on("conventional-commits"))
-
-    # no-large-files takes its limit, in KB, of 1 or more; a wrong setting is a problem, and its
-    # default applies.
-    def test_no_large_files(self):
-        for yml, max_kb, problems in [
-            ("git-hooks:\n  no-large-files: true\n", 0, []),
-            ("git-hooks:\n  no-large-files:\n    max-size: 5000\n", 5000, []),
-            ("git-hooks:\n  no-large-files:\n    max-size: 0\n    nope: 1\n", 0, [
-                ".claude/baloo.yml line 3: git-hooks.no-large-files.max-size: is not a size of 1"
-                " KB or more; its default applies",
-                ".claude/baloo.yml line 4: git-hooks.no-large-files.nope is not a setting of"
-                " no-large-files; ignored",
-            ]),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual((c.max_file_kb, got), (max_kb, problems))
-                self.assertTrue(c.check_on("no-large-files"))
+                self.assertEqual(
+                    (sorted(n for n in checks.HOOK_CHECKS if c.check_on(n)), got), (on, problems)
+                )
 
 
 class Plugin(unittest.TestCase):
@@ -550,15 +472,10 @@ class Plugin(unittest.TestCase):
         self.assertEqual(sorted(g["properties"]), want)
         self.assertIs(g["additionalProperties"], False)
 
-    # The schema has a key for each Check under the group that runs it.
+    # The schema has a key for each Check a Hook runs.
     def test_checks(self):
         props = schema()["properties"]
-        for group, want in [
-            ("claude-hooks", checks.HOOK_CHECKS),
-            ("git-hooks", checks.GIT_HOOK_CHECKS),
-        ]:
-            with self.subTest(group):
-                self.assertEqual(sorted(props[group]["properties"]), sorted(want))
+        self.assertEqual(sorted(props["claude-hooks"]["properties"]), sorted(checks.HOOK_CHECKS))
 
 
 if __name__ == "__main__":

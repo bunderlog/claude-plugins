@@ -8,11 +8,9 @@ import json
 import os
 import re
 import shutil
-import signal
 import subprocess
 import sys
-from datetime import date
-from typing import Any, Dict, List, Optional, TextIO, Tuple
+from typing import Any, Dict, List, Optional, TextIO
 
 from baloo import (
     binlink,
@@ -36,10 +34,7 @@ USAGE = (
     "subagent-start | status-line |\n"
     "  pre-tool-use | post-tool-use | session-end | user-prompt-submit |\n"
     "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n"
-    "  proposals |\n  "
-    + " |\n  ".join(checks.usage())
-    + " |\n"
-    "  git-hook " + "|".join(sorted(checks.GIT_HOOKS)) + " <git's arguments> |\n"
+    "  proposals | git-hook <hook> |\n"
     "  condense [--last <n> | <session>...] | condense <session> --around <line>"
 )
 
@@ -98,14 +93,7 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         if code is not None:
             return code
     if len(args) > 1 and args[0] == "git-hook":
-        code = git_hook(args[1], args[2:], stdin, stdout, stderr)
-        if code is not None:
-            return code
-    if len(args) > 1 and args[0] == "check":
-        in_, c = _git_hook_input(stdin)
-        code = checks.run(args[1], args[2:], in_, c.check_on, stderr)
-        if code is not None:
-            return code
+        return git_hook(args[1], stderr)
     stderr.write(USAGE + "\n")
     return 2
 
@@ -542,93 +530,19 @@ def _os_error(op: str, path: str, e: OSError) -> str:
     return f"{op} {path}: {why}" if path else f"{op}: {why}"
 
 
-def _git_hook_input(stdin: Optional[TextIO]) -> Tuple[checks.Input, config.Config]:
-    """What the Checks Git hooks run read in the repo git runs them in, with its Config; a Check
-    passes everything, and no command runs, where the Config can't be read."""
-    try:
-        c = config.read(os.getcwd())
-    except OSError:
-        c = config.Config()
-    return (
-        checks.Input(
-            dir=".", stdin=stdin, today=date.today().isoformat(), rules=c.commit_rules,
-            max_file_kb=c.max_file_kb,
-        ),
-        c,
-    )
-
-
-def git_hook(
-    name: str, args: List[str], stdin: Optional[TextIO], stdout: TextIO, stderr: TextIO
-) -> Optional[int]:
-    """Runs the Git hook `name` (ADR git-hooks): its Checks the Config turns on, then, once they all
-    pass, the command the Config sets for it, with sh, git's arguments `args` as $1 on, and for
-    pre-push the refs git gave on `stdin`, which linear-history reads too. It returns the exit code
-    for git: the Checks', or 1 where the command fails. None where the plugin writes no such Git
-    hook, or git gives none of the arguments one of its Checks takes."""
-    in_, c = _git_hook_input(stdin)
-    command = c.git_hook_commands.get(name, "")
-    pushed: Optional[str] = None
-    if name == "pre-push" and command:
-        try:
-            pushed = _read_strict(stdin)
-        except (OSError, ValueError) as e:
-            stderr.write(f"{names.PLUGIN}:{names.GIT_HOOK_COMMANDS}.{name}: {e}\n")
-            return 2
-        in_.stdin = io.StringIO(pushed)
-    code = checks.run_hook(name, args, in_, c.check_on, stderr)
-    if code is None or code != 0 or not command:
-        return code
-    why = _sh(["sh", "-c", command, "sh"] + args, stdin, pushed, stdout, stderr)
-    if why:
-        stderr.write(f"{names.PLUGIN}:{names.GIT_HOOK_COMMANDS}.{name}: {command}: {why}\n")
-        return 1
-    return 0
-
-
-def _read_strict(stdin: Optional[TextIO]) -> str:
-    return "" if stdin is None else stdin.read()
-
-
-def _fileno(stream: Any) -> Optional[int]:
-    try:
-        return stream.fileno()
-    except (AttributeError, OSError, ValueError, io.UnsupportedOperation):
-        return None
-
-
-def _sh(
-    argv: List[str], stdin: Optional[TextIO], given: Optional[str], stdout: TextIO, stderr: TextIO
-) -> str:
-    """Runs `argv` with `given` on its stdin, or else `stdin`, and its output on `stdout` and
-    `stderr`; it returns why it failed, as Go words it, or ""."""
-    kwargs: Dict[str, Any] = {}
-    if given is not None:
-        kwargs["input"] = given.encode()
-    elif stdin is None:
-        kwargs["stdin"] = subprocess.DEVNULL
-    elif _fileno(stdin) is not None:
-        kwargs["stdin"] = _fileno(stdin)
-    else:
-        kwargs["input"] = stdin.read().encode()
-    out_fd, err_fd = _fileno(stdout), _fileno(stderr)
-    for stream in (stdout, stderr):
-        stream.flush()
+def git_hook(name: str, stderr: TextIO) -> int:
+    """What a Git hook an earlier Release wrote runs now (ADR git-hooks): it lets the commit or push
+    through, saying that the plugin no longer checks it and how to remove the hook."""
     try:
         p = subprocess.run(
-            argv,
-            stdout=out_fd if out_fd is not None else subprocess.PIPE,
-            stderr=err_fd if err_fd is not None else subprocess.PIPE,
-            **kwargs,
+            ["git", "rev-parse", "--git-path", "hooks/" + name],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
         )
-    except OSError as e:
-        return str(e)
-    if out_fd is None and p.stdout:
-        stdout.write(p.stdout.decode(errors="replace"))
-    if err_fd is None and p.stderr:
-        stderr.write(p.stderr.decode(errors="replace"))
-    if p.returncode > 0:
-        return f"exit status {p.returncode}"
-    if p.returncode < 0:
-        return "signal: " + (signal.strsignal(-p.returncode) or str(-p.returncode)).lower()
-    return ""
+        path = p.stdout.strip() if p.returncode == 0 and p.stdout.strip() else ".git/hooks/" + name
+    except OSError:
+        path = ".git/hooks/" + name
+    stderr.write(
+        f"{names.PLUGIN}: no longer checks commits, hathi does (github.com/bunderlog/hathi); "
+        f"this Git hook only lets them through: remove it with rm {path}\n"
+    )
+    return 0

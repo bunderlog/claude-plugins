@@ -16,9 +16,9 @@ class Parse(unittest.TestCase):
     def test_this_repos_config(self):
         with open(os.path.join(ROOT, ".claude", "baloo.yml")) as f:
             got = value(f.read())
-        self.assertEqual(got["output-style"], "short-replies")
-        self.assertEqual(got["status-line"]["bars"], ["context", "5h", "7d", "cache"])
-        self.assertEqual(got["status-line"]["thresholds"]["cache"], {"yellow": 40, "red": 20})
+        self.assertIs(got["output-style"], False)
+        self.assertIs(got["status-line"], False)
+        self.assertIs(got["claude-hooks"]["no-secrets-in-context"], True)
         self.assertIs(got["guidelines"]["vue"], False)
         self.assertNotIn("format-on-edit", got)
 

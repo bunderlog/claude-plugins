@@ -4,38 +4,27 @@ The `bunderlog` marketplace of Claude Code plugins. It holds one plugin, `baloo`
 its [plugin.json](plugins/baloo/.claude-plugin/plugin.json).
 
 It is for developers who work with Claude Code across several projects and want the same
-discipline in each: decisions, terms and requirements recorded in the project's `.about/`, commits
-checked by Git hooks and CI, and one set of working rules and one reply style for Claude.
+discipline in each: decisions, terms and requirements recorded in the project's `.about/`, Secrets
+kept out of Claude's context, and one set of working rules and one reply style for Claude. Commits
+are checked by [`hathi`](https://github.com/bunderlog/hathi), from a project's own Git hooks and
+CI.
 
 ```sh
 claude plugin marketplace add bunderlog/claude-plugins
 claude plugin install baloo@bunderlog
 ```
 
-Its Hooks and Git hooks run its Python code, so they need `python3` 3.9 or later, which a Mac gets
+Its Hooks run its Python code, so they need `python3` 3.9 or later, which a Mac gets
 with the Command Line Tools and most Linux distributions have; nothing else is installed.
 
 Why things are the way they are is in [.about/adr/](.about/adr/).
 
 ## Git hooks
 
-At session start the plugin writes the Git hooks `pre-commit`, `commit-msg` and `pre-push`
-where `.claude/baloo.yml` turns on one of their Checks under `git-hooks`, and takes its own out
-where it turns them all off. A Git hook already there that the plugin didn't write is left alone,
-and session start names the Checks it keeps from running. With husky 9, the plugin's Git hooks go
-into `.git/baloo-hooks/`, and a line first in `.husky/<hook>` runs each: commit that line.
-
-A Git hook also runs the project's own command, once its Checks pass, where `.claude/baloo.yml`
-sets one under `git-hook-commands`, so a repo needs no husky just for its tests:
-
-```yaml
-git-hook-commands:
-  pre-commit: mise run test
-```
-
-The command runs with `sh` in the repo, with git's arguments as `$1` on (`commit-msg: npx
-commitlint --edit $1`) and, for `pre-push`, the pushed refs on stdin; the commit or push fails
-when it does. Only people with the plugin run it: CI should run it too.
+The plugin writes no Git hook: a project's own, committed in `.githooks/`, run `hathi`, and its CI
+runs the same `hathi` (PRD project-setup). A Git hook an earlier Release wrote into `.git/hooks`
+now lets each commit through, saying so and how to remove it; `git-hooks` and `git-hook-commands`
+in `.claude/baloo.yml` are ignored, and `/baloo:doctor` names them for you to delete.
 
 ## Format on edit
 
@@ -47,46 +36,8 @@ and says nothing of how it went.
 
 `/baloo:doctor`, or asking Claude what baloo has on or why a Check didn't run, shows the plugin's
 state in the repo: its problems first, each with what fixes it, then the plugin's version and the
-link the Git hooks run, the Config's settings, each Check on or off, the Git hooks and the
-Guidelines. It changes nothing.
-
-## CI
-
-The Checks that Git hooks run can run in a project's CI too, for commits made where the Git
-hooks didn't: without the plugin, or in GitHub's web editor. Download a Release's source, pinned
-by its commit, run its `run.py` with `python3` 3.9 or later, and give each Check the input its Git hook would,
-with `$BASE` the commit the checked commits start from and `$BRANCH` the branch they go to:
-
-```sh
-set -e
-commit=850393ae181fe0efa7ce7fd698824a80848792ae # v0.35.0
-dir=$(mktemp -d)
-curl -fsSL "https://github.com/bunderlog/claude-plugins/archive/$commit.tar.gz" | tar -xz -C "$dir"
-baloo() { python3 -E -s "$dir/claude-plugins-$commit/plugins/baloo/scripts/run.py" "$@"; }
-for sha in $(git rev-list "$BASE"..HEAD); do
-  git log -1 --format=%B "$sha" > "$dir/msg"
-  baloo check conventional-commits "$dir/msg"
-  baloo check no-ai-coauthor "$dir/msg"
-done
-echo "refs/heads/ci $(git rev-parse HEAD) refs/heads/$BRANCH $BASE" | baloo check linear-history
-git reset -q --soft "$BASE" # the checked commits' changes, staged
-baloo check no-secrets-in-commits
-baloo check no-conflict-markers
-baloo check no-large-files
-```
-
-- Check out the head with its full history, not a merge commit. In GitHub Actions that is
-  `fetch-depth: 0`, and on a pull request `ref: ${{ github.event.pull_request.head.sha }}` with
-  `BASE=$(git merge-base <the base's sha> HEAD)`; on a push, `BASE` is `github.event.before`.
-  `BRANCH` is `github.base_ref` on a pull request and `github.ref_name` on a push.
-- Each Check takes its settings from the repo's `.claude/baloo.yml`, as in its Git hook, and one
-  the Config turns off passes.
-- `no-stale-adr-date` is left out: it compares an ADR's Date with today, so a change checked on a
-  later day than it was made would fail.
-- How a Check takes its input follows the Git hooks, not a promised interface; the pinned commit
-  keeps a later Release from breaking CI, and, unlike a tag, can't be moved to other code. The
-  line above is the last Release's; another's commit is `git ls-remote
-  https://github.com/bunderlog/claude-plugins v<version>`.
+link the Status line runs, the Config's settings, each Check on or off and the Guidelines. It
+changes nothing.
 
 ## Development
 

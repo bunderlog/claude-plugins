@@ -1,15 +1,15 @@
 # The plugin's `doctor` shows its state, run by the `doctor` skill, and changes nothing
 
-Date: 2026-10-14
+Date: 2026-11-09
 
 Session start says what it changed and what went wrong, but not what is on: which Checks run and
 why, which Git hook runs which version, which version runs. A Git hook running a link to an older
 binary, with nothing saying so, went unnoticed in this repo. So the plugin has `doctor`, which shows
 its state in the repo it runs in, its problems first, each with what fixes it: the plugin's folder
-and version running and the link the Git hooks and the Status line run (ADR git-hooks), the Config's
+and version running and the link the Status line runs (ADR status-line), the Config's
 settings, whether a Session review runs and how many Proposals wait or disagree with their files
-(ADR session-review), each Check on or off and whether by its key or by default (ADR checks), each
-Git hook, and the Guidelines on and off; a setting an earlier Release had and this one removed is
+(ADR session-review), each Check on or off and whether by its key or by default (ADR checks), and
+the Guidelines on and off; a setting an earlier Release had and this one removed is
 one of its problems, for the user to delete, which session start leaves out (ADR measurement). It
 exits 1 when it finds a problem, 0 otherwise, and prints the same text for the user and for Claude.
 

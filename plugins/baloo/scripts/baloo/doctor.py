@@ -9,7 +9,7 @@ import io
 import os
 from typing import List, TextIO
 
-from baloo import binlink, checks, config, githooks, guidelines, hook, names, review, version
+from baloo import binlink, checks, config, guidelines, hook, names, review, version
 
 
 def run(stdout: TextIO, stderr: TextIO) -> int:
@@ -33,7 +33,7 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     link = ""
     if not data:
         problems.append(
-            "CLAUDE_PLUGIN_DATA is not set, so the link the Git hooks run can't be checked: run "
+            "CLAUDE_PLUGIN_DATA is not set, so the link the Status line runs can't be checked: run "
             "doctor as the doctor skill does"
         )
     else:
@@ -41,16 +41,16 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
         if not os.path.exists(link):
             w.write(f"  link\t{link}, missing\n")
             problems.append(
-                f"{link} is missing, so the Git hooks and the Status line run nothing: the next "
-                "session start points it at this plugin"
+                f"{link} is missing, so the Status line runs nothing: the next session start "
+                "points it at this plugin"
             )
         else:
             target = os.path.realpath(link)
             w.write(f"  link\t{link} -> {target}\n")
             if target != binlink.PLUGIN:
                 problems.append(
-                    f"{link} points at {target}, not at this plugin, so the Git hooks and the "
-                    "Status line run that one: the next session start points it here"
+                    f"{link} points at {target}, not at this plugin, so the Status line runs "
+                    "that one: the next session start points it here"
                 )
 
     if not c.root:
@@ -92,31 +92,13 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             f"  failed this week\t{failed}\n  cost this week\t${cost:.2f}\n"
         )
 
-    for title, group in [
-        ("Checks in Claude Code's hooks (claude-hooks):", checks.HOOK_CHECKS),
-        ("Checks in Git hooks (git-hooks):", checks.GIT_HOOK_CHECKS),
-    ]:
+    for title, group in [("Checks in Claude Code's hooks (claude-hooks):", checks.HOOK_CHECKS)]:
         w.write(f"\n{title}\n")
         for name in sorted(group):
             state = "on" if c.check_on(name) else "off"
             if name not in c.checks:
                 state += ", by default"
             w.write(f"  {name}\t{state}\n")
-
-    if c.root:
-        try:
-            hooks_dir, husky, hooks = githooks.inspect(c.root, data, c.git_hook_runs)
-        except (OSError, checks.Error) as e:
-            problems.append(f"could not read the Git hooks: {e}")
-        else:
-            problems += git_hook_problems(hooks, link)
-            via = ", run by husky 9" if husky else ""
-            w.write(f"\nGit hooks in {hooks_dir}{via}:\n")
-            for h in hooks:
-                w.write(f"  {h.name}\t{h.state}")
-                if h.runs:
-                    w.write(": " + ", ".join(h.runs))
-                w.write("\n")
 
     on = sorted(n for n in guidelines.names() if c.guidelines.get(n))
     off = sorted(n for n in guidelines.names() if not c.guidelines.get(n))
@@ -136,44 +118,6 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             stdout.write(f"- {hook.one_line(p)}\n")
     stdout.write(_columns(w.getvalue()))
     return 1 if problems else 0
-
-
-def git_hook_problems(hooks: List[githooks.Hook], link: str) -> List[str]:
-    """The problems of the Git hooks `hooks`, which the plugin runs through `link`, each with what
-    fixes it."""
-    problems = []
-    for h in hooks:
-        runs = ", ".join(h.runs)
-        if h.state == githooks.MISSING:
-            problems.append(
-                f"{h.path} is missing, so {runs} don't run: the next session start writes it"
-            )
-        elif h.state == githooks.THEIRS:
-            problems.append(
-                f"{h.path} is not the plugin's Git hook, so {runs} don't run: move it out of the "
-                f"way and start a session, or turn their keys in {names.CONFIG} off"
-            )
-        elif h.state == githooks.OUTDATED:
-            if link and h.link != link:
-                problems.append(
-                    f"{h.path} runs {h.link}, not {link}: the next session start rewrites it"
-                )
-            else:
-                problems.append(
-                    f"{h.path} is not as this version writes it: the next session start rewrites "
-                    "it"
-                )
-        elif h.state == githooks.LEFTOVER:
-            problems.append(
-                f"{h.path} is the plugin's, but {names.CONFIG} turns its checks and command off: "
-                "the next session start takes it out"
-            )
-        if h.husky_outdated:
-            problems.append(
-                f".husky/{h.name} is not as session start keeps its line that runs the plugin's "
-                "Git hook: the next session start fixes it, and the change is yours to commit"
-            )
-    return problems
 
 
 def _columns(text: str) -> str:

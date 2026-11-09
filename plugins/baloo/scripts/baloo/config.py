@@ -9,15 +9,13 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
 from baloo import checks, guidelines, names, settings, statusline, yaml
-from baloo.checks import CommitRules
 from baloo.yaml import Node
 
 
 @dataclass
 class Config:
     """A repo's settings. What a new key needs is in ADR config's Consequences; a Check also needs
-    its name in checks.HOOK_CHECKS, or a Git hook's Check its entry in the checks package's
-    registry."""
+    its name in checks.HOOK_CHECKS."""
 
     # The root of the repo whose Config this is, or "" where the repo has none (see load).
     root: str = ""
@@ -34,42 +32,28 @@ class Config:
     session_review: bool = False
     # The command run on each file Claude edits, or "" where it is off (ADR format-on-edit).
     format_on_edit: str = ""
-    # The project's own commands the Git hooks run after their Checks, by Git hook (ADR
-    # git-hooks).
-    git_hook_commands: Dict[str, str] = field(default_factory=dict)
     # The Guidelines turned on, by name (ADR guidelines).
     guidelines: Dict[str, bool] = field(default_factory=dict)
     # The Checks the Config turns on or off, by name; see check_on for one it doesn't.
     checks: Dict[str, bool] = field(default_factory=dict)
-    # conventional-commits' settings.
-    commit_rules: CommitRules = field(default_factory=CommitRules)
-    # no-large-files' limit, in KB, or 0 for its default.
-    max_file_kb: int = 0
     # The settings of _REMOVED, one line each, for doctor to name (see _REMOVED).
     removed: List[str] = field(default_factory=list)
 
     def check_on(self, name: str) -> bool:
-        """Whether the Check `name` is on: as the Config says, and else on for a Check a Hook runs,
-        off for a Git hook's (ADR checks)."""
+        """Whether the Check `name` is on: as the Config says, and else on (ADR checks)."""
         if name in self.checks:
             return self.checks[name]
         return name in checks.HOOK_CHECKS
-
-    def git_hook_runs(self, name: str) -> bool:
-        """Whether a Git hook runs `name`: a Check the Config turns on, or the command
-        `git-hook-commands.<hook>` it sets."""
-        prefix = names.GIT_HOOK_COMMANDS + "."
-        if name.startswith(prefix):
-            return self.git_hook_commands.get(name[len(prefix) :], "") != ""
-        return self.check_on(name)
 
 
 # The plugin's Output styles, the files in its output-styles/.
 OUTPUT_STYLES = ["short-replies"]
 
-# The settings earlier Releases had and this one dropped (ADR measurement): a Config that still has
-# one works as without it, and only doctor names it, for the user to delete.
-_REMOVED = ["stop-check", "claude-hooks.no-destructive-commands"]
+# The settings earlier Releases had and this one dropped (ADR measurement, ADR git-hooks): a Config
+# that still has one works as without it, and only doctor names it, for the user to delete.
+_REMOVED = [
+    "stop-check", "claude-hooks.no-destructive-commands", "git-hooks", "git-hook-commands",
+]
 
 
 def _removed_at(line: int, name: str) -> str:
@@ -136,24 +120,6 @@ def _format_on_edit(c: Config, key: Node, value: Node) -> List[str]:
     return problems
 
 
-def _git_hook_commands(c: Config, key: Node, value: Node) -> List[str]:
-    if value.tag == "null":
-        return []
-    if value.tag != "map":
-        return [_wrong(key.line, key.text, "is not a map of Git hooks to commands")]
-    problems: List[str] = []
-    for hook, cmd in value.pairs:
-        entry = key.text + "." + hook.text
-        if hook.text not in checks.GIT_HOOKS:
-            problems.append(_at(hook.line, entry + " is not a Git hook of the plugin's; ignored"))
-            continue
-        got, wrong = _command_at(hook.line, entry, cmd)
-        problems += wrong
-        if got:
-            c.git_hook_commands[hook.text] = got
-    return problems
-
-
 def _guidelines(c: Config, key: Node, value: Node) -> List[str]:
     if value.tag == "null":
         return []
@@ -190,11 +156,6 @@ def _check_keys(group: List[str]) -> Callable[[Config, Node, Node], List[str]]:
             if name.text not in group:
                 problems.append(_at(name.line, entry + " is not a check; ignored"))
                 continue
-            settings_of = _CHECK_SETTINGS.get(name.text)
-            if settings_of is not None and on.tag == "map":
-                c.checks[name.text] = True
-                problems += settings_of(c, entry, on)
-                continue
             if on.tag != "bool":
                 problems.append(_wrong(name.line, entry, "is not true or false"))
                 continue
@@ -202,54 +163,6 @@ def _check_keys(group: List[str]) -> Callable[[Config, Node, Node], List[str]]:
         return problems
 
     return decode
-
-
-def _no_large_files(c: Config, entry: str, value: Node) -> List[str]:
-    problems: List[str] = []
-    for key, v in value.pairs:
-        setting = entry + "." + key.text
-        if key.text != "max-size":
-            problems.append(_at(key.line, setting + " is not a setting of no-large-files; ignored"))
-            continue
-        if v.tag != "int" or v.value < 1:
-            problems.append(_wrong(key.line, setting, "is not a size of 1 KB or more"))
-            continue
-        c.max_file_kb = v.value
-    return problems
-
-
-def _commit_rules(c: Config, entry: str, value: Node) -> List[str]:
-    """Decodes conventional-commits' settings, the map `value` at `entry`, into the Config's
-    commit_rules, and returns what is wrong with them; each wrong one keeps its default."""
-    rules = c.commit_rules
-    problems: List[str] = []
-    for key, v in value.pairs:
-        setting = entry + "." + key.text
-        if key.text == "types":
-            types = _strings(v)
-            if v.tag == "str" and v.text == "any":
-                rules.any_type = True
-            elif types is not None:
-                rules.types = types
-            else:
-                problems.append(_wrong(key.line, setting, "is not a list of types or any"))
-        elif key.text == "max-length":
-            if v.tag != "int" or v.value < 0:
-                problems.append(_wrong(key.line, setting, "is not a length of 0 or more"))
-                continue
-            rules.max_length = v.value
-        else:
-            why = " is not a setting of conventional-commits; ignored"
-            problems.append(_at(key.line, setting + why))
-    return problems
-
-
-# The settings a Check takes instead of true, the map `value` at `entry`, decoded into a Config,
-# which turns it on; each returns what is wrong with them, and each wrong one keeps its default.
-_CHECK_SETTINGS: Dict[str, Callable[[Config, str, Node], List[str]]] = {
-    "conventional-commits": _commit_rules,
-    "no-large-files": _no_large_files,
-}
 
 
 def _status_layout(entry: str, value: Node) -> Tuple[statusline.Layout, List[str]]:
@@ -332,9 +245,7 @@ _KEYS: Dict[str, Callable[[Config, Node, Node], List[str]]] = {
     "status-line": _status_line,
     "session-review": _session_review,
     "format-on-edit": _format_on_edit,
-    names.GIT_HOOK_COMMANDS: _git_hook_commands,
     "claude-hooks": _check_keys(checks.HOOK_CHECKS),
-    "git-hooks": _check_keys(checks.GIT_HOOK_CHECKS),
     "guidelines": _guidelines,
 }
 
@@ -347,7 +258,6 @@ def _new_config(fit: List[str]) -> str:
         f"  {name}: {'true' if name in fit else 'false'}\n" for name in sorted(guidelines.names())
     )
     hook_list = "".join(f"  {name}: true\n" for name in sorted(checks.HOOK_CHECKS))
-    git_hook_list = "".join(f"  {name}: true\n" for name in sorted(checks.GIT_HOOK_CHECKS))
     return (
         "# yaml-language-server: $schema=" + names.SCHEMA + """
 #
@@ -376,12 +286,6 @@ session-review: true
 # with false.
 # format-on-edit: npx prettier --write
 
-# The project's own commands, by Git hook (pre-commit, commit-msg, pre-push), that the plugin's Git
-# hook runs with sh after its Checks pass, with git's arguments as $1 and, for pre-push, the pushed
-# refs on stdin; the commit or push fails when the command does. Off without it, or with false.
-# git-hook-commands:
-#   pre-commit: mise run test
-
 # Guidelines, the plugin's working rules: each one on is named to Claude at session start, for
 # Claude to read when a task calls for it, but typescript, vue and testing, which Claude is given
 # whole the first time it reads or edits a file of their subject in a session. A stack's is on
@@ -398,14 +302,6 @@ guidelines:
 claude-hooks:
 """
         + hook_list
-        + """
-# Checks in Git hooks check every commit or push, yours or Claude's. The Git hooks are written
-# where at least one of their Checks is on. conventional-commits also takes its settings instead
-# of true, such as { types: [feat, fix], max-length: 72 }; types: any takes any type,
-# max-length: 0 any length. no-large-files takes { max-size: 5000 }, in KB; 1024 without it.
-git-hooks:
-"""
-        + git_hook_list
     )
 
 
