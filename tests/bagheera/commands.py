@@ -9,7 +9,7 @@ import unittest
 from typing import Tuple
 from unittest import mock
 
-from bagheera import cli, names, setup
+from bagheera import cli, deny, names, setup
 from tests import testkit
 
 # The plugin's folder in this repo.
@@ -61,8 +61,10 @@ def in_repo(test: unittest.TestCase) -> str:
 
 
 def set_up(dir: str) -> None:
-    """Writes into the repo at `dir` what PRD project-setup lists for a project without hathi, so
-    doctor finds nothing missing."""
+    """Writes into the repo at `dir` what PRD project-setup lists for a project without hathi, and
+    the deny rules into the person's own settings (PRD deny), so doctor finds nothing missing."""
+    write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"),
+          json.dumps({"permissions": {"deny": deny.RULES}}))
     write(os.path.join(dir, names.PROJECT_SETTINGS), json.dumps({
         "extraKnownMarketplaces": {"bunderlog": {"source": dict(setup.MARKETPLACE_SOURCE)}},
         "enabledPlugins": {p: True for p in setup.PLUGINS},
