@@ -9,6 +9,12 @@ PLUGIN_ID = PLUGIN + "@" + MARKETPLACE
 # The plugin whose skills a Session review loads, glossary and adr, and whose files it reads only:
 # the project's method, beside this plugin in the marketplace (PRD bagheera).
 KNOWLEDGE = "baloo"
+# The plugin a project turns on to build, which setting a project up turns on beside baloo.
+BUILD = "louie"
+# The repo of the marketplace, on GitHub.
+MARKETPLACE_REPO = MARKETPLACE + "/claude-plugins"
+# The skill that sets a repo up, as the user runs it (PRD setup).
+SETUP_SKILL = "/" + PLUGIN + ":setup"
 # The plugin's folder in this repo.
 PLUGIN_DIR = "plugins/" + PLUGIN
 # The plugin's manifest; its version is the plugin's.

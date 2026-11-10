@@ -23,6 +23,7 @@ from bagheera import (
     names,
     review,
     settings,
+    setup,
     statusline,
 )
 
@@ -131,9 +132,33 @@ def _session_review(s: Start) -> Lines:
     return out
 
 
+def _not_set_up(s: Start) -> Lines:
+    """Once per clone, the clone known by its root's path, that a repo lacking any item of the
+    list isn't set up, and that /bagheera:setup does it (PRD setup); nothing in a headless
+    session, so it doesn't use the telling up."""
+    if not s.root or not s.data or review.headless() or (
+            setup.started(s.root) and not setup.missing(s.root)):
+        return Lines()
+    digest = hashlib.sha256(s.root.encode()).hexdigest()[:16]
+    mark = os.path.join(s.data, "setup-told", digest)
+    if os.path.exists(mark):
+        return Lines()
+    try:
+        os.makedirs(os.path.dirname(mark), mode=0o700, exist_ok=True)
+        with open(mark, "w"):
+            pass
+    except OSError as e:
+        return Lines(problems=[f"setup: {e}"])
+    return Lines(lines=[
+        f"this repo isn't set up for bunderlog's plugins: tell the user, once, that "
+        f"{names.SETUP_SKILL} sets it up, and that doctor lists what it lacks"
+    ])
+
+
 # The parts session start reports on, in the order it prints their lines.
 PARTS: List[Callable[[Start], Lines]] = [
     _personal,
+    _not_set_up,
     _session_review,
 ]
 

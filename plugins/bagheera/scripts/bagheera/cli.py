@@ -22,12 +22,14 @@ from bagheera import (
     repo,
     review,
     session_start,
+    setup,
     statusline,
     version,
 )
 
 USAGE = (
-    "usage: bagheera version | doctor | session-start [UserPromptSubmit] | status-line |\n"
+    "usage: bagheera version | doctor | setup [--hathi | --no-hathi] |\n"
+    "  session-start [UserPromptSubmit] | status-line |\n"
     "  pre-tool-use | session-end | user-prompt-submit |\n"
     "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n"
     "  proposals |\n"
@@ -81,6 +83,9 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         return review_decision(args[1:], stdout, stderr)
     if args == ["proposals"]:
         return proposals(stdout, stderr)
+    if args and args[0] == "setup" and args[1:] in ([], ["--hathi"], ["--no-hathi"]):
+        add = {"--hathi": True, "--no-hathi": False}.get(args[1]) if args[1:] else None
+        return setup_repo(add, stdout, stderr)
     if args and args[0] == "condense":
         code = condense_sessions(args[1:], stdout, stderr)
         if code is not None:
@@ -308,6 +313,35 @@ def proposals(stdout: TextIO, stderr: TextIO) -> int:
         return 1
     for line in review.waiting(root, os.environ.get("CLAUDE_PLUGIN_DATA", "")):
         stdout.write(line + "\n")
+    return 0
+
+
+def setup_repo(add_hathi: Optional[bool], stdout: TextIO, stderr: TextIO) -> int:
+    """The setup skill's run (PRD setup): it sets the repo up, printing what it changed and what
+    is left for the skill and the user; where it can't, it writes nothing and says why."""
+    prefix = f"{names.PLUGIN} setup: "
+    try:
+        dir = hook.project()
+    except OSError as e:
+        stderr.write(f"{prefix}{e}\n")
+        return 1
+    root = repo.root(dir)
+    if not root:
+        stderr.write(f"{prefix}{dir} is not in a repo\n")
+        return 1
+    try:
+        result = setup.run(root, add_hathi)
+    except (setup.Stop, OSError) as e:
+        stderr.write(f"{prefix}{e}\n")
+        return 1
+    if result.changed:
+        stdout.write("changed:\n" + "".join(f"  {p}\n" for p in result.changed))
+    if result.removed:
+        stdout.write("removed:\n" + "".join(f"  {p}\n" for p in result.removed))
+    if not result.changed and not result.removed:
+        stdout.write("nothing to change\n")
+    if result.left:
+        stdout.write("left:\n" + "".join(f"  {line}\n" for line in result.left))
     return 0
 
 

@@ -1,7 +1,8 @@
 """doctor: the plugin's state in the repo it runs in, its problems first, each with what fixes it
 (ADR doctor): the plugin running and the link its Status line runs, the Session review's
-Proposals, and the Checks; what an earlier baloo left in the clone, for the person to remove. It
-changes nothing."""
+Proposals, and the Checks; what an earlier baloo left in the clone, for the person to remove; and
+what the repo lacks of being set up, which /bagheera:setup adds (PRD setup). It changes
+nothing."""
 
 from __future__ import annotations
 
@@ -10,7 +11,7 @@ import os
 from typing import List, TextIO
 
 from bagheera import (
-    binlink, checks, hook, names, repo, review, settings, statusline, version,
+    binlink, checks, hook, names, repo, review, settings, setup, version,
 )
 
 
@@ -63,6 +64,12 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
 
     if root:
         problems += _left_in_local(dir)
+        if not setup.started(root):
+            problems.append(f"{root} isn't set up for bunderlog's plugins: {names.SETUP_SKILL} "
+                            "sets it up")
+        else:
+            for item in setup.missing(root):
+                problems.append(f"{item} is missing: {names.SETUP_SKILL} adds it")
 
     if root:
         waiting = mismatches = 0
@@ -107,11 +114,11 @@ def _left_in_local(dir: str) -> List[str]:
     except (OSError, ValueError):
         return []
     found = []
-    if statusline.ours(local.get("statusLine")):
+    keys = setup.baloo_local(local)
+    if "statusLine" in keys:
         found.append(f"{path} has the statusLine an earlier baloo wrote: remove it, and set "
                      "your own in ~/.claude/settings.json")
-    style = local.get("outputStyle")
-    if isinstance(style, str) and style.startswith(names.OLD_MARKER.split()[-1] + ":"):
+    if "outputStyle" in keys:
         found.append(f"{path} has the outputStyle an earlier baloo picked: remove it, and "
                      "pick your own in ~/.claude/settings.json")
     return found

@@ -93,7 +93,7 @@ def exclude(root: str, path: str) -> None:
     Claude Code does with a settings.local.json it creates."""
     rel = os.path.relpath(path, root)
     line = "/" + _pattern(rel.replace(os.sep, "/"))
-    file = os.path.join(_git_dir(root), "info", "exclude")
+    file = os.path.join(git_dir(root), "info", "exclude")
     try:
         with open(file, encoding="utf-8") as f:
             data = f.read()
@@ -116,7 +116,7 @@ def _pattern(rel: str) -> str:
     return trimmed + "\\ " * (len(p) - len(trimmed))
 
 
-def _git_dir(root: str) -> str:
+def git_dir(root: str) -> str:
     """The folder holding the info/ of the repo at `root`: its .git folder, or for a worktree,
     whose .git is a file naming its own folder, the folder its worktrees share."""
     folder = os.path.join(root, ".git")
