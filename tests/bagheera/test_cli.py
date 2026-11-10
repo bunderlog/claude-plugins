@@ -4,6 +4,7 @@ import re
 import subprocess
 import time
 import unittest
+from unittest import mock
 
 from bagheera import cli, names, review
 from tests import testkit
@@ -124,6 +125,53 @@ class Waiting(unittest.TestCase):
         _, out, _ = run("status-line", stdin=json.dumps({"session_id": "s1"}))
         self.assertTrue(COLORS.sub("", out).rstrip().endswith("⧗ 1 · ⚑ 1"), out)
         self.assertFalse(os.path.exists(os.path.join(data, "attention.running")))
+
+
+class Line(unittest.TestCase):
+    # Drawing the whole line, with a git that takes a second, takes under 300 ms and shows what
+    # the draw before got (PRD status-line).
+    def test_slow_git(self):
+        dir = in_repo(self)
+        testkit.git(dir, "commit", "-q", "--allow-empty", "-m", "a")
+        write(os.path.join(dir, "a"), "\n")
+        os.environ["COLUMNS"] = "120"
+        stdin = json.dumps({"session_id": "s1", "workspace": {"current_dir": dir, "project_dir": dir}})
+        run("attention")  # what it found is fresh, so the line starts no check of its own
+        _, first, _ = run("status-line", stdin=stdin)
+        bin = testkit.tempdir(self)
+        write(os.path.join(bin, "git"), "#!/bin/sh\nsleep 1\n", 0o755)
+        os.environ["PATH"] = bin + os.pathsep + os.environ["PATH"]
+        start = time.monotonic()
+        _, again, _ = run("status-line", stdin=stdin)
+        self.assertLess(time.monotonic() - start, 0.3)
+        self.assertIn("main ±1", COLORS.sub("", again))
+        self.assertEqual(COLORS.sub("", again), COLORS.sub("", first))
+
+    # Drawing the line, the check it starts included, opens no socket and runs no git that
+    # reaches a remote (PRD status-line, PRD visibility).
+    def test_offline(self):
+        dir = in_repo(self)
+        origin = testkit.repo(self)
+        testkit.git(origin, "commit", "-q", "--allow-empty", "-m", "a")
+        testkit.git(dir, "remote", "add", "origin", origin)
+        log = os.path.join(testkit.tempdir(self), "git.log")
+        real = subprocess.run(["sh", "-c", "command -v git"], stdout=subprocess.PIPE, text=True).stdout.strip()
+        bin = testkit.tempdir(self)
+        write(os.path.join(bin, "git"), f'#!/bin/sh\necho "$@" >> {log}\nexec {real} "$@"\n', 0o755)
+        os.environ["PATH"] = bin + os.pathsep + os.environ["PATH"]
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "p", "s.jsonl"),
+              json.dumps({"type": "user", "cwd": dir}) + "\n")
+        stdin = json.dumps({"session_id": "s1", "workspace": {"current_dir": dir, "project_dir": dir}})
+        with mock.patch("socket.socket", side_effect=AssertionError("a socket was opened")), \
+                mock.patch("subprocess.Popen", wraps=subprocess.Popen) as popen:
+            run("attention")
+            code, _, err = run("status-line", stdin=stdin)
+        self.assertEqual((code, err), (0, ""))
+        self.assertTrue(popen.called)
+        with open(log) as f:
+            ran = f.read()
+        for word in ("fetch", "pull", "ls-remote", "remote update"):
+            self.assertNotIn(word, ran)
 
 
 def pre_tool_use(test, stdin):

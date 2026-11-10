@@ -8,6 +8,7 @@ from unittest import mock
 from bagheera import binlink, names, statusline
 from bagheera.statusline import Input, Layout, Thresholds, default
 from tests import testkit
+from tests.bagheera import commands
 
 PLUGIN_ID = names.PLUGIN_ID
 ON = '{"enabledPlugins": {"' + PLUGIN_ID + '": true}}'
@@ -185,10 +186,11 @@ class Render(unittest.TestCase):
                 self.assertIn(want, line, columns)
             self.assertNotRegex(line, "[█░]")
 
-    # The parts never overlap the branch, and the line shows nothing it isn't given.
+    # The figures never overlap the branch: where nothing else is left to drop, they go; and the
+    # line shows nothing it isn't given.
     def test_bounds(self):
         got = plain(default().render(usage(), "a-very-long-branch-name-that-fills-the-line", 20))
-        self.assertIn("line   ▤", got)
+        self.assertEqual(got, "a-very-long-branch-name-that-fills-the-line")
         self.assertEqual(default().render(Input(), "", 120).strip(), "")
         self.assertLessEqual(statusline._visible(default().render(usage(), "", 120)), 116)
 
@@ -243,15 +245,15 @@ class Marks(unittest.TestCase):
     # each only when it isn't 0, naming no project; they stay when the model goes (PRD visibility).
     def test_marks(self):
         in_ = usage(MODEL)
-        colored = default().render(in_, "main", 120, 3, 2)
+        colored = default().render(in_, "main", 120, statusline.Marks(waiting=3, attention=2))
         self.assertTrue(plain(colored).endswith("⧗ 3 · ⚑ 2 · Opus 5.5 high"), plain(colored))
         self.assertIn(YELLOW + "⧗ 3", colored)
         self.assertIn(YELLOW + "⚑ 2", colored)
-        self.assertTrue(plain(default().render(in_, "main", 120, 0, 2)).endswith("   ⚑ 2 · Opus 5.5 high"))
+        self.assertTrue(plain(default().render(in_, "main", 120, statusline.Marks(attention=2))).endswith("   ⚑ 2 · Opus 5.5 high"))
         line = plain(default().render(in_, "main", 120))
         self.assertNotIn("⧗", line)
         self.assertNotIn("⚑", line)
-        narrow = plain(default().render(in_, "main", 52, 3, 2))
+        narrow = plain(default().render(in_, "main", 52, statusline.Marks(waiting=3, attention=2)))
         self.assertTrue(narrow.endswith("⧗ 3 · ⚑ 2"), narrow)
         self.assertNotIn("Opus", narrow)
 
@@ -263,6 +265,141 @@ class Marks(unittest.TestCase):
         colored = default().render(in_, "main", 120)
         self.assertNotIn(YELLOW, colored)
         self.assertNotIn(RED, colored)
+
+
+class Work(unittest.TestCase):
+    """The branch and what the clone hasn't committed or pushed, beside it (PRD status-line)."""
+
+    def repo(self):
+        dir = testkit.repo(self)
+        testkit.git(dir, "commit", "-q", "--allow-empty", "-m", "a")
+        return dir
+
+    # Each entry git status lists counts once: a file staged and changed again, and an untracked
+    # folder of three files, are one each.
+    def test_changed(self):
+        dir = self.repo()
+        self.assertEqual(statusline.work(dir, ""), statusline.Work("main", 0, 0))
+        for name in ("a", "b"):
+            write(os.path.join(dir, name), "1\n")
+        testkit.git(dir, "add", "a", "b")
+        testkit.git(dir, "commit", "-q", "-m", "files")
+        write(os.path.join(dir, "a"), "2\n")
+        testkit.git(dir, "add", "a")
+        write(os.path.join(dir, "a"), "3\n")
+        write(os.path.join(dir, "b"), "2\n")
+        for name in ("x", "y", "z"):
+            write(os.path.join(dir, "new", name), "\n")
+        self.assertEqual(statusline.work(dir, "").changed, 3)
+
+    # Commits not on the upstream, or without one, or on a detached HEAD, not on origin/HEAD;
+    # with neither, none.
+    def test_ahead(self):
+        origin = self.repo()
+        dir = os.path.join(testkit.tempdir(self), "clone")
+        testkit.git(origin, "clone", "-q", origin, dir)
+        for m in ("b", "c"):
+            testkit.git(dir, "commit", "-q", "--allow-empty", "-m", m)
+        self.assertEqual(statusline.work(dir, "").ahead, 2)
+        testkit.git(dir, "checkout", "-q", "-b", "side")
+        self.assertEqual(statusline.work(dir, "").ahead, 2)
+        testkit.git(dir, "checkout", "-q", "--detach")
+        got = statusline.work(dir, "")
+        self.assertEqual(got.ahead, 2)
+        self.assertEqual(got.branch, testkit.git(dir, "rev-parse", "--short", "HEAD").strip())
+        alone = self.repo()
+        testkit.git(alone, "commit", "-q", "--allow-empty", "-m", "b")
+        self.assertEqual(statusline.work(alone, "").ahead, 0)
+
+    # Outside a repo there is no branch and nothing to count, and the line shows no ± or ↑.
+    def test_outside(self):
+        commands.env(self)
+        folder = testkit.tempdir(self)
+        with mock.patch.dict(os.environ, {"GIT_CEILING_DIRECTORIES": os.path.dirname(folder)}):
+            got = statusline.work(folder, "")
+        self.assertEqual(got, statusline.Work())
+        line = plain(default().render(usage(), got.branch, 120,
+                                      statusline.Marks(changed=got.changed, ahead=got.ahead)))
+        self.assertNotIn("±", line)
+        self.assertNotIn("↑", line)
+
+    # A git slower than the line waits for gives what the last draw got in that folder, or
+    # nothing on the first.
+    def test_slow(self):
+        dir = self.repo()
+        data = testkit.tempdir(self)
+        write(os.path.join(dir, "a"), "\n")
+        self.assertEqual(statusline.work(dir, data), statusline.Work("main", 1, 0))
+        write(os.path.join(dir, "b"), "\n")
+        with slow_git(self):
+            start = time.monotonic()
+            self.assertEqual(statusline.work(dir, data), statusline.Work("main", 1, 0))
+            self.assertLess(time.monotonic() - start, statusline.WAIT + 0.1)
+            self.assertEqual(statusline.work(dir, testkit.tempdir(self)), statusline.Work())
+
+    # They show grey one space after the branch, and stay when the details and the model go.
+    def test_shown(self):
+        in_ = usage(MODEL)
+        colored = default().render(in_, "main", 120, statusline.Marks(changed=3, ahead=2))
+        self.assertTrue(plain(colored).startswith("main ±3 ↑2   "), plain(colored))
+        self.assertIn(GREY + "main ±3 ↑2", colored)
+        narrow = plain(default().render(in_, "main", 50, statusline.Marks(changed=3, ahead=2)))
+        self.assertTrue(narrow.startswith("main ±3 ↑2"), narrow)
+        self.assertNotIn("Opus", narrow)
+
+
+def slow_git(test):
+    """A git on the PATH that takes a second and does nothing, for the rest of the test's block."""
+    bin = testkit.tempdir(test)
+    write(os.path.join(bin, "git"), "#!/bin/sh\nsleep 1\n")
+    os.chmod(os.path.join(bin, "git"), 0o755)
+    return mock.patch.dict(os.environ, {"PATH": bin + os.pathsep + os.environ["PATH"]})
+
+
+class Restart(unittest.TestCase):
+    # A session shows the version a restart runs, yellow, while it started on an older one than
+    # Claude Code records as installed for its project, even once a later session started on the
+    # newer one (PRD status-line).
+    def test_restart(self):
+        dir = commands.in_repo(self)
+        data = os.environ["CLAUDE_PLUGIN_DATA"]
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+              json.dumps({"plugins": {names.PLUGIN_ID: [
+                  {"scope": "project", "projectPath": dir, "version": "0.52.0"}]}}))
+        statusline.record(data, "old", "0.51.1")
+        statusline.record(data, "new", "0.52.0")
+        self.assertEqual(statusline.restart(data, "old", dir), "0.52")
+        self.assertEqual(statusline.restart(data, "new", dir), "")
+        self.assertEqual(statusline.restart(data, "unknown", dir), "")
+        colored = default().render(usage(MODEL), "main", 120, statusline.Marks(attention=1, restart="0.52"))
+        self.assertTrue(plain(colored).endswith("⚑ 1 · ⇡ 0.52 · Opus 5.5 high"), plain(colored))
+        self.assertIn(YELLOW + "⇡ 0.52", colored)
+
+    # Session start keeps the version the session runs, the plugin's manifest's.
+    def test_recorded(self):
+        commands.in_repo(self)
+        commands.run("session-start", stdin=json.dumps({"session_id": "s1"}))
+        with open(os.path.join(PLUGIN, ".claude-plugin", "plugin.json")) as f:
+            manifest = json.load(f)["version"]
+        with open(os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], statusline.SESSIONS, "s1")) as f:
+            self.assertEqual(f.read(), manifest)
+
+
+class Fits(unittest.TestCase):
+    # In 120 columns, with everything, the line shows every part with its details and the model;
+    # where nothing else is left to drop, the folder's name is cut short.
+    def test_all_in_120(self):
+        in_ = usage(MODEL + ', "workspace": {"project_dir": "/w/claude-plugins"}')
+        marks = statusline.Marks(changed=5, ahead=2, waiting=3, attention=2, restart="0.54")
+        line = plain(default().render(in_, "main", 120, marks))
+        for want in ("claude-plugins main ±5 ↑2", "▤ 12%", "◷ 55% 14:00", "⧗ 3 · ⚑ 2 · ⇡ 0.54 · Opus 5.5 high"):
+            self.assertIn(want, line)
+        for columns in (44, 60):
+            narrow = plain(default().render(in_, "main", columns, marks))
+            self.assertLessEqual(len(narrow), columns - 4, narrow)
+            self.assertIn("main ±5 ↑2", narrow)
+            self.assertTrue(narrow.endswith("⧗ 3 · ⚑ 2 · ⇡ 0.54"), narrow)
+        self.assertIn("…", plain(default().render(in_, "main", 44, marks)))
 
 
 class Cache(unittest.TestCase):
@@ -352,18 +489,19 @@ class Branch(unittest.TestCase):
         with mock.patch.dict(
             os.environ, {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
         ):
-            if statusline.branch(folder):
+            if statusline.work(folder, "").branch:
                 self.skipTest("the temporary folder is inside a repo")
             testkit.git(folder, "init", "-q", "-b", "work")
-            self.assertEqual(statusline.branch(folder), "work")
+            self.assertEqual(statusline.work(folder, "").branch, "work")
             testkit.git(
                 folder, "-c", "user.name=t", "-c", "user.email=t@example.com",
                 "-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "x",
             )
+            self.assertEqual(statusline.work(folder, "").branch, "work")
             testkit.git(folder, "checkout", "-q", "--detach")
             commit = testkit.git(folder, "rev-parse", "--short", "HEAD").strip()
-            self.assertEqual(statusline.branch(folder), commit)
-        self.assertEqual(statusline.branch(""), "")
+            self.assertEqual(statusline.work(folder, "").branch, commit)
+        self.assertEqual(statusline.work("", "").branch, "")
 
 
 if __name__ == "__main__":
