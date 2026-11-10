@@ -3,6 +3,7 @@ line command, and the command set in a project's settings."""
 
 from __future__ import annotations
 
+import json
 import math
 import re
 import os
@@ -11,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from bagheera import names
+from bagheera import names, version
 
 # The Status line's parts, each once a bar, in the order it shows them.
 BARS = ["context", "5h", "7d", "cache"]
@@ -150,8 +151,22 @@ _GREY, _YELLOW, _RED = "90", "33", "31"
 
 # Each part's icon, in place of its label.
 _ICONS = {"context": "▤", "5h": "◷", "7d": "◷", "cache": "↻"}
-# The icons of how many sessions wait and how many projects need attention (PRD visibility).
-WAITING, ATTENTION = "⧗", "⚑"
+# The icons of how many sessions wait and how many projects need attention (PRD visibility), and
+# of a newer version installed, which a restart runs (PRD status-line).
+WAITING, ATTENTION, RESTART = "⧗", "⚑", "⇡"
+
+
+@dataclass
+class Marks:
+    """What the line shows beside Claude Code's input: in the clone, how many entries `git status`
+    lists and how many commits aren't pushed (PRD status-line); on the machine, how many sessions
+    wait and how many projects need attention (PRD visibility); and the version a restart runs."""
+
+    changed: int = 0
+    ahead: int = 0
+    waiting: int = 0
+    attention: int = 0
+    restart: str = ""
 
 # The least room between the line's left, middle and right; a group's own parts are one space
 # apart.
@@ -295,18 +310,28 @@ class Layout:
                 parts.append(part)
         return _DOT.join(parts)
 
-    def render(self, in_: Input, branch: str, columns: int, waiting: int = 0,
-               attention: int = 0) -> str:
+    def render(self, in_: Input, branch: str, columns: int, m: Optional[Marks] = None) -> str:
         """The Status line for a terminal `columns` wide, grey but for what is past a threshold:
-        the project's folder and the branch on the left, the parts centered, and on the right
-        how many sessions wait and how many projects need attention, in yellow where not 0, and the
-        model with its effort flush with the right edge, the groups a dot apart. When the
-        line is too narrow it drops the details, then the model."""
+        the project's folder, the branch and what isn't committed or pushed on the left, the parts
+        centered, and on the right how many sessions wait, how many projects need attention and a
+        restart, in yellow where there, and the model with its effort flush with the right edge,
+        the groups a dot apart. When the line is too narrow it drops the details, then the model,
+        then cuts the folder's name short, then drops the figures."""
+        m = m or Marks()
         width = max(40, columns - _MARGIN)
         folder = os.path.basename((in_.project_dir or in_.current_dir).rstrip("/"))
-        left = _grey(" ".join(p for p in (folder, branch) if p)) if folder or branch else ""
+        work = [s + str(n) for s, n in (("±", m.changed), ("↑", m.ahead)) if n > 0]
+        tail = " ".join(([branch] if branch else []) + work)
         marks = [_paint(_YELLOW, icon + " " + str(n))
-                 for icon, n in ((WAITING, waiting), (ATTENTION, attention)) if n > 0]
+                 for icon, n in ((WAITING, m.waiting), (ATTENTION, m.attention)) if n > 0]
+        if m.restart:
+            marks.append(_paint(_YELLOW, RESTART + " " + m.restart))
+
+        def left_of(name: str) -> str:
+            text = " ".join(p for p in (name, tail) if p)
+            return _grey(text) if text else ""
+
+        left = left_of(folder)
         model = _model(in_)
         r = _DOT.join(marks + ([model] if model else []))
 
@@ -321,6 +346,14 @@ class Layout:
             mid = self._middle(in_, False)
         if not fits(mid):
             r = _DOT.join(marks)
+        if not fits(mid) and len(folder) > 1:
+            over = _visible(left) + len(_GAP) + _visible(mid) - width
+            if r:
+                over += len(_GAP) + _visible(r)
+            keep = max(1, len(folder) - over - 1)
+            left = left_of(folder[:keep] + "…")
+        if not fits(mid):
+            mid = ""
         gap = len(_GAP) if left else 0
         end = width - _visible(r) - len(_GAP) if r else width
         start = max(min((width - _visible(mid)) // 2, end - _visible(mid)), _visible(left) + gap)
@@ -344,27 +377,132 @@ def default() -> Layout:
     )
 
 
-def branch(folder: str) -> str:
-    """The branch checked out in `folder`, or its commit when detached; "" outside a repo."""
-    if not folder:
+# The folder of the plugin's data folder that holds, by session, the version its session start
+# ran: the line runs through a link a later session's start points at a newer copy, so it can't
+# tell the session's version from its own (PRD status-line).
+SESSIONS = "sessions"
+# How long a session's version is kept: a week.
+KEPT = 7 * 24 * 3600
+
+
+def record(data: str, session: str, ran: str) -> None:
+    """Keeps, in the plugin's data folder `data`, that the session `session` runs the version
+    `ran`, and forgets those kept over KEPT."""
+    if not data or not session or os.sep in session:
+        return
+    folder = os.path.join(data, SESSIONS)
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    now = time.time()
+    for e in os.scandir(folder):
+        if now - e.stat().st_mtime > KEPT:
+            os.remove(e.path)
+    with open(os.path.join(folder, session), "w", encoding="utf-8") as f:
+        f.write(ran)
+
+
+def _numbers(v: str) -> Optional[Tuple[int, ...]]:
+    try:
+        return tuple(int(x) for x in v.split("."))
+    except ValueError:
+        return None
+
+
+def restart(data: str, session: str, root: str) -> str:
+    """The version installed for the repo at `root`, as "0.54", where it is newer than the one the
+    session `session` started on, which only a restart runs; "" otherwise."""
+    try:
+        with open(os.path.join(data, SESSIONS, session), encoding="utf-8") as f:
+            ran = f.read().strip()
+    except OSError:
         return ""
+    there = version.installed(root)
+    running, newer = _numbers(ran), _numbers(there)
+    if not (running and newer and newer > running):
+        return ""
+    return ".".join(there.split(".")[:2])
 
-    def git(*args: str) -> Tuple[str, bool]:
+
+# How long the line waits for git, in seconds, before it shows what it last got.
+WAIT = 0.15
+# The file of the plugin's data folder that keeps what the line last got from git, by folder.
+COUNTS = "counts.json"
+
+
+@dataclass
+class Work:
+    """What git says of the clone a folder is in: the branch checked out, or its commit when
+    detached, "" outside a repo; how many entries `git status` lists; and how many commits on what
+    is checked out aren't on its upstream, or, without one, on `origin/HEAD` (PRD status-line)."""
+
+    branch: str = ""
+    changed: int = 0
+    ahead: int = 0
+
+
+def work(folder: str, data: str) -> Work:
+    """What git says of the clone `folder` is in. It runs nothing that fetches, runs git's
+    commands side by side and waits for them at most WAIT, and past that gives what it last got in
+    `folder`, kept in the plugin's data folder `data`, or nothing."""
+    if not folder:
+        return Work()
+    base = ["git", "--no-optional-locks", "-C", folder]
+    commands = [
+        base + ["branch", "--show-current"],
+        base + ["rev-parse", "--short", "HEAD"],
+        base + ["status", "--porcelain"],
+        base + ["rev-list", "--count", "@{upstream}..HEAD"],
+        base + ["rev-list", "--count", "origin/HEAD..HEAD"],
+    ]
+    try:
+        procs = [subprocess.Popen(c, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                 for c in commands]
+    except OSError:
+        return Work()
+    deadline = time.monotonic() + WAIT
+    outs: List[Optional[Tuple[str, bool]]] = []
+    for p in procs:
         try:
-            p = subprocess.run(
-                ["git", "--no-optional-locks", "-C", folder, *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                text=True,
-            )
+            out, _ = p.communicate(timeout=max(0.0, deadline - time.monotonic()))
+            outs.append((out.strip(), p.returncode == 0))
+        except subprocess.TimeoutExpired:
+            # Not communicate: a child git left holds the pipe open until it ends.
+            p.kill()
+            p.wait()
+            if p.stdout:
+                p.stdout.close()
+            outs.append(None)
+    path = os.path.join(data, COUNTS) if data else ""
+    kept: Dict[str, Any] = {}
+    if path:
+        try:
+            with open(path, encoding="utf-8") as f:
+                kept = _obj(json.load(f))
+        except (OSError, ValueError):
+            kept = {}
+    if any(o is None for o in outs):
+        last = kept.get(folder)
+        if (isinstance(last, list) and len(last) == 3 and isinstance(last[0], str)
+                and all(isinstance(n, int) for n in last[1:])):
+            return Work(last[0], last[1], last[2])
+        return Work()
+    (name, named), (commit, _), (status, ok), *ahead = outs  # type: ignore[misc]
+    if not named or not ok:
+        return Work()
+    got = Work(name or commit, len([line for line in status.splitlines() if line.strip()]))
+    for out, done in ahead:  # type: ignore[misc]
+        if done and out.isdigit():
+            got.ahead = int(out)
+            break
+    if path and kept.get(folder) != [got.branch, got.changed, got.ahead]:
+        kept[folder] = [got.branch, got.changed, got.ahead]
+        try:
+            tmp = f"{path}.{os.getpid()}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(kept, f)
+            os.replace(tmp, path)
         except OSError:
-            return "", False
-        return p.stdout.strip(), p.returncode == 0
-
-    name, ok = git("branch", "--show-current")
-    if not ok or name:
-        return name
-    return git("rev-parse", "--short", "HEAD")[0]
+            pass
+    return got
 
 
 def _quote(s: str) -> str:

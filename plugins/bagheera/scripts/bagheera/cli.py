@@ -142,8 +142,10 @@ def status_line(text: str, stdout: TextIO) -> int:
     Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with its default figures
     (PRD no-config). A field of another type than the plugin's is left out, and the rest shows;
     whatever else goes wrong, it prints nothing, since Claude Code shows under the prompt whatever
-    it prints. It shows how many sessions wait and how many projects need attention as the last
-    check found, and starts the next check in the background where that is old (PRD visibility)."""
+    it prints. It shows what the clone hasn't committed or pushed and a restart that runs a newer
+    version (PRD status-line), and how many sessions wait and how many projects need attention as
+    the last check found, starting the next check in the background where that is old (PRD
+    visibility)."""
     try:
         value, _ = json.JSONDecoder().raw_decode(text.lstrip(" \t\r\n"))
     except ValueError:
@@ -155,9 +157,16 @@ def status_line(text: str, stdout: TextIO) -> int:
         width = 120
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "") or binlink.data_of(sys.argv[0])
     found = attention.read(data) if data else attention.Found()
-    layout = statusline.default()
-    stdout.write(layout.render(in_, statusline.branch(in_.current_dir), width,
-                               found.waiting(in_.session_id), found.attention()) + "\n")
+    # The branch and what isn't committed or pushed are of the folder Claude Code is in, as the
+    # branch always was; the version installed, of the project, or the user's outside a repo.
+    git = statusline.work(in_.current_dir, data)
+    folder = in_.project_dir or in_.current_dir
+    root = repo.root(folder) or folder
+    marks = statusline.Marks(
+        git.changed, git.ahead, found.waiting(in_.session_id), found.attention(),
+        statusline.restart(data, in_.session_id, root) if data and in_.session_id else "",
+    )
+    stdout.write(statusline.default().render(in_, git.branch, width, marks) + "\n")
     if data:
         try:
             attention.start(data, os.path.join(binlink.PLUGIN, "scripts", "run.py"), time.time())

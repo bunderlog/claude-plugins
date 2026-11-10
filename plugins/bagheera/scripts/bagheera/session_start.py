@@ -26,6 +26,7 @@ from bagheera import (
     settings,
     setup,
     statusline,
+    version,
 )
 
 
@@ -209,6 +210,10 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
             binlink.point(data)
         except OSError:
             pass  # the Status line, which runs through it, says so
+        try:
+            statusline.record(data, session, version.read())
+        except OSError:
+            pass
     s = Start(dir, root, data, session)
     out = Lines()
     for part in PARTS:
