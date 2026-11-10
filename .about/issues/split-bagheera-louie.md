@@ -48,11 +48,9 @@ with python3 from the Command Line Tools.
 
 ### 2026-11-10 · clean machine
 
-Tried on the clean machine by the user, half by hand: baloo and louie came on from the set-up
-project's settings once the folder was trusted, but bagheera had to be added to the project's
-settings by hand, and the Status line set by hand. So PRD harness's second install criterion
-holds; the first, that `claude plugin marketplace add` and `claude plugin install
-bagheera@bunderlog` are the whole install for bagheera's Checks in any folder, doesn't as written.
-Why the user-scope install didn't reach the project is unknown; the Status line by hand is ADR
-status-line's rule, not a defect (Inbox, "A clean machine needed bagheera and the Status line by
-hand").
+Tried on the clean machine by the user: baloo and louie came on from the set-up project's settings
+once the folder was trusted, so PRD harness's second install criterion holds. The user chose not
+to install bagheera at user scope and added it to the project's settings by hand, so the first
+criterion, the two commands as the whole install for any folder, is still unchecked; the Status
+line was set by hand, as ADR status-line has it (Inbox, "A clean machine: bagheera by the project,
+and the Status line by hand").

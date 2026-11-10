@@ -229,19 +229,20 @@ departure that blocked, fixed in 0.49.1, and these that don't:
   `config` package comes due as they grow.
 Settled by fixing each in the template, or by deciding a rule doesn't reach a template's file.
 
-## A clean machine needed bagheera and the Status line by hand
+## A clean machine: bagheera by the project, and the Status line by hand
 
 2026-11-10 · user
 
-On a clean machine, after the README's install, the user had to add bagheera to the project's
-settings by hand for it to run there, and to set the Status line by hand (Issue
+On a clean machine the user didn't want bagheera installed at user scope, for every folder, and
+added it to the project's settings instead; and set the Status line by hand (Issue
 split-bagheera-louie). Two things to settle:
-- Why bagheera, installed at user scope, wasn't on in the project: a missing `enabledPlugins`
-  entry in `~/.claude/settings.json` after `claude plugin install`, the project's settings
-  turning it off, or the session not restarted. Settled by repeating the two commands on a clean
-  account, opening a new project and running `/bagheera:doctor`, then reading `enabledPlugins` in
-  each settings file; a defect found becomes an Issue.
+- ADR plugin and PRD harness make bagheera each person's, installed once at user scope; a person
+  who wants it only in some projects puts it in a project's settings, where it reaches everyone in
+  the project, against PRD harness's anti-goal that one person's preferences reach another through
+  committed files, unless it goes in `.claude/settings.local.json`. Settled by deciding whether
+  bagheera at project or local scope is supported and documented, or user scope stays the one
+  install; and, either way, by trying the two commands at user scope on a clean account for PRD
+  harness's first install criterion.
 - The Status line by hand is ADR status-line's rule, since a plugin can't set `statusLine`;
   whether bagheera writes it into `~/.claude/settings.json` after the person's yes is PRD
-  harness's open question for the visibility PRD. This is the first person who had to do it
-  without being told; settled in that PRD.
+  harness's open question for the visibility PRD, settled there.
