@@ -56,10 +56,12 @@ OLD_STYLE_TOLD = "old-outputStyle"
 
 
 def _personal(s: Start) -> Lines:
-    """Once per clone, how to set an Output style and a Status line in the person's own settings,
-    for each no settings file sets: the plugin sets neither (PRD no-config); and where a settings
-    file still picks baloo's `short-replies`, which Claude Code no longer finds, to pick bagheera's
-    (PRD bagheera). A headless session is told nothing, so it doesn't use up the telling."""
+    """Once per clone, for each of an Output style and a Status line no settings file sets, to
+    offer the person to add bagheera's to their own settings: `~/.claude/settings.json` where
+    bagheera is on there, else the clone's local settings, never the committed ones (ADR
+    status-line, ADR output-styles); and where a settings file still picks baloo's
+    `short-replies`, which Claude Code no longer finds, to pick bagheera's (PRD bagheera). A
+    headless session is told nothing, so it doesn't use up the telling."""
     if not s.root or not s.data or review.headless():
         return Lines()
     paths = settings.files(s.dir)
@@ -99,10 +101,13 @@ def _personal(s: Start) -> Lines:
     out = Lines()
     keys = [k for k in new if k != OLD_STYLE_TOLD]
     if keys:
+        on_user = settings.enabling(fields) == settings.USER
+        target = paths[settings.USER] if on_user and paths[settings.USER] else paths[settings.LOCAL]
         fields_text = ", ".join(f'"{k}": {values[k]}' for k in keys)
         out.lines.append(
-            f"{names.PLUGIN} no longer picks an Output style or sets a Status line; to keep its "
-            f"own, the user adds to ~/.claude/settings.json: {fields_text}: tell the user, once"
+            f"{names.PLUGIN} sets no Output style or Status line of its own: offer the user, once, "
+            f"to add to {target}: {fields_text}; add it there only on their yes, keeping the "
+            "file's other settings"
         )
     if OLD_STYLE_TOLD in new:
         out.lines.append(

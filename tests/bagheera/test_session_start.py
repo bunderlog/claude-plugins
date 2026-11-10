@@ -41,27 +41,39 @@ class SessionStart(unittest.TestCase):
         write(os.path.join(dir, names.OLD_CONFIG), "nope: 1\nformat-on-edit: x\n")
         self.assertNotIn("baloo.yml", start(self)[1])
 
-    # Where no settings file sets an Output style or a Status line, session start tells, once per
-    # clone, how the person sets each in their own settings, and writes neither; a headless session
-    # doesn't use the telling up, and one already set isn't told of (PRD no-config).
+    # Where no settings file sets an Output style or a Status line, session start has Claude offer,
+    # once per clone, to add each to the person's own settings, and writes neither itself; a
+    # headless session doesn't use the telling up, and one already set isn't told of (ADR
+    # status-line, ADR output-styles).
     def test_personal(self):
         dir = in_repo(self)
         user = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json")
         write(user, ENABLE)
         os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
-        self.assertNotIn("no longer picks", start(self)[1])
+        self.assertNotIn("sets no Output style", start(self)[1])
         os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
         out = start(self)[1]
-        self.assertIn("bagheera no longer picks an Output style or sets a Status line", out)
+        self.assertIn(
+            "bagheera sets no Output style or Status line of its own: offer the user, once, to add "
+            "to " + user, out)
         self.assertIn('"outputStyle": "bagheera:short-replies"', out)
         self.assertIn('"statusLine": {"type": "command"', out)
         self.assertFalse(os.path.exists(os.path.join(dir, names.LOCAL_SETTINGS)))
-        self.assertNotIn("no longer picks", start(self)[1])
+        self.assertNotIn("sets no Output style", start(self)[1])
 
         dir = in_repo(self)
         write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"),
               '{"outputStyle": "Explanatory", "statusLine": {"type": "command", "command": "x"}}')
-        self.assertNotIn("no longer picks", start(self)[1])
+        self.assertNotIn("sets no Output style", start(self)[1])
+
+    # bagheera on only in the clone's local settings has the lines offered for those, never for the
+    # user's own or the committed ones (ADR plugin, ADR status-line).
+    def test_personal_local(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, names.LOCAL_SETTINGS), ENABLE)
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
+        out = start(self)[1]
+        self.assertIn("offer the user, once, to add to " + os.path.join(dir, names.LOCAL_SETTINGS), out)
 
     # Where a settings file still picks baloo's short-replies, session start tells, once per clone,
     # to pick bagheera's there; one that picks bagheera's isn't told of (PRD bagheera).
@@ -75,7 +87,7 @@ class SessionStart(unittest.TestCase):
         out = start(self)[1]
         self.assertIn(user + " picks the Output style baloo:short-replies", out)
         self.assertIn('"outputStyle": "bagheera:short-replies" there: tell the user, once', out)
-        self.assertNotIn("no longer picks", out)
+        self.assertNotIn("sets no Output style", out)
         self.assertNotIn("baloo:short-replies", start(self)[1])
 
         in_repo(self)
@@ -125,7 +137,7 @@ class PromptAfterUpdate(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         hook = json.loads(out)["hookSpecificOutput"]
         self.assertEqual(hook["hookEventName"], "UserPromptSubmit")
-        self.assertIn("no longer picks an Output style", hook["additionalContext"])
+        self.assertIn("sets no Output style", hook["additionalContext"])
         self.assertEqual(os.path.realpath(os.path.join(data, names.PLUGIN)), PLUGIN)
         self.assertEqual(run("user-prompt-submit", stdin='{"session_id":"s1"}'), (0, "", ""))
 
@@ -144,7 +156,7 @@ class PromptAfterUpdate(unittest.TestCase):
         code, out, err = run("user-prompt-submit", stdin='{"session_id":"s1"}')
         self.assertEqual((code, err), (0, ""))
         told = json.loads(out)["hookSpecificOutput"]["additionalContext"]
-        self.assertIn("no longer picks an Output style", told)
+        self.assertIn("sets no Output style", told)
         self.assertIn("but 99.0.0 is installed for this project", told)
 
 
