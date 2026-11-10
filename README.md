@@ -37,6 +37,10 @@ session start tells you once per clone the lines to add. An old `.claude/baloo.y
 read, and `/bagheera:doctor` names it for you to remove. To run a formatter on Claude's edits, a
 project adds its own `PostToolUse` Hook to its `.claude/settings.json`.
 
+louie's Workflows, such as `/louie:verify`, run only where Claude Code's dynamic workflows are on:
+`"enableWorkflows": true` in the project's `.claude/settings.json`, which setting a project up
+adds. Where they are off, Claude runs the `louie:verifier` agent by name instead.
+
 ## Doctor
 
 `/bagheera:doctor`, or asking Claude what bagheera has on or why a Check didn't run, shows its

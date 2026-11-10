@@ -14,7 +14,8 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
 - A task that serves an Issue or a PRD with acceptance criteria ends, before its commit or PR,
-  with one line offering `/louie:verify`; run it only if the user agrees.
+  with one line offering `/louie:verify`, or the `louie:verifier` agent where the session has no
+  Workflow tool; run it only if the user agrees.
 - Stop a process by its id (`kill $!`) or with `pkill -f '[w]eb-server'`: a plain
   `pkill -f web-server` matches the shell running it too, and kills it.
 - Something found and left for later (a bug, a code review's finding, a decision still open)

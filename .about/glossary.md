@@ -147,8 +147,8 @@ _Avoid_: issue, incident
 
 **Session review**:
 A review bagheera starts itself when a session ends, in every repo: a separate headless session
-proposes, as Proposals, what the conversation settled but nobody wrote down, and a later session asks the user about each. Unlike a Retro, it looks at what was
-settled, not at how the work went.
+proposes, as Proposals, what the conversation settled but nobody wrote down, and a later session
+asks the user about each. Unlike a Retro, it looks at what was settled, not at how the work went.
 _Avoid_: session-end review
 
 **Proposal**:
@@ -174,12 +174,12 @@ _In code_: the `issue` skill writes one
 
 **Verification**:
 A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
-Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. louie's
-agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
-nothing. Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't
-run the change; unlike a Check, it isn't a plugin's code.
+Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. louie's agent, the
+verifier, makes it in a context of its own, so not as the change's author, one for each source when
+the `verify` Workflow runs it, and changes nothing. Unlike a code review, it doesn't hunt bugs;
+unlike Claude Code's `/verify`, it doesn't run the change; unlike a Check, it isn't a plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
-_In code_: the `verify` skill; `agents/verifier.md`; `names.VERIFIER`
+_In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 
 ## Retired terms
 

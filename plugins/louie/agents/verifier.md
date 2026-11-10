@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Issue or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through /louie:verify. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
+description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Issue or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through the /louie:verify Workflow, which runs one for each source. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
@@ -21,7 +21,8 @@ so and stop. Read a changed file whole where the diff alone doesn't show what th
 ## 2. What was agreed
 
 At the git repo's root. A project not yet moved to `.about/` may still keep numbered ADRs
-(`docs/adr/`) or a `CONTEXT.md`: read those too.
+(`docs/adr/`) or a `CONTEXT.md`: read those too. Where your prompt names one source, check that one
+only: the others are other verifiers'.
 
 - **ADRs**, `.about/adr/`: every one whose subject the change touches, read whole. A change that
   contradicts one is a finding; so is a decision the change makes that is hard to reverse and no
@@ -41,7 +42,8 @@ At the git repo's root. A project not yet moved to `.about/` may still keep numb
 
 ## 3. Report
 
-Findings, most consequential first, each one:
+Where your prompt gives you a schema, your reply is that, filled from what follows. Otherwise:
+findings, most consequential first, each one:
 
 ```
 <file>:<line> — what the change does — what it departs from: ADR <subject>, the glossary's

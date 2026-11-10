@@ -6,7 +6,7 @@ PLUGIN = "louie"
 MARKETPLACE = "bunderlog"
 # The plugin as Claude Code's settings name it, in enabledPlugins.
 PLUGIN_ID = PLUGIN + "@" + MARKETPLACE
-# The plugin's agent that the verify skill runs, as Claude Code names it.
+# The plugin's agent that the verify Workflow runs, as Claude Code names it.
 VERIFIER = PLUGIN + ":verifier"
 # The plugin's folder in this repo.
 PLUGIN_DIR = "plugins/" + PLUGIN

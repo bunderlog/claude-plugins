@@ -1,4 +1,4 @@
-# A Verification is louie's one agent, run by the `verify` skill when the user asks or agrees
+# A Verification is louie's verifier, one per source, run by the `verify` Workflow when asked
 
 Date: 2026-11-10
 
@@ -9,11 +9,16 @@ change to see it work; neither knows anything of `.about/`. So louie ships one a
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
 departure with `file:line`. It doesn't hunt bugs, which the code review does.
 
-The `verify` skill runs it with `context: fork` and `agent: louie:verifier`, waiting for its reply,
-so the user has `/louie:verify`; Claude can also run the agent by its name. Both run only when the
-user asks or agrees, as a Verification is a whole run's tokens. Claude offers one, in a line and
+The `verify` Workflow runs four of it at once, one per source: the ADRs, the glossary, the
+Guidelines and the acceptance criteria, each told its one source and returning its findings in a
+schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
+departure that blocks or a criterion not met (PRD delivery). So the user has `/louie:verify`, and
+`deliver` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
+Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
+context. A Verification runs only when the user asks or agrees, or as a stage of a `deliver` run
+they started, as it is a whole run's tokens. Claude offers one, in a line and
 once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit
-or PR: there it has criteria to check against, and few tasks have one. The skill's description
+or PR: there it has criteria to check against, and few tasks have one. The Workflow's description
 says so, and a line in `principles`' On every task, which session start prints in every session
 (ADR guidelines): on 2026-11-02 the description alone made Claude offer it in 3 of 3 runs on
 Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without the plugin in none
@@ -30,12 +35,13 @@ findings are its reply: the session that asked decides with the user what to fix
 left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox). What it
 can't check by reading, whether the change works when run, it names for `/verify`. It runs with the
 user's model, as the Session review does (ADR session-review). Nothing turns it off but louie
-itself: a plugin's agent and skill can't be hidden from one project anyway.
+itself: a plugin's agent and Workflow can't be hidden from one project anyway.
 
-Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
-the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
-index session start prints. Where `python3` is missing or the plugin fails, the agent starts
-without it and says it couldn't check the Guidelines.
+Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for the
+agent alone (`^louie:verifier$`), a Workflow's agents too where Claude Code starts them as
+subagents: the plugin's `subagent-start` gives it the same Guidelines index session start prints.
+Where `python3` is missing or the plugin fails, the agent starts without it and says it couldn't
+check the Guidelines.
 
 ## Considered options
 
@@ -54,7 +60,11 @@ without it and says it couldn't check the Guidelines.
   it soon goes unread.
 - Offered before a PR only — never, in a project that commits straight to `main`.
 - Only the agent, with no skill — no `/louie:verify`; the user would have to know
-  `@agent-louie:verifier`.
+  `@agent-louie:verifier`. Where Workflows are off, that is how it is, and Claude offers the agent
+  by name.
+- The `verify` skill running the one agent with `context: fork` (until 2026-11-10) — one context
+  read every source, the agent judged its own verdict, and `deliver` would have needed its own
+  copy of the Review.
 - Only a skill forked onto `general-purpose` — no agent file, but its tools can't be limited.
 - The diff put into the prompt by the skill, with no Bash — truly unable to write, but a large
   diff fills the prompt, and a PR or a run by the agent's name has none.
@@ -68,7 +78,7 @@ without it and says it couldn't check the Guidelines.
 
 ## Consequences
 
-- The agent's and the skill's descriptions are in every session, the project's using them or
+- The agent's and the Workflow's descriptions are in every session, the project's using them or
   not.
 - A Verification can still write through Bash if its prompt is ignored; the user's permission
   rules are what stop it.
