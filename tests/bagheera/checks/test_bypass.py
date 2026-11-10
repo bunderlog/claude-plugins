@@ -5,6 +5,7 @@ from bagheera.checks import no_git_hook_bypass
 NO_VERIFY = "git commit --no-verify bypasses the Git hooks"
 HOOKS_PATH = "git config core.hooksPath changes where the Git hooks are"
 HUSKY = "HUSKY=0 turns the Git hooks off"
+ENV = "GIT_CONFIG_* setting core.hooksPath bypasses the Git hooks"
 
 
 class NoGitHookBypass(unittest.TestCase):
@@ -36,6 +37,18 @@ class NoGitHookBypass(unittest.TestCase):
             "echo $(git commit --no-verify)": NO_VERIFY,
             "git commit --no-verify\ngit push": NO_VERIFY,
             "git commit -m 'x' \\\n --no-verify": NO_VERIFY,
+            'echo "$(git commit --no-verify)"': NO_VERIFY,
+            'echo "`git commit --no-verify`"': NO_VERIFY,
+            "timeout 60 git commit --no-verify": NO_VERIFY,
+            "timeout -s KILL 60 git commit --no-verify": NO_VERIFY,
+            "nice -n 5 git commit --no-verify": NO_VERIFY,
+            "stdbuf -oL git commit --no-verify": NO_VERIFY,
+            "git commit --no-veri -m x": NO_VERIFY,
+            "git config --file .git/config core.hooksPath /dev/null": HOOKS_PATH,
+            "git config -f .git/config core.hooksPath /dev/null": HOOKS_PATH,
+            "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=x git commit": ENV,
+            "export GIT_CONFIG_KEY_0=core.hookspath": ENV,
+            "GIT_CONFIG_PARAMETERS=\"'core.hooksPath'='x'\" git push": ENV,
         }.items():
             with self.subTest(command=command):
                 self.assertEqual(no_git_hook_bypass(command), want)
@@ -56,6 +69,12 @@ class NoGitHookBypass(unittest.TestCase):
             "git -c user.name=me commit -m x",
             "HUSKY=1 git commit -m x",
             "grep -r no-verify .",
+            "echo '$(git commit --no-verify)'",
+            'echo "\\$(git commit --no-verify)"',
+            "git commit --no-ver -m x",
+            "git config -f x --get core.hooksPath",
+            "timeout 60 make test",
+            "GIT_CONFIG_KEY_0=user.name git commit -m x",
             "",
         ]:
             with self.subTest(command=command):
