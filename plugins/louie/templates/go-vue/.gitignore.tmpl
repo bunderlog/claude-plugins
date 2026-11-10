@@ -5,3 +5,7 @@
 # What `mise run check` installs and builds.
 node_modules/
 /apps/app/dist/
+# The deploy's secrets, which `mise run deploy` reads; .env.example names them (ADR stack).
+/.env
+/.env.*
+!/.env.example

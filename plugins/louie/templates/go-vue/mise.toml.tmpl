@@ -10,6 +10,10 @@ sqlc = "1.31.1" # the header of apps/api/internal/db/*.go
 node = "24.22.1" # LTS line (ADR stack)
 pnpm = "11.28.8" # the workspace's package manager (ADR stack)
 
+[env]
+# The local Postgres of docker-compose.yml, which takes no password (ADR stack).
+DATABASE_URL = "postgres://__NAME__@localhost:5433/__NAME__?sslmode=disable"
+
 [tasks.setup]
 description = "Install the tools and turn the Git hooks on in this clone"
 run = [
@@ -28,7 +32,54 @@ run = [
   "cd apps/app && pnpm exec eslint . && pnpm exec prettier --check . && pnpm exec vue-tsc --noEmit && pnpm exec vitest run && pnpm exec vite build",
 ]
 
+# The API on :8080 and the app on :5173, side by side; Vite proxies /api to the API (ADR stack).
+[tasks.dev]
+description = "Run the local Postgres, the API on :8080 and the app on :5173, which proxies /api to the API"
+depends = ["dev:api", "dev:app"]
+
+[tasks."dev:db"]
+description = "Start the local Postgres of docker-compose.yml on :5433 and wait until it is ready; `docker compose down` stops it"
+run = "docker compose up -d --wait db"
+
+[tasks."dev:api"]
+description = "Run the API on :8080 against the local Postgres, migrating it first"
+depends = ["dev:db"]
+dir = "apps/api"
+run = "go run ./cmd/server"
+
+[tasks."dev:app"]
+description = "Install from the lockfile, then serve the app with Vite on :5173"
+run = [
+  "pnpm install --frozen-lockfile",
+  "cd apps/app && pnpm exec vite --strictPort",
+]
+
 [tasks.sqlc]
 description = "Generate apps/api/internal/db from apps/api/queries and the migrations"
 dir = "apps/api"
 run = "sqlc generate"
+
+# Kamal from its image, pinned like every tool, so a deploy needs Docker and no Ruby; the secrets
+# are .env's, which .kamal/secrets reads, and the SSH agent is passed in as Kamal's docs give it
+# (ADR stack).
+[tasks.deploy]
+description = "Run a kamal command with the secrets of .env: `mise run deploy` deploys, `mise run deploy setup` sets the server up the first time"
+usage = 'arg "[args]" var=#true help="the kamal command and its arguments; deploy when none"'
+run = '''
+if [ ! -f .env ]; then
+  echo "deploy: no .env; copy .env.example to .env and fill in each secret (README.md)" >&2
+  exit 1
+fi
+# The image, then kamal's arguments, split into words; the docker options go before them.
+set -- ghcr.io/basecamp/kamal:v2.12.0 ${usage_args:-deploy}
+case $(uname -s) in
+  Darwin) set -- -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
+    -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock "$@" ;;
+  *) if [ -n "${SSH_AUTH_SOCK:-}" ]; then
+    set -- -v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent "$@"
+  fi ;;
+esac
+if [ -t 0 ]; then set -- -t "$@"; fi
+exec docker run --rm -i --env-file .env -v "$PWD:/workdir" \
+  -v /var/run/docker.sock:/var/run/docker.sock "$@"
+'''

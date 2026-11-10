@@ -1,4 +1,4 @@
-# Stack: one repository, mise for every tool and task, hathi in the Git hooks and CI, Go with sqlc and goose, Vue with Tailwind in a pnpm workspace
+# Stack: one repository, mise for every tool and task, hathi in the Git hooks and CI, Go with sqlc and goose, Vue with Tailwind in a pnpm workspace, deployed with Kamal
 
 Date: __DATE__
 
@@ -40,6 +40,12 @@ and sqlc generates the Go that runs them into `apps/api/internal/db/`, which is 
 never edited by hand. `mise run sqlc` regenerates it, and `mise run check` runs `sqlc diff`, which
 fails where `internal/db` differs from what sqlc generates; it needs no database.
 
+The server opens a pgx pool from `DATABASE_URL` at start, in `internal/database`, and runs the
+migrations it hasn't run yet: they are built into the binary from `migrations/`, and goose's
+provider runs them, so a deploy migrates the database before the new server takes a request. If it
+can't connect or migrate, it exits naming the step that failed, and kamal-proxy keeps the old
+server serving.
+
 The schema is goose's migrations in `apps/api/migrations/`, plain SQL that sqlc reads as its
 schema too. goose's CLI is pinned in `mise.toml`, and the next migration is made with `goose -dir
 apps/api/migrations create -s <name> sql`, which carries on the numbered sequence. The migration
@@ -47,15 +53,17 @@ apps/api/migrations create -s <name> sql`, which carries on the numbered sequenc
 models sqlc makes: replace them with the product's first real migration and queries before its
 first deploy.
 
-`apps/app` is the app, one Vue 3 single-page app in TypeScript, which the Go binary is to serve
-from the same origin as the API. Vue because it is the stack its operator already runs, and one app
-is enough until a product needs a second. The app follows louie's `vue`, `typescript` and
-`tailwind` Guidelines: `src/app/` holds the entry, `App.vue` and the router, and `src/views/` the
-pages no feature owns, each loaded when its named route is first visited; a feature gets its folder
-in `src/features/` when the first one comes, and code any part of the app uses goes in
-`src/shared/` when the first such code comes. Its test sits beside each page: Vitest with
-`@vue/test-utils`, mounting it in jsdom. The page fetches nothing yet, so there is no TanStack
-Query, Pinia, `cn()` or `cva`; a product adds each when its first need comes.
+`apps/app` is the app, one Vue 3 single-page app in TypeScript, which the Go binary serves from the
+same origin as the API: where `APP_DIR` names the app's build, the server serves it beside `/api/`,
+every path that isn't a file getting `index.html`, so one image and one port serve both. Vue because
+it is the stack its operator already runs, and one app is enough until a product needs a second. The
+app follows louie's `vue`, `typescript` and `tailwind` Guidelines: `src/app/` holds the entry,
+`App.vue` and the router, and `src/views/` the pages no feature owns, each loaded when its named
+route is first visited; a feature gets its folder in `src/features/` when the first one comes, and
+code any part of the app uses goes in `src/shared/` when the first such code comes. Its test sits
+beside each page: Vitest with `@vue/test-utils`, mounting it in jsdom. The page fetches nothing yet,
+so there is no TanStack Query, Pinia, `cn()` or `cva`; a product adds each when its first need
+comes.
 
 The JavaScript is a pnpm workspace: `pnpm-workspace.yaml` lists the apps that have a
 `package.json`, and `pnpm-lock.yaml` is committed. pnpm because it is stable, refuses an import
@@ -82,6 +90,33 @@ builds don't load in Node, and 1.26.3 loads only through jiti, so eslint's confi
 
 `mise run check` installs from the frozen lockfile, then lints, checks the format, type-checks
 with `vue-tsc`, tests and builds `apps/app`; it needs no database and no running API.
+
+`mise run dev` runs the product on this machine: Postgres 17 from `docker-compose.yml` on port
+5433, the API on 8080 with `go run`, and Vite on 5173, mise running the API and Vite side by side
+once Postgres is ready. Vite passes `/api` on to the API, so the app calls the same paths as in
+production. The local Postgres trusts every connection and takes no password: it listens on this
+machine only and holds nothing but test data, and with no password in `mise.toml`'s `DATABASE_URL`
+or in the compose file, nothing in the repo reads as a Secret.
+
+The `Dockerfile` builds the image that is deployed: the app's build with Node and pnpm, and the
+server with Go, each on the builder's own platform and the server cross-compiled, so building for
+the server's architecture emulates nothing; then both are copied onto
+`gcr.io/distroless/static-debian12:nonroot`, which holds no shell and doesn't run as root.
+
+Kamal deploys that image, as `config/deploy.yml` says: one server the person owns, reached over
+SSH, with kamal-proxy in front, which starts the new server, waits for `GET /api/up` to answer 200
+and only then moves traffic to it, so a deploy drops no request. Postgres runs beside it as
+Kamal's accessory, its data in a directory on the server and its port bound to the server's own
+address. Kamal because it is what its operator already runs, and it needs nothing on the server but
+Docker. `config/deploy.yml` leaves only the server and the registry marked, for the person to
+fill in as the README says; with no domain yet, kamal-proxy answers over HTTP, and `host` and
+`ssl` are added once one points at the server.
+
+`mise run deploy` runs Kamal from its Docker image, pinned to an exact version like every tool, so
+a deploy needs Docker and no Ruby; the SSH agent is passed in as Kamal's docs give it. The
+deploy's secrets are in `.env`, which `.gitignore` keeps out of the repo and `.env.example` names;
+`mise run deploy` hands them to the container, and `.kamal/secrets` reads them from its
+environment, holding no value itself.
 
 ## Considered options
 
@@ -113,12 +148,32 @@ with `vue-tsc`, tests and builds `apps/app`; it needs no database and no running
   theme costs more than the few components a product starts with.
 - A `tailwind.config.js` — Tailwind 4 reads its theme from CSS, so a JavaScript config is a second
   place for the same values.
+- Kamal's gem, through Ruby in mise — a second language's toolchain to install and keep up for one
+  command, where Docker, which the project already needs, runs Kamal's image.
+- A PaaS or Kubernetes — a PaaS's price and limits are its own and a move off it is a rewrite of
+  the deploy, and Kubernetes is a cluster to run for one server.
+- docker compose on the server — each deploy stops the old server before the new one is up, with
+  no health check gating the switch.
+- Migrations as a separate deploy step, or goose's CLI on the server — a step to forget, or a tool
+  in the image, where the server migrating at start keeps the schema with the code that needs it.
+- A password on the local database — a value in the repo that reads as a Secret, for a database
+  that holds only test data and listens on this machine only.
+- A separate web server, or a CDN, for the app — a second thing to deploy and a second origin, with
+  CORS, for what the Go binary serves from the same image.
 
 ## Consequences
 
-- Each clone needs git and mise; mise installs the rest.
+- Each clone needs git, mise and Docker; mise installs the rest, and Docker runs Postgres and Kamal.
 - A commit or push fails where `hathi` isn't installed, so `mise run setup` comes first.
-- Raising a tool's version is an edit to `mise.toml`, and CI runs the new one with it.
+- Raising a tool's version is an edit to `mise.toml`, and CI runs the new one with it; raising Go,
+  Node or pnpm also edits the `Dockerfile`'s images, and raising Kamal edits the image `mise run
+  deploy` runs.
+- The first deploy is `mise run deploy setup`, after `config/deploy.yml`'s server and registry and
+  `.env`'s secrets are filled in; each after it is `mise run deploy`.
+- `.env` is never committed: a lost one is filled in again from `.env.example` and wherever the
+  secrets are kept.
+- A migration runs on the next start of the server, so a deploy that changes the schema is one
+  whose old code can still run on the new schema until it is replaced.
 - A change to `queries/` or `migrations/` is followed by `mise run sqlc`, or check fails.
 - A change to a `package.json` is followed by `pnpm install`, whose lockfile is committed with it,
   or check fails on the frozen lockfile.

@@ -1,0 +1,43 @@
+# Kamal's deploy (ADR stack): the Dockerfile's image on one server, behind kamal-proxy, with
+# Postgres beside it as an accessory. `<server>` and `<registry>` are yours to fill in, as
+# README.md says; `mise run deploy` runs Kamal with the secrets of .env, which .kamal/secrets reads.
+service: __NAME__
+image: __OWNER__/__NAME__
+
+servers:
+  - <server> # the server's IP address or host name, reached over SSH as root
+
+# No host and no TLS yet: kamal-proxy answers on the server's address over HTTP. Once a domain
+# points at the server, add `host:` with the domain and `ssl: true`, for Let's Encrypt.
+proxy:
+  app_port: 8080
+  healthcheck:
+    path: /api/up
+
+registry:
+  server: <registry> # where the image is pushed and the server pulls it from, such as ghcr.io
+  username:
+    - KAMAL_REGISTRY_USERNAME
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64 # the server's; the Dockerfile cross-compiles, so another machine emulates nothing
+
+env:
+  secret:
+    - DATABASE_URL
+
+accessories:
+  db:
+    image: postgres:17-alpine
+    host: <server>
+    port: "127.0.0.1:5432:5432" # the server's own, for psql or a dump over SSH; never public
+    env:
+      clear:
+        POSTGRES_USER: __NAME__
+        POSTGRES_DB: __NAME__
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data

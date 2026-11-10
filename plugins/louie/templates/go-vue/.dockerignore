@@ -1,0 +1,9 @@
+# What the image's build never reads: the history, the secrets, what is installed or built here,
+# and the project's decisions and Claude's files.
+.git
+.env
+.env.*
+**/node_modules
+apps/app/dist
+.about
+.claude

@@ -1,0 +1,24 @@
+# The local Postgres of `mise run dev`, on port 5433 so another Postgres on 5432 can run beside it;
+# mise.toml's DATABASE_URL points here. It trusts every connection and takes no password: it
+# listens on this machine only and holds nothing but test data, and a password in the repo would
+# read as a Secret (ADR stack). `docker compose down` stops it; `down -v` drops its data too.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: __NAME__
+      POSTGRES_DB: __NAME__
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "__NAME__", "-d", "__NAME__"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres-data:
