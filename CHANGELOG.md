@@ -2,6 +2,15 @@
 
 The marketplace's Releases, newest first.
 
+## 0.53.0 — 2026-11-11
+
+### bagheera
+
+#### Features
+
+- bagheera: set a repo up in one step with /bagheera:setup, and name what it lacks in doctor (f252fd3)
+- bagheera: offer each person deny rules that keep Secrets' files out of every session (d2b0514)
+
 ## 0.52.0 — 2026-11-10
 
 ### baloo
