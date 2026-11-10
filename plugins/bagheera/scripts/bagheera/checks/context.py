@@ -4,9 +4,10 @@
 
 from __future__ import annotations
 
+import glob
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from bagheera.checks.secrets import ALLOW_SECRET, is_env_file
 from bagheera.checks.shell import Program, base, has_flag, programs, split, split_git
@@ -29,13 +30,24 @@ _SECRET_FILES = [".aws/credentials", ".netrc", ".docker/config.json", ".config/g
 _READERS = [
     "cat", "bat", "less", "more", "head", "tail", "tac", "nl", "grep", "egrep", "fgrep", "rg",
     "ag", "sed", "awk", "cut", "sort", "uniq", "strings", "xxd", "od", "hexdump", "base64", "jq",
-    "yq", "diff", "column", "view",
+    "yq", "diff", "column", "view", "rev", "paste", "fold", "fmt", "pr", "expand", "unexpand",
+    "iconv", "comm", "join",
 ]
 # Readers whose first argument is a pattern or a script, not a file, unless it is given with an
 # option.
 _PATTERN_FIRST = ["grep", "egrep", "fgrep", "rg", "ag", "sed", "awk", "jq", "yq"]
 # jq's options that take a name and a value before its program (`--arg p "$p"`).
 _JQ_PAIRS = ["--arg", "--argjson", "--slurpfile", "--rawfile"]
+# Interpreters, each with its options whose value is code it runs: a file that code names in
+# quotes, `open(".env")`, it most likely reads.
+_INLINE_CODE = {
+    "python": ["-c"], "python3": ["-c"], "node": ["-e", "--eval", "-p", "--print"],
+    "bun": ["-e", "--eval", "-p", "--print"], "deno": ["eval"], "perl": ["-e", "-E"],
+    "ruby": ["-e"], "php": ["-r"],
+}
+_QUOTED = re.compile(r"([\"'`])([^\"'`]+)\1")
+# The characters that make a path a pattern the shell expands.
+_GLOB = re.compile(r"[*?\[]")
 
 _MARK_ADVICE = (
     f"only the user marks an env file as holding no secrets ({ALLOW_SECRET}). If it really holds "
@@ -48,7 +60,7 @@ def _str(value) -> str:
 
 
 def no_secrets_in_context(call: dict, dir: str) -> str:
-    """The Check baloo:no-secrets-in-context (PreToolUse on Bash, Read, Grep, Edit, Write and
+    """The Check no-secrets-in-context (PreToolUse on Bash, Read, Grep, Edit, Write and
     MultiEdit): why the tool call `call`, Claude Code's PreToolUse input with its tool_name and
     tool_input, run in the folder `dir`, would Leak a Secret into Claude's context, or mark an Env
     file as holding none, which only the user does; "" when it would do neither. It says so to
@@ -168,6 +180,22 @@ def _secret_file(path: str, dir: str) -> str:
         home = os.path.expanduser("~")
         if home != "~":
             p = _HOME.sub(lambda m: home + m[2], p)
+    # A pattern that reads as a Secret's file, *.env or *.pem, is one wherever it matches, as a
+    # Grep's glob is; another shows each file the shell expands it to: .e* matches .env, * doesn't.
+    why = _secret_path(path, p, dir)
+    if why or not _GLOB.search(p):
+        return why
+    absolute = os.path.isabs(p)
+    for m in sorted(glob.glob(p if absolute else os.path.join(glob.escape(dir), p))):
+        shown = m if absolute else os.path.relpath(m, dir)
+        why = _secret_path(shown, m, dir)
+        if why:
+            return why
+    return ""
+
+
+def _secret_path(path: str, p: str, dir: str) -> str:
+    """_secret_file's answer for the file `path`, `p` once its home folder is expanded."""
     if is_env_file(p):
         if not os.path.isabs(p):
             p = os.path.join(dir, p)
@@ -212,73 +240,115 @@ def _shows(p: Program, dir: str) -> str:
         why = _secret_file(file, dir)
         if why and not _hides_values(p, i):
             return why
-    named = [a for a in args if not a.startswith("-")]
+    show = _PRINTERS.get(p.name)
+    if show is not None:
+        return show(p, dir)
+    if p.name in _INLINE_CODE:
+        return _inline_code(p, dir)
+    return ""
 
-    def secret(names: List[str]) -> str:
-        return next((n for n in names if _secret_name(n)), "")
 
-    if p.name in ("env", "printenv"):
-        if _dumps_env(p):
-            return p.name + " prints every environment variable"
-        s = secret(named)
-        if p.name == "printenv" and s:
-            return f"printenv {s} prints a secret"
-    elif p.name in ("export", "declare", "typeset"):
-        if not named:
-            return p.name + " prints every exported variable"
-        s = secret(named)
-        if has_flag(args, "-p") and s:
-            return f"{p.name} -p {s} prints a secret"
-    elif p.name == "set":
-        if not args:
-            return "set prints every shell variable"
-    elif p.name in ("echo", "printf", "print"):
-        if _to_file(args):
-            return ""
-        shown: List[str] = []
-        for a in args:
-            text, inner = _substituted(a)
-            why = next((w for w in (_leak(c, dir) for c in inner) if w), "")
-            if why:
-                return why
-            shown.append(text)
-        s = secret([m[1] or m[2] for a in shown for m in _VARIABLE.finditer(a)])
-        if s:
-            return f"{p.name} ${s} prints a secret"
-    elif p.name == "gh":
-        if (
-            len(args) > 1
-            and args[0] == "auth"
-            and (
-                args[1] == "token"
-                or (args[1] == "status" and has_flag(args, "--show-token", "-t"))
-            )
-        ):
-            return "gh auth token prints a secret"
-    elif p.name == "security":
-        if (
-            args
-            and args[0] in ("find-generic-password", "find-internet-password")
-            and has_flag(args, "-w", "-g")
-        ):
-            return f"security {args[0]} -w prints a password"
-    elif p.name == "aws":
-        if (
-            len(args) > 1
-            and args[0] == "configure"
-            and (
-                args[1] == "export-credentials"
-                or (args[1] == "get" and len(args) > 2 and _secret_name(args[2]))
-            )
-        ):
-            return f"aws configure {args[1]} prints a secret"
-    elif p.name == "op":
-        if args and args[0] == "read":
-            return "op read prints a secret"
-    elif p.name == "git":
-        _, sub, rest = split_git(args)
-        if sub == "credential" and rest and rest[0] == "fill":
-            return "git credential fill prints a secret"
+def _named(args: List[str]) -> List[str]:
+    return [a for a in args if not a.startswith("-")]
+
+
+def _secret_named(names: List[str]) -> str:
+    """The first of the variables' names `names` that says it holds a Secret, or ""."""
+    return next((n for n in names if _secret_name(n)), "")
+
+
+def _env(p: Program, dir: str) -> str:
+    if _dumps_env(p):
+        return p.name + " prints every environment variable"
+    s = _secret_named(_named(p.args))
+    return f"printenv {s} prints a secret" if p.name == "printenv" and s else ""
+
+
+def _export(p: Program, dir: str) -> str:
+    named = _named(p.args)
+    if not named:
+        return p.name + " prints every exported variable"
+    s = _secret_named(named)
+    return f"{p.name} -p {s} prints a secret" if has_flag(p.args, "-p") and s else ""
+
+
+def _set(p: Program, dir: str) -> str:
+    return "" if p.args else "set prints every shell variable"
+
+
+def _echo(p: Program, dir: str) -> str:
+    if _to_file(p.args):
+        return ""
+    shown: List[str] = []
+    for a in p.args:
+        text, inner = _substituted(a)
+        why = next((w for w in (_leak(c, dir) for c in inner) if w), "")
+        if why:
+            return why
+        shown.append(text)
+    s = _secret_named([m[1] or m[2] for a in shown for m in _VARIABLE.finditer(a)])
+    return f"{p.name} ${s} prints a secret" if s else ""
+
+
+def _gh(p: Program, dir: str) -> str:
+    args = p.args
+    if len(args) > 1 and args[0] == "auth" and (
+        args[1] == "token" or (args[1] == "status" and has_flag(args, "--show-token", "-t"))
+    ):
+        return "gh auth token prints a secret"
+    return ""
+
+
+def _security(p: Program, dir: str) -> str:
+    args = p.args
+    if (
+        args
+        and args[0] in ("find-generic-password", "find-internet-password")
+        and has_flag(args, "-w", "-g")
+    ):
+        return f"security {args[0]} -w prints a password"
+    return ""
+
+
+def _aws(p: Program, dir: str) -> str:
+    args = p.args
+    if len(args) > 1 and args[0] == "configure" and (
+        args[1] == "export-credentials"
+        or (args[1] == "get" and len(args) > 2 and _secret_name(args[2]))
+    ):
+        return f"aws configure {args[1]} prints a secret"
+    return ""
+
+
+def _op(p: Program, dir: str) -> str:
+    return "op read prints a secret" if p.args and p.args[0] == "read" else ""
+
+
+def _git(p: Program, dir: str) -> str:
+    _, sub, rest = split_git(p.args)
+    if sub == "credential" and rest and rest[0] == "fill":
+        return "git credential fill prints a secret"
+    return ""
+
+
+# The programs that print a Secret themselves, each with why it does, or "" when it doesn't.
+_PRINTERS: Dict[str, Callable[[Program, str], str]] = {
+    "env": _env, "printenv": _env, "export": _export, "declare": _export, "typeset": _export,
+    "set": _set, "echo": _echo, "printf": _echo, "print": _echo, "gh": _gh,
+    "security": _security, "aws": _aws, "op": _op, "git": _git,
+}
+
+
+def _inline_code(p: Program, dir: str) -> str:
+    """Why the code the interpreter `p` is given to run, not a script's file, would show a Secret:
+    a file it names in quotes holds one."""
+    options = _INLINE_CODE[p.name]
+    for i, a in enumerate(p.args[:-1]):
+        if a in options:
+            for m in _QUOTED.finditer(p.args[i + 1]):
+                why = _secret_file(m[2], dir)
+                if why:
+                    return why
     return ""
 
 
