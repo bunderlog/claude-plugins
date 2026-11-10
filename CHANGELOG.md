@@ -2,6 +2,26 @@
 
 The marketplace's Releases, newest first.
 
+## 0.42.0 — 2026-11-10
+
+### baloo
+
+#### Breaking changes
+
+- split louie out of baloo: the Guidelines and the verifier, for building (dddecdb)
+
+### bagheera
+
+#### Fixes
+
+- doctor: name bagheera, not baloo, in the doctor skill (f2b953e)
+
+### louie
+
+#### Breaking changes
+
+- split louie out of baloo: the Guidelines and the verifier, for building (dddecdb)
+
 ## 0.41.0 — 2026-11-10
 
 ### baloo
