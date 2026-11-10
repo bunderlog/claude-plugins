@@ -228,3 +228,20 @@ departure that blocked, fixed in 0.49.1, and these that don't:
   test helper `get` takes no `t` (`go` §4); `main.go` reads its three settings itself, where a
   `config` package comes due as they grow.
 Settled by fixing each in the template, or by deciding a rule doesn't reach a template's file.
+
+## A clean machine needed bagheera and the Status line by hand
+
+2026-11-10 · user
+
+On a clean machine, after the README's install, the user had to add bagheera to the project's
+settings by hand for it to run there, and to set the Status line by hand (Issue
+split-bagheera-louie). Two things to settle:
+- Why bagheera, installed at user scope, wasn't on in the project: a missing `enabledPlugins`
+  entry in `~/.claude/settings.json` after `claude plugin install`, the project's settings
+  turning it off, or the session not restarted. Settled by repeating the two commands on a clean
+  account, opening a new project and running `/bagheera:doctor`, then reading `enabledPlugins` in
+  each settings file; a defect found becomes an Issue.
+- The Status line by hand is ADR status-line's rule, since a plugin can't set `statusLine`;
+  whether bagheera writes it into `~/.claude/settings.json` after the person's yes is PRD
+  harness's open question for the visibility PRD. This is the first person who had to do it
+  without being told; settled in that PRD.

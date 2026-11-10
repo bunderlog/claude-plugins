@@ -45,3 +45,14 @@ that each plugin works with the others gone.
 PRD delivery and PRD templates are agreed; 0.44.1 tells once, to whoever still picks
 `baloo:short-replies`, to pick `bagheera:short-replies`. The clean machine is a new macOS account,
 with python3 from the Command Line Tools.
+
+### 2026-11-10 · clean machine
+
+Tried on the clean machine by the user, half by hand: baloo and louie came on from the set-up
+project's settings once the folder was trusted, but bagheera had to be added to the project's
+settings by hand, and the Status line set by hand. So PRD harness's second install criterion
+holds; the first, that `claude plugin marketplace add` and `claude plugin install
+bagheera@bunderlog` are the whole install for bagheera's Checks in any folder, doesn't as written.
+Why the user-scope install didn't reach the project is unknown; the Status line by hand is ADR
+status-line's rule, not a defect (Inbox, "A clean machine needed bagheera and the Status line by
+hand").
