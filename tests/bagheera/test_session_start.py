@@ -63,6 +63,25 @@ class SessionStart(unittest.TestCase):
               '{"outputStyle": "Explanatory", "statusLine": {"type": "command", "command": "x"}}')
         self.assertNotIn("no longer picks", start(self)[1])
 
+    # Where a settings file still picks baloo's short-replies, session start tells, once per clone,
+    # to pick bagheera's there; one that picks bagheera's isn't told of (PRD bagheera).
+    def test_old_output_style(self):
+        in_repo(self)
+        user = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json")
+        write(user, '{"outputStyle": "baloo:short-replies", "statusLine": {"type": "command"}}')
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
+        self.assertNotIn("baloo:short-replies", start(self)[1])
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
+        out = start(self)[1]
+        self.assertIn(user + " picks the Output style baloo:short-replies", out)
+        self.assertIn('"outputStyle": "bagheera:short-replies" there: tell the user, once', out)
+        self.assertNotIn("no longer picks", out)
+        self.assertNotIn("baloo:short-replies", start(self)[1])
+
+        in_repo(self)
+        write(user, '{"outputStyle": "bagheera:short-replies", "statusLine": {"type": "command"}}')
+        self.assertNotIn("picks the Output style", start(self)[1])
+
     # In a Session review's session, session start says nothing and changes nothing in the repo
     # or Claude Code's settings.
     def test_in_session_review(self):

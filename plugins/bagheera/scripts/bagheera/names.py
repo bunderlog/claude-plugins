@@ -15,6 +15,8 @@ PLUGIN_DIR = "plugins/" + PLUGIN
 MANIFEST = PLUGIN_DIR + "/.claude-plugin/plugin.json"
 # The Config an earlier baloo read, from a repo's root, which doctor names for removal.
 OLD_CONFIG = ".claude/baloo.yml"
+# The Output style an earlier baloo shipped, bagheera's since 0.41.0 (PRD bagheera).
+OLD_STYLE = KNOWLEDGE + ":short-replies"
 # Claude Code's own settings files of a project, from its folder: the team's and one person's.
 PROJECT_SETTINGS = ".claude/settings.json"
 LOCAL_SETTINGS = ".claude/settings.local.json"

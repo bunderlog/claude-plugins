@@ -51,17 +51,26 @@ class Start:
     session: str
 
 
+# The mark in the clone's told folder that the old Output style was told of.
+OLD_STYLE_TOLD = "old-outputStyle"
+
+
 def _personal(s: Start) -> Lines:
     """Once per clone, how to set an Output style and a Status line in the person's own settings,
-    for each no settings file sets: the plugin sets neither (PRD no-config). A headless session is
-    told nothing, so it doesn't use up the telling."""
+    for each no settings file sets: the plugin sets neither (PRD no-config); and where a settings
+    file still picks baloo's `short-replies`, which Claude Code no longer finds, to pick bagheera's
+    (PRD bagheera). A headless session is told nothing, so it doesn't use up the telling."""
     if not s.root or not s.data or review.headless():
         return Lines()
+    paths = settings.files(s.dir)
     try:
-        fields = settings.read_all(settings.files(s.dir))
+        fields = settings.read_all(paths)
     except (OSError, ValueError):
         return Lines()
     unset = [k for k in ("outputStyle", "statusLine") if not any(k in f for f in fields.values())]
+    old = [paths[k] for k, f in fields.items() if f.get("outputStyle") == names.OLD_STYLE]
+    if old:
+        unset.append(OLD_STYLE_TOLD)
     digest = hashlib.sha256(s.root.encode()).hexdigest()[:16]
     folder = os.path.join(s.data, "personal-told", digest)
     try:
@@ -87,11 +96,21 @@ def _personal(s: Start) -> Lines:
             "refreshInterval": 60,
         }),
     }
-    fields_text = ", ".join(f'"{k}": {values[k]}' for k in new)
-    return Lines([
-        f"{names.PLUGIN} no longer picks an Output style or sets a Status line; to keep its own, "
-        f"the user adds to ~/.claude/settings.json: {fields_text}: tell the user, once"
-    ])
+    out = Lines()
+    keys = [k for k in new if k != OLD_STYLE_TOLD]
+    if keys:
+        fields_text = ", ".join(f'"{k}": {values[k]}' for k in keys)
+        out.lines.append(
+            f"{names.PLUGIN} no longer picks an Output style or sets a Status line; to keep its "
+            f"own, the user adds to ~/.claude/settings.json: {fields_text}: tell the user, once"
+        )
+    if OLD_STYLE_TOLD in new:
+        out.lines.append(
+            f"{', '.join(old)} picks the Output style {names.OLD_STYLE}, which is "
+            f"{names.PLUGIN}'s now and no longer found under that name: to keep it, the user sets "
+            f'"outputStyle": {values["outputStyle"]} there: tell the user, once'
+        )
+    return out
 
 
 def _session_review(s: Start) -> Lines:

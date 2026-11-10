@@ -3,17 +3,19 @@
 Date: 2026-11-10
 
 The plugin ships how Claude writes its replies, such as `short-replies`, as Output styles in
-`plugins/baloo/output-styles/`, each with `keep-coding-instructions: true` so Claude Code keeps its
+`plugins/bagheera/output-styles/`, each with `keep-coding-instructions: true` so Claude Code keeps its
 own instructions for coding. Claude Code sends the active one with every request, and its own
-`outputStyle` setting picks it (`baloo:short-replies`).
+`outputStyle` setting picks it (`bagheera:short-replies`).
 
 The plugin picks none: each person picks their own in `~/.claude/settings.json`,
-`baloo:short-replies` or any other, since how Claude talks to them is theirs (PRD harness, PRD
+`bagheera:short-replies` or any other, since how Claude talks to them is theirs (PRD harness, PRD
 no-config). Where no settings file Claude Code reads (the person's, the project's, the clone's local
 or the managed ones) sets `outputStyle`, the first session start in a clone tells Claude, to tell
 the person, the line to add, once per clone; a headless session is told nothing and leaves the
-telling for the next. A plugin can't set a default Output style but by `force-for-plugin`, which
-would override the person's own.
+telling for the next. Where a settings file still picks `baloo:short-replies`, which moved to
+bagheera with 0.41.0 and isn't found under that name any more, session start tells, the same way,
+to pick `bagheera:short-replies` in that file. A plugin can't set a default Output style but by
+`force-for-plugin`, which would override the person's own.
 
 ## Considered options
 
