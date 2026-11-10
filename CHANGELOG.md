@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.44.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: add /louie:plan, which plans an agreed Issue and changes nothing (2b7c869)
+
 ## 0.43.1 — 2026-11-10
 
 ### louie
