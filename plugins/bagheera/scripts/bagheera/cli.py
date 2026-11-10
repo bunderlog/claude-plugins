@@ -9,9 +9,11 @@ import os
 import re
 import shutil
 import sys
+import time
 from typing import Any, Dict, List, Optional, TextIO
 
 from bagheera import (
+    attention,
     binlink,
     checks,
     condense,
@@ -30,7 +32,7 @@ from bagheera import (
 USAGE = (
     "usage: bagheera version | doctor | setup [--hathi | --no-hathi] |\n"
     "  session-start [UserPromptSubmit] | status-line |\n"
-    "  pre-tool-use | session-end | user-prompt-submit |\n"
+    "  pre-tool-use | session-end | user-prompt-submit | stop | notification | attention |\n"
     "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n"
     "  proposals |\n"
     "  condense [--last <n> | <session>...] | condense <session> --around <line>"
@@ -65,6 +67,9 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
             return 0
         if command == "doctor":
             return doctor.run(stdout, stderr)
+        if command == "attention":
+            attention.run_check(os.environ.get("CLAUDE_PLUGIN_DATA", ""), repo.own_folder())
+            return 0
         if command == "session-start":
             return session_start.run_hook("SessionStart", _read(stdin), stdout, stderr)
         hooks = {
@@ -72,6 +77,8 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
             "pre-tool-use": pre_tool_use,
             "session-end": session_end,
             "user-prompt-submit": user_prompt_submit,
+            "stop": waiting,
+            "notification": waiting,
         }
         if command in hooks:
             return hooks[command](_read(stdin), stdout)
@@ -132,10 +139,11 @@ def _tool_call(text: str) -> Optional[Dict[str, Any]]:
 
 def status_line(text: str, stdout: TextIO) -> int:
     """Claude Code's status line command (ADR status-line): it prints the Status line for what
-    Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with its default bars
+    Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with its default figures
     (PRD no-config). A field of another type than the plugin's is left out, and the rest shows;
     whatever else goes wrong, it prints nothing, since Claude Code shows under the prompt whatever
-    it prints."""
+    it prints. It shows how many sessions wait and how many projects need attention as the last
+    check found, and starts the next check in the background where that is old (PRD visibility)."""
     try:
         value, _ = json.JSONDecoder().raw_decode(text.lstrip(" \t\r\n"))
     except ValueError:
@@ -145,9 +153,47 @@ def status_line(text: str, stdout: TextIO) -> int:
     width = int(columns) if re.fullmatch(r"[+-]?[0-9]+", columns) else 0
     if width <= 0:
         width = 120
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "") or binlink.data_of(sys.argv[0])
+    found = attention.read(data) if data else attention.Found()
     layout = statusline.default()
-    stdout.write(layout.render(in_, statusline.branch(in_.current_dir), width) + "\n")
+    stdout.write(layout.render(in_, statusline.branch(in_.current_dir), width,
+                               found.waiting(in_.session_id), found.attention()) + "\n")
+    if data:
+        try:
+            attention.start(data, os.path.join(binlink.PLUGIN, "scripts", "run.py"), time.time())
+        except OSError:
+            pass
     return 0
+
+
+def waiting(text: str, stdout: TextIO) -> int:
+    """The Stop and Notification Hooks' part, and the PreToolUse Hook's for a question (PRD
+    visibility): it marks the session waiting for its person, but in a headless session, which
+    nobody waits on. It says nothing."""
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
+    if not data or os.environ.get(review.ENV, "") or review.headless():
+        return 0
+    event = hook.decode(text)
+    try:
+        if event is None:
+            return 0
+        session = hook.text(event, "session_id")
+        cwd = hook.text(event, "cwd") or hook.project()
+        transcript = hook.text(event, "transcript_path")
+        attention.mark(data, session, cwd, transcript, attention.claude_pid(), time.time())
+    except (OSError, hook.Mismatch):
+        pass
+    return 0
+
+
+def _not_waiting(text: str) -> None:
+    """Clears the mark of the session that gave the Hook `text`: a prompt came, or it ended."""
+    event = hook.decode(text)
+    try:
+        session = hook.text(event, "session_id") if event is not None else ""
+    except hook.Mismatch:
+        return
+    attention.clear(os.environ.get("CLAUDE_PLUGIN_DATA", ""), session)
 
 
 # Ends the reason of a command denied, for Claude to leave it to the user.
@@ -168,6 +214,8 @@ def pre_tool_use(text: str, stdout: TextIO) -> int:
     if call is None:
         return 0
     cwd = call.get("cwd") or dir
+    if call.get("tool_name") == "AskUserQuestion":
+        return waiting(text, stdout)
     if call.get("tool_name") == "Bash":
         command = (call.get("tool_input") or {}).get("command") or ""
         why = checks.no_git_hook_bypass(command)
@@ -194,6 +242,7 @@ def session_end(text: str, stdout: TextIO) -> int:
     the session that ended and returns at once. It says nothing and never fails the exit: without
     the Transcript, `claude`, or the plugin's folder or data folder, and in a Session review's own
     session, it does nothing."""
+    _not_waiting(text)
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     if os.environ.get(review.ENV, "") or not data or not plugin:
@@ -233,6 +282,7 @@ def user_prompt_submit(text: str, stdout: TextIO) -> int:
     plugin's data folder still points at the version before (see binlink): it runs this version's
     session start first, which points it here, and says nothing of what fails there. What both
     tell goes in one JSON: Claude Code drops a Hook's output that holds two."""
+    _not_waiting(text)
     if os.environ.get(review.ENV, ""):
         return 0
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")

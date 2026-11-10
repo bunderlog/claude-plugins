@@ -101,6 +101,18 @@ def started(root: str) -> bool:
     return isinstance(plugins, dict) and plugins.get(PLUGINS[0]) is True
 
 
+def hooks_off(root: str) -> str:
+    """The command that turns on the Git hooks git tracks in the repo at `root`, in a layout setup
+    knows, where this clone hasn't turned them on; "" otherwise (PRD visibility)."""
+    for where in (GITHOOKS, HUSKY):
+        p = subprocess.run(["git", "--no-optional-locks", "-C", root, "ls-files", "--",
+                            where.folder], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                           text=True)
+        if p.stdout.strip():
+            return "" if _git_config(root, "core.hooksPath") == where.hooks_path else where.command
+    return ""
+
+
 def missing(root: str) -> List[str]:
     """The items of the list the repo at `root` lacks, by name."""
     return [i.name for i in _items(root) if not i.present]

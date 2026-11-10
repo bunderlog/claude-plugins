@@ -1,18 +1,21 @@
 """doctor: the plugin's state in the repo it runs in, its problems first, each with what fixes it
 (ADR doctor): the plugin running and the link its Status line runs, the Session review's
 Proposals, and the Checks; what an earlier baloo left in the clone, for the person to remove; and
-what the repo lacks of being set up, which /bagheera:setup adds (PRD setup); and the deny rules
-the person's own settings lack (PRD deny). It changes nothing."""
+what the repo lacks of being set up, which /bagheera:setup adds (PRD setup); the deny rules
+the person's own settings lack (PRD deny); and the machine's projects that need attention and the
+sessions waiting, which aren't its problems (PRD visibility). It changes nothing but what the
+plugin's data folder keeps of them."""
 
 from __future__ import annotations
 
 import io
 import json
 import os
+import time
 from typing import List, TextIO
 
 from bagheera import (
-    binlink, checks, deny, hook, names, repo, review, settings, setup, version,
+    attention, binlink, checks, deny, hook, names, repo, review, settings, setup, version,
 )
 
 
@@ -104,6 +107,8 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     for name in sorted(checks.HOOK_CHECKS):
         w.write(f"  {name}\ton\n")
 
+    _machine(w, data)
+
     stdout.write(f"{names.PLUGIN} {version.read()} doctor in {dir}\n\n")
     if not problems:
         stdout.write("No problems.\n")
@@ -113,6 +118,28 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             stdout.write(f"- {hook.one_line(p)}\n")
     stdout.write(_columns(w.getvalue()))
     return 1 if problems else 0
+
+
+def _machine(w: io.StringIO, data: str) -> None:
+    """Writes the machine's projects that need attention, each thing a line with what to do, the
+    sessions waiting, and how many projects need nothing and how many aren't set up."""
+    found = attention.check(data, repo.own_folder(), time.time())
+    w.write(f"\nProjects on this machine, from the Transcripts of the last {attention.DAYS} days:\n")
+    if not found.projects and not found.waits:
+        w.write("  none found\n")
+        return
+    for wait in found.waits:
+        since = time.strftime("%Y-%m-%d %H:%M", time.localtime(wait.since))
+        w.write(f"  {wait.root or 'a folder outside any repo'}: a session waits for you since "
+                f"{since}: switch to it\n")
+    for p in found.projects:
+        if p.needs:
+            w.write(f"  {p.root}:\n")
+            for n in p.needs:
+                w.write(f"    - {n.what}: {n.fix}\n")
+    quiet = len([p for p in found.projects if not p.needs])
+    w.write(f"  need nothing\t{quiet}\n")
+    w.write(f"  not set up\t{len([p for p in found.projects if not p.set_up])}\n")
 
 
 def _left_in_local(dir: str) -> List[str]:

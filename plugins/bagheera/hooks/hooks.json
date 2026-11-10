@@ -47,7 +47,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit",
+        "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit|AskUserQuestion",
         "hooks": [
           {
             "type": "command",
@@ -55,6 +55,37 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/scripts/hook",
               "pre-tool-use"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook",
+              "stop"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook",
+              "notification"
             ],
             "timeout": 10
           }

@@ -38,3 +38,12 @@ def point(data: str) -> str:
         os.remove(tmp)
         raise
     return path
+
+
+def data_of(script: str) -> str:
+    """The plugin's data folder where `script` was run through its link, as the Status line runs
+    `<data>/bagheera/scripts/run.py`; "" where it wasn't."""
+    link = os.path.dirname(os.path.dirname(os.path.abspath(script)))
+    if os.path.basename(link) == names.PLUGIN and os.path.islink(link):
+        return os.path.dirname(link)
+    return ""

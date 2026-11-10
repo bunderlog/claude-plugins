@@ -10,7 +10,7 @@ import sys
 
 QUIET = [
     "allow-guideline", "pre-tool-use", "post-tool-use", "session-end", "user-prompt-submit",
-    "subagent-start", "status-line",
+    "subagent-start", "status-line", "stop", "notification", "attention",
 ]
 
 if sys.version_info < (3, 9):
