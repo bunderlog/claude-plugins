@@ -1,12 +1,12 @@
 """What every command a Hook runs shares: the folder it runs in, the JSON Claude Code gives it and
-takes back, and the Guidelines' index."""
+takes back, and the command that logs a decision on a Proposal."""
 
 from __future__ import annotations
 
 import json
 import os
+import shlex
 from typing import Any, Dict, Optional, TextIO
-
 
 
 def project() -> str:
@@ -75,8 +75,8 @@ def decide_command() -> str:
     the plugin."""
     run = os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT", ""), "scripts", "run.py")
     return (
-        "CLAUDE_PLUGIN_DATA='" + os.environ.get("CLAUDE_PLUGIN_DATA", "") + "' python3 -E -s '"
-        + run + "' review-decision"
+        "CLAUDE_PLUGIN_DATA=" + shlex.quote(os.environ.get("CLAUDE_PLUGIN_DATA", ""))
+        + " python3 -E -s " + shlex.quote(run) + " review-decision"
     )
 
 
