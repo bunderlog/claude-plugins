@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.45.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: add /louie:deliver, which takes an agreed Issue to a pull request (8d84920)
+
 ## 0.44.1 — 2026-11-10
 
 ### bagheera
