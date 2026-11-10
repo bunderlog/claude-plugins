@@ -82,9 +82,10 @@ and Claude Code sends with every request once a person's own `outputStyle` setti
 _Avoid_: "style" alone; tone
 
 **Status line**:
-The line Claude Code shows under the prompt; bagheera's, with the branch, the Usage figures, the
-Cache figure, the sessions waiting, the projects needing attention and the model, is drawn by
-bagheera, and set by each person in their own settings (ADR status-line, PRD visibility).
+The line Claude Code shows under the prompt; bagheera's, with the branch and what isn't committed
+or pushed, the Usage figures, the Cache figure, the sessions waiting, the projects needing
+attention, a restart that runs a newer version and the model, is drawn by bagheera, and set by
+each person in their own settings (ADR status-line, PRD visibility, PRD status-line).
 _Avoid_: "status" alone, which is a PRD's Status
 _In code_: `bagheera/statusline.py`
 

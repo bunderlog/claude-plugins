@@ -54,9 +54,10 @@ you worked on from this machine in the last 30 days that need attention, each wi
 the sessions waiting for you. It changes nothing.
 
 bagheera's Status line is grey while all is well: `▤` the context, `◷` the 5-hour and 7-day
-limits and `↻` the cache, each a number that turns yellow and red past its threshold; on the right,
-a yellow `⧗ 3` says three sessions wait for you and `⚑ 2` that two projects need attention, which
-`/bagheera:doctor` names.
+limits and `↻` the cache, each a number that turns yellow and red past its threshold. Beside the
+branch, `±5` counts what `git status` lists and `↑2` the commits not pushed. On the right, a yellow
+`⧗ 3` says three sessions wait for you, `⚑ 2` that two projects need attention, which
+`/bagheera:doctor` names, and `⇡ 0.54` that a restart runs the newer version installed.
 
 ## Development
 

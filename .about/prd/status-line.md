@@ -36,7 +36,7 @@ do that they would otherwise have done later or not at all.
 - The line runs `git` for `±` and `↑` each time it draws, and waits for it at most 150 ms; past
   that, it shows the counts it last got in that folder, or none.
 - Where the line doesn't fit, PRD visibility's order holds (the details, then the model); `±N`,
-  `↑N` and `⇡` stay. Past that, the folder's name is cut short with `…`.
+  `↑N` and `⇡` stay. Past that, the folder's name is cut short with `…`, then the figures go.
 - ADR status-line and the glossary's Status line are rewritten with the change that builds this,
   with PRD visibility's.
 
@@ -55,17 +55,30 @@ do that they would otherwise have done later or not at all.
 
 - In a clone with 2 files changed, one of them staged and changed again, and an untracked folder
   of 3 files, the line shows `±3`; with none, no `±`.
+  → test: tests/bagheera/test_statusline.py "Work.test_changed"
 - On a branch 2 commits ahead of its upstream, the line shows `↑2`; on one with no upstream, or
   a detached HEAD, 2 commits past `origin/HEAD`, `↑2`; with neither, no `↑`.
-- A session that started on 0.51.1 shows `⇡ 0.52` once 0.52.0 is installed for its project and another
-  session has started on 0.52.0; a session that started on 0.52.0 doesn't.
+  → test: tests/bagheera/test_statusline.py "Work.test_ahead"
+- A session that started on 0.51.1 shows `⇡ 0.52` once 0.52.0 is installed for its project and
+  another session has started on 0.52.0; a session that started on 0.52.0 doesn't.
+  → test: tests/bagheera/test_statusline.py "Restart.test_restart"
+  → test: tests/bagheera/test_statusline.py "Restart.test_recorded"
 - With `git` made to take 1 s, the line draws within 300 ms, with the counts from the draw before,
   or with none on the first.
+  → test: tests/bagheera/test_cli.py "Line.test_slow_git"
+  → test: tests/bagheera/test_statusline.py "Work.test_slow"
 - Drawing the line opens no socket and runs no `git fetch`, checked by a test that fails any.
+  → test: tests/bagheera/test_cli.py "Line.test_offline"
 - In 120 columns, in `claude-plugins` on `main` with `±`, `↑`, `⇡` and PRD visibility's `⧗` and
   `⚑`, the line shows all of them, every number with its details, and the model.
+  → test: tests/bagheera/test_statusline.py "Fits.test_all_in_120"
 - In a line too narrow for all of it, `±N`, `↑N` and `⇡` stay while the details and the model go.
+  → test: tests/bagheera/test_statusline.py "Work.test_shown"
+  → test: tests/bagheera/test_statusline.py "Fits.test_all_in_120"
 - Outside a repo, the line shows no `±` and no `↑`.
+  → test: tests/bagheera/test_statusline.py "Work.test_outside"
 - `±N` and `↑N` are grey, as work in progress is, and `⇡` is yellow.
+  → test: tests/bagheera/test_statusline.py "Work.test_shown"
+  → test: tests/bagheera/test_statusline.py "Restart.test_restart"
 - In this repo, the whole line, with PRD visibility's part, draws in under 300 ms on the
   maintainer's machine, checked by hand.
