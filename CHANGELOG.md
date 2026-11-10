@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.48.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: give the go-vue template apps/app, a Vue app in a pnpm workspace (c101f4f)
+
 ## 0.47.0 — 2026-11-10
 
 ### louie
