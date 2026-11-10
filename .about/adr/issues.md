@@ -34,6 +34,9 @@ the change that delivers it, as above.
   request, and takes the flow from what the project names.
 - `ticket` for the name — the `inbox` skill's word until now, and "issue" names a Stall's
   _Avoid_; but "issue" is what GitHub and Jira call it, and what users asked for.
+- `ticket`, `task` or `issue` for the Workflow's name, `/louie:ticket` — `ticket` a second name
+  for an Issue, `task` only one kind of Issue, and `issue` the skill that writes one; `deliver`
+  names what the Workflow does with an Issue.
 - Only the ticket's text in the chat, filed by the user — no duplicate search, and no check that
   the markup renders.
 - A Config key naming the tracker — rejected for PRDs already (ADR prd).
