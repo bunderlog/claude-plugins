@@ -27,6 +27,12 @@ branch `<slug>` from the remote's default branch, the slug being the tracker's k
 is there, use `<slug>-2`, then `-3` and on; never reuse, delete or rewrite an earlier one. Return
 the worktree's absolute path, the branch, the commit it starts from and the default branch.
 
+## discard
+
+The run stopped before anything was built: remove the worktree and the branch your prompt names,
+`git worktree remove` and `git branch -d`, only when the branch holds no commit beyond where it
+started and the worktree no change; otherwise leave both and say why.
+
 ## implement, rework
 
 Build the plan you are given, or fix the findings you are given, in commits in the project's

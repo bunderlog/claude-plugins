@@ -53,7 +53,8 @@ such pull request carries the Verification's verdict on each acceptance criterio
      deleting or rewriting an earlier one, and leaving the person's checkout as it was; the
      worktree stays after the run, and every later stage works in it;
   3. plans again, stopping when the Issue has no acceptance criteria, leaves a decision open, or
-     has nothing to build;
+     has nothing to build, and then discarding the worktree and branch it made, which hold
+     nothing; a question outside the Issue's criteria is not a decision for the person;
   4. implements in commits in the project's format, with the checks the project's `CLAUDE.md` or
      README names (`mise run check`, `make verify`) passing on the last one, or stops
      `blocked:checks` with their output; a change that delivers an Issue kept in

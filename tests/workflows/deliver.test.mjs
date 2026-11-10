@@ -64,7 +64,9 @@ test('deliver stops before changing anything when prepare stops, or the plan isn
   for (const [verdict, want] of [['needs-decision', 'blocked:needs-decision'], ['done:nothing-to-build', 'done:nothing-to-build']]) {
     const { result, calls } = await run('deliver', 'x.md', stages({ planned: { verdict, reason: 'r', report: 'p' } }))
     assert.equal(result.verdict, want)
-    assert.deepEqual(calls.map((c) => c.label), ['prepare'])
+    // The worktree it made, holding nothing yet, is discarded.
+    assert.deepEqual(calls.map((c) => c.label), ['prepare', 'discard'])
+    assert.equal(result.worktree, '')
   }
   assert.equal((await run('deliver', undefined)).result.verdict, 'blocked:no-issue')
 })

@@ -15,7 +15,8 @@ export const meta = {
 //
 // The script decides the order of the stages and every way out of them; the agents do the work
 // (PRD delivery). Plan and Verify are louie's own Workflows, run as stages. At most 23 agents:
-// prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4, pull request 1. The agent's
+// prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4, pull request 1; a run the
+// plan stops spends one more, to discard the worktree it made. The agent's
 // name repeats louie's names.PLUGIN, as a script can't import it.
 
 const MAX_REWORK = 3
@@ -102,7 +103,14 @@ try {
 if (!planned || !planned.verdict) return end('blocked:tooling', 'the plan Workflow returned nothing')
 if (planned.verdict !== 'ready') {
   const verdict = planned.verdict === 'needs-decision' ? 'blocked:needs-decision' : planned.verdict
-  return end(verdict, planned.reason, { plan: planned.report })
+  // The worktree holds nothing yet: a rerun once the decisions are in starts a new one.
+  await agent(
+    `Stage: discard\nIssue: ${issue}\nDiscard ${where}, as your instructions say.`,
+    { agentType: 'louie:implementer', label: 'discard' },
+  )
+  const result = end(verdict, planned.reason, { plan: planned.report })
+  prep = null
+  return { ...result, branch: '', worktree: '' }
 }
 
 let findings = ''

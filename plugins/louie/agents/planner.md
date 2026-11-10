@@ -36,7 +36,8 @@ retry, say which tool failed and with what error.
 - Decisions only the person can make: a choice the Issue, the ADRs and the code leave open, such
   as a behavior another decision set, or a scope the Issue doesn't settle. Each with its options
   and the one you recommend. A choice the code or the ADRs settle is not one: settle it and say
-  how.
+  how. Nor is a question outside the Issue's acceptance criteria, such as whether to also redo
+  past work: name it under assumptions, as left out.
 - Assumptions you made, each with what would change if it is wrong.
 - Confidence: high when the cause and every change are found; medium when one change is a guess;
   low when the cause or the place to change isn't found.
