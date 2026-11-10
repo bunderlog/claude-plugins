@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.38.0 — 2026-11-10
+
+### Breaking changes
+
+- leave the Output style and Status line to each person's own settings (3b44007)
+
 ## 0.37.0 — 2026-11-09
 
 ### Breaking changes
