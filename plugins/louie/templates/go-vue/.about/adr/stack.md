@@ -38,11 +38,13 @@ mux's `Allow` header, in place of the mux's plain text. golangci-lint runs at it
 no config.
 
 Postgres is reached through sqlc on `pgx/v5`: queries are written as SQL in `apps/api/queries/`
-and sqlc generates the Go that runs them into `apps/api/internal/db/`, which is committed and
-never edited by hand. `mise run sqlc` regenerates it, and `mise run check` runs `sqlc diff`, which
-fails where `internal/db` differs from what sqlc generates; it needs no database.
+and sqlc generates the Go that runs them into `apps/api/internal/db/`, which is committed; the
+files it generates are never edited by hand. `mise run sqlc` regenerates them, and `mise run check`
+runs `sqlc diff`, which fails where they differ from what sqlc generates; it needs no database.
+Beside them, `open.go` is written by hand, so the database is one package, and sqlc leaves it
+alone.
 
-The server opens a pgx pool from `DATABASE_URL` at start, in `internal/database`, and runs the
+The server opens a pgx pool from `DATABASE_URL` at start, in `internal/db`'s `open.go`, and runs the
 migrations it hasn't run yet: they are built into the binary from `migrations/`, and goose's
 provider runs them, so a deploy migrates the database before the new server takes a request. If it
 can't connect or migrate, it exits naming the step that failed, and kamal-proxy keeps the old
