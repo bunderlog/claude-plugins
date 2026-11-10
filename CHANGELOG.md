@@ -2,6 +2,12 @@
 
 The marketplace's Releases, newest first.
 
+## 0.40.0 — 2026-11-10
+
+### Features
+
+- session-review: propose only what a session settled, not what it left open (6cccb4b)
+
 ## 0.39.0 — 2026-11-10
 
 ### Breaking changes
