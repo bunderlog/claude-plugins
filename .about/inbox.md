@@ -39,64 +39,6 @@ session-review); decide once a skill has to write there, not only read. louie's 
 will read an Issue from the project's tracker (PRD harness), so its PRD may be where this comes up
 first.
 
-## Project knowledge reaches the context only as a task needs it
-
-2026-10-06 · user · kept 2026-11-09
-
-After a few weeks, this repo's `.about/` is about 25k tokens (20 ADRs about 82 KB, the glossary
-and the Inbox about 15 KB) and the Guidelines another 10k, and both only grow; the more of it a
-session holds, the worse Claude follows what matters. Today session start prints a line per
-Guideline and the Inbox's count, and the skills and the verifier pick ADRs by the subject in their
-file names; ADRs and PRDs are edited in place, so nothing superseded piles up in the files.
-Measures to weigh:
-
-- Session start lists the titles of the ADRs, terms and PRDs, and Claude reads a file by its path.
-- The plugin picks what a task needs from the files it touches, once ADRs and acceptance criteria
-  link to code.
-- Reading many ADRs goes to an agent of its own, as the verifier does, which returns only its
-  report.
-- The plugin counts the tokens session start adds and says when they pass a budget.
-- A kind that only grows, such as Compound Engineering's `docs/solutions/` of solved problems,
-  gets a search and a cleanup before baloo adds it, and what it archives stays out of every
-  listing.
-
-Settled by measuring how much of `.about/` a session holds in a project a year old, then deciding
-which measures earn their cost.
-
-Loading on a task's demand is itself an open question, not a confirmed approach: the measurement
-of 2026-10-07 found the Guidelines read before an edit on their subject in 5 of 79 cases, and
-`.about/` read before an edit to code in 8 of 28 sessions, and a week of 2026-10 in one project
-in 12 of 30. For the Guidelines, 0.27.0 gives each by a signal of its task instead (ADR
-guidelines); `.about/` still waits to be read.
-
-The usefulness check of 2026-09-29 to 2026-10-30 found `.about/` read, or named, before an edit to
-code in 24 of 71 sessions in webui, though 67 of them had it, against 28 of 29 in three other
-projects. Size alone doesn't explain it: webui's ADRs, glossary, Inbox and PRDs are about 118 KB,
-64 KB of it the Inbox, and one of the three, read before every edit, has about 87 KB.
-
-What webui's sessions had in common, read on 2026-10-31: of 52 that edited its code, 41 began with
-a Jira ticket, and 1 of those 41 read an ADR, the glossary or a PRD before the first edit, against
-6 of the other 11. A ticket was named in `.about/` before its session in 3 of 40; 6 of webui's 10
-ADRs are about its process, not its code, and most tickets fix a legacy screen that no ADR or PRD
-covers. Where one did, Claude read it: RPG-6249, a menu regression, read ADR vue-migration before
-its fix and updated it after, and the project's own skills link to ADRs such as
-device-capabilities. No webui2 edit compared a device's type outside `entities/deviceConfig/`, the
-one rule of an ADR checked. So the count misleads: it judges a session by its first edit, where a
-webui session often works through several tickets.
-
-Counted per edit on 2026-11-02, on this machine's sessions from 2026-10-01: of 545 edits to code in
-81 sessions in six projects, 52 had an ADR or PRD that names the edited file, or a path of two or
-more segments ending in its folder, such as `entities/deviceConfig`, and for 20 of them it was read
-earlier in the session or a subagent of it; in webui 0 of 22, in the others 20 of 30. `.about/` was
-read at all before 341 of the 545, before 82 of webui's 260. So the ADRs that name code are few, 52
-of 545 edits, and in webui none of those reached the edit; an ADR that names no path is missed by
-the count, which needs a link from ADRs to code to judge the rest.
-
-On 2026-11-09 PRD harness took the first measure: session start puts the titles of the ADRs and
-PRDs and the glossary's terms in the context, derived each time, not kept in a file of their own.
-It has a PRD of its own (PRD harness, Non-goals); the measurements above move into it, and this
-item goes with them.
-
 ## A plugin for another audience, such as ad managers
 
 2026-10-14 · user · kept 2026-11-09
