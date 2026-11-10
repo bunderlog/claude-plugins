@@ -234,7 +234,7 @@ Settled by fixing each in the template, or by deciding a rule doesn't reach a te
 2026-11-10 · user
 
 On a clean machine the user didn't want bagheera installed at user scope, for every folder, and
-added it to the project's settings instead; and set the Status line by hand (Issue
+added it to the project's settings instead, where everything worked; and set the Status line by hand (Issue
 split-bagheera-louie). Two things to settle:
 - ADR plugin and PRD harness make bagheera each person's, installed once at user scope; a person
   who wants it only in some projects puts it in a project's settings, where it reaches everyone in
