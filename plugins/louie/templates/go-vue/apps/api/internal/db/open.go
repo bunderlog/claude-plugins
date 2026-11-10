@@ -1,6 +1,7 @@
-// Package database opens the API's Postgres and migrates it to the current schema at start (ADR
-// stack).
-package database
+// Package db reaches the API's Postgres. This file is written by hand: Open opens the database and
+// migrates it to the current schema at start. sqlc generates the package's other files from
+// queries/ and migrations/, and leaves this one alone (ADR stack).
+package db
 
 import (
 	"context"
@@ -28,9 +29,9 @@ func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
 }
 
 func migrate(ctx context.Context, pool *pgxpool.Pool) error {
-	db := stdlib.OpenDBFromPool(pool)
-	defer func() { _ = db.Close() }()
-	p, err := goose.NewProvider(goose.DialectPostgres, db, migrations.FS)
+	sqlDB := stdlib.OpenDBFromPool(pool)
+	defer func() { _ = sqlDB.Close() }()
+	p, err := goose.NewProvider(goose.DialectPostgres, sqlDB, migrations.FS)
 	if err != nil {
 		return fmt.Errorf("read the migrations: %w", err)
 	}

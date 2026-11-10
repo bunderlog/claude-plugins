@@ -90,10 +90,10 @@ class New(unittest.TestCase):
             "apps/api/cmd/server/main.go", "apps/api/internal/handler/handler.go",
             "apps/api/internal/handler/handler_test.go", "apps/api/internal/handler/app.go",
             "apps/api/internal/handler/app_test.go", "apps/api/internal/respond/respond.go",
-            "apps/api/internal/database/database.go",
-            "apps/api/internal/database/database_test.go", "apps/api/migrations/migrations.go",
+            "apps/api/migrations/migrations.go",
             "apps/api/internal/db/db.go", "apps/api/internal/db/models.go",
-            "apps/api/internal/db/notes.sql.go", "apps/api/migrations/00001_notes.sql",
+            "apps/api/internal/db/notes.sql.go", "apps/api/internal/db/open.go",
+            "apps/api/internal/db/open_test.go", "apps/api/migrations/00001_notes.sql",
             "apps/api/queries/notes.sql",
             "package.json", "pnpm-workspace.yaml", "pnpm-lock.yaml",
             "apps/app/package.json", "apps/app/index.html", "apps/app/tsconfig.json",
@@ -272,10 +272,10 @@ class New(unittest.TestCase):
 
         api = os.path.join(dest, "apps", "api")
         self.assertIn('"github.com/acme/my-app2/migrations"',
-                      text(os.path.join(api, "internal", "database", "database.go")))
+                      text(os.path.join(api, "internal", "db", "open.go")))
         self.assertIn("//go:embed *.sql\n", text(os.path.join(api, "migrations", "migrations.go")))
         main = text(os.path.join(api, "cmd", "server", "main.go"))
-        for part in ('"github.com/acme/my-app2/internal/database"', "DATABASE_URL", "APP_DIR",
+        for part in ('"github.com/acme/my-app2/internal/db"', "DATABASE_URL", "APP_DIR",
                      "handler.WithApp("):
             self.assertIn(part, main)
         self.assertIn("github.com/pressly/goose/v3 v3.27.2", text(os.path.join(api, "go.mod")))

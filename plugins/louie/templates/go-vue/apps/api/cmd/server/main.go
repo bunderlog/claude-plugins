@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/__OWNER__/__NAME__/internal/database"
+	"github.com/__OWNER__/__NAME__/internal/db"
 	"github.com/__OWNER__/__NAME__/internal/handler"
 )
 
@@ -38,7 +38,7 @@ func main() {
 		routes = handler.WithApp(routes, dir)
 	}
 
-	pool, err := database.Open(ctx, url)
+	pool, err := db.Open(ctx, url)
 	if err != nil {
 		slog.ErrorContext(ctx, "open the database failed", "err", err)
 		os.Exit(1)
