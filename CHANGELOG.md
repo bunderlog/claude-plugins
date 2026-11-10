@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.47.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: give the go-vue template apps/api, a Go module serving GET /api/up (ab6cece)
+
 ## 0.46.0 — 2026-11-10
 
 ### louie
