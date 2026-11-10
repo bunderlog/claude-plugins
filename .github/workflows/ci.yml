@@ -33,6 +33,30 @@ jobs:
             done
           '
 
+  # louie's go-vue template, written as /louie:new writes it: the line it gives the person turns the
+  # Git hooks on and makes the first commit through them, and the fresh repo's check passes (PRD
+  # templates).
+  template:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v5
+      - shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name ci
+          git config --global user.email ci@example.com
+          line=$(python3 -E -s plugins/louie/scripts/run.py new "$RUNNER_TEMP/demo" demo bunderlog | tail -n 1)
+          case $line in "! "*) ;; *) echo "not the line to run: $line" >&2; exit 1 ;; esac
+          bash -euc "${line#! }"
+          cd "$RUNNER_TEMP/demo"
+          test "$(git config core.hooksPath)" = .githooks
+          if git commit -q --allow-empty -m wip; then echo "the Git hooks let wip through" >&2; exit 1; fi
+          version=$(python3 -E -s "$GITHUB_WORKSPACE/plugins/louie/scripts/run.py" version)
+          test "$(git log -1 --format=%s)" = "chore: scaffold from louie go-vue $version"
+          mise run check
+          if grep -rE '__(NAME|OWNER|DATE)__' --exclude-dir=.git .; then exit 1; fi
+
   # hathi's commit and repo Checks on what the push or pull request brings.
   hathi:
     runs-on: ubuntu-24.04
