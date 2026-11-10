@@ -75,7 +75,7 @@ in a project.
 
 - From Release 1, in a repo whose `.claude/baloo.yml` turns `no-secrets-in-context` and
   `no-git-hook-bypass` off, Claude's `cat .env` and `git commit --no-verify` are still refused.
-  A new test in tests/test_cli.py.
+  A new test in tests/bagheera/test_cli.py.
 - From Release 1, in a repo with `go.mod` whose Config turns `go` off, session start's index names
   the `go` Guideline; in a repo without one, it doesn't; and a `.ts` file read in a repo with no
   TypeScript dependency still gives the `typescript` Guideline once in the session.

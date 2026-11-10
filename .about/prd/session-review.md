@@ -39,6 +39,6 @@ A Session review adds no item to any project's Inbox; the share of its Proposals
 
 - The prompt a Session review runs with asks for changes to the glossary, ADRs and PRDs, and for
   the deletion of a settled Inbox item, and tells it to propose nothing for what is open.
-  → test: tests/test_review.py "test_only_what_was_settled"
+  → test: tests/bagheera/test_review.py "test_only_what_was_settled"
 - In an eval session that settles a term and leaves a question open, the review proposes the term
   and nothing for the question.
