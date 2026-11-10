@@ -28,6 +28,6 @@ type upResponse struct {
 }
 
 // Up answers 200 with {"status": "up"}.
-func (h *UpHandler) Up(w http.ResponseWriter, _ *http.Request) {
-	respond.JSON(w, http.StatusOK, upResponse{Status: "up"})
+func (h *UpHandler) Up(w http.ResponseWriter, r *http.Request) {
+	respond.JSON(w, r, http.StatusOK, upResponse{Status: "up"})
 }

@@ -9,23 +9,23 @@ import (
 )
 
 // JSON writes v as the response body with the status.
-func JSON(w http.ResponseWriter, status int, v any) {
+func JSON(w http.ResponseWriter, r *http.Request, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
-		slog.Warn("write response failed", "err", err)
+		slog.WarnContext(r.Context(), "write response failed", "method", r.Method, "path", r.URL.Path, "err", err)
 	}
 }
 
 // Error writes {"code": code, "message": message} with the status.
-func Error(w http.ResponseWriter, status int, code, message string) {
-	JSON(w, status, errorBody{Code: code, Message: message})
+func Error(w http.ResponseWriter, r *http.Request, status int, code, message string) {
+	JSON(w, r, status, errorBody{Code: code, Message: message})
 }
 
 // Internal logs err and writes a generic 500, never err's detail.
 func Internal(w http.ResponseWriter, r *http.Request, err error) {
 	slog.ErrorContext(r.Context(), "request failed", "method", r.Method, "path", r.URL.Path, "err", err)
-	Error(w, http.StatusInternalServerError, "internal", "Something went wrong on our side.")
+	Error(w, r, http.StatusInternalServerError, "internal", "Something went wrong on our side.")
 }
 
 type errorBody struct {
