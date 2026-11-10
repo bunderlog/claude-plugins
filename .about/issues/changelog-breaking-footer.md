@@ -28,3 +28,10 @@ until 0.44.1. The section should carry the footer's text under the change it bel
   before.
 - In a Release of several plugins, the footer's text appears under the change in each plugin's
   part that lists it.
+
+## Comments
+
+### 2026-11-10 · decision
+
+The CHANGELOG's sections already released stay as they are: only Releases from now on carry a
+footer's text, as the criteria ask. 0.44.1 already tells whoever still picks `baloo:short-replies`.
