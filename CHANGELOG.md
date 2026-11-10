@@ -2,6 +2,12 @@
 
 The baloo plugin's Releases, newest first.
 
+## 0.39.0 — 2026-11-10
+
+### Breaking changes
+
+- drop the Config: the Session review always runs, and Format on edit goes (3130ce5)
+
 ## 0.38.0 — 2026-11-10
 
 ### Breaking changes
