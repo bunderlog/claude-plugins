@@ -9,7 +9,7 @@ import unittest
 from typing import Tuple
 from unittest import mock
 
-from bagheera import cli, names
+from bagheera import cli, names, setup
 from tests import testkit
 
 # The plugin's folder in this repo.
@@ -58,6 +58,23 @@ def in_repo(test: unittest.TestCase) -> str:
         "CLAUDE_PLUGIN_ROOT": PLUGIN,
     })
     return dir
+
+
+def set_up(dir: str) -> None:
+    """Writes into the repo at `dir` what PRD project-setup lists for a project without hathi, so
+    doctor finds nothing missing."""
+    write(os.path.join(dir, names.PROJECT_SETTINGS), json.dumps({
+        "extraKnownMarketplaces": {"bunderlog": {"source": dict(setup.MARKETPLACE_SOURCE)}},
+        "enabledPlugins": {p: True for p in setup.PLUGINS},
+        "enableWorkflows": True,
+        "permissions": {"deny": setup.DENY},
+        "attribution": {"commit": "", "pr": ""},
+    }))
+    write(os.path.join(dir, ".githooks", "pre-commit"), "#!/bin/sh\nexec gitleaks git --staged\n",
+          0o755)
+    write(os.path.join(dir, "README.md"), "Run `git config core.hooksPath .githooks`.\n")
+    write(os.path.join(dir, ".gitignore"), "".join(p + "\n" for p in setup.IGNORED))
+    write(os.path.join(dir, setup.ADR), "# This repo checks Secrets with gitleaks\n")
 
 
 def run(*args: str, stdin: str = "") -> Tuple[int, str, str]:

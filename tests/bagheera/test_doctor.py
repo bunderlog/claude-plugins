@@ -5,7 +5,7 @@ import unittest
 from bagheera import doctor, names, review, version
 from tests import testkit
 from tests.bagheera import commands, test_review
-from tests.bagheera.commands import PLUGIN, in_repo, run, start, write
+from tests.bagheera.commands import PLUGIN, in_repo, run, set_up, start, write
 
 
 def doctor_run(test):
@@ -20,6 +20,7 @@ class Doctor(unittest.TestCase):
     # After session start, doctor finds no problem and shows what is on, and why.
     def test_doctor(self):
         dir = in_repo(self)
+        set_up(dir)
         self.assertEqual(start(self)[0], 0)
         code, out = doctor_run(self)
         self.assertEqual(code, 0, out)
@@ -76,6 +77,7 @@ class Doctor(unittest.TestCase):
     def test_session_review_week(self):
         test_review.entrypoint(self, "cli")
         dir = in_repo(self)
+        set_up(dir)
         data = os.environ["CLAUDE_PLUGIN_DATA"]
         for session, reply in [
             ("s1", '{"is_error":true,"subtype":"error_max_budget_usd","total_cost_usd":3.1}'),
@@ -95,6 +97,7 @@ class Doctor(unittest.TestCase):
     # one or a file of another shape is none; a user's install counts where the project has none.
     def test_installed_newer(self):
         dir = in_repo(self)
+        set_up(dir)
         self.assertEqual(start(self)[0], 0)
         installed = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json")
         want = (
