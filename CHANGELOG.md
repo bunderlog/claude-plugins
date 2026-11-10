@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.55.0 — 2026-11-11
+
+### bagheera
+
+#### Features
+
+- bagheera: show uncommitted and unpushed work and a restart's version in the Status line (0c90715)
+
 ## 0.54.0 — 2026-11-11
 
 ### bagheera
