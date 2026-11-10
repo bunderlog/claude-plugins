@@ -59,3 +59,14 @@ Until the apps exist, the template's `mise run check` runs `shellcheck .githooks
 shellcheck pinned in its `mise.toml`: the Git hooks are this step's only code, so it is a real
 check, where a task that checks nothing would pass for the wrong reason. `hathi doctor` was the
 other option, but it reports hooks that aren't on, which they aren't in CI.
+
+### 2026-11-10 · decision
+
+Only the template's files that would act inside this repo carry a `.tmpl` suffix, which louie's
+code drops when it copies them: `CLAUDE.md`, `.gitignore`, `.claude/settings.json`, `mise.toml`,
+and in the later Issues `go.mod`, `package.json` and `pnpm-workspace.yaml`. Every other file keeps
+its real name, so louie's Guidelines, gofmt and eslint still reach the `.go`, `.ts` and `.vue`
+files Claude writes into the template; a test keeps session start here naming no stack Guideline
+the template's files would call for. Suffixing every file was the other option: one rule, but
+none of that would reach them. The marks are `__NAME__`, `__OWNER__` and `__DATE__`, which can't
+clash with Vue's or GitHub Actions' `{{ }}`.
