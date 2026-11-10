@@ -228,3 +228,12 @@ departure that blocked, fixed in 0.49.1, and these that don't:
   test helper `get` takes no `t` (`go` §4); `main.go` reads its three settings itself, where a
   `config` package comes due as they grow.
 Settled by fixing each in the template, or by deciding a rule doesn't reach a template's file.
+
+## A Check that fails lets the call through without a trace
+
+2026-11-10 · code review
+
+`scripts/hook` drops `run.py`'s stderr and exits 0 for every Hook but session start (ADR binary),
+so a Check that raises lets the tool call through and leaves nothing to find later. Settled by
+deciding whether `pre-tool-use` keeps its last failure in `${CLAUDE_PLUGIN_DATA}` for `doctor` to
+show, or by keeping it as it is, since session start already says when no Check runs at all.
