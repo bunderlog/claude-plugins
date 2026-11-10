@@ -1,4 +1,4 @@
-# Stack: one repository, mise for every tool and task, hathi in the Git hooks and CI, Go with sqlc and goose
+# Stack: one repository, mise for every tool and task, hathi in the Git hooks and CI, Go with sqlc and goose, Vue with Tailwind in a pnpm workspace
 
 Date: __DATE__
 
@@ -47,6 +47,42 @@ apps/api/migrations create -s <name> sql`, which carries on the numbered sequenc
 models sqlc makes: replace them with the product's first real migration and queries before its
 first deploy.
 
+`apps/app` is the app, one Vue 3 single-page app in TypeScript, which the Go binary is to serve
+from the same origin as the API. Vue because it is the stack its operator already runs, and one app
+is enough until a product needs a second. The app follows louie's `vue`, `typescript` and
+`tailwind` Guidelines: `src/app/` holds the entry, `App.vue` and the router, and `src/views/` the
+pages no feature owns, each loaded when its named route is first visited; a feature gets its folder
+in `src/features/` when the first one comes, and code any part of the app uses goes in
+`src/shared/` when the first such code comes. Its test sits beside each page: Vitest with
+`@vue/test-utils`, mounting it in jsdom. The page fetches nothing yet, so there is no TanStack
+Query, Pinia, `cn()` or `cva`; a product adds each when its first need comes.
+
+The JavaScript is a pnpm workspace: `pnpm-workspace.yaml` lists the apps that have a
+`package.json`, and `pnpm-lock.yaml` is committed. pnpm because it is stable, refuses an import
+the package doesn't declare, and runs Vite and its plugins on the Node they are built against;
+Node is on its LTS line. Every package is pinned to an exact version in its `package.json`, and
+`minimumReleaseAge` lets a release into the lockfile only once it is two weeks old, a package's
+own dependencies too. There are no `scripts` in a `package.json`: `mise run check` runs each tool.
+
+Tailwind styles the app: its classes sit in the markup they style and draw on one theme's tokens,
+so a page's look is read and changed in its own file, kept to the theme by the classes there are,
+and it is the stack its operator already runs. Tailwind 4 is configured in CSS, in
+`src/app/main.css`, with no `tailwind.config.js`: the theme's colors are tokens in `@theme`, each a
+pair of a background and the text made for it, and their dark values switch with the system's, so a
+component styled with tokens needs no `dark:`.
+
+eslint runs typescript-eslint's type-checked rules, `.vue` files' scripts included, so a promise
+left floating fails; then `eslint-plugin-vue`'s `flat/recommended`, and
+`eslint-plugin-vue-modular`'s recommended config, which checks the layout and the names, its test
+beside a page allowed. Layout of the code is prettier's, at
+its defaults with `prettier-plugin-tailwindcss` ordering the classes, and `eslint-config-prettier`
+turns off eslint's rules that would fight it. `eslint-plugin-vue-modular` is at 1.26.3: its later
+builds don't load in Node, and 1.26.3 loads only through jiti, so eslint's config is
+`eslint.config.ts`, which eslint loads through jiti.
+
+`mise run check` installs from the frozen lockfile, then lints, checks the format, type-checks
+with `vue-tsc`, tests and builds `apps/app`; it needs no database and no running API.
+
 ## Considered options
 
 - An ORM over sqlc — it writes the SQL, so a query's cost and shape are hidden behind code, and
@@ -62,6 +98,21 @@ first deploy.
   someone writes them, and two clones drift.
 - Tools installed by each person, or versions left floating — a tool's new release breaks one
   machine or CI and not another.
+- bun over pnpm — faster, but younger, and Vite's plugins are built and tested against Node.
+- npm or yarn — npm lets code import a package it doesn't declare, and yarn's Plug'n'Play needs
+  editors and tools set up for it.
+- Turbo over the workspace — a cache and a task runner for one app, while mise already runs the
+  tasks.
+- React — a second stack to run beside the one the operator knows.
+- `eslint-plugin-vue`'s `flat/essential` — it drops the recommended rules that aren't about
+  layout too, where `eslint-config-prettier` turns off only those prettier owns.
+- Scoped `<style>` blocks or CSS modules over Tailwind — each component names its own classes and
+  writes its own values, so keeping to the theme's tokens is left to care, and a page's look is
+  split between its markup and its styles.
+- A component library such as Vuetify — its look is its own, and bending it to the product's
+  theme costs more than the few components a product starts with.
+- A `tailwind.config.js` — Tailwind 4 reads its theme from CSS, so a JavaScript config is a second
+  place for the same values.
 
 ## Consequences
 
@@ -69,6 +120,9 @@ first deploy.
 - A commit or push fails where `hathi` isn't installed, so `mise run setup` comes first.
 - Raising a tool's version is an edit to `mise.toml`, and CI runs the new one with it.
 - A change to `queries/` or `migrations/` is followed by `mise run sqlc`, or check fails.
+- A change to a `package.json` is followed by `pnpm install`, whose lockfile is committed with it,
+  or check fails on the frozen lockfile.
+- Raising `eslint-plugin-vue-modular` past 1.26.3 waits for a build that loads in Node.
 - Raising Go's version is an edit to `mise.toml` and to `apps/api/go.mod`'s `go` directive, and
   golangci-lint may need raising with it, since it refuses a module newer than the Go it was built
   with.
