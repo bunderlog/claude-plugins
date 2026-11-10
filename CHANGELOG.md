@@ -2,6 +2,15 @@
 
 The marketplace's Releases, newest first.
 
+## 0.44.1 — 2026-11-10
+
+### bagheera
+
+#### Fixes
+
+- session-start: tell once to pick bagheera:short-replies where baloo's is still set (a35936f)
+- retro: count an earlier baloo's Check denials as Checks (2a4f2e3)
+
 ## 0.44.0 — 2026-11-10
 
 ### louie
