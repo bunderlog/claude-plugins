@@ -1,14 +1,14 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-10-31
+Date: 2026-11-10
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
-closes. Where the Config has `session-review: true`, the `SessionEnd` Hook runs the plugin's
+closes. In every repo with baloo on, the `SessionEnd` Hook runs the plugin's
 `session-end`, which starts a Session review and returns at once: a separate headless `claude -p`,
 detached so that Claude Code's exit never waits for it, run at the repo's root with the `glossary`
 and `adr` skills. It loads the plugin from its own folder too, since the review's session may not
-have it otherwise, as where the ended session had it from `--plugin-dir`. A new Config turns it on;
-without the key it is off, since it didn't exist before the key (ADR config).
+have it otherwise, as where the ended session had it from `--plugin-dir`. It has no switch of its
+own: turning baloo off turns it off (PRD no-config).
 
 The review reads only the user's and Claude's text, masked as a Retro's is (ADR transcripts),
 and at most the last 200,000 characters of it: no tool call or result. It skips a session shorter
@@ -92,8 +92,7 @@ reply or, with none, the first line of its errors. The first session with the us
 ended logs its end and is told, once, of a review that failed or that read only the end of its
 conversation, to tell the user; `doctor` shows how many failed in the last week and what they cost.
 
-Its session changes nothing else either: there session start creates no Config, picks no Output
-style, sets no Status line and writes no Git hook, and no Format on edit runs. A review starts as
+Its session changes nothing else either: there session start only names the Guidelines. A review starts as
 the user may be opening their next session, whose session start writes the same settings files.
 The Checks a Hook runs still run there, so a tool call of the review's can't show it a Secret;
 session start still names the Guidelines. It runs with the user's default model, and may spend
@@ -103,6 +102,8 @@ reaches it fails, and is told as any other failure.
 
 ## Considered options
 
+- Turning it on or off by `session-review` in the Config (until 2026-11-10) — most projects had it
+  on, and a switch of the plugin's own sat beside Claude Code's (PRD no-config).
 - Editing `.about/` itself, its reply shown once at the next session start (until 2026-10-07) —
   of its 80 changes in other repos, 64 were Inbox items; the next review overwrote 21 of its
   replies, which were one file per repo, and a project's headless reviewer of commits took 9, its

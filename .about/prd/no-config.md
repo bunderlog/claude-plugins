@@ -50,11 +50,11 @@ in a project.
 - `doctor` names, for the person to remove, a `statusLine` in a clone's
   `.claude/settings.local.json` whose command ends `# managed by baloo`, and an `outputStyle` of
   `baloo:short-replies` there.
-- Each Release rewrites the ADRs and glossary entries it changes: 1 ADR checks and guidelines and
-  the entries Check and Guideline; 2 ADR output-styles and status-line and the entries Output style
-  and Status line; 3 ADR session-review and format-on-edit and the entries Session review and
-  Format on edit, moved to Retired terms; 4 ADR config and the entry Config, moved to Retired
-  terms.
+- Releases 3 and 4 ship as one, since after 3 the Config would hold no setting at all. Each Release
+  rewrites the ADRs and glossary entries it changes: 1 ADR checks and guidelines and the entries
+  Check and Guideline; 2 ADR output-styles and status-line and the entries Output style and Status
+  line; 3 ADR session-review and format-on-edit and the entries Session review and Format on edit,
+  moved to Retired terms; 4 ADR config and the entry Config, moved to Retired terms.
 
 ## Non-goals
 

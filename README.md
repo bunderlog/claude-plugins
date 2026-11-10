@@ -23,20 +23,21 @@ Why things are the way they are is in [.about/adr/](.about/adr/).
 
 The plugin writes no Git hook: a project's own, committed in `.githooks/`, run `hathi`, and its CI
 runs the same `hathi` (PRD project-setup). A Git hook an earlier Release wrote into `.git/hooks`
-now lets each commit through, saying so and how to remove it; `git-hooks` and `git-hook-commands`
-in `.claude/baloo.yml` are ignored, and `/baloo:doctor` names them for you to delete.
+now lets each commit through, saying so and how to remove it.
 
-## Format on edit
+## Settings
 
-With `format-on-edit: <command>` in `.claude/baloo.yml`, such as `format-on-edit: npx prettier
---write`, the plugin runs the command in the repo's root with the path of each file Claude edits,
-and says nothing of how it went.
+baloo has none of its own: all of it is on where Claude Code's `enabledPlugins` turns it on (PRD
+no-config). Your Output style and Status line are yours, in `~/.claude/settings.json`; session
+start tells you once per clone the lines to add. An old `.claude/baloo.yml` is no longer read, and
+`/baloo:doctor` names it for you to remove. To run a formatter on Claude's edits, a project adds its
+own `PostToolUse` Hook to its `.claude/settings.json`.
 
 ## Doctor
 
 `/baloo:doctor`, or asking Claude what baloo has on or why a Check didn't run, shows the plugin's
 state in the repo: its problems first, each with what fixes it, then the plugin's version and the
-link the Status line runs, the Config's settings, each Check on or off and the Guidelines. It
+link the Status line runs, the Session review, the Checks and the Guidelines that fit the repo. It
 changes nothing.
 
 ## Development

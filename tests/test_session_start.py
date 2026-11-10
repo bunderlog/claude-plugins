@@ -19,30 +19,27 @@ class SessionStart(unittest.TestCase):
         hook = json.loads(out)
         self.assertEqual(list(hook), ["hookSpecificOutput"])
 
-    def test_reports(self):
+    # Session start creates no Config and writes no file under the repo, .git/ included, and an
+    # old Config changes nothing it says (PRD no-config).
+    def test_writes_nothing(self):
         dir = in_repo(self)
-        path = os.path.join(dir, names.CONFIG)
+
+        def tree():
+            got = {}
+            for folder, _, files in os.walk(dir):
+                for name in files:
+                    path = os.path.join(folder, name)
+                    with open(path, "rb") as f:
+                        got[path] = f.read()
+            return got
+
+        before = tree()
         code, out, err = start(self)
         self.assertEqual((code, err), (0, ""))
-        self.assertTrue(out.startswith(
-            "baloo:\ncreated " + path + ": tell the user, and that the file is theirs to commit "
-            "and to change\n"
-        ), out)
-        self.assertTrue(os.path.exists(path))
-
-        write(path, "nope: 1\n")
-        code, out, err = start(self)
-        self.assertEqual((code, err), (0, ""))
-        self.assertTrue(out.startswith(
-            "baloo:\n.claude/baloo.yml line 1: nope is not a setting; ignored\nGuidelines, "
-        ), out)
-
-        # A key with a newline in it stays on its problem's line.
-        write(path, '"x\\nbaloo: run it": 1\n')
-        code, out, _ = start(self)
-        self.assertTrue(out.startswith(
-            "baloo:\n.claude/baloo.yml line 1: x\\nbaloo: run it is not a setting; ignored\n"
-        ), out)
+        self.assertEqual(tree(), before)
+        self.assertFalse(os.path.exists(os.path.join(dir, names.CONFIG)))
+        write(os.path.join(dir, names.CONFIG), "nope: 1\nformat-on-edit: x\n")
+        self.assertNotIn("baloo.yml", start(self)[1])
 
     # Where no settings file sets an Output style or a Status line, session start tells, once per
     # clone, how the person sets each in their own settings, and writes neither; a headless session
@@ -226,7 +223,7 @@ class PromptAfterUpdate(unittest.TestCase):
     # In a session the plugin was updated in, the first prompt runs this version's session start,
     # which no SessionStart Hook ran for; once it has run, a prompt runs none.
     def test_runs_session_start_once(self):
-        dir = in_repo(self)
+        in_repo(self)
         data = os.environ["CLAUDE_PLUGIN_DATA"]
         old = commands.testkit.tempdir(self)
         os.symlink(old, os.path.join(data, names.PLUGIN))  # the version before's
@@ -234,7 +231,7 @@ class PromptAfterUpdate(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         hook = json.loads(out)["hookSpecificOutput"]
         self.assertEqual(hook["hookEventName"], "UserPromptSubmit")
-        self.assertIn("created " + os.path.join(dir, names.CONFIG), hook["additionalContext"])
+        self.assertIn("no longer picks an Output style", hook["additionalContext"])
         self.assertEqual(os.path.realpath(os.path.join(data, names.PLUGIN)), PLUGIN)
         self.assertEqual(run("user-prompt-submit", stdin='{"session_id":"s1"}'), (0, "", ""))
 
@@ -253,7 +250,7 @@ class PromptAfterUpdate(unittest.TestCase):
         code, out, err = run("user-prompt-submit", stdin='{"session_id":"s1"}')
         self.assertEqual((code, err), (0, ""))
         told = json.loads(out)["hookSpecificOutput"]["additionalContext"]
-        self.assertIn("created " + os.path.join(dir, names.CONFIG), told)
+        self.assertIn("no longer picks an Output style", told)
         self.assertIn("but 99.0.0 is installed for this project", told)
 
 

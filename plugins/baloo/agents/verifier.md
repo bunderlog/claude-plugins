@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines the plugin's Config turns on, and the acceptance criteria of the Issue or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through /baloo:verify. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
+description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Issue or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through /baloo:verify. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
@@ -29,7 +29,7 @@ At the git repo's root. A project not yet moved to `.about/` may still keep numb
 - **Glossary**, `.about/glossary.md`: the terms in the names, messages, comments and docs the
   change adds. A word the glossary lists under _Avoid_, or a term used for another concept, is a
   finding.
-- **Guidelines**: your context lists the ones the Config turns on, each with the task that calls
+- **Guidelines**: your context lists the ones that fit the repo, each with the task that calls
   for it; read those whose task the change is. The project's CLAUDE.md and linters win where they
   conflict. Without the list, skip them and say so.
 - **Acceptance criteria**: of the Issue or PRD your prompt names; otherwise of the one in

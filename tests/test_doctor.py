@@ -4,7 +4,7 @@ import unittest
 
 from baloo import doctor, names, review, version
 from tests import commands, test_review, testkit
-from tests.commands import PLUGIN, in_repo, read, run, start, write
+from tests.commands import PLUGIN, in_repo, run, start, write
 
 
 def doctor_run(test):
@@ -27,7 +27,6 @@ class Doctor(unittest.TestCase):
             "baloo " + version.read() + " doctor in " + dir + "\n\nNo problems.\n",
             "\nPlugin:\n  running  " + PLUGIN + " (" + version.read() + ")\n",
             "  link     " + link + " -> " + PLUGIN + "\n",
-            "Config: " + os.path.join(dir, names.CONFIG) + "\n",
             "no-secrets-in-context  on\n",
             "\nGuidelines that fit the repo, given by their task's signal or named at session start:\n"
             "  debugging, design, principles, testing, writing-for-agents\n",
@@ -39,8 +38,7 @@ class Doctor(unittest.TestCase):
         dir = in_repo(self)
         self.assertEqual(start(self)[0], 0)
         config = os.path.join(dir, names.CONFIG)
-        write(config, read(config) + "nope: 1\nstop-check: make\ngit-hooks:\n  no-ai-coauthor: true\n"
-              "claude-hooks:\n  no-git-hook-bypass: false\n")
+        write(config, "claude-hooks:\n  no-git-hook-bypass: false\n")
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         os.remove(link)
         code, out = doctor_run(self)
@@ -48,10 +46,7 @@ class Doctor(unittest.TestCase):
         for want in [
             "\nProblems:\n- ",
             "- " + link + " is missing, so the Status line runs nothing",
-            "nope is not a setting; ignored\n",
-            "stop-check is no longer a setting and is ignored: delete it\n",
-            "git-hooks is no longer a setting and is ignored: delete it\n",
-            "claude-hooks is no longer a setting and is ignored: delete it\n",
+            "- " + config + " is no longer read: baloo has no settings of its own, so remove it\n",
             "no-git-hook-bypass     on\n",
         ]:
             self.assertIn(want, out)
@@ -150,11 +145,7 @@ class Doctor(unittest.TestCase):
         in_repo(self)
         os.environ["CLAUDE_PROJECT_DIR"] = commands.outside_repo(self)
         _, out = doctor_run(self)
-        for want in [
-            "Config: none, outside a repo",
-            "no-secrets-in-context  on\n",
-        ]:
-            self.assertIn(want, out)
+        self.assertIn("no-secrets-in-context  on\n", out)
         self.assertNotIn("Git hooks in ", out)
 
     # Without the plugin's data folder, the link can't be checked: a problem.

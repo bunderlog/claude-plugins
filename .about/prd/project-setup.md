@@ -61,12 +61,10 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
   command, never a plugin.
 - Setting a project up removes what baloo wrote before: its Git hooks in `.git/hooks` (each begins
   with the line `# managed by baloo`) or its line in husky's, a committed `outputStyle`, and a
-  `statusLine` or `outputStyle` in the clone's `.claude/settings.local.json`. Until baloo works
-  without a Config (Issue config-out-of-baloo), which would create one again, the project commits
-  `.claude/baloo.yml` with `output-style: false`, `status-line: false`, every Git hook Check under
-  `git-hooks` false and no `git-hook-commands`; whoever wants baloo's Status line meanwhile sets it
-  in their own `~/.claude/settings.json`. The Release that closes that Issue says to remove the
-  file.
+  `statusLine` or `outputStyle` in the clone's `.claude/settings.local.json`, and
+  `.claude/baloo.yml`, which baloo reads no longer (PRD no-config).
+- A project that wants its formatter run on Claude's edits commits its own `PostToolUse` Hook on
+  Edit, Write and MultiEdit in `.claude/settings.json`, running the formatter on the edited file.
 - First by hand, from this list; bagheera's setup skill does the same once it ships, and when the
   list grows, bagheera's `doctor` names a set-up project that lacks a new item.
 
@@ -91,8 +89,7 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
   baloo on, the deny rules, attribution off, no `statusLine` or `outputStyle`; the import in
   `CLAUDE.md`; `.hathi.yml` with its types, where it has `hathi`; the hook folder with `hathi
   check <hook>` first in each hook; the command in the README; `.about/proposals/` in
-  `.gitignore`; the exact `hathi` pin; the ADR; and, until the Release that closes Issue
-  config-out-of-baloo, `.claude/baloo.yml` as above. Checked by hand.
+  `.gitignore`; the exact `hathi` pin; the ADR; and no `.claude/baloo.yml`. Checked by hand.
 - In a fresh clone of a set-up project with `hathi`, after the README's command, a commit with the
   message `wip` and a commit that adds a made-up AWS access key ID (`AKIA` and 16 random
   characters from A–Z and 2–7, not a published example) are each refused, and `hathi doctor`

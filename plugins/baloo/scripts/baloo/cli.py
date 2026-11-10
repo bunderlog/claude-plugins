@@ -16,12 +16,12 @@ from baloo import (
     binlink,
     checks,
     condense,
-    config,
     doctor,
     guidelines,
     hook,
     names,
     once,
+    repo,
     review,
     session_start,
     settings,
@@ -169,7 +169,7 @@ def subagent_start(text: str, stdout: TextIO) -> int:
         dir = hook.project()
     except (hook.Mismatch, OSError):
         return 0
-    index, _ = hook.guideline_index(config.read(dir).root)
+    index, _ = hook.guideline_index(repo.root(dir))
     if not index:
         return 0
     hook.write(stdout, {"hookSpecificOutput": {
@@ -217,16 +217,14 @@ def pre_tool_use(text: str, stdout: TextIO) -> int:
     if call is None:
         return 0
     cwd = call.get("cwd") or dir
-    c = config.read(dir)
-    if c.check_on("no-git-hook-bypass") and call.get("tool_name") == "Bash":
+    if call.get("tool_name") == "Bash":
         command = (call.get("tool_input") or {}).get("command") or ""
         why = checks.no_git_hook_bypass(command)
         if why:
             return _deny(stdout, f"{names.PLUGIN}:no-git-hook-bypass: {why}{_RUN_IT_YOURSELF}")
-    if c.check_on("no-secrets-in-context"):
-        why = checks.no_secrets_in_context(call, cwd)
-        if why:
-            return _deny(stdout, f"{names.PLUGIN}:no-secrets-in-context: {why}")
+    why = checks.no_secrets_in_context(call, cwd)
+    if why:
+        return _deny(stdout, f"{names.PLUGIN}:no-secrets-in-context: {why}")
     return 0
 
 
@@ -240,17 +238,11 @@ def _deny(stdout: TextIO, reason: str) -> int:
     return 0
 
 
-# How long the format-on-edit command may run, under the Hook's own limit.
-_FORMAT_TIMEOUT = 50
-
-
 def post_tool_use(text: str, stdout: TextIO) -> int:
     """The PostToolUse Hook on Claude's reads, edits and Bash commands, and the PostToolUseFailure
     Hook on its Bash commands. For a file in the repo, or a command, it gives Claude the Guidelines
-    of its subject or its task, once a session (ADR guidelines), and after an Edit, Write or
-    MultiEdit it runs the Config's format-on-edit command in the repo's root on the file (ADR
-    format-on-edit), saying nothing of how that went. In a Session review's session it does
-    nothing."""
+    of its subject or its task, once a session (ADR guidelines). In a Session review's session it
+    does nothing."""
     if os.environ.get(review.ENV, ""):
         return 0
     call = hook.decode(text)
@@ -275,10 +267,10 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         v for v in (call.get("error"), response.get("stdout"), response.get("stderr"))
         if isinstance(v, str)
     )
-    c = config.read(dir)
+    root = repo.root(dir)
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
-    if not c.root:
+    if not root:
         return 0
     if tool == "Bash":
         failed = event == "PostToolUseFailure"
@@ -293,7 +285,7 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         return 0
     if not os.path.isabs(path):
         return 0
-    rel = os.path.relpath(path, c.root)
+    rel = os.path.relpath(path, root)
     if rel == ".." or rel.startswith(".." + os.sep):
         return 0
     try:
@@ -304,25 +296,14 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         given = ""
     if given:
         hook.context(stdout, event, f"{names.PLUGIN}:\n{given}\n")
-    if not c.format_on_edit or tool == "Read":
-        return 0
-    try:
-        subprocess.run(
-            ["sh", "-c", c.format_on_edit + ' "$1"', "sh", rel], cwd=c.root,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            timeout=_FORMAT_TIMEOUT,
-        )
-    except (OSError, subprocess.SubprocessError):
-        pass
     return 0
 
 
 def session_end(text: str, stdout: TextIO) -> int:
-    """The SessionEnd Hook's part (ADR session-review): where the repo's Config turns the Session
-    review on, it starts one of the session that ended and returns at once. It says nothing and
-    never fails the exit: without the Transcript, `claude`, or the plugin's folder or data folder,
-    and in a Session review's own session, it does nothing. A problem with the Config is left to
-    the next session start, as there is no one to tell now."""
+    """The SessionEnd Hook's part (ADR session-review): in a repo, it starts a Session review of
+    the session that ended and returns at once. It says nothing and never fails the exit: without
+    the Transcript, `claude`, or the plugin's folder or data folder, and in a Session review's own
+    session, it does nothing."""
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     if os.environ.get(review.ENV, "") or not data or not plugin:
@@ -336,8 +317,8 @@ def session_end(text: str, stdout: TextIO) -> int:
         transcript_path = hook.text(end, "transcript_path")
     except (OSError, hook.Mismatch):
         return 0
-    c = config.read(dir)
-    if not c.root or not c.session_review:
+    root = repo.root(dir)
+    if not root:
         return 0
     claude = shutil.which("claude")
     try:
@@ -347,7 +328,7 @@ def session_end(text: str, stdout: TextIO) -> int:
         return 0
     if claude:
         try:
-            review.start(claude, plugin, c.root, data, session, transcript)
+            review.start(claude, plugin, root, data, session, transcript)
         except OSError:
             pass
     return 0
@@ -389,11 +370,11 @@ def _prompt_lines(data: str, session: str) -> List[str]:
         dir = hook.project()
     except OSError:
         return []
-    c = config.read(dir)
-    if not c.root:
+    root = repo.root(dir)
+    if not root:
         return []
-    lines = review.show(c.root, data, session, hook.decide_command())
-    newer = version.newer_installed(c.root) if not review.headless() else ""
+    lines = review.show(root, data, session, hook.decide_command())
+    newer = version.newer_installed(root) if not review.headless() else ""
     if newer and once.first(data, "restart", session):
         lines.append(
             f"this session runs {names.PLUGIN} {version.read()}, but {newer} is installed for this "
@@ -411,13 +392,13 @@ def review_decision(args: List[str], stdout: TextIO, stderr: TextIO) -> int:
     except OSError as e:
         stderr.write(f"{prefix}{e}\n")
         return 1
-    c = config.read(dir)
-    if not c.root:
+    root = repo.root(dir)
+    if not root:
         stderr.write(f"{prefix}{dir} is not in a repo\n")
         return 1
     try:
         todo = review.decide(
-            c.root, os.environ.get("CLAUDE_PLUGIN_DATA", ""), args[0], args[1], args[2]
+            root, os.environ.get("CLAUDE_PLUGIN_DATA", ""), args[0], args[1], args[2]
         )
     except (review.Error, OSError) as e:
         stderr.write(f"{prefix}{e}\n")
@@ -436,11 +417,11 @@ def proposals(stdout: TextIO, stderr: TextIO) -> int:
     except OSError as e:
         stderr.write(f"{names.PLUGIN} proposals: {e}\n")
         return 1
-    c = config.read(dir)
-    if not c.root:
+    root = repo.root(dir)
+    if not root:
         stderr.write(f"{names.PLUGIN} proposals: {dir} is not in a repo\n")
         return 1
-    for line in review.waiting(c.root, os.environ.get("CLAUDE_PLUGIN_DATA", "")):
+    for line in review.waiting(root, os.environ.get("CLAUDE_PLUGIN_DATA", "")):
         stdout.write(line + "\n")
     return 0
 

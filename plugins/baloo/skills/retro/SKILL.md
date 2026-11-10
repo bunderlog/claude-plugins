@@ -1,6 +1,6 @@
 ---
 name: retro
-description: Review how past sessions went and recommend changes to the project's setup (CLAUDE.md, the baloo Config, settings, skills, hooks) that would have spared the trouble — when the user asks for a retro, what went wrong in a session, or how to improve the setup from experience. Condenses the transcripts, ranks stalls by cost, and changes only what the user picks. Not for recording terms or decisions.
+description: Review how past sessions went and recommend changes to the project's setup (CLAUDE.md, settings, skills, hooks) that would have spared the trouble — when the user asks for a retro, what went wrong in a session, or how to improve the setup from experience. Condenses the transcripts, ranks stalls by cost, and changes only what the user picks. Not for recording terms or decisions.
 ---
 
 # Retro
@@ -19,7 +19,7 @@ kind, repeated prompts and the tokens each tool added to the context. To check o
 with `<id> --around <line>`: the lines around it, up to 2,000 characters a block, masked. Read
 transcripts only through it: a raw one can hold a secret an earlier session printed.
 
-Then read what a fix would touch: CLAUDE.md, the Config (`.claude/baloo.yml`),
+Then read what a fix would touch: CLAUDE.md,
 `.claude/settings.json`, the hooks and skills involved, and the project's auto-memory
 (`MEMORY.md` and its files, in the project's folder under `~/.claude/projects/`). A fix that
 already exists but is off, not wired up or broken is the thing to report, not a new one. A
@@ -57,7 +57,7 @@ finding. Nothing worth a fix is a result: say so in a line.
 ## Fix where it holds
 
 Prefer the fix that works without Claude remembering it:
-1. **Enforced**: a Check turned on in the Config, a test, or a lint or Git hook the project owns.
+1. **Enforced**: a test, a lint, a Git hook or a CI job the project owns, or a Check `hathi` runs.
    A mistake with a fixed pattern (a banned API, an import shape, a file in the wrong place)
    always gets one, never a written line.
 2. **Configured**: a permission rule or a setting of Claude Code.

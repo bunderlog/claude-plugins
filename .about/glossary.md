@@ -55,7 +55,7 @@ _Avoid_: installed, which is a plugin's on a machine
 **Hook**:
 A command Claude Code runs at an event in a session, such as `SessionStart` or `PreToolUse`.
 _Avoid_: "hook" for a Git hook; lowercase "hook", but in text for users who don't know these terms
-(the schema, the Config's comments, messages) and in the Guidelines and skills, written for any
+(messages, the README) and in the Guidelines and skills, written for any
 project
 
 **Git hook**:
@@ -65,25 +65,11 @@ writes none, and one an earlier Release wrote lets each commit through (ADR git-
 _Avoid_: "hook" alone
 _In code_: `git_hook` in `baloo/cli.py`, for the old ones
 
-**Config**:
-A repo's settings for the plugin, `.claude/baloo.yml` from its root, created at its first session
-start with every Check on and the Guidelines that fit the repo. Each Check and each Guideline
-turns on with a key of its own there; a wrong setting is reported at session start, and its
-default applies.
-_Avoid_: settings, which are Claude Code's `settings.json`
-_In code_: `baloo/config.py`
-
 **Check**:
 Code in the plugin that a Hook triggers, such as `baloo:no-secrets-in-context`, always on where
 baloo is (ADR checks); a commit's Checks are `hathi`'s.
 _Avoid_: built-in check; "a Check on Claude's tool calls"
 _In code_: `baloo/checks/`; `HOOK_CHECKS`
-
-**Format on edit**:
-The plugin's run of the project's own formatter, named in the Config, on each file Claude edits,
-saying nothing of how it went; not a Check.
-_Avoid_: "lint on edit"; a Check
-_In code_: `format-on-edit`, `post_tool_use` in `baloo/cli.py`
 
 **Guideline**:
 A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
@@ -135,8 +121,8 @@ host.
 ## Sessions
 
 **Setup**:
-Everything that shapes how Claude works in a project: its CLAUDE.md, the Config, Claude Code's
-settings, and the skills, Hooks and plugins it uses.
+Everything that shapes how Claude works in a project: its CLAUDE.md, Claude Code's settings, its
+Git hooks, and the skills, Hooks and plugins it uses.
 _Avoid_: harness, which is all the projects' Setups and the person's own rules together
 
 **Harness**:
@@ -163,7 +149,7 @@ mid-change, a denial that was right, or a call that is the user's to make each t
 _Avoid_: issue, incident
 
 **Session review**:
-A review the plugin starts itself when a session ends, where the Config turns it on: a separate
+A review the plugin starts itself when a session ends, in every repo with baloo on: a separate
 headless session proposes, as Proposals, what the conversation settled or left open but nobody
 wrote down, and a later session asks the user about each. Unlike a Retro, it looks at what was
 settled, not at how the work went.
@@ -192,7 +178,7 @@ _In code_: the `issue` skill writes one
 
 **Verification**:
 A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
-Guidelines the Config turns on, and the acceptance criteria of its Issue or PRD. The plugin's
+Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. The plugin's
 agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
 nothing. Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't
 run the change; unlike a Check, it isn't the plugin's code.
@@ -200,6 +186,12 @@ _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` skill; `agents/verifier.md`; `names.VERIFIER`
 
 ## Retired terms
+
+- **Config** — `.claude/baloo.yml`, a repo's settings for the plugin, each Check and Guideline
+  turned on by a key of its own, until 2026-11-10; Claude Code's settings are the only switch now
+  (ADR config).
+- **Format on edit** — the plugin's run of the formatter the Config named on each file Claude
+  edited, until 2026-11-10; a project's own `PostToolUse` Hook does it now (ADR format-on-edit).
 
 - **Git hook command** — the project's own command, by Git hook under `git-hook-commands` in the
   Config, that the plugin's Git hook ran once its Checks passed, until 2026-11-09; a project's own

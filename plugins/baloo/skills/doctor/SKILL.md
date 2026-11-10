@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Show baloo's state in this repo and what is wrong with it — when the user asks what baloo has on, which version runs, or why a Check or a Guideline didn't run. Runs the plugin's doctor, which only reads. Not for changing the Config.
+description: Show baloo's state in this repo and what is wrong with it — when the user asks what baloo has on, which version runs, or why a Check or a Guideline didn't run. Runs the plugin's doctor, which only reads. Not for changing a setting.
 ---
 
 # Doctor
@@ -12,5 +12,5 @@ Exit 1 means it found problems, listed first, each with what fixes it; exit 2 wi
 on stderr means it couldn't run, and that line says why; no `python3` at all means no Hook of the
 plugin runs either, which Python 3.9 or later fixes. Answer what the user asked from its output: the
 problems and their fixes first, then only the part of the state the question is about. A fix is
-mostly the next session start; a file to move or a Config key to change is the user's call, so name
+mostly the next session start; a file to remove or a setting to change is the user's call, so name
 it rather than doing it.

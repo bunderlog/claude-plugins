@@ -349,31 +349,15 @@ class SessionEnd(unittest.TestCase):
         self.assertTrue(dir)
 
 
-class PostToolUse(unittest.TestCase):
-    # Format on edit runs the Config's command on a file Claude edited in the repo, with its path,
-    # and says nothing of how it went; a file outside the repo, or a Session review's edit, runs
-    # nothing.
+    # A format-on-edit key in an old Config runs nothing (PRD no-config).
     def test_format_on_edit(self):
         dir = in_repo(self)
-        config = os.path.join(dir, names.CONFIG)
-        write(config, "format-on-edit: printf formatted >\n")
-
-        def edit(path):
-            write(path, "edited")
-            stdin = json.dumps({"tool_name": "Edit", "tool_input": {"file_path": path}})
-            self.assertEqual(run("post-tool-use", stdin=stdin), (0, "", ""))
-
-        inside = os.path.join(dir, ".claude", "src", "a.txt")
-        outside = os.path.join(testkit.tempdir(self), "b.txt")
-        edit(inside)
-        edit(outside)
-        self.assertEqual((read(inside), read(outside)), ("formatted", "edited"))
-        os.environ[review.ENV] = "1"
-        edit(inside)
-        self.assertEqual(read(inside), "edited")
-        os.environ[review.ENV] = ""
-        write(config, "format-on-edit: exit 3\n")
-        edit(inside)  # a failing command is said nothing of, too
+        write(os.path.join(dir, names.CONFIG), "format-on-edit: printf formatted >\n")
+        path = os.path.join(dir, "src", "a.txt")
+        write(path, "edited")
+        stdin = json.dumps({"tool_name": "Edit", "tool_input": {"file_path": path}})
+        self.assertEqual(run("post-tool-use", stdin=stdin), (0, "", ""))
+        self.assertEqual(read(path), "edited")
 
     # A Read or an edit of a file in the repo gives Claude the Guidelines whose subject it is, once
     # a session, whatever an old Config turns off (PRD no-config); a Read gives no testing.

@@ -10,7 +10,7 @@ import os
 from typing import List, TextIO
 
 from baloo import (
-    binlink, checks, config, guidelines, hook, names, review, settings, statusline, version,
+    binlink, checks, guidelines, hook, names, repo, review, settings, statusline, version,
 )
 
 
@@ -20,13 +20,13 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     except OSError as e:
         stderr.write(f"{names.PLUGIN}: {e}\n")
         return 1
-    c, path, problems = config.inspect(dir)
-    problems = problems + c.removed
+    root = repo.root(dir)
+    problems: List[str] = []
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
     w = io.StringIO()
 
     w.write(f"\nPlugin:\n  running\t{binlink.PLUGIN} ({version.read()})\n")
-    newer = version.newer_installed(c.root) if c.root else ""
+    newer = version.newer_installed(root) if root else ""
     if newer:
         problems.append(
             f"this session runs {names.PLUGIN} {version.read()}, but {newer} is installed for this "
@@ -55,30 +55,18 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
                     "that one: the next session start points it here"
                 )
 
-    if not c.root:
-        w.write(
-            "\nConfig: none, outside a repo or in Claude Code's own folder, so every setting has "
-            "its default\n"
+    if root and os.path.lexists(os.path.join(root, names.CONFIG)):
+        problems.append(
+            f"{os.path.join(root, names.CONFIG)} is no longer read: {names.PLUGIN} has no settings "
+            "of its own, so remove it"
         )
-    elif not path:
-        w.write(
-            f"\nConfig: none in {c.root}, so every setting has its default: the next session "
-            f"start creates {names.CONFIG}\n"
-        )
-    else:
-        w.write(f"\nConfig: {path}\n")
-    for key, value in [
-        ("session-review", _bool(c.session_review)),
-        ("format-on-edit", _or_none(c.format_on_edit)),
-    ]:
-        w.write(f"  {key}\t{value}\n")
 
-    if c.root:
+    if root:
         problems += _left_in_local(dir)
 
-    if c.root:
+    if root:
         waiting = mismatches = 0
-        for it in review.items(c.root, data):
+        for it in review.items(root, data):
             if it.mismatch:
                 mismatches += 1
                 problems.append(
@@ -87,9 +75,9 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
                 )
             elif it.pending:
                 waiting += 1
-        failed, cost = review.week(c.root, data)
+        failed, cost = review.week(root, data)
         w.write(
-            f"\nSession review:\n  running\t{_bool(review.running(c.root, data))}\n"
+            f"\nSession review:\n  running\t{_bool(review.running(root, data))}\n"
             f"  proposals waiting\t{waiting}\n  mismatches\t{mismatches}\n"
             f"  failed this week\t{failed}\n  cost this week\t${cost:.2f}\n"
         )
@@ -98,7 +86,7 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     for name in sorted(checks.HOOK_CHECKS):
         w.write(f"  {name}\ton\n")
 
-    listed = sorted(guidelines.on_in(c.root))
+    listed = sorted(guidelines.on_in(root))
     w.write(
         f"\nGuidelines that fit the repo, given by their task's signal or named at session start:\n"
         f"  {_or_none(', '.join(listed))}\n"

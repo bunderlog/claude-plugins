@@ -1,83 +1,21 @@
-# The Config is `.claude/baloo.yml`, created at session start with every Check on
+# baloo has no Config: all of it is on where Claude Code turns the plugin on
 
-Date: 2026-11-09
+Date: 2026-11-10
 
-A repo's settings for the plugin are one file, `.claude/baloo.yml`, beside Claude Code's own
-settings in the root of its repo: the nearest folder up from the project that holds a `.git`, found
-without running git. Each Check and each Guideline turns on with a key of its own (ADR plugin), and
-without it is off, but for the Checks a Hook runs, which are on (ADR checks).
+baloo reads no settings file of its own and creates none (PRD no-config): its Checks in Hooks, its
+Guidelines and the Session review are on in every repo where Claude Code's `enabledPlugins` turns
+baloo on, and turning baloo off is the only switch. The Output style and the Status line are each
+person's, in their own `~/.claude/settings.json` (ADR output-styles, ADR status-line), and a
+project that wants its formatter run on Claude's edits adds its own `PostToolUse` Hook (ADR
+format-on-edit). A Hook finds the repo it runs in as the nearest folder up from the project that
+holds a `.git`, without running git, and none in the home folder or Claude Code's own folder.
 
-At session start the plugin creates the Config in a repo that has none, with every Check on and
-the Guidelines that fit the repo (ADR guidelines), and tells Claude to tell the user; a repo turns
-a Check or a Guideline off, or on, by editing its key. Outside a repo, when the repo is the home
-folder itself, a dotfiles repo, or when it is Claude Code's own folder, `$CLAUDE_CONFIG_DIR` or
-`~/.claude/`, or inside it, such as a marketplace Claude Code cloned, it neither creates nor reads
-a Config and every setting has its default, so Claude Code's own `.claude/` is never taken for
-one, and nothing is written in Claude Code's own folder. A new Config's first line names the JSON
-Schema, `plugins/baloo/schema.json` on `main`, for editors, and its comments say how the settings
-work. A Config that is there is never written to.
-
-The plugin reads it with a reader of its own, in the standard library alone (ADR binary), for the
-subset of YAML a Config is written in: block and flow maps and lists, plain and quoted scalars, and
-comments; what is outside it, such as an anchor, a tag or a block scalar, is a file that isn't YAML.
-It goes through the top-level keys itself. A key that isn't a setting, or a value that doesn't
-decode, is a problem, one line with its line number, and that setting keeps its default while the
-others apply; a setting an earlier Release had and this one removed is no problem, but is ignored,
-and only `doctor` names it, for the user to delete (ADR measurement); a file that isn't YAML or
-isn't a map of settings is one problem, and none of it applies. At session start the plugin prints,
-for Claude, a Config it created and the problems.
+A `.claude/baloo.yml` left in a repo is read by nobody; `doctor` names it for the person to remove.
 
 ## Considered options
 
-- Creating it only when asked, by an `init` skill, with every Check off (until 2026-09-30) —
-  nothing appears in a repo nobody set up, but a repo gets no Check until someone knows to ask
-  for the Config.
-- Creating it at session start only where the project's own `.claude/settings.json` enables the
-  plugin — a user-scope install would get no Check anywhere without a step of its own.
-- An `init` command that also downloads the binary and writes the Hooks into the project's
-  `.claude/settings.json` — nothing would run without asking, but project settings have no
-  `${CLAUDE_PLUGIN_ROOT}`, so the binary would need a path of its own outside the plugin, and a
-  plugin update would need `init` again.
-- JSON with comments, or the same keys in either format — a parser or an editing step of our own
-  for each format.
-- A YAML package such as PyYAML copied into the plugin — all of YAML, but thousands of lines of
-  someone else's code to ship and keep up, for a file that uses a small part of it.
-- TOML, read with `tomllib` — no parser of our own, but `tomllib` needs Python 3.11 where the
-  plugin supports 3.9, and every Config would change format.
-- `go.yaml.in/yaml/v3` in the Go binary, the YAML organization's maintained copy of
-  `gopkg.in/yaml.v3` (until 2026-10-14) — all of YAML, gone with the binary (ADR binary); it took a
-  key written twice, the second entry applying after the first.
-- `gopkg.in/yaml.v3` — archived, so a fix would never come.
-- `goccy/go-yaml` — better error messages, but a bigger API and more code in the binary.
-- Decoding the whole file with `KnownFields` — the problems would be the library's messages,
-  which name Go types.
-- `.baloo.yml` at the repo's root (until 2026-09-30) — one more file at the root, apart from the
-  `.claude/settings.json` that enables the plugin.
-- Finding the root with `git rev-parse` — a process on every Hook and Git hook that reads the
-  Config.
-
-## Consequences
-
-- With a user-scope install, every repo opened gets a Config, and every Check, at its first
-  session: a new file to commit, and Checks it didn't ask for.
-- A deleted Config comes back at the next session start; a repo opts out of a Check by turning
-  its key off, not by deleting the file.
-- Every new key needs a field in `Config`, an entry in `keys` and in the schema (a test checks
-  the two agree), and the key, turned on, in the template; a stack's Guideline is on in it only
-  where the repo has the stack, `ci` only where it has a CI's config, `dependencies` only where
-  it has a package manager's manifest, and `format-on-edit`, whose command the template can't
-  know, is a comment there (ADR format-on-edit).
-- The template lists the keys of `guidelines` and `claude-hooks` sorted, whatever
-  order the code keeps them in, so a key is found by its name; a test checks it.
-- A new key reaches a Config that exists only when its user adds it, so its default must be what
-  the Check did before it had the key, unless ADR checks says otherwise.
-- The schema is read from `main`, so an editor can check a Config against settings newer than
-  the installed Release.
-- Only the first YAML document is read; a second one is ignored silently.
-- A key written twice is one problem, and none of the file applies, as YAML that doesn't parse;
-  go-yaml took both.
-- A Config written in YAML outside the subset, such as one using an anchor, is one problem, and
-  none of it applies, though another YAML reader would take it; the reader grows when a Config
-  needs more.
-- Revisit when a repo the plugin reaches gets Checks nobody asked for, a repo needs settings that
-  differ per folder, or one Config for many repos.
+- The Config, `.claude/baloo.yml`, created at a clone's first session start with every Check on
+  and the Guidelines that fit the repo, each part turned on or off by a key of its own, read by
+  the plugin's own YAML parser (until 2026-11-10) — a teammate's clone got a Config before anyone
+  decided on one, what was on differed from project to project for no reason anyone recorded, and
+  about 1,300 lines did nothing but read it and write Claude Code's settings from it.

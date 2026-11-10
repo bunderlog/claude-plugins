@@ -28,7 +28,3 @@ INBOX = ".about/inbox.md"
 # Marks what the plugin wrote into a file it shares, so it knows it for its own: the statusLine
 # command, and a Git hook or husky's line an earlier Release wrote.
 MARKER = "# managed by " + PLUGIN
-# Where editors find the Config's JSON Schema, which a new Config names.
-SCHEMA = (
-    "https://raw.githubusercontent.com/bunderlog/claude-plugins/main/" + PLUGIN_DIR + "/schema.json"
-)

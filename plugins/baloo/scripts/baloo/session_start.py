@@ -1,12 +1,11 @@
-"""Session start, the SessionStart Hook's part (ADR binary): it creates the repo's Config when it
-has none (ADR config) and reads it; it writes no Claude Code setting and no Git hook (PRD
-no-config, ADR git-hooks). What it prints Claude Code adds to Claude's context, so it prints only
-what Claude should know: a Config it created, once per clone how the person sets their own Output
-style and Status line, a Session review still running and the Proposals waiting for the user (ADR
-session-review), how many items the Inbox holds (ADR inbox), the files in .about/ git hasn't
-committed (ADR about-folder), and the problems, each on one line; then the Guidelines that fit the
-repo (ADR guidelines). In a Session review's session it only names the Guidelines: that session
-changes nothing but its Proposals (ADR session-review).
+"""Session start, the SessionStart Hook's part (ADR binary): it writes no file in the repo, no
+Claude Code setting and no Git hook (PRD no-config, ADR git-hooks). What it prints Claude Code adds
+to Claude's context, so it prints only what Claude should know: once per clone how the person sets
+their own Output style and Status line, a Session review still running and the Proposals waiting for
+the user (ADR session-review), how many items the Inbox holds (ADR inbox), the files in .about/ git
+hasn't committed (ADR about-folder), and the problems, each on one line; then the Guidelines that
+fit the repo (ADR guidelines). In a Session review's session it only names the Guidelines: that
+session changes nothing but its Proposals (ADR session-review).
 
 Each part returns its own Lines, and session start only gathers them, in the order of PARTS: a new
 part is a function and its place there."""
@@ -22,7 +21,7 @@ from typing import Callable, List, Optional, TextIO
 
 from baloo import (
     binlink,
-    config,
+    repo,
     hook,
     inbox,
     names,
@@ -48,36 +47,27 @@ class Lines:
 
 @dataclass
 class Start:
-    """What each part works from: the folder Claude Code runs in, its repo's Config, the path of a
-    Config session start created, or "", the plugin's data folder, and the session's id."""
+    """What each part works from: the folder Claude Code runs in, its repo's root, or "" outside a
+    repo (see repo.root), the plugin's data folder, and the session's id."""
 
     dir: str
-    config: config.Config
-    created: str
+    root: str
     data: str
     session: str
-
-
-def _config(s: Start) -> Lines:
-    if not s.created:
-        return Lines()
-    return Lines([
-        f"created {s.created}: tell the user, and that the file is theirs to commit and to change"
-    ])
 
 
 def _personal(s: Start) -> Lines:
     """Once per clone, how to set an Output style and a Status line in the person's own settings,
     for each no settings file sets: the plugin sets neither (PRD no-config). A headless session is
     told nothing, so it doesn't use up the telling."""
-    if not s.config.root or not s.data or review.headless():
+    if not s.root or not s.data or review.headless():
         return Lines()
     try:
         fields = settings.read_all(settings.files(s.dir))
     except (OSError, ValueError):
         return Lines()
     unset = [k for k in ("outputStyle", "statusLine") if not any(k in f for f in fields.values())]
-    digest = hashlib.sha256(s.config.root.encode()).hexdigest()[:16]
+    digest = hashlib.sha256(s.root.encode()).hexdigest()[:16]
     folder = os.path.join(s.data, "personal-told", digest)
     try:
         told = set(os.listdir(folder))
@@ -111,28 +101,28 @@ def _personal(s: Start) -> Lines:
 
 def _session_review(s: Start) -> Lines:
     out = Lines()
-    if not s.config.root:
+    if not s.root:
         return out
-    if review.running(s.config.root, s.data) and not review.headless():
+    if review.running(s.root, s.data) and not review.headless():
         out.lines.append(
             "a Session review of an earlier session is still running: its proposals come with a "
             "later prompt"
         )
-    out.lines.extend(review.show(s.config.root, s.data, s.session, hook.decide_command()))
+    out.lines.extend(review.show(s.root, s.data, s.session, hook.decide_command()))
     return out
 
 
 def _inbox(s: Start) -> Lines:
-    return Lines(inbox.lines(s.config.root) if s.config.root else [])
+    return Lines(inbox.lines(s.root) if s.root else [])
 
 
 def _uncommitted_about(s: Start) -> Lines:
     """The files in .about/ with changes git hasn't committed, new ones too, for the user to
     commit (ADR about-folder): not the Proposals, and nothing in a headless session."""
-    if not s.config.root or review.headless():
+    if not s.root or review.headless():
         return Lines()
     try:
-        out = git(s.config.root, "status", "--porcelain", "-z", "--untracked-files=all", "--",
+        out = git(s.root, "status", "--porcelain", "-z", "--untracked-files=all", "--",
                   ".about")
     except (GitError, OSError) as e:
         return Lines(problems=[f".about/ changes: {e}"])
@@ -156,7 +146,6 @@ def _uncommitted_about(s: Start) -> Lines:
 # The parts session start reports on, in the order it prints their lines; the Guidelines' index
 # comes after them all.
 PARTS: List[Callable[[Start], Lines]] = [
-    _config,
     _personal,
     _session_review,
     _inbox,
@@ -173,25 +162,25 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
         stderr.write(f"{names.PLUGIN}: {e}\n")
         return 1
     if os.environ.get(review.ENV, ""):
-        index, _ = hook.guideline_index(config.read(dir).root)
+        index, _ = hook.guideline_index(repo.root(dir))
         if index:
             stdout.write(index + "\n")
         return 0
-    c, created, problems = config.load(dir)
+    root = repo.root(dir)
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
     if data:
         # The link tells a later prompt that this version's session start ran (see cli).
         try:
             binlink.point(data)
         except OSError:
-            pass  # the Status line and the Git hooks, which run through it, say so
-    s = Start(dir, c, created, data, session)
-    out = Lines(problems=list(problems))
+            pass  # the Status line and the old Git hooks, which run through it, say so
+    s = Start(dir, root, data, session)
+    out = Lines()
     for part in PARTS:
         got = part(s)
         out.lines.extend(got.lines)
         out.problems.extend(got.problems)
-    index, why = hook.guideline_index(c.root)
+    index, why = hook.guideline_index(root)
     if why is not None:
         out.problems.append(f"could not name the guidelines: {why}")
     lines = [hook.one_line(line) for line in out.lines + out.problems]
