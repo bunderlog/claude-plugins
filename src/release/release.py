@@ -38,6 +38,9 @@ _SUBJECT = re.compile(r"^(\w+)(?:\(([^)]*)\))?(!)?: (.+)$", re.A)
 
 _BREAKING_FOOTER = re.compile(r"^BREAKING[ -]CHANGE: ", re.M)
 
+# Any Conventional Commits footer's first line: a token, then `: ` or ` #`.
+_FOOTER_TOKEN = re.compile(r"^(?:BREAKING CHANGE|[\w-]+)(?:: | #)", re.A)
+
 
 def _parts(c: Commit) -> List[str]:
     first, _, body = c.message.partition("\n")
@@ -46,6 +49,25 @@ def _parts(c: Commit) -> List[str]:
     if _BREAKING_FOOTER.search(body):
         parts[3] = "!"
     return parts
+
+
+def _footer(c: Commit) -> str:
+    """The text of the commit's `BREAKING CHANGE:` footers, each running to a blank line or the
+    next footer, its lines joined into one paragraph; several footers are blank-line apart."""
+    _, _, body = c.message.partition("\n")
+    footers: List[List[str]] = []
+    current: Optional[List[str]] = None
+    for line in body.split("\n"):
+        m = _BREAKING_FOOTER.match(line)
+        if m:
+            current = [line[m.end():].strip()]
+            footers.append(current)
+        elif current is not None and line.strip() and not _FOOTER_TOKEN.match(line):
+            current.append(line.strip())
+        else:
+            current = None
+    paragraphs = [" ".join(w for w in f if w) for f in footers]
+    return "\n\n".join(p for p in paragraphs if p)
 
 
 def _breaking(c: Commit) -> bool:
@@ -82,14 +104,15 @@ def next_version(version: str, commits: List[Commit], changed: bool) -> str:
 
 def section(version: str, date: str, commits: List[Commit]) -> str:
     """The CHANGELOG section for `version`: its breaking changes, features and fixes, oldest
-    first."""
+    first, a breaking change with its `BREAKING CHANGE:` footer's text indented under it."""
     return f"## {version} — {date}\n\n{_body(commits, '###')}"
 
 
 def sections(version: str, date: str, by_plugin: Dict[str, List[Commit]]) -> str:
     """The CHANGELOG section for `version` of several plugins: a part per plugin with commits, in
-    the order given, each with its breaking changes, features and fixes; with one plugin, as
-    section has it."""
+    the order given, each with its breaking changes, features and fixes, a breaking change with
+    its footer's text under it in every part that lists it; with one plugin, as section has
+    it."""
     if len(by_plugin) == 1:
         return section(version, date, next(iter(by_plugin.values())))
     parts = [f"### {name}\n\n{_body(commits, '####')}" for name, commits in by_plugin.items() if commits]
@@ -110,10 +133,15 @@ def _body(commits: List[Commit], level: str) -> str:
         if body:
             body += "\n"
         body += f"{level} {title}\n\n"
-        for c in listed:
+        for i, c in enumerate(listed):
             m = _parts(c)
             scope = m[2] + ": " if m[2] else ""
             body += f"- {scope}{m[4]} ({c.sha})\n"
+            text = _footer(c) if keep is _breaking else ""
+            if text:
+                body += "\n" + "\n".join("  " + t if t else "" for t in text.split("\n")) + "\n"
+                if i + 1 < len(listed):
+                    body += "\n"
     return body or "No feature changes or fixes.\n"
 
 

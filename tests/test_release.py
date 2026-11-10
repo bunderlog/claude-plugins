@@ -71,6 +71,72 @@ class Section(unittest.TestCase):
             "## 0.4.1 — 2026-09-29\n\nNo feature changes or fixes.\n",
         )
 
+    # A breaking footer's wrapped lines become one paragraph indented under the change's line,
+    # up to the blank line before `PRD x`; the `!`-only change, the feature and the fix keep
+    # their lines.
+    def test_breaking_footer(self):
+        commits = [
+            Commit("a1", "feat!: a breaking feature"),
+            Commit("b2", "refactor: x\n\nWhat changed, in a body.\n\n"
+                         "BREAKING CHANGE: install y (claude plugin install y@m)\n"
+                         "to keep the Checks, and pick y:style\n"
+                         "in place of x:style.\n\nPRD x"),
+            Commit("c3", "chore(config): move it\n\nBREAKING-CHANGE: set z again.\nRefs #4"),
+            Commit("d4", "feat(status-line): a feature\n\nwith a body"),
+            Commit("e5", "fix: a fix"),
+        ]
+        want = """## 0.4.0 — 2026-09-29
+
+### Breaking changes
+
+- a breaking feature (a1)
+- x (b2)
+
+  install y (claude plugin install y@m) to keep the Checks, and pick y:style in place of x:style.
+
+- config: move it (c3)
+
+  set z again.
+
+### Features
+
+- status-line: a feature (d4)
+
+### Fixes
+
+- a fix (e5)
+"""
+        self.assertEqual(release.section("0.4.0", "2026-09-29", commits), want)
+
+    def test_breaking_footer_in_every_plugin(self):
+        both = Commit("b2", "refactor: x\n\nBREAKING CHANGE: install y\nnow.\n\nPRD x")
+        want = """## 0.4.0 — 2026-09-29
+
+### baloo
+
+#### Breaking changes
+
+- x (b2)
+
+  install y now.
+
+#### Fixes
+
+- a fix (a1)
+
+### louie
+
+#### Breaking changes
+
+- x (b2)
+
+  install y now.
+"""
+        got = release.sections(
+            "0.4.0", "2026-09-29", {"baloo": [Commit("a1", "fix: a fix"), both], "louie": [both]}
+        )
+        self.assertEqual(got, want)
+
 
 def write(root, rel, text):
     path = os.path.join(root, rel)
