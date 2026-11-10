@@ -4,7 +4,7 @@ import tempfile
 import time
 import unittest
 
-from baloo import condense
+from bagheera import condense
 
 
 def transcript(*lines):
@@ -21,7 +21,7 @@ META = '{"type":"user","isMeta":true,"message":{"role":"user","content":"<local-
 SKILL = '{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Base directory for this skill: /x\\n\\n# Retro"}]}}'
 REMIND = '{"type":"user","message":{"role":"user","content":"<system-reminder>be brief</system-reminder>"}}'
 STOP = '{"type":"user","timestamp":"2026-10-01T09:10:00.000Z","message":{"role":"user","content":[{"type":"text","text":"[Request interrupted by user]"}]}}'
-CMD = '{"type":"user","message":{"role":"user","content":"<command-name>/baloo:interview</command-name>\\n<command-message>baloo:interview</command-message>\\n<command-args>port retro</command-args>"}}'
+CMD = '{"type":"user","message":{"role":"user","content":"<command-name>/bagheera:interview</command-name>\\n<command-message>baloo:interview</command-message>\\n<command-args>port retro</command-args>"}}'
 
 
 def failure(command, error):
@@ -115,7 +115,7 @@ class Report(unittest.TestCase):
             "[1] prompt: add a retro skill to the plugin\n"
             "[4] error exit Bash(go test ./...): Exit code 1: --- FAIL: TestX FAIL pkg\n"
             "[9] interrupt\n"
-            "[10] command: /baloo:interview port retro",
+            "[10] command: /bagheera:interview port retro",
         )
 
     def test_masks_secrets(self):
@@ -133,9 +133,9 @@ class Report(unittest.TestCase):
     def test_names_the_kind_of_each_failure(self):
         for error, want in [
             (
-                "PreToolUse:Bash hook error: baloo:no-git-hook-bypass: git commit --no-verify "
+                "PreToolUse:Bash hook error: bagheera:no-git-hook-bypass: git commit --no-verify "
                 "bypasses the Git hooks.",
-                "[2] error check Bash(x): PreToolUse:Bash hook error: baloo:no-git-hook-bypass: "
+                "[2] error check Bash(x): PreToolUse:Bash hook error: bagheera:no-git-hook-bypass: "
                 "git commit --no-verify bypasses the Git hooks.",
             ),
             (
@@ -275,8 +275,8 @@ class Mask(unittest.TestCase):
                 "TestLoader_without_shasum_or_sha_stops_before_downloading",
             ),
             (
-                "src/baloo/internal/condense/condense_test.go",
-                "src/baloo/internal/condense/condense_test.go",
+                "src/bagheera/internal/condense/condense_test.go",
+                "src/bagheera/internal/condense/condense_test.go",
             ),
         ]:
             with self.subTest(text=text):
@@ -367,7 +367,7 @@ class Conversation(unittest.TestCase):
             got,
             "user: add a retro skill to the plugin\n\n"
             "assistant: On it.\n\n"
-            "user: /baloo:interview port retro\n\n"
+            "user: /bagheera:interview port retro\n\n"
             "assistant: Use *****.",
         )
         self.assertEqual(condense.conversation(transcript(START, REPLY), 10), "nt: On it.")

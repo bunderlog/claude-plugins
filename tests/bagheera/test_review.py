@@ -3,8 +3,11 @@ import time
 import unittest
 from unittest import mock
 
-from baloo import names, review
+from bagheera import names, review
 from tests import testkit
+
+# The repo's plugins/, where baloo's folder is beside bagheera's.
+PLUGINS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "plugins")
 
 
 def fake_claude(test, reply):
@@ -67,7 +70,7 @@ class Start(unittest.TestCase):
         data = testkit.tempdir(self)
         for session in ["aaaaaaaa-1", "bbbbbbbb-2"]:
             started = review.start(
-                claude, "/plugins/baloo", root, data, session, conversation(3000)
+                claude, PLUGINS + "/bagheera", root, data, session, conversation(3000)
             )
             self.assertTrue(started)
             wait(self, root, data)
@@ -84,7 +87,7 @@ class Start(unittest.TestCase):
         args = read(seen, "args")
         for want in [
             "-p",
-            "--plugin-dir\n/plugins/baloo\n",
+            "--plugin-dir\n" + PLUGINS + "/baloo\n",
             "--tools\nRead,Glob,Grep,Edit,Write,Skill\n",
             "--permission-mode\ndontAsk\n",
             "--output-format\njson\n",
@@ -119,7 +122,7 @@ class Start(unittest.TestCase):
                     '{"type":"user","entrypoint":"' + entry + '","message":{"content":"'
                     + "x" * chars + '"}}\n'
                 )
-                started = review.start(claude, "/plugins/baloo", root, data, "s", transcript)
+                started = review.start(claude, "/plugins/bagheera", root, data, "s", transcript)
                 self.assertEqual(started, want)
                 wait(self, root, data)
                 self.assertEqual(os.path.exists(os.path.join(seen, "args")), want)
@@ -140,7 +143,7 @@ class Runs(unittest.TestCase):
         """Starts the review of `transcript` with a `claude` that replies `reply`, and waits for
         its end; returns whether it started and the folder of what `claude` was run with."""
         claude, seen = fake_claude(self, reply)
-        started = review.start(claude, "/plugins/baloo", self.root, self.data, session, transcript)
+        started = review.start(claude, "/plugins/bagheera", self.root, self.data, session, transcript)
         wait(self, self.root, self.data)
         return started, seen
 
@@ -349,17 +352,15 @@ class Show(unittest.TestCase):
                 got = show(repo_with(self), testkit.tempdir(self), "s")
                 self.assertEqual("R1 P2 glossary edit" in got, want, got)
 
-    # The Proposals are shown once a session, until each is decided, those for the Inbox only
-    # counted, for the inbox skill; the log gets a line a decision, with the repo's origin; the
+    # The Proposals are shown once a session, until each is decided, those for the Inbox too (PRD
+    # bagheera); the log gets a line a decision, with the repo's origin; the
     # file goes once each is decided and applied.
     def test_show_and_decide(self):
         root, data = repo_with(self), testkit.tempdir(self)
         got = show(root, data, "s1")
-        self.assertNotIn("No evals", got)
         self.assertEqual(review.waiting(root, data)[0], "R1 P1 inbox add .about/inbox.md: No evals")
         for want in [
-            "1 Session review proposal for .about/inbox.md waits in .about/proposals/: tell the "
-            "user, and that /baloo:inbox goes through them\n",
+            "  R1 P1 inbox add .about/inbox.md: No evals\n",
             "`decide <review> <id> accepted|accepted-edited|rejected|deferred`",
             "  R1 P2 glossary edit .about/glossary.md: Order\n",
             "  R1 P3 adr delete .about/adr/gone.md: Gone\n",

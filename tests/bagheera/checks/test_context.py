@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 
-from baloo.checks import ALLOW_SECRET, no_secrets_in_context
+from bagheera.checks import ALLOW_SECRET, no_secrets_in_context
 from tests import testkit
 
 LEAK_ADVICE = (

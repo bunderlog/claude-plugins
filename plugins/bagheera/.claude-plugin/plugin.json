@@ -1,0 +1,11 @@
+{
+  "name": "bagheera",
+  "version": "0.40.0",
+  "description": "Each person's session machinery for Claude Code: checks that keep secrets out of Claude's context and Git hooks from being skipped, a status line, a doctor, a session review that proposes what a session settled, a retro of past sessions, and a short-replies output style.",
+  "author": {
+    "name": "Andrew Molyuk",
+    "email": "andrew@molyuk.com"
+  },
+  "repository": "https://github.com/bunderlog/claude-plugins",
+  "license": "MIT"
+}

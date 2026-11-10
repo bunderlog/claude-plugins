@@ -83,17 +83,6 @@ def guideline_index(root: str) -> Tuple[str, Optional[str]]:
     return index, why
 
 
-def decide_command() -> str:
-    """The command Claude runs, in the repo, to log the user's decision on a Proposal: the
-    plugin's review-decision, with the data folder it keeps the log in, as the doctor skill runs
-    the plugin."""
-    run = os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT", ""), "scripts", "run.py")
-    return (
-        "CLAUDE_PLUGIN_DATA='" + os.environ.get("CLAUDE_PLUGIN_DATA", "") + "' python3 -E -s '"
-        + run + "' review-decision"
-    )
-
-
 _NAMED = {"\a": "\\a", "\b": "\\b", "\f": "\\f", "\n": "\\n", "\r": "\\r", "\t": "\\t", "\v": "\\v"}
 
 
@@ -115,3 +104,12 @@ def one_line(s: str) -> str:
             out.append(f"\\U{ord(c):08x}")
     return "".join(out)
 
+
+# What a Session review's own session runs with, which bagheera starts: there baloo's Hooks do
+# nothing but name the Guidelines.
+REVIEW_ENV = "BALOO_SESSION_REVIEW"
+
+
+def headless() -> bool:
+    """Whether the session is headless, claude -p's or the Agent SDK's, which nobody reads."""
+    return os.environ.get("CLAUDE_CODE_ENTRYPOINT", "").startswith("sdk-")

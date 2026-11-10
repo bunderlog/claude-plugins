@@ -2,9 +2,10 @@ import json
 import os
 import unittest
 
-from baloo import doctor, names, review, version
-from tests import commands, test_review, testkit
-from tests.commands import PLUGIN, in_repo, run, start, write
+from bagheera import doctor, names, review, version
+from tests import testkit
+from tests.bagheera import commands, test_review
+from tests.bagheera.commands import PLUGIN, in_repo, run, start, write
 
 
 def doctor_run(test):
@@ -24,12 +25,10 @@ class Doctor(unittest.TestCase):
         self.assertEqual(code, 0, out)
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         for want in [
-            "baloo " + version.read() + " doctor in " + dir + "\n\nNo problems.\n",
+            "bagheera " + version.read() + " doctor in " + dir + "\n\nNo problems.\n",
             "\nPlugin:\n  running  " + PLUGIN + " (" + version.read() + ")\n",
             "  link     " + link + " -> " + PLUGIN + "\n",
             "no-secrets-in-context  on\n",
-            "\nGuidelines that fit the repo, given by their task's signal or named at session start:\n"
-            "  debugging, design, principles, testing, writing-for-agents\n",
         ]:
             self.assertIn(want, out)
 
@@ -37,7 +36,7 @@ class Doctor(unittest.TestCase):
     def test_problems(self):
         dir = in_repo(self)
         self.assertEqual(start(self)[0], 0)
-        config = os.path.join(dir, names.CONFIG)
+        config = os.path.join(dir, names.OLD_CONFIG)
         write(config, "claude-hooks:\n  no-git-hook-bypass: false\n")
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
         os.remove(link)
@@ -99,7 +98,7 @@ class Doctor(unittest.TestCase):
         self.assertEqual(start(self)[0], 0)
         installed = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json")
         want = (
-            f"- this session runs baloo {version.read()}, but 99.0.0 is installed for this "
+            f"- this session runs bagheera {version.read()}, but 99.0.0 is installed for this "
             "project: restart Claude Code to run it\n"
         )
 

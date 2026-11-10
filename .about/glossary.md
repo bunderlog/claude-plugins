@@ -21,7 +21,8 @@ _Avoid_: "Release" alone
 
 ## The plugins and `hathi`
 
-These are planned (PRD harness); until each ships, baloo does its part as described below.
+bagheera shipped with 0.41.0 (PRD bagheera); louie is planned, and until it ships baloo does
+its part.
 
 **bagheera**:
 The plugin each person turns on once, for every session: Checks in Hooks beyond Claude Code's

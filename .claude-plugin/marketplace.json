@@ -11,6 +11,10 @@
     {
       "name": "baloo",
       "source": "./plugins/baloo"
+    },
+    {
+      "name": "bagheera",
+      "source": "./plugins/bagheera"
     }
   ]
 }

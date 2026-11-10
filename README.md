@@ -1,7 +1,9 @@
 # bunderlog/claude-plugins
 
-The `bunderlog` marketplace of Claude Code plugins. It holds one plugin, `baloo`, described in
-its [plugin.json](plugins/baloo/.claude-plugin/plugin.json).
+The `bunderlog` marketplace of Claude Code plugins, released together under one version:
+`baloo`, the project's method, which a project turns on for everyone in it, and `bagheera`, each
+person's session machinery, which each person installs once (ADR plugin). Each is described in its
+`plugin.json`.
 
 It is for developers who work with Claude Code across several projects and want the same
 discipline in each: decisions, terms and requirements recorded in the project's `.about/`, Secrets
@@ -11,10 +13,11 @@ CI.
 
 ```sh
 claude plugin marketplace add bunderlog/claude-plugins
-claude plugin install baloo@bunderlog
+claude plugin install bagheera@bunderlog
+claude plugin install baloo@bunderlog --scope project
 ```
 
-Its Hooks run its Python code, so they need `python3` 3.9 or later, which a Mac gets
+Their Hooks run their Python code, so they need `python3` 3.9 or later, which a Mac gets
 with the Command Line Tools and most Linux distributions have; nothing else is installed.
 
 Why things are the way they are is in [.about/adr/](.about/adr/).
@@ -42,12 +45,12 @@ changes nothing.
 
 ## Development
 
-This repo uses its own plugin: `.claude/settings.json` installs `baloo` from GitHub, so a session
-here runs its last Release. To try an edit to a skill, the agent, a Guideline or a Hook before a
-Release, start a session with `claude --plugin-dir plugins/baloo`: its Hooks, and the Git hooks
-and Status line from then on, run this checkout's code. The code is in `plugins/baloo/scripts/`,
-its tests in `tests/`, and `mise run check` runs them on Python 3.9 and lints the Python and the
-Hooks' `sh`. To make a Release and push it, run `mise run release`.
+This repo uses its own plugins: `.claude/settings.json` installs `baloo` from GitHub, so a session
+here runs its last Release. To try an edit before a Release, start a session with `claude
+--plugin-dir plugins/baloo --plugin-dir plugins/bagheera`: their Hooks, and bagheera's Status line
+from then on, run this checkout's code. The code is in each plugin's `scripts/`, the tests in
+`tests/` (baloo's) and `tests/bagheera/`, and `mise run check` runs them on Python 3.9 and lints the
+Python and the Hooks' `sh`. To make a Release of both and push it, run `mise run release`.
 
 The repo's own Git hooks are in `.githooks/` and run `hathi`, which `mise.toml` pins; turn them on
 once per clone with `git config core.hooksPath .githooks`.

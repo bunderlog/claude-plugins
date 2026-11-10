@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 
-from baloo import names, review
+from baloo import names
 from tests import commands, testkit
 from tests.commands import PLUGIN, in_repo, read, run, start, write
 
@@ -41,28 +41,6 @@ class SessionStart(unittest.TestCase):
         write(os.path.join(dir, names.CONFIG), "nope: 1\nformat-on-edit: x\n")
         self.assertNotIn("baloo.yml", start(self)[1])
 
-    # Where no settings file sets an Output style or a Status line, session start tells, once per
-    # clone, how the person sets each in their own settings, and writes neither; a headless session
-    # doesn't use the telling up, and one already set isn't told of (PRD no-config).
-    def test_personal(self):
-        dir = in_repo(self)
-        user = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json")
-        write(user, ENABLE)
-        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
-        self.assertNotIn("no longer picks", start(self)[1])
-        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
-        out = start(self)[1]
-        self.assertIn("baloo no longer picks an Output style or sets a Status line", out)
-        self.assertIn('"outputStyle": "baloo:short-replies"', out)
-        self.assertIn('"statusLine": {"type": "command"', out)
-        self.assertFalse(os.path.exists(os.path.join(dir, names.LOCAL_SETTINGS)))
-        self.assertNotIn("no longer picks", start(self)[1])
-
-        dir = in_repo(self)
-        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"),
-              '{"outputStyle": "Explanatory", "statusLine": {"type": "command", "command": "x"}}')
-        self.assertNotIn("no longer picks", start(self)[1])
-
     # Session start writes no Git hook, leaves Claude Code's commit attribution to the project's
     # settings and the commit format to CLAUDE.md, and says nothing of either, whatever an old
     # Config says (ADR git-hooks).
@@ -84,7 +62,7 @@ class SessionStart(unittest.TestCase):
     # settings, and only names the Guidelines.
     def test_in_session_review(self):
         dir = in_repo(self)
-        os.environ[review.ENV] = "1"
+        os.environ["BALOO_SESSION_REVIEW"] = "1"
         write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"), ENABLE)
         write(os.path.join(dir, "go.mod"), "module x\n")
         write(os.path.join(dir, names.CONFIG), "output-style: short-replies\nstatus-line: true\n")
@@ -231,7 +209,7 @@ class PromptAfterUpdate(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         hook = json.loads(out)["hookSpecificOutput"]
         self.assertEqual(hook["hookEventName"], "UserPromptSubmit")
-        self.assertIn("no longer picks an Output style", hook["additionalContext"])
+        self.assertIn("Guidelines, the plugin's working rules", hook["additionalContext"])
         self.assertEqual(os.path.realpath(os.path.join(data, names.PLUGIN)), PLUGIN)
         self.assertEqual(run("user-prompt-submit", stdin='{"session_id":"s1"}'), (0, "", ""))
 
@@ -250,7 +228,7 @@ class PromptAfterUpdate(unittest.TestCase):
         code, out, err = run("user-prompt-submit", stdin='{"session_id":"s1"}')
         self.assertEqual((code, err), (0, ""))
         told = json.loads(out)["hookSpecificOutput"]["additionalContext"]
-        self.assertIn("no longer picks an Output style", told)
+        self.assertIn("Guidelines, the plugin's working rules", told)
         self.assertIn("but 99.0.0 is installed for this project", told)
 
 

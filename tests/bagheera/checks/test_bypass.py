@@ -1,6 +1,6 @@
 import unittest
 
-from baloo.checks import no_git_hook_bypass
+from bagheera.checks import no_git_hook_bypass
 
 NO_VERIFY = "git commit --no-verify bypasses the Git hooks"
 HOOKS_PATH = "git config core.hooksPath changes where the Git hooks are"

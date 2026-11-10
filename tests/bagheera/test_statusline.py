@@ -5,8 +5,8 @@ import time
 import unittest
 from unittest import mock
 
-from baloo import binlink, names, statusline
-from baloo.statusline import Input, Layout, Thresholds, default
+from bagheera import binlink, names, statusline
+from bagheera.statusline import Input, Layout, Thresholds, default
 from tests import testkit
 
 PLUGIN_ID = names.PLUGIN_ID
@@ -14,7 +14,7 @@ ON = '{"enabledPlugins": {"' + PLUGIN_ID + '": true}}'
 THEIRS = '{"statusLine": {"type": "command", "command": "their-line"}}'
 # The plugin's folder in this repo, where the code under test runs from.
 PLUGIN = os.path.realpath(
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins", "baloo")
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plugins", "bagheera")
 )
 
 
@@ -45,8 +45,8 @@ class Ours(unittest.TestCase):
     # The command the person sets runs the plugin through the link, marked as the plugin's, and a
     # statusLine with that mark is told from the person's own.
     def test_command_and_ours(self):
-        cmd = statusline.command("/data/baloo")
-        self.assertEqual(cmd, "python3 -E -s '/data/baloo/scripts/run.py' status-line " + names.MARKER)
+        cmd = statusline.command("/data/bagheera")
+        self.assertEqual(cmd, "python3 -E -s '/data/bagheera/scripts/run.py' status-line " + names.MARKER)
         self.assertTrue(statusline.ours({"type": "command", "command": cmd}))
         self.assertFalse(statusline.ours({"type": "command", "command": "my-line"}))
         self.assertFalse(statusline.ours("nope"))
@@ -57,12 +57,12 @@ class Link(unittest.TestCase):
     # version, or to the Go binary, in place.
     def test_point(self):
         data = testkit.tempdir(self)
-        path = os.path.join(data, "baloo")
+        path = os.path.join(data, "bagheera")
         os.symlink("/old/baloo_0.25.1_linux_amd64", path)
         self.assertEqual(binlink.point(data), path)
         self.assertEqual(os.readlink(path), PLUGIN)
         self.assertEqual(binlink.point(data), path)
-        self.assertEqual(os.listdir(data), ["baloo"])
+        self.assertEqual(os.listdir(data), ["bagheera"])
         self.assertTrue(os.path.isfile(os.path.join(path, ".claude-plugin", "plugin.json")))
 
     def test_no_data(self):

@@ -1,20 +1,16 @@
 """Session start, the SessionStart Hook's part (ADR binary): it writes no file in the repo, no
 Claude Code setting and no Git hook (PRD no-config, ADR git-hooks). What it prints Claude Code adds
-to Claude's context, so it prints only what Claude should know: once per clone how the person sets
-their own Output style and Status line, a Session review still running and the Proposals waiting for
-the user (ADR session-review), how many items the Inbox holds (ADR inbox), the files in .about/ git
-hasn't committed (ADR about-folder), and the problems, each on one line; then the Guidelines that
-fit the repo (ADR guidelines). In a Session review's session it only names the Guidelines: that
-session changes nothing but its Proposals (ADR session-review).
+to Claude's context, so it prints only what Claude should know: how many items the Inbox holds (ADR
+inbox), the files in .about/ git hasn't committed (ADR about-folder), and the problems, each on one
+line; then the Guidelines that fit the repo (ADR guidelines). In a Session review's session, which
+bagheera starts, it only names the Guidelines.
 
 Each part returns its own Lines, and session start only gathers them, in the order of PARTS: a new
 part is a function and its place there."""
 
 from __future__ import annotations
 
-import hashlib
 import io
-import json
 import os
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, TextIO
@@ -25,9 +21,6 @@ from baloo import (
     hook,
     inbox,
     names,
-    review,
-    settings,
-    statusline,
 )
 from baloo.checks.git import Error as GitError, git
 
@@ -56,62 +49,6 @@ class Start:
     session: str
 
 
-def _personal(s: Start) -> Lines:
-    """Once per clone, how to set an Output style and a Status line in the person's own settings,
-    for each no settings file sets: the plugin sets neither (PRD no-config). A headless session is
-    told nothing, so it doesn't use up the telling."""
-    if not s.root or not s.data or review.headless():
-        return Lines()
-    try:
-        fields = settings.read_all(settings.files(s.dir))
-    except (OSError, ValueError):
-        return Lines()
-    unset = [k for k in ("outputStyle", "statusLine") if not any(k in f for f in fields.values())]
-    digest = hashlib.sha256(s.root.encode()).hexdigest()[:16]
-    folder = os.path.join(s.data, "personal-told", digest)
-    try:
-        told = set(os.listdir(folder))
-    except OSError:
-        told = set()
-    new = [k for k in unset if k not in told]
-    if not new:
-        return Lines()
-    try:
-        os.makedirs(folder, mode=0o700, exist_ok=True)
-        for key in new:
-            with open(os.path.join(folder, key), "w"):
-                pass
-    except OSError as e:
-        return Lines(problems=[f"personal settings: {e}"])
-    values = {
-        "outputStyle": json.dumps(f"{names.PLUGIN}:short-replies"),
-        "statusLine": json.dumps({
-            "type": "command",
-            "command": statusline.command(os.path.join(s.data, names.PLUGIN)),
-            "padding": 0,
-            "refreshInterval": 60,
-        }),
-    }
-    fields_text = ", ".join(f'"{k}": {values[k]}' for k in new)
-    return Lines([
-        f"{names.PLUGIN} no longer picks an Output style or sets a Status line; to keep its own, "
-        f"the user adds to ~/.claude/settings.json: {fields_text}: tell the user, once"
-    ])
-
-
-def _session_review(s: Start) -> Lines:
-    out = Lines()
-    if not s.root:
-        return out
-    if review.running(s.root, s.data) and not review.headless():
-        out.lines.append(
-            "a Session review of an earlier session is still running: its proposals come with a "
-            "later prompt"
-        )
-    out.lines.extend(review.show(s.root, s.data, s.session, hook.decide_command()))
-    return out
-
-
 def _inbox(s: Start) -> Lines:
     return Lines(inbox.lines(s.root) if s.root else [])
 
@@ -119,7 +56,7 @@ def _inbox(s: Start) -> Lines:
 def _uncommitted_about(s: Start) -> Lines:
     """The files in .about/ with changes git hasn't committed, new ones too, for the user to
     commit (ADR about-folder): not the Proposals, and nothing in a headless session."""
-    if not s.root or review.headless():
+    if not s.root or hook.headless():
         return Lines()
     try:
         out = git(s.root, "status", "--porcelain", "-z", "--untracked-files=all", "--",
@@ -146,8 +83,6 @@ def _uncommitted_about(s: Start) -> Lines:
 # The parts session start reports on, in the order it prints their lines; the Guidelines' index
 # comes after them all.
 PARTS: List[Callable[[Start], Lines]] = [
-    _personal,
-    _session_review,
     _inbox,
     _uncommitted_about,
 ]
@@ -161,7 +96,7 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
     except OSError as e:
         stderr.write(f"{names.PLUGIN}: {e}\n")
         return 1
-    if os.environ.get(review.ENV, ""):
+    if os.environ.get(hook.REVIEW_ENV, ""):
         index, _ = hook.guideline_index(repo.root(dir))
         if index:
             stdout.write(index + "\n")

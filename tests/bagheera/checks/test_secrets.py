@@ -1,7 +1,7 @@
 import unittest
 
-from baloo.checks import mask_secrets
-from baloo.checks.secrets import is_env_file
+from bagheera.checks import mask_secrets
+from bagheera.checks.secrets import is_env_file
 
 # A fake Secret of each kind, built at run time, so this file holds none and passes a commit's
 # Secrets check.

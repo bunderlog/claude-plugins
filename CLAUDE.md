@@ -1,10 +1,12 @@
 # CLAUDE.md
 
-This repo is baloo's own source: `plugins/baloo/` is what ships (skills, the agent, Guidelines,
-Hooks, the Output style, and in `scripts/` the Python code the Hooks run, standard library only,
-Python 3.9 and later), `tests/` tests that code, and `src/release/release.py` makes and tags
-Releases. A session here runs the plugin from the last Release, not this checkout — see README.md's
-Development section for trying an edit to a skill, the agent, a Guideline or a Hook first.
+This repo is the `bunderlog` marketplace's source: `plugins/baloo/` (skills, the agent, Guidelines
+and the Hooks that give them) and `plugins/bagheera/` (the Checks in Hooks, the Status line, doctor,
+the Session review, Retro and the Output style) are what ships, each with its Python in `scripts/`,
+standard library only, Python 3.9 and later, sharing no code (ADR plugin); `tests/` tests baloo's
+code and `tests/bagheera/` bagheera's, and `src/release/release.py` makes and tags Releases of
+both under one version. A session here runs the plugins from the last Release, not this checkout —
+see README.md's Development section for trying an edit first.
 
 `.about/` holds this project's own decisions (ADRs, glossary, Inbox) — read it before proposing
 an architecture change or a new domain term; don't reopen what it already settled.

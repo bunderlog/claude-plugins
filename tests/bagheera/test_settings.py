@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from baloo import names, settings
+from bagheera import names, settings
 
 
 def write(path, text):
