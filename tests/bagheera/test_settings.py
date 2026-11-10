@@ -26,6 +26,22 @@ class TempDir(unittest.TestCase):
         self.dir = os.path.realpath(tmp.name)
 
 
+class Enabling(unittest.TestCase):
+    # The most specific settings file that names the plugin decides; managed settings don't count.
+    def test_enabling(self):
+        on = {"enabledPlugins": {names.PLUGIN_ID: True}}
+        off = {"enabledPlugins": {names.PLUGIN_ID: False}}
+        for fields, want in [
+            ({settings.USER: on}, settings.USER),
+            ({settings.LOCAL: off, settings.USER: on}, ""),
+            ({settings.PROJECT: on, settings.USER: off}, settings.PROJECT),
+            ({settings.MANAGED: on}, ""),
+            ({settings.LOCAL: {"enabledPlugins": []}, settings.USER: on}, settings.USER),
+        ]:
+            with self.subTest(fields=fields):
+                self.assertEqual(settings.enabling(fields), want)
+
+
 class Pattern(unittest.TestCase):
     def test_pattern(self):
         for rel, want in {

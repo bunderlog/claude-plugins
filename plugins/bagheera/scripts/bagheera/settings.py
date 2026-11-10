@@ -74,6 +74,20 @@ def _read(path: str) -> Dict[str, Any]:
     return fields
 
 
+def enabling(fields: Dict[str, Dict[str, Any]]) -> str:
+    """The Scope whose settings `fields` enable the plugin, or "" when none does: of the local,
+    project and user settings, the most specific whose enabledPlugins names it decides, as in
+    Claude Code. Managed settings don't count: a plugin they enable is the machine's, not a
+    choice made for the project."""
+    for scope in (LOCAL, PROJECT, USER):
+        plugins = fields.get(scope, {}).get("enabledPlugins")
+        if not isinstance(plugins, dict):
+            continue
+        if names.PLUGIN_ID in plugins:
+            return scope if plugins[names.PLUGIN_ID] is True else ""
+    return ""
+
+
 def exclude(root: str, path: str) -> None:
     """Adds the file at `path` to the info/exclude of the repo at `root`, unless it is there, as
     Claude Code does with a settings.local.json it creates."""
