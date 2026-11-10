@@ -35,7 +35,13 @@ _WRAPPERS = {
     "nohup": [],
     "time": [],
     "xargs": ["-I", "-L", "-n", "-P", "-s", "-d", "-E"],
+    "timeout": ["-s", "-k", "--signal", "--kill-after"],
+    "nice": ["-n", "--adjustment"],
+    "stdbuf": ["-i", "-o", "-e", "--input", "--output", "--error"],
 }
+# Wrappers that take arguments of their own after their options, before the program: timeout's
+# duration.
+_OPERANDS = {"timeout": 1}
 
 SHELLS = ["sh", "bash", "zsh", "dash"]
 
@@ -73,12 +79,14 @@ def programs(command: str) -> List[Program]:
             valued = _WRAPPERS.get(base(words[0]))
             if valued is None:
                 break
-            bare_env = base(words[0]) == "env"
+            wrapper = base(words[0])
+            bare_env = wrapper == "env"
             words = words[1:]
             while words and words[0].startswith("-"):
                 if words[0] in valued and len(words) > 1:
                     words = words[1:]
                 words = words[1:]
+            words = words[_OPERANDS.get(wrapper, 0) :]
         if not words:
             if bare_env:
                 found.append(Program("env", [], env, piped[i]))
@@ -112,9 +120,11 @@ class _Heredoc:
 def segments(command: str) -> Tuple[List[List[str]], List[bool]]:
     """split's commands, each with whether a single | pipes its output into the next. A
     here-document's body is text a program reads, not commands, so it is left out, but for a
-    shell's."""
+    shell's. A command substitution inside double quotes, `"$(…)"` or `"`…`"`, stays in its word,
+    and its commands come after the rest, since the shell runs them too."""
     cmds: List[List[str]] = [[]]
     piped = [False]
+    nested: List[str] = []
     bodies: List[_Heredoc] = []
     word: List[str] = []
     in_word = False
@@ -132,7 +142,12 @@ def segments(command: str) -> Tuple[List[List[str]], List[bool]]:
     while i < len(s):
         c = s[i]
         if quote:
-            if c == quote:
+            end = _substitution_end(s, i) if quote == '"' else 0
+            if end:
+                word.append(s[i:end])
+                nested.append(s[i + (1 if c == "`" else 2) : end - 1])
+                i = end - 1
+            elif c == quote:
                 quote = ""
             elif c == "\\" and quote == '"' and i + 1 < len(s):
                 i += 1
@@ -178,8 +193,29 @@ def segments(command: str) -> Tuple[List[List[str]], List[bool]]:
             in_word = True
         i += 1
     flush()
+    for inner in nested:
+        more, more_piped = segments(inner)
+        cmds += more
+        piped += more_piped
     kept = [(words, p) for words, p in zip(cmds, piped) if words]
     return [words for words, _ in kept], [p for _, p in kept]
+
+
+def _substitution_end(s: str, at: int) -> int:
+    """The index just past the command substitution that starts at `at` in `s`, `$(…)` but not
+    the arithmetic `$((…))`, or `…`; 0 where none starts there."""
+    if s.startswith("$(", at) and not s.startswith("$((", at):
+        depth, j = 1, at + 2
+        while j < len(s) and depth:
+            depth += {"(": 1, ")": -1}.get(s[j], 0)
+            j += 1
+        return j
+    if s[at] == "`":
+        j = at + 1
+        while j < len(s) and s[j] != "`":
+            j += 2 if s[j] == "\\" else 1
+        return min(j + 1, len(s))
+    return 0
 
 
 def _heredoc_at(s: str, at: int) -> Tuple[_Heredoc, int]:
