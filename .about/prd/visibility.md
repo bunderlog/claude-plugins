@@ -51,7 +51,7 @@ waiting without the line.
     or red together at the thresholds that color the bar today: `▤ 12% 120K` for the context, `◷ 42% 02:42` for the
     5-hour limit, `◷ 61% Sat` for the 7-day one, `↻ 40m` for the cache. The details after the
     number (tokens, reset times) stay grey and have no parentheses. A group's parts are a space
-    apart, the groups three.
+    apart, the groups a grey `·`, as Claude Code's own footer has them.
   - The part, before the model, names nothing: a yellow `⧗` and how many sessions wait, then a
     yellow `⚑` and how many projects need attention, each only when it isn't 0, since each shown
     is something to do. Which ones, and what to
@@ -94,35 +94,57 @@ waiting without the line.
 - A repo with a Transcript modified 29 days ago is one of the machine's projects, one whose latest
   was modified 31 days ago isn't, nor is a `cwd` since removed; a `cwd` in a subfolder or a linked
   worktree counts for its repo's main working tree.
+  → test: tests/bagheera/test_attention.py "Projects.test_projects"
 - With the clock moved 60 seconds on after a Proposal is written in a project where nothing else
   needs attention, the line of a session in another project counts one more project and `doctor`
   names it; 60 seconds after the last one is decided, one fewer.
+  → test: tests/bagheera/test_attention.py "Needs.test_proposals"
+  → test: tests/bagheera/test_attention.py "Check.test_check_and_read"
 - A repo whose `.claude/settings.json` turns baloo on but lacks `attribution` needs attention; a
   repo that isn't set up doesn't for it, and `doctor` counts it as not set up.
+  → test: tests/bagheera/test_attention.py "Needs.test_setup"
+  → test: tests/bagheera/test_doctor.py "Machine.test_machine"
 - A clone where git tracks `.githooks/` and `core.hooksPath` is unset needs attention; 60 seconds
   after `git config core.hooksPath .githooks` runs there, it doesn't.
+  → test: tests/bagheera/test_attention.py "Needs.test_hooks_off"
 - An Inbox whose every item has ` · kept <date>` on the first non-blank line after its heading
   doesn't make its project need attention; one with an item that hasn't, does.
+  → test: tests/bagheera/test_attention.py "Needs.test_inbox"
 - 60 seconds after a session's turn ends, it asks for a permission, or it calls `AskUserQuestion`,
   the line of a session in any project counts it waiting, and `doctor` names its project; 60
   seconds after a prompt is sent to it, it ends, or its Claude Code exits without ending, it
   doesn't. Checked by tests that feed the Hooks' input; that Claude Code sends each event, by hand
   once.
+  → test: tests/bagheera/test_cli.py "Waiting.test_marks"
+  → test: tests/bagheera/test_attention.py "Waits.test_waits"
+  → test: tests/bagheera/test_attention.py "Waits.test_exited"
 - A session's own line never shows itself waiting, and an interrupted turn, a headless session
   (a Session review's included) and a subagent are never shown waiting.
-- With three sessions waiting and two projects needing attention, the part is `⧗ 3   ⚑ 2`; with
+  → test: tests/bagheera/test_attention.py "Waits.test_found"
+  → test: tests/bagheera/test_cli.py "Waiting.test_headless"
+- With three sessions waiting and two projects needing attention, the part is `⧗ 3 · ⚑ 2`; with
   none waiting, `⚑ 2`; with nothing needing attention, there is none. It holds no project's name.
+  → test: tests/bagheera/test_statusline.py "Marks.test_marks"
+  → test: tests/bagheera/test_cli.py "Waiting.test_line"
 - In 120 columns, in `claude-plugins` on `main` with both counts, the line shows the folder, the
   branch, every number with its details, the part and the model; no bar is drawn at any width.
+  → test: tests/bagheera/test_statusline.py "Marks.test_marks"
 - In a line too narrow for all of it, the details go first, then the model, and the part stays; with
   nothing over a threshold and nothing waiting, every part of the line is grey; a context of 22%
   shows its icon and number in red, and its tokens grey.
+  → test: tests/bagheera/test_statusline.py "Render.test_narrow"
+  → test: tests/bagheera/test_statusline.py "Render.test_context_colors"
+  → test: tests/bagheera/test_statusline.py "Marks.test_all_grey"
 - `doctor` lists each project that needs attention, a line for each thing with its folder and what
   to do, and the counts of those that need nothing and of those not set up; in a repo with no
   problem of its own it exits 0 while other projects need attention, and outside any repo it lists
   them too.
+  → test: tests/bagheera/test_doctor.py "Machine.test_machine"
 - Neither the Status line nor `doctor` changes a file outside bagheera's data folder or git's
   config, checked by a test that compares each project's files and `git config --list` before and
   after; nor opens a socket, checked by a test that fails any.
+  → test: tests/bagheera/test_attention.py "Check.test_reads_only"
 - With no Transcripts, or a Transcript that can't be read, the line draws without the part and
   `doctor` says it found no projects.
+  → test: tests/bagheera/test_attention.py "Projects.test_no_transcripts"
+  → test: tests/bagheera/test_doctor.py "Machine.test_none_found"

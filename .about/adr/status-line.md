@@ -1,26 +1,44 @@
 # The Status line is the plugin's, set by each person in their own settings
 
-Date: 2026-11-10
+Date: 2026-11-11
 
-The plugin ships a Status line: the project's folder and the branch on the left, the context, 5-hour
-and 7-day Usage bars and the Cache bar centered, the Cache bar last since nothing in parentheses
-closes it, and the model with its effort on the right. The folder is the last part of the path
-Claude Code runs in (`workspace.project_dir`, else `current_dir`), not of the folder a command moved
-to, so a terminal shows which project, or which worktree of one, a session works in. The plugin
-draws it, `run.py status-line`, from what Claude Code gives a status line command on stdin; a line
-too narrow shrinks the bars, then drops the reset times, the 5-hour's clock time and the 7-day's
-weekday, then the model. Each Usage bar turns yellow and red at percentages, by default the context
-at 15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
+The plugin ships a Status line: the project's folder and the branch on the left; the context,
+5-hour and 7-day Usage figures and the Cache figure centered; and on the right how many sessions
+wait for their person and how many of the machine's projects need attention (PRD visibility), then
+the model with its effort. Each figure is an icon and a number in place of a label and a bar: `▤
+12% 120K` the context with its tokens, `◷ 42% 02:42` the 5-hour limit with when it resets, `◷ 61%
+Sat` the 7-day one with the weekday it resets on, `↻ 40m` the cache; `⧗ 3` the sessions waiting
+and `⚑ 2` the projects, each only when it isn't 0. The groups of the middle and of the right are a
+grey `·` apart, as Claude Code's own footer has it, a group's parts a space. The whole line is grey
+while all is well; a figure's icon and number turn yellow and red together at its thresholds, the
+details after it stay grey, and `⧗` and `⚑` are yellow, since each shown is something to do. The
+folder is the last part of the path Claude Code runs in (`workspace.project_dir`, else
+`current_dir`), not of the folder a command moved to, so a terminal shows which project, or which
+worktree of one, a session works in. The plugin draws it, `run.py status-line`, from what Claude
+Code gives a status line command on stdin; a line too narrow drops the details, then the model, and
+keeps `⧗` and `⚑`. Each Usage figure turns yellow and red at percentages, by default the context at
+15 and 20, the 5-hour at 70 and 85, the 7-day at 80 and 95.
 
-The Cache bar reads Claude Code's `prompt_cache`: it fills with the share of the cache's lifetime
-left, 5 minutes or an hour, turning yellow below 40% and red below 20% by default, and empty when
-cold; beside it are the minutes until the cache goes cold, rounded up, or `cold` in red. Without
-the context bar the cache's size follows them, the tokens the next message writes again once it
-is cold; it is the context's tokens again, so beside them it would say the same twice. With
-caching off it doesn't show. Claude Code runs the line again when the cache goes cold, and the
-`statusLine` setting asks it to every 60 seconds besides, so the minutes count down while idle.
+The Cache figure reads Claude Code's `prompt_cache`: the minutes until the cache goes cold, rounded
+up, or `cold`, turning yellow below 40% of its lifetime left, 5 minutes or an hour, red below 20%
+and when cold, by default. Without the context the cache's size follows them, the tokens the next
+message writes again once it is cold; it is the context's tokens again, so beside them it would say
+the same twice. With caching off it doesn't show. Claude Code runs the line again when the cache
+goes cold, and the `statusLine` setting asks it to every 60 seconds besides, so the minutes count
+down while idle.
 
-It draws its default bars at their default thresholds; no file sets them (PRD no-config). A plugin
+The counts on the right come from what the last check of the machine's projects found, kept in
+the plugin's data folder; the line never runs that check itself, which reads every repo of the
+last 30 days' Transcripts, but starts it in the background where what it found is over 30 seconds
+old and no check runs, so what it shows is at most about a minute old. It leaves out the session it
+draws for, which the person is looking at. A session is marked waiting by bagheera's Stop Hook,
+its Notification Hook for a permission, and its PreToolUse Hook for `AskUserQuestion`; the mark
+clears on the session's next prompt or its end, and the check clears it once the session's
+Transcript holds an entry of the person or of Claude after it (Claude Code's own entries after a
+turn, such as its Hooks' summary, don't count), or its Claude Code has exited. A headless session
+is never marked.
+
+It draws its default figures at their default thresholds; no file sets them (PRD no-config). A plugin
 can't set Claude Code's `statusLine` itself, and the plugin writes none: each person sets it in
 their own `~/.claude/settings.json`, as `python3 -E -s '<plugin data>/bagheera/scripts/run.py'
 status-line # managed by bagheera`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session
@@ -33,6 +51,18 @@ never to the committed `.claude/settings.json`, which would choose for the team.
 session is told nothing.
 
 ## Considered options
+
+- Bars ten cells wide that shrink to five when narrow (until 2026-11-11) — about 150 columns once
+  the line counts the sessions waiting and the projects, so a terminal of 120 cut the rest; the
+  number already says what the bar shows, and its color says when to look.
+- Bars of five cells drawn in eighths, or one cell of eight heights beside the number — closer
+  to a bar, but still a column or five each for what the number says.
+- The name of the project that waits longest, or of each project, on the right — 16 columns or
+  more for what `doctor` lists in full when the count says to look.
+- The check run by the line itself — it reads every project's files and runs `git` in each, too
+  slow for the 300 ms Claude Code gives a status line.
+- A mark cleared when the Transcript is modified after it — Claude Code writes its Hooks' summary
+  after the Stop Hook, so every mark would clear at once.
 
 - The Config's `status-line` key, with its `bars` and `thresholds`, which session start wrote
   into the clone's `.claude/settings.local.json` where the plugin was enabled (until 2026-11-10) —

@@ -82,21 +82,22 @@ and Claude Code sends with every request once a person's own `outputStyle` setti
 _Avoid_: "style" alone; tone
 
 **Status line**:
-The line Claude Code shows under the prompt; bagheera's, with the branch, the Usage bars, the
-Cache bar and the model, is drawn by bagheera, and set by each person in their own settings (ADR
-status-line).
+The line Claude Code shows under the prompt; bagheera's, with the branch, the Usage figures, the
+Cache figure, the sessions waiting, the projects needing attention and the model, is drawn by
+bagheera, and set by each person in their own settings (ADR status-line, PRD visibility).
 _Avoid_: "status" alone, which is a PRD's Status
 _In code_: `bagheera/statusline.py`
 
-**Usage bar**:
-One of the Status line's three bars showing how much is used: the context window, and the 5-hour
-and 7-day rate limits.
-_Avoid_: meter, gauge
+**Usage figure**:
+One of the Status line's three icons and percentages showing how much is used: the context window,
+and the 5-hour and 7-day rate limits.
+_Avoid_: Usage bar, which it was until 2026-11-11; meter, gauge
 
-**Cache bar**:
-The Status line's bar showing how long the prompt cache stays warm, or that it is cold, and,
-without the context bar, its size: the tokens the next message writes to it again once it is cold.
-_Avoid_: cache meter
+**Cache figure**:
+The Status line's icon and minutes showing how long the prompt cache stays warm, or that it is
+cold, and, without the context, its size: the tokens the next message writes to it again once it
+is cold.
+_Avoid_: Cache bar, which it was until 2026-11-11; cache meter
 
 ## Secrets
 

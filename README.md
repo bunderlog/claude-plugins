@@ -49,7 +49,14 @@ adds. Where they are off, Claude runs the `louie:verifier` agent by name instead
 
 `/bagheera:doctor`, or asking Claude what bagheera has on or why a Check didn't run, shows its
 state in the repo: its problems first, each with what fixes it, then its version and the link the
-Status line runs, the Session review's Proposals and the Checks. It changes nothing.
+Status line runs, the Session review's Proposals and the Checks; then, in any folder, the projects
+you worked on from this machine in the last 30 days that need attention, each with what to do, and
+the sessions waiting for you. It changes nothing.
+
+bagheera's Status line is grey while all is well: `▤` the context, `◷` the 5-hour and 7-day
+limits and `↻` the cache, each a number that turns yellow and red past its threshold; on the right,
+a yellow `⧗ 3` says three sessions wait for you and `⚑ 2` that two projects need attention, which
+`/bagheera:doctor` names.
 
 ## Development
 

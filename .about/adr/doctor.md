@@ -11,10 +11,15 @@ settings, whether a Session review runs and how many Proposals wait or disagree 
 (ADR session-review), each Check on or off and whether by its key or by default (ADR checks), and
 the Guidelines on and off, and each item of PRD project-setup's list the repo lacks, which
 `/bagheera:setup` adds (PRD setup); a setting an earlier Release had and this one removed is
-one of its problems, for the user to delete, which session start leaves out (ADR measurement). It
-exits 1 when it finds a problem, 0 otherwise, and prints the same text for the user and for Claude.
+one of its problems, for the user to delete, which session start leaves out (ADR measurement).
+Last, in any folder, it lists the machine's projects that need attention, each thing with its
+folder and what to do, the sessions waiting for their person and since when, and how many projects
+need nothing and how many aren't set up (PRD visibility); these aren't its problems, since they
+are other repos'. It exits 1 when it finds a problem, 0 otherwise, and prints the same text for the
+user and for Claude.
 
-It only reads: what fixes a problem is the next session start, a file or a Config key that is the
+It only reads, but keeps what it found of the machine's projects in the plugin's data folder,
+where the Status line reads it (ADR status-line): what fixes a problem is the next session start, a file or a Config key that is the
 user's to change, which it names, or `/bagheera:setup`. The versions it compares are local, the
 running plugin's with the link's target and with the one Claude Code records as installed for the
 project, in its own folder's `plugins/installed_plugins.json`; it asks GitHub for nothing. Claude Code loads a plugin
