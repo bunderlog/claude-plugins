@@ -64,7 +64,8 @@ Release.
 ## Consequences
 
 - The message of a commit that changes the plugin is release notes: its subject is what users
-  read. A commit that changes the plugin and something else counts whole.
+  read, and a breaking change's `BREAKING CHANGE:` footer is printed under it, so the footer says
+  what users must do. A commit that changes the plugin and something else counts whole.
 - The release commit is signed like any other, and the tag always is (`git tag -s`), so the
   Release is made where the signing key is.
 - If the Release workflow fails, users already have the version, only without its notes page;
