@@ -1,6 +1,6 @@
 # Each Check a Hook runs is always on
 
-Date: 2026-11-10
+Date: 2026-11-11
 
 The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are bagheera's (ADR
 plugin), and always on, outside a repo too: they guard against accidents where nobody set anything
@@ -22,7 +22,18 @@ such as a file copied first and shown after, goes through. Where `python3` is
 missing or the plugin fails, it says nothing, and the call runs: session start has already said
 that no Check runs that session (ADR binary).
 
+Claude Code's `Read` deny rules, in a set-up project's settings (PRD project-setup) and in each
+person's own (PRD deny), are a second layer under `no-secrets-in-context`, not its replacement:
+they cover what the Check can't see, such as a Glob's results, an `@`-mentioned file and a
+symlink, and hold where the plugin fails.
+
 ## Considered options
+
+- Dropping the parts of `no-secrets-in-context` that deny rules cover, Read and Grep of Secrets'
+  files and `cat`, `head`, `tail`, `sed` and `tee` of them (2026-11-11) — less code of the
+  plugin's own, but a rule can't name every Env file the Check knows (`.env.prod`, where `.env.*`
+  would deny `.env.example` too), the rules hold only where a person or a project added them, and
+  a Check that guarded a session would stop (PRD bagheera).
 
 - Each Check turned on or off by its own key under `claude-hooks`, on without it (until
   2026-11-09) — a committed Config could turn one off for everyone who opened the repo, a Leak
