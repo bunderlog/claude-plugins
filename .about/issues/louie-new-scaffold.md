@@ -52,3 +52,10 @@ PRD templates is built in four Issues, one after another: this one; `apps/api`, 
 with `GET /api/up`, Postgres through sqlc and goose; `apps/app`, the Vue app, and the pnpm
 workspace; then `mise run dev`, the Dockerfile and Kamal's `config/deploy.yml`, and the CI job
 running `mise run dev`. Each adds its tools to `mise.toml` and its part to `mise run check`.
+
+### 2026-11-10 · decision
+
+Until the apps exist, the template's `mise run check` runs `shellcheck .githooks/*`, with
+shellcheck pinned in its `mise.toml`: the Git hooks are this step's only code, so it is a real
+check, where a task that checks nothing would pass for the wrong reason. `hathi doctor` was the
+other option, but it reports hooks that aren't on, which they aren't in CI.
