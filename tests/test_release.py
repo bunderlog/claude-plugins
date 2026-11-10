@@ -98,12 +98,11 @@ def released(test):
 
 
 class Release(unittest.TestCase):
-    # Only the plugin's commits count: not its schema, the tests or the release tool; the commit
+    # Only the plugin's commits count: not the tests or the release tool; the commit
     # and the files are made, and the tag, which must be signed, fails without a key.
     def test_release(self):
         root = released(self)
         commit(root, "tests/test_x.py", "x", "feat: a test only")
-        commit(root, names.PLUGIN_DIR + "/schema.json", "{}", "feat: the schema only")
         commit(root, "src/release/release.py", "x", "feat: the tool only")
         commit(root, names.PLUGIN_DIR + "/skills/x/SKILL.md", "x", "fix(skills): a fix")
         sha = testkit.git(root, "rev-parse", "--short", "HEAD").strip()
@@ -135,8 +134,7 @@ class Release(unittest.TestCase):
             release.release(root, "2026-10-14")
         self.assertEqual(
             str(caught.exception),
-            "nothing to release: plugins/baloo :!plugins/baloo/schema.json is unchanged since "
-            "v0.3.1",
+            "nothing to release: plugins/baloo is unchanged since v0.3.1",
         )
 
     def test_uncommitted_changes(self):

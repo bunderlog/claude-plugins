@@ -40,9 +40,8 @@ class Commit:
 
 
 # The paths whose change needs a Release, and whose commits alone count for its version and
-# CHANGELOG: the plugin, but not what users don't get from a Release: the schema, which editors
-# read from main. Its tests are in tests/, outside it.
-CHANGES = [names.PLUGIN_DIR, ":!" + names.PLUGIN_DIR + "/schema.json"]
+# CHANGELOG: the plugin. Its tests are in tests/, outside it.
+CHANGES = [names.PLUGIN_DIR]
 
 CHANGELOG_HEADER = "# Changelog\n\nThe " + names.PLUGIN + " plugin's Releases, newest first.\n"
 
