@@ -72,7 +72,8 @@ Git hooks and CI with no file of the template changed by hand.
 - louie's code, given a new folder, a name and an owner, writes the template there with `git init`
   on `main`; in it `mise trust && mise run setup` turns the Git hooks on, the first commit with the
   skill's message passes them, `mise run check` passes, and `mise run dev` answers `GET
-  /api/up` with 200 and serves the app's page. Checked by a CI job of this repo.
+  /api/up` with 200 and serves the app's page, and its Dockerfile builds. Checked by a CI job of
+  this repo.
 - In that fresh repo, no file holds the template's name, owner or date marks, and the Go module's
   path and the app's name are the ones given; only `config/deploy.yml`'s server and registry are
   left marked for the person.
