@@ -1,0 +1,7 @@
+# The workspace: each app in apps/ with a package.json (ADR stack).
+packages:
+  - apps/app
+
+# A release resolves into the lockfile only once it is two weeks old, a dependency's dependencies
+# too (ADR stack).
+minimumReleaseAge: 20160

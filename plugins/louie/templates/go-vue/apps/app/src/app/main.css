@@ -1,0 +1,21 @@
+/* The app's theme, Tailwind 4's in CSS: each color is a pair, a background and the text made for
+   it, and switches with the system's dark mode, so no component needs `dark:` (ADR stack). */
+@import "tailwindcss";
+
+@theme {
+  --color-surface: oklch(98.5% 0 0);
+  --color-on-surface: oklch(21% 0.006 285.885);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: oklch(21% 0.006 285.885);
+    --color-on-surface: oklch(98.5% 0 0);
+  }
+}
+
+@layer base {
+  html {
+    @apply bg-surface text-on-surface;
+  }
+}
