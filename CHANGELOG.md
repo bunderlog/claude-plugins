@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.42.1 — 2026-11-10
+
+### bagheera
+
+#### Fixes
+
+- on a python3 older than 3.9, say louie gives no Guideline, and exit 2 (8a5bd82)
+
+### louie
+
+#### Fixes
+
+- on a python3 older than 3.9, say louie gives no Guideline, and exit 2 (8a5bd82)
+
 ## 0.42.0 — 2026-11-10
 
 ### baloo
