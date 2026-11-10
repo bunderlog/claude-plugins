@@ -30,4 +30,6 @@ and leave the first commit to them.
    of yours. Don't run it, and don't commit for them.
 7. Then name what comes next, theirs to run, without running it: creating the GitHub repo and
    pushing, such as `gh repo create <owner>/<name> --private --source . --push` in the new
-   folder.
+   folder; running it with `mise run dev`; and deploying, as the new repo's README says: filling
+   in `config/deploy.yml`'s `<server>` and `<registry>` and the secrets of `.env`, copied from
+   `.env.example`, then `mise run deploy setup`.
