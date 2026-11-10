@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.51.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: deliver up to five Issues at once, all planned before any is built (49e157e)
+
 ## 0.50.0 — 2026-11-10
 
 ### bagheera
