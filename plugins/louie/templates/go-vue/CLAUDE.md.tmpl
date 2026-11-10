@@ -7,13 +7,11 @@ The code is on GitHub, `__OWNER__/__NAME__`: pull requests go there, through `gh
 
 ## Tools and checks
 
-mise pins every tool and runs every task: `mise run check` is what CI runs, so run it before a
-commit is pushed (ADR stack).
+mise pins every tool and runs every task: `mise run check` is what CI runs (ADR stack).
 
 ## Commits and Git hooks
 
 Commit messages follow `.hathi.yml`, which the Git hooks check: @.hathi.yml (ADR stack)
 
 The Git hooks are in `.githooks/` and run `hathi`, which `mise.toml` pins. Turn them on once per
-clone with `mise run setup`, which installs the tools and runs `git config core.hooksPath
-.githooks` (ADR stack).
+clone with `mise run setup` (ADR stack).
