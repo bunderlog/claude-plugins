@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The same check as on a machine: mise installs the pinned tools and runs it (ADR stack).
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v5
+      - run: mise run check
+
+  # hathi's commit and repo Checks on what the push or pull request brings.
+  hathi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: github:bunderlog/hathi
+      - run: hathi check ci

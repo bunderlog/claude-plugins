@@ -1,0 +1,17 @@
+# Every tool pinned to an exact version, and every task run from here; CI runs the same `mise run
+# check` (ADR stack). The apps add their tools here and their part of check as they come.
+[tools]
+shellcheck = "0.11.0"
+"github:bunderlog/hathi" = "1.2.0"
+
+[tasks.setup]
+description = "Install the tools and turn the Git hooks on in this clone"
+run = [
+  "mise install",
+  "git config core.hooksPath .githooks",
+]
+
+# Until the apps exist the Git hooks are the only code, so check lints them (ADR stack).
+[tasks.check]
+description = "Lint the Git hooks' sh"
+run = "shellcheck .githooks/*"
