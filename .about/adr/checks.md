@@ -1,20 +1,24 @@
 # Each Check a Hook runs is always on
 
-Date: 2026-11-09
+Date: 2026-11-10
 
-The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are always on, outside a
-repo too: they guard against accidents where nobody set anything up, and turning baloo off is the
-only way to turn them off (PRD no-config). A `claude-hooks` key left in an old Config does nothing,
-and `doctor` names it for the user to delete.
+The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are bagheera's (ADR
+plugin), and always on, outside a repo too: they guard against accidents where nobody set anything
+up, and turning bagheera off is the only way to turn them off (PRD no-config). A `claude-hooks` key
+left in an earlier baloo's Config does nothing, and `doctor` names the Config for the user to
+delete.
 
 The plugin has no commit Check: those are `hathi`'s, run by a project's own Git hooks and CI (ADR
 git-hooks).
 
-A Check only denies; none asks the user first, and nothing asks before a change to the Config or
-to Claude Code's settings that may turn the Checks off (ADR measurement).
+A Check only denies; none asks the user first, and nothing asks before a change to Claude Code's
+settings that may turn the Checks off (ADR measurement).
 
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the plugin's
-`pre-tool-use`, which reads the Config once and runs the Checks it turns on. Where `python3` is
+`pre-tool-use`, which runs both Checks. Each reads the command's words, not a full shell: it
+looks past wrappers such as `sudo`, `timeout` and `env`, into `sh -c`, `eval` and command
+substitutions, and a pattern such as `.e*` stands for the files it matches; what it can't follow,
+such as a file copied first and shown after, goes through. Where `python3` is
 missing or the plugin fails, it says nothing, and the call runs: session start has already said
 that no Check runs that session (ADR binary).
 
@@ -59,9 +63,9 @@ that no Check runs that session (ADR binary).
 
 - A Config made before 2026-11-09 with `claude-hooks` or `checks` turns nothing off; `doctor` names
   the first as a removed setting, and the second as not a setting.
-- Claude can turn a Check off only by turning baloo off in Claude Code's settings, without a
+- Claude can turn a Check off only by turning bagheera off in Claude Code's settings, without a
   question.
 - Nothing in the plugin stops a command that destroys work: Claude Code's permissions and its
   auto mode do.
-- Revisit when a false alarm would make people turn baloo off wholesale, or a session shows work
+- Revisit when a false alarm would make people turn bagheera off wholesale, or a session shows work
   destroyed that a Check would have stopped.

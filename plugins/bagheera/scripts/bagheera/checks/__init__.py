@@ -13,6 +13,5 @@ __all__ = [
     "no_secrets_in_context",
 ]
 
-# The Checks a Hook runs, by name: each is on without its key under claude-hooks in the Config
-# (ADR checks).
+# The Checks a Hook runs, by name: each is always on (ADR checks).
 HOOK_CHECKS = ["no-git-hook-bypass", "no-secrets-in-context"]

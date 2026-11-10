@@ -1,17 +1,17 @@
 # The Hooks run the plugin's own Python code, standard library only
 
-Date: 2026-11-09
+Date: 2026-11-10
 
-Claude Code's Hooks are only triggers: each runs `baloo`, the plugin's Python code, which runs the
-Checks the Config turns on (ADR config). The code ships inside the plugin, so what runs on a user's
+Claude Code's Hooks are only triggers: each runs the plugin's Python code, bagheera's or louie's
+(ADR plugin), which runs the Checks or gives the Guidelines. The code ships inside the plugin, so what runs on a user's
 machine is code they, a reviewer or Claude can read and debug there, and a Release has nothing to
 build per platform or to download. It uses Python's standard library only, so nothing is installed,
 and supports Python 3.9 and later, the `python3` that Xcode's Command Line Tools ship and Debian 11
 has. Anthropic's own plugins, `hookify` and `security-guidance`, run `python3` from their Hooks the
 same way, so it is a requirement plugins already make.
 
-The code is the package `baloo` in the plugin's `scripts/`, and its entry script `scripts/run.py`
-takes a command: `session-start`, `pre-tool-use`, `doctor`, `git-hook <hook>` and the rest. Each
+The code is a package named for the plugin in its `scripts/`, and its entry script
+`scripts/run.py` takes a command: `session-start`, `pre-tool-use`, `doctor` and the rest. Each
 Hook runs `sh scripts/hook <command>` by `${CLAUDE_PLUGIN_ROOT}`, which runs `run.py` with
 `python3 -E -s`: `-E` and `-s` keep a user's `PYTHONPATH` and user site from changing what runs,
 where `-I` would also drop the script's own folder from the import path. Where `python3` is
