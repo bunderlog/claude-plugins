@@ -17,7 +17,8 @@ that does the work deletes it, as an Inbox item's settling change does; git keep
 An Issue is work already agreed; the Inbox holds what is still to decide, a bug found among it
 (ADR inbox). So nothing writes an Issue unattended: the Session review and `principles` still send
 a bug left for later to the Inbox, and the `inbox` skill's "file an issue" moves an item from
-there. Session start doesn't count Issues: the count is for what waits on the user. The skill
+there. Session start lists each Issue by its title, with the ADRs and PRDs (PRD index), but
+doesn't count them: a count is for what waits on the user. The skill
 writes one Issue a request and none from a PRD's criteria, which stay in one place (ADR prd).
 
 louie's `deliver` Workflow takes an Issue from there to a pull request (PRD delivery), or up to
@@ -51,6 +52,6 @@ a tracker's Issue; an Issue in `.about/issues/` goes with the change that delive
 
 - Without a tracker, a project's open work is in the repo, in `.about/issues/`, visible to any
   agent and to whoever clones it.
-- An Issue nobody does stays unnoticed until someone looks: nothing counts them.
+- An Issue nobody does is only listed at session start: nothing counts it or says it waits.
 - Revisit when Issues pile up undone, or a Session review keeps sending the Inbox bugs the user
   then files unchanged.

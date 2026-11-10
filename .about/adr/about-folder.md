@@ -1,6 +1,6 @@
 # Project knowledge lives in `.about/` at the repo root
 
-Date: 2026-10-30
+Date: 2026-11-10
 
 The skills keep a project's glossary, ADRs, PRDs, Inbox and Issues in `.about/glossary.md`,
 `.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/issues/` (ADR issues), at
@@ -32,7 +32,11 @@ tells Claude to tell the user: an interactive session's edits there, an intervie
 ADR, are left uncommitted and unread as often as a Session review's would be (5 of 9 on
 2026-10-07; this repo's own sat eight days behind a stale checkout until 2026-10-14). Committing
 them stays the user's call. `.about/proposals/` is out of git (ADR session-review), so it never
-shows, and a headless session is shown nothing, as with the Proposals.
+shows, and a headless session is shown none of them, as with the Proposals.
+
+Before that, session start names every ADR, PRD and Issue by its title and every term of the
+glossary, headless sessions included, read from the files each time and kept in none of their own
+(PRD index).
 
 ## Considered options
 
