@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.54.0 — 2026-11-11
+
+### bagheera
+
+#### Features
+
+- bagheera: show sessions waiting and projects needing attention in the Status line and doctor (ef8cdb4)
+
 ## 0.53.0 — 2026-11-11
 
 ### bagheera
