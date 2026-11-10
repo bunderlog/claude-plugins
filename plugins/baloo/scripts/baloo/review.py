@@ -64,8 +64,9 @@ def _prompt(id: str, file: str, rejected: List[str], earlier: bool) -> str:
             + "\n"
         )
     return (
-        """The conversation that just ended is on stdin. Find what it settled or left open that
-.about/ doesn't say yet, and propose each change to .about/ in """
+        """The conversation that just ended is on stdin. Find what it settled that .about/ doesn't
+say yet: a term, a decision about how something is built, or what a feature is for and how it is
+checked; and propose each change to .about/ in """
         + file
         + """; edit nothing else, and
 never .about/ itself: the user accepts, rejects or defers each proposal later. Use the """
@@ -74,13 +75,11 @@ never .about/ itself: the user accepts, rejects or defers each proposal later. U
         + p
         + """:adr skills for what to check and for the
 format of a term or an ADR, but write their result as a proposal. Nobody can answer questions:
-propose only what the conversation clearly agreed, and only about this repo. Anything contested or
-left open, and a bug or problem it found but didn't fix, is an Inbox item to add to """
+propose only what the conversation clearly agreed, and only about this repo. Propose nothing for
+what it left open or contested, or for a bug or problem it found but didn't fix: whoever wants it
+kept writes it down. An item of """
         + names.INBOX
-        + """: a "## <title>", a line "<YYYY-MM-DD> · session review", then what it is and
-what would settle it. What is still to do or check on a ticket the conversation worked on (a check
-on a device, a PR to merge, a wait on firmware) stays with that ticket: propose nothing for it. An
-item the conversation settled is one to delete. A PRD changes only where
+        + """ the conversation settled is one to delete. A PRD changes only where
 the conversation agreed what the feature is for or how it is checked. Propose nothing already
 waiting in """
         + names.PROPOSALS

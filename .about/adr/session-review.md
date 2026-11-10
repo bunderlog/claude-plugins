@@ -14,12 +14,11 @@ The review reads only the user's and Claude's text, masked as a Retro's is (ADR 
 and at most the last 200,000 characters of it: no tool call or result. It skips a session shorter
 than 2,000 characters, which can't have settled much, and a headless one, its own or another
 tool's, and a review never starts another. Only what the conversation clearly agreed, and only
-about the repo it runs in, is proposed. Anything contested or left open, and a bug or a problem
-the session found but didn't fix, is an Inbox item to add, and an item the conversation settled
-one to delete (ADR inbox). What is still to do or check on a ticket the conversation worked on, a
-check on a device, a PR to merge, a wait on firmware, stays with that ticket and gets no Proposal:
-in one project's week, 14 of the review's 37 Inbox items were such, and 44 of the 48 items added
-that week never came up again outside going through the Proposals and the Inbox.
+about the repo it runs in, is proposed: a term, a decision about how, a feature's purpose or check,
+and the deletion of an Inbox item the conversation settled (ADR inbox). Nothing left open or
+contested, and no bug or problem the session found but didn't fix, gets a Proposal: whoever wants
+it kept writes it down (PRD session-review). The rule is the review's prompt; a Proposal for the
+Inbox it still writes, or an earlier review wrote, is decided as any other.
 
 A resumed session keeps its id and its Transcript, so its end starts a review of what an earlier
 review read already. The plugin keeps, per session, where in the Transcript its last review
@@ -92,16 +91,19 @@ reply or, with none, the first line of its errors. The first session with the us
 ended logs its end and is told, once, of a review that failed or that read only the end of its
 conversation, to tell the user; `doctor` shows how many failed in the last week and what they cost.
 
-Its session changes nothing else either: there session start only names the Guidelines. A review starts as
-the user may be opening their next session, whose session start writes the same settings files.
-The Checks a Hook runs still run there, so a tool call of the review's can't show it a Secret;
-session start still names the Guidelines. It runs with the user's default model, and may spend
-$3 (`--max-budget-usd`): 40 reviews up to 2026-10-17 cost about $0.45 each, $0.81 the dearest, at
-Claude Opus 5.5's prices, and the rest leaves room for a dearer default model. A review that
+Its session changes nothing else either: there session start only names the Guidelines. A review
+starts as the user may be opening their next session, whose session start writes the same settings
+files. The Checks a Hook runs still run there, so a tool call of the review's can't show it a
+Secret; session start still names the Guidelines. It runs with the user's default model, and may
+spend $3 (`--max-budget-usd`): 40 reviews up to 2026-10-17 cost about $0.45 each, $0.81 the dearest,
+at Claude Opus 5.5's prices, and the rest leaves room for a dearer default model. A review that
 reaches it fails, and is told as any other failure.
 
 ## Considered options
 
+- Proposing what a session left open, contested, or found and didn't fix, as Inbox items (until
+  2026-11-10) — in `webui` 71 of the Inbox's 116 items came from it, and in one project's week 44
+  of the 48 items added never came up again outside going through the Proposals and the Inbox.
 - Turning it on or off by `session-review` in the Config (until 2026-11-10) — most projects had it
   on, and a switch of the plugin's own sat beside Claude Code's (PRD no-config).
 - Editing `.about/` itself, its reply shown once at the next session start (until 2026-10-07) —

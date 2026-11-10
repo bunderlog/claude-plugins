@@ -479,5 +479,19 @@ class Repo(unittest.TestCase):
         self.assertEqual(review.repo(root), "git@github.com:o/r.git")
 
 
+
+class Prompt(unittest.TestCase):
+    # The review is asked for what the conversation settled, a deletion of a settled Inbox item
+    # among it, and for nothing it left open (PRD session-review).
+    def test_only_what_was_settled(self):
+        text = " ".join(review._prompt("R1", "/tmp/r.md", [], False).split())
+        for want in [
+            "Find what it settled that .about/ doesn't say yet",
+            "Propose nothing for what it left open or contested",
+            "An item of .about/inbox.md the conversation settled is one to delete",
+        ]:
+            self.assertIn(want, text)
+        self.assertNotIn("is an Inbox item to add", text)
+
 if __name__ == "__main__":
     unittest.main()
