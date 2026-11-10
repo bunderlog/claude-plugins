@@ -18,6 +18,7 @@ from typing import Callable, List, Optional, TextIO
 
 from bagheera import (
     binlink,
+    deny,
     repo,
     hook,
     names,
@@ -155,9 +156,36 @@ def _not_set_up(s: Start) -> Lines:
     ])
 
 
+def _deny_rules(s: Start) -> Lines:
+    """Once per machine, in any folder, to offer the person to add the deny rules on Secrets'
+    files their own settings lack (PRD deny); nothing where those settings can't be read, and
+    nothing in a headless session, so it doesn't use the offer up."""
+    if not s.data or review.headless():
+        return Lines()
+    try:
+        rules = deny.missing()
+    except (OSError, ValueError):
+        return Lines()
+    mark = os.path.join(s.data, "deny-told")
+    if not rules or os.path.exists(mark):
+        return Lines()
+    try:
+        with open(mark, "w"):
+            pass
+    except OSError as e:
+        return Lines(problems=[f"deny rules: {e}"])
+    return Lines(lines=[
+        "Claude Code's own deny rules keep Secrets' files out of every session, beside "
+        f"{names.PLUGIN}'s Checks: offer the user, once, to add these deny rules to the "
+        f"permissions.deny of {deny.user_file()}: {json.dumps(rules)}; add them there only on their "
+        "yes, keeping the file's other settings"
+    ])
+
+
 # The parts session start reports on, in the order it prints their lines.
 PARTS: List[Callable[[Start], Lines]] = [
     _personal,
+    _deny_rules,
     _not_set_up,
     _session_review,
 ]

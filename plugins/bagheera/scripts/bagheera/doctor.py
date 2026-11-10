@@ -1,17 +1,18 @@
 """doctor: the plugin's state in the repo it runs in, its problems first, each with what fixes it
 (ADR doctor): the plugin running and the link its Status line runs, the Session review's
 Proposals, and the Checks; what an earlier baloo left in the clone, for the person to remove; and
-what the repo lacks of being set up, which /bagheera:setup adds (PRD setup). It changes
-nothing."""
+what the repo lacks of being set up, which /bagheera:setup adds (PRD setup); and the deny rules
+the person's own settings lack (PRD deny). It changes nothing."""
 
 from __future__ import annotations
 
 import io
+import json
 import os
 from typing import List, TextIO
 
 from bagheera import (
-    binlink, checks, hook, names, repo, review, settings, setup, version,
+    binlink, checks, deny, hook, names, repo, review, settings, setup, version,
 )
 
 
@@ -55,6 +56,16 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
                     f"{link} points at {target}, not at this plugin, so the Status line runs "
                     "that one: the next session start points it here"
                 )
+
+    try:
+        rules = deny.missing()
+        if rules:
+            problems.append(
+                f"{deny.user_file()} lacks {len(rules)} of {names.PLUGIN}'s deny rules: add to its "
+                f"permissions.deny {json.dumps(rules)}"
+            )
+    except (OSError, ValueError) as e:
+        problems.append(f"{e}: fix it so Claude Code reads its deny rules")
 
     if root and os.path.lexists(os.path.join(root, names.OLD_CONFIG)):
         problems.append(
