@@ -45,3 +45,11 @@ dev`, the Dockerfile, Kamal's `config/deploy.yml` and the CI job running `mise r
 `GET /api/up` says the server is up and touches no database, so it answers 200 with Postgres down
 and serves as Kamal's health check later; a check of the database, if a product wants one, is its
 own route.
+
+### 2026-11-10 · decision
+
+The template's one migration creates a small example table, `notes` (id, body, created_at), and
+its one query is `ListNotes`: it shows the whole pattern, a table, a query and the models sqlc
+makes, without presuming a domain decision, and the template's ADR stack says to replace it with
+the product's first real migration before its first deploy. A table most products keep, such as
+`accounts`, would presume email sign-in; no table at all would show no schema to copy.
