@@ -76,3 +76,16 @@ func TestWithApp_MissingAssetIs404(t *testing.T) {
 		t.Fatalf("GET a missing asset status = %d, want %d", w.Code, http.StatusNotFound)
 	}
 }
+
+func TestWithApp_UnknownAPIPathIs404JSON(t *testing.T) {
+	w := serve(t, WithApp(Routes(), build(t)), http.MethodGet, "/api/nope")
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("GET /api/nope status = %d, want %d", w.Code, http.StatusNotFound)
+	}
+	if got := w.Header().Get("Content-Type"); got != "application/json" {
+		t.Fatalf("GET /api/nope Content-Type = %q, want %q", got, "application/json")
+	}
+	if strings.Contains(w.Body.String(), "<title>app</title>") {
+		t.Fatalf("GET /api/nope body = %q, want the API's 404, not the app", w.Body.String())
+	}
+}

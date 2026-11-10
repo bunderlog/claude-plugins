@@ -32,8 +32,10 @@ operator already runs. Go is pinned to 1.26.10, a mature line over a newer one, 
 `cmd/server/main.go` wires the server up and nothing else, each package of `internal/` is named
 for what it provides, `internal/respond` alone writes responses, and the tests use the standard
 `testing` package. Its one route, `GET /api/up`, says the server is up and touches no database, so
-it answers 200 whatever Postgres is doing; the standard library's `http.ServeMux` routes it.
-golangci-lint runs at its v2 defaults, with no config.
+it answers 200 whatever Postgres is doing; the standard library's `http.ServeMux` routes it. An
+unknown path or a wrong method under `/api/` gets `respond`'s JSON 404 or 405, the 405 with the
+mux's `Allow` header, in place of the mux's plain text. golangci-lint runs at its v2 defaults, with
+no config.
 
 Postgres is reached through sqlc on `pgx/v5`: queries are written as SQL in `apps/api/queries/`
 and sqlc generates the Go that runs them into `apps/api/internal/db/`, which is committed and
