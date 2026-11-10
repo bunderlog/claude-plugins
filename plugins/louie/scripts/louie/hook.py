@@ -72,8 +72,8 @@ def context(out: TextIO, event: str, text: str) -> None:
 
 def guideline_index(root: str) -> Tuple[str, Optional[str]]:
     """What Claude is told of the Guidelines on in the repo at `root` (see guidelines.on_in), in
-    the plugin's folder that Claude Code gives a Hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's shell: CLAUDE_CODE_SHELL, or the user's SHELL;
-    with why it is short, or None."""
+    the plugin's folder that Claude Code gives a Hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's
+    shell, CLAUDE_CODE_SHELL or the user's SHELL; with why it is short, or None."""
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     shell = os.environ.get("CLAUDE_CODE_SHELL", "") or os.environ.get("SHELL", "")
     on = guidelines.on_in(root)

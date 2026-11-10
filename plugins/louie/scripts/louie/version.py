@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import os
 
-from louie import binlink, names, settings
+from louie import binlink, names, repo
 
 
 def read() -> str:
@@ -26,7 +26,7 @@ def installed(root: str) -> str:
     """The version Claude Code records as installed for the repo at `root`, in its own folder's
     plugins/installed_plugins.json: the project's or local install, else the user's; "" where it
     records none, or the file has another shape, as it is Claude Code's and undocumented."""
-    own = settings.own()
+    own = repo.own_folder()
     try:
         with open(os.path.join(own, "plugins", "installed_plugins.json"), encoding="utf-8") as f:
             data = json.load(f)
