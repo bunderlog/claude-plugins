@@ -98,7 +98,7 @@ as a skill would put every stack's description into every session, whatever the 
 
 So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `issue`,
 `prd`), are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`), or
-run the plugin's agent (`verify`, ADR verify); rules for how to do a kind of task are a
+run as a Workflow (`verify`, ADR verify); rules for how to do a kind of task are a
 Guideline, `debugging`, `ci` and `dependencies` among them: they keep no document, and one with no
 CI never gets `ci`'s line.
 

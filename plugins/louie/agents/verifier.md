@@ -32,7 +32,11 @@ only: the others are other verifiers'.
   finding.
 - **Guidelines**: your context lists the ones that fit the repo, each with the task that calls
   for it; read those whose task the change is. The project's CLAUDE.md and linters win where they
-  conflict. Without the list, skip them and say so.
+  conflict. Without the list, as when a Workflow runs you, take louie's folder from
+  `plugins/installed_plugins.json` under `$CLAUDE_CONFIG_DIR` or `~/.claude`: the `installPath` of
+  `louie@bunderlog` whose `projectPath` is the repo's root, else its user-scope one. Read the
+  `guidelines/` there whose subject the repo and the change are, and name the folder you used. No
+  such folder: skip them and say so.
 - **Acceptance criteria**: of the Issue or PRD your prompt names; otherwise of the one in
   `.about/issues/`, `.about/prd/` or the tracker the project's CLAUDE.md or AGENTS.md names that
   the branch's name, its commit messages or the changed files point to. None found: say so, and

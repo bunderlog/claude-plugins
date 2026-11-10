@@ -9,7 +9,8 @@ export const meta = {
 // { target }; nothing for the current branch and the working tree.
 //
 // One verifier for each source of what was agreed (PRD delivery), so each reads its source whole
-// rather than a quarter of four; the script, not a model, joins their findings and decides.
+// rather than a quarter of four; the script, not a model, joins their findings and decides. The
+// agent's name repeats names.VERIFIER, as a script can't import it.
 
 const target = typeof args === 'string' ? args : (args && args.target) || ''
 
@@ -43,10 +44,11 @@ const SCHEMA = {
         type: 'object',
         properties: {
           criterion: { type: 'string', description: 'the criterion, quoted in a line' },
+          at: { type: 'string', description: 'file:line of the code or test that meets it, or of the criterion where nothing does' },
           verdict: { type: 'string', enum: ['met-tested', 'met-untested', 'not-met', 'not-checked'] },
           why: { type: 'string', description: 'the test that checks it, or what is missing, one sentence' },
         },
-        required: ['criterion', 'verdict', 'why'],
+        required: ['criterion', 'at', 'verdict', 'why'],
       },
     },
     not_checked: {
@@ -93,10 +95,10 @@ const verdict = fails ? 'fail' : 'pass'
 
 lines.push('', `Verdict: ${verdict}`, '', 'Departures:')
 if (!departures.length) lines.push('- none')
-departures.forEach((d) => lines.push(`- ${d.at} — ${d.what} — ${d.from}${d.blocks ? ' (blocks)' : ''}`))
+departures.forEach((d) => lines.push(`- [${d.source}] ${d.at} — ${d.what} — ${d.from}${d.blocks ? ' (blocks)' : ''}`))
 lines.push('', 'Acceptance criteria:')
 if (!criteria.length) lines.push('- none found for this change')
-criteria.forEach((c) => lines.push(`- ${c.verdict}: ${c.criterion} — ${c.why}`))
+criteria.forEach((c) => lines.push(`- ${c.verdict}: ${c.criterion} — ${c.at} — ${c.why}`))
 if (notChecked.length) {
   lines.push('', 'Not checked:')
   notChecked.forEach((n) => lines.push(`- ${n}`))

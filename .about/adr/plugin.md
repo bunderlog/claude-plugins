@@ -22,7 +22,10 @@ marketplace (ADR releases).
 
 Every name the code, a plugin's and the release tool's, uses for a plugin (its name, folders and
 file names) is a constant in one module of that plugin, so a rename is one edit in its code, plus
-the manifests and the docs.
+the manifests and the docs; a Workflow script repeats the names it needs, as it can't import.
+
+A plugin's code is Python, standard library only, but its Workflows are JavaScript, the language
+Claude Code runs them in; `node` is needed only by this repo's tests (PRD delivery).
 
 New work that leans on what a plugin already has is part of that plugin, not a plugin of its own:
 fixing a failed CI run is louie's `ci` Guideline (ADR guidelines), which follows `debugging` and

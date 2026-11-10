@@ -39,7 +39,7 @@ _Avoid_: hathi as a plugin
 
 **Workflow**:
 A Claude Code dynamic workflow: a script a plugin ships that runs many agents, such as
-`/louie:deliver`; a project turns them on in its `.claude/settings.json`.
+`/louie:verify`; a project turns them on in its `.claude/settings.json`.
 _Avoid_: pipeline
 
 **Set up**:

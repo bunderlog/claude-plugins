@@ -13,21 +13,21 @@ The `verify` Workflow runs four of it at once, one per source: the ADRs, the glo
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
 schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
 departure that blocks or a criterion not met (PRD delivery). So the user has `/louie:verify`, and
-`deliver` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
-Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
-context. A Verification runs only when the user asks or agrees, or as a stage of a `deliver` run
-they started, as it is a whole run's tokens. Claude offers one, in a line and
-once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit
-or PR: there it has criteria to check against, and few tasks have one. The Workflow's description
-says so, and a line in `principles`' On every task, which session start prints in every session
-(ADR guidelines): on 2026-11-02 the description alone made Claude offer it in 3 of 3 runs on
-Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without the plugin in none
-(`evals/verify/offer`). By default it looks at the current branch's
-commits since the default branch, plus the working tree; a commit range, a branch or a PR given
-overrides that. It checks the criteria of the Issue or PRD it is given, or else of the one the
-branch's name, its commits or its files point to, and says so when it finds none rather than
-guessing. Checking a built feature's whole PRD, every criterion's test link, stays the `prd` skill's
-(ADR prd): a Verification looks at the criteria one change serves.
+`deliver` is to run the same Workflow as a stage. Where the session has no Workflow tool, as on Pro
+until Workflows are turned on, Claude runs the agent by its name instead, checking every source in
+one context. A Verification runs only when the user asks or agrees, as it is a whole run's tokens.
+Claude offers one, in a line and once, at the end of a task that serves an Issue or a PRD with
+acceptance criteria, before its commit or PR: there it has criteria to check against, and few tasks
+have one. The Workflow's description says so, and a line in `principles`' On every task, which
+session start prints in every session (ADR guidelines): on 2026-11-02 the description alone made
+Claude offer it in 3 of 3 runs on Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without
+the plugin in none (`evals/verify/offer`, run against the skill's description, which the Workflow's
+`whenToUse` now carries). By default it looks at the current branch's commits since the default
+branch, plus the working tree; a commit range, a branch or a PR given overrides that. It checks the
+criteria of the Issue or PRD it is given, or else of the one the branch's name, its commits or its
+files point to, and says so when it finds none rather than guessing. Checking a built feature's
+whole PRD, every criterion's test link, stays the `prd` skill's (ADR prd): a Verification looks at
+the criteria one change serves.
 
 Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that it writes nothing
 holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its
@@ -37,11 +37,12 @@ can't check by reading, whether the change works when run, it names for `/verify
 user's model, as the Session review does (ADR session-review). Nothing turns it off but louie
 itself: a plugin's agent and Workflow can't be hidden from one project anyway.
 
-Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for the
-agent alone (`^louie:verifier$`), a Workflow's agents too where Claude Code starts them as
-subagents: the plugin's `subagent-start` gives it the same Guidelines index session start prints.
-Where `python3` is missing or the plugin fails, the agent starts without it and says it couldn't
-check the Guidelines.
+Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
+the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
+index session start prints. A Workflow's agents start with no `SubagentStart` (seen 2026-11-10), so
+there the verifier takes louie's folder from Claude Code's `plugins/installed_plugins.json` and
+reads the Guidelines that fit itself. Where `python3` is missing or the plugin fails, the agent
+starts without the index and does the same.
 
 ## Considered options
 
@@ -50,8 +51,9 @@ check the Guidelines.
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
   steer it; testing is the project's checks' and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
-- A pipeline from Issue to tested change — each repo's flow is its own, as for `ship`
-  (ADR issues).
+- A pipeline from Issue to tested change (until 2026-11-10) — each repo's flow is its own, as for
+  `ship` (ADR issues); PRD delivery's `deliver` takes it from what the project names, its checks
+  command, commit format and tracker.
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
 - Run only when the user asks, never offered (until 2026-11-02) — in about 200 sessions in five
@@ -64,15 +66,15 @@ check the Guidelines.
   by name.
 - The `verify` skill running the one agent with `context: fork` (until 2026-11-10) — one context
   read every source, the agent judged its own verdict, and `deliver` would have needed its own
-  copy of the Review.
+  copy of the Verification.
 - Only a skill forked onto `general-purpose` — no agent file, but its tools can't be limited.
 - The diff put into the prompt by the skill, with no Bash — truly unable to write, but a large
   diff fills the prompt, and a PR or a run by the agent's name has none.
 - Writing its findings to the Inbox itself — it would need Edit, and what the session fixes a
   minute later would still land there.
-- The agent finding the Guidelines itself, or the caller passing them — the first guesses
-  the plugin's folder and copies the index's rules into a prompt; the second is forgotten, and a
-  run by the agent's name has none.
+- The agent finding the Guidelines itself always, or the caller passing them — the first copies
+  the index's rules into a prompt, so it is only the fallback where the Hook doesn't run; the second
+  is forgotten, and a run by the agent's name has none.
 - `review` for the name — the word is a Session review's, a Retro's and a code review's already
   (ADR inbox).
 
