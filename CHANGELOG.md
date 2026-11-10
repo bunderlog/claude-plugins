@@ -2,6 +2,18 @@
 
 The marketplace's Releases, newest first.
 
+## 0.51.1 — 2026-11-10
+
+### louie
+
+#### Fixes
+
+- louie: have the go-vue template's test helper take t and mark itself a helper (f49d35e)
+- louie: answer an unknown path or method of the go-vue template's API with respond's JSON (fc98a4e)
+- louie: open the go-vue template's database from sqlc's internal/db, not a second package (ec889da)
+- louie: stop the go-vue template's CLAUDE.md restating setup and asking for check before a push (cfe4c7a)
+- louie: open each of the go-vue template's .vue files with a comment saying what it is (f8b9a01)
+
 ## 0.51.0 — 2026-11-10
 
 ### louie
