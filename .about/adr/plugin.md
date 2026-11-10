@@ -10,8 +10,11 @@ louie, PRD delivery); and `bagheera`, the person's sessions and repos — Checks
 Claude Code's deny rules, the Status line and `doctor`, the Session review and Retro, the
 `short-replies` Output style, and setting a project up. A part goes where who turns it on and what
 it is made of put it: a project turns baloo and louie on for everyone in it, and each person turns
-bagheera on once, for every session, the home folder included, so setting a project up is
-bagheera's, since baloo and louie are off until it is done.
+bagheera on where they want it: once at user scope, for every session, the home folder included,
+or at local scope, `.claude/settings.local.json`, in each clone they want it in, since not every
+project needs it. Setting a project up is bagheera's, since baloo and louie are off until it is
+done. A team that wants bagheera for everyone in a project commits it at project scope; that is
+the team's choice, not one person's preference reaching the others.
 
 No plugin has a Config of its own: Claude Code's `enabledPlugins` is the switch, and a plugin that
 is on is on whole. The plugins share no code and call none of each other's; they work together
@@ -39,6 +42,9 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
   for each part, about 2,500 of its 7,100 lines of Python, only to turn on and off what
   `enabledPlugins` turns on and off; and the parts a project turns on for everyone and the parts
   a person turns on for every session came in one install.
+- bagheera only at user scope, installed once for every session (until 2026-11-10) — a person
+  who wanted it in some projects only had no way the docs named; on a clean machine the user put
+  it in a project's settings instead, and it all worked there.
 - A plugin per role on top of baloo, which would keep only the project's knowledge: `bagheera`
   for developers, `kaa` for testers, `hathi` guarding with the Checks and Git hooks, `mowgli` for
   the person's own setup, `akela` for product managers (agreed in an interview 2026-10-05, never
@@ -65,8 +71,12 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 
 ## Consequences
 
-- A person installs bagheera once; baloo and louie reach a teammate from the project's committed
-  settings once the folder is trusted, which a clean machine has yet to confirm.
+- A person installs bagheera once, or once per clone at local scope; baloo and louie reach a
+  teammate from the project's committed settings once the folder is trusted, as a clean machine
+  confirmed on 2026-11-10.
+- bagheera's code can't assume it is on in every session: a project without it has no Checks in
+  Hooks, no Session review and no session start of bagheera's, and a Status line set in
+  `~/.claude/settings.json` still runs there.
 - bagheera's Checks are off only with bagheera or its Hooks.
 - The release tool has to release several plugins under one version before the first split, and
   whether a change needs a Release depends on `plugins/` as a whole (ADR releases).
@@ -75,5 +85,4 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 - A plugin's entry script is in `scripts/`, not `bin/`: claude.ai and Cowork don't install a plugin
   with a top-level `bin/`, and nothing needs it on the Bash tool's `PATH`, since a skill can name
   its path under `${CLAUDE_PLUGIN_ROOT}/scripts/`.
-- Revisit when a part is wanted on in a way its plugin isn't (a team wanting bagheera's Checks for
-  everyone in a project), or when the copied helpers outgrow a few hundred lines.
+- Revisit when a part is wanted on in a way its plugin isn't, or when the copied helpers outgrow a few hundred lines.

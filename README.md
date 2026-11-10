@@ -3,7 +3,7 @@
 The `bunderlog` marketplace of Claude Code plugins, released together under one version: `baloo`,
 the project's method, and `louie`, its working rules for building, which a project turns on for
 everyone in it, and `bagheera`, each person's session machinery, which each person installs once
-(ADR plugin). Each is described in its `plugin.json`.
+for every session, or with `--scope local` in each project they want it in (ADR plugin). Each is described in its `plugin.json`.
 
 It is for developers who work with Claude Code across several projects and want the same
 discipline in each: decisions, terms and requirements recorded in the project's `.about/`, Secrets

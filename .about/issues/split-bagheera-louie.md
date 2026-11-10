@@ -49,8 +49,8 @@ with python3 from the Command Line Tools.
 ### 2026-11-10 · clean machine
 
 Tried on the clean machine by the user: baloo and louie came on from the set-up project's settings
-once the folder was trusted, so PRD harness's second install criterion holds. The user chose not
-to install bagheera at user scope and added it to the project's settings by hand, where it all worked, so the first
-criterion, the two commands as the whole install for any folder, is still unchecked; the Status
-line was set by hand, as ADR status-line has it (Inbox, "A clean machine: bagheera by the project,
-and the Status line by hand").
+once the folder was trusted, so PRD harness's second install criterion holds. The user chose not to
+install bagheera at user scope and added it to the project's settings by hand, where it all worked,
+so the first criterion, the two commands as the whole install for any folder, is still unchecked;
+the Status line was set by hand, as ADR status-line has it (Inbox, "The Status line set by hand on a
+clean machine"); bagheera at local scope is supported from then on (ADR plugin).
