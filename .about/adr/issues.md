@@ -20,11 +20,11 @@ a bug left for later to the Inbox, and the `inbox` skill's "file an issue" moves
 there. Session start doesn't count Issues: the count is for what waits on the user. The skill
 writes one Issue a request and none from a PRD's criteria, which stay in one place (ADR prd).
 
-louie's `deliver` Workflow takes an Issue from there to a pull request (PRD delivery): it reads the
-Issue, branches, commits, pushes and opens the pull request, each repo's flow coming from what the
-project names, its checks command, commit format, tracker and code host, rather than from the
-plugin. It never merges and never closes a tracker's Issue; an Issue in `.about/issues/` goes with
-the change that delivers it, as above.
+louie's `deliver` Workflow takes an Issue from there to a pull request (PRD delivery), or up to
+five, all planned before any is built (PRD batch): it reads the Issue, branches, commits, pushes and
+opens the pull request, each repo's flow coming from what the project names, its checks command,
+commit format, tracker and code host, rather than from the plugin. It never merges and never closes
+a tracker's Issue; an Issue in `.about/issues/` goes with the change that delivers it, as above.
 
 ## Considered options
 

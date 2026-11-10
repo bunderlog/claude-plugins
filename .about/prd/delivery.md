@@ -13,7 +13,7 @@ use it and it has already drifted from the rest (PRD harness).
 - A developer in a project with louie on and Workflows turned on, who has an Issue with acceptance
   criteria and wants a pull request without steering each step.
 - Not for: work with no agreed criteria (an exploration, a design still open), which goes to the
-  `interview` or `prd` skill first; or a batch of Issues at once.
+  `interview` or `prd` skill first.
 
 ## Success signal
 
@@ -85,7 +85,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 
 ## Non-goals
 
-- `batch`, `deliver` for many Issues at once: a PRD of its own, once `deliver` has run.
+- Several Issues in one run: PRD batch.
 - Running the app to test the change: the project's own test or Claude Code's `/verify`; the pull
   request says the app was not run.
 - Fixing a red CI run after the pull request: a session with the `ci` Guideline, or Claude Code's

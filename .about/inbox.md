@@ -209,7 +209,9 @@ what `mise run check` runs, and Issue louie-new-api on whether the server opens 
 comment, and the user said to stop only when it is truly unclear. Settled by deciding whether
 `deliver` takes a plan already made (its report, with the decisions written into the Issue), or
 whether the planner treats a choice with a recommended option that no criterion or ADR rules out
-as an assumption rather than a decision.
+as an assumption rather than a decision. `deliver` on several Issues plans them all before
+building any and lists every decision in one report (PRD batch), which leaves only `/louie:plan`'s
+own plan going unused.
 
 ## What a fresh `go-vue` repo still departs from louie's Guidelines in
 
