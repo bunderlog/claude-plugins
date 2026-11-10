@@ -53,3 +53,16 @@ its one query is `ListNotes`: it shows the whole pattern, a table, a query and t
 makes, without presuming a domain decision, and the template's ADR stack says to replace it with
 the product's first real migration before its first deploy. A table most products keep, such as
 `accounts`, would presume email sign-in; no table at all would show no schema to copy.
+
+### 2026-11-10 · decision
+
+In this Issue the server serves routes only and opens no database: `migrations/` and `queries/`
+feed sqlc and the pinned goose CLI, and the pgx pool from `DATABASE_URL` and where the migrations
+run (at start through an embedded `migrations.go`, as chainofsale does, or as a Kamal step) come
+with the `mise run dev` Issue, where Postgres first runs. None of this Issue's criteria needs a
+running database, and `/api/up` answers whatever Postgres is doing.
+
+Settled with it, so the plan needn't ask again: Go is pinned to 1.26.10, chainofsale's line
+(ADR stack there, mature over newer); goose is the CLI `go:github.com/pressly/goose/v3/cmd/goose`,
+as checkmeup pins it; golangci-lint runs with its v2 defaults and no config; the owner follows
+GitHub's rule (letters, digits and single hyphens, not starting or ending with one).
