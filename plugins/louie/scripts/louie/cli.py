@@ -14,6 +14,7 @@ from louie import (
     guidelines,
     hook,
     names,
+    new,
     once,
     repo,
     session_start,
@@ -22,7 +23,7 @@ from louie import (
 
 USAGE = (
     "usage: louie version | session-start [UserPromptSubmit] | allow-guideline | subagent-start |\n"
-    "  post-tool-use | user-prompt-submit"
+    "  post-tool-use | user-prompt-submit | new <path> <name> <owner>"
 )
 
 
@@ -62,6 +63,8 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         }
         if command in hooks:
             return hooks[command](_read(stdin), stdout)
+    if len(args) == 4 and args[0] == "new":
+        return new.run(args[1], args[2], args[3], stdout, stderr)
     # The UserPromptSubmit Hook, in a session the plugin was updated in, runs the session start no
     # SessionStart Hook ran for this version (see user_prompt_submit).
     if args == ["session-start", "UserPromptSubmit"]:

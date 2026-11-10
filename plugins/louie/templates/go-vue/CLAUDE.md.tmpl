@@ -1,0 +1,19 @@
+# __NAME__
+
+`.about/` holds this project's decisions: read `.about/adr/` before proposing a change to how it is
+built, and don't reopen what an ADR already settled (ADR stack).
+
+The code is on GitHub, `__OWNER__/__NAME__`: pull requests go there, through `gh` (ADR stack).
+
+## Tools and checks
+
+mise pins every tool and runs every task: `mise run check` is what CI runs, so run it before a
+commit is pushed (ADR stack).
+
+## Commits and Git hooks
+
+Commit messages follow `.hathi.yml`, which the Git hooks check: @.hathi.yml (ADR stack)
+
+The Git hooks are in `.githooks/` and run `hathi`, which `mise.toml` pins. Turn them on once per
+clone with `mise run setup`, which installs the tools and runs `git config core.hooksPath
+.githooks` (ADR stack).

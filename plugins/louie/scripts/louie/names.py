@@ -13,3 +13,9 @@ PLUGIN_DIR = "plugins/" + PLUGIN
 # Claude Code's own settings files of a project, from its folder: the team's and one person's.
 PROJECT_SETTINGS = ".claude/settings.json"
 LOCAL_SETTINGS = ".claude/settings.local.json"
+# The plugin's folder of templates, the one template /louie:new writes, and the suffix of the
+# template's files that would act in this repo by their real name, which writing drops (PRD
+# templates).
+TEMPLATES = "templates"
+TEMPLATE = "go-vue"
+TEMPLATE_SUFFIX = ".tmpl"
