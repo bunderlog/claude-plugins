@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import time
 import unittest
@@ -82,6 +83,26 @@ class Fitting(unittest.TestCase):
                 root = temp(self)
                 write(root, files)
                 self.assertEqual(guidelines.fitting(root), want)
+
+    # The go-vue template's files, where this repo keeps them, call for no Guideline the repo
+    # doesn't already fit: its files that would act by their real name carry a suffix (PRD
+    # templates).
+    def test_template_calls_for_none(self):
+        here = os.path.join(os.path.dirname(guidelines.__file__), "..", "..")
+        template = os.path.realpath(os.path.join(here, "templates", "go-vue"))
+        empty = temp(self)
+        root = temp(self)
+        shutil.copytree(template, os.path.join(root, "plugins", "louie", "templates", "go-vue"))
+        self.assertEqual(guidelines.fitting(root), guidelines.fitting(empty))
+        acting = [
+            "CLAUDE.md", ".gitignore", ".claude/settings.json", "mise.toml", "go.mod",
+            "package.json", "pnpm-workspace.yaml",
+        ]
+        for folder, _, files in os.walk(template):
+            for name in files:
+                rel = os.path.relpath(os.path.join(folder, name), template)
+                self.assertNotIn(rel.replace(os.sep, "/"), acting)
+                self.assertNotIn(name, ["go.mod", "package.json", "pnpm-workspace.yaml"], rel)
 
 
 class Index(unittest.TestCase):
