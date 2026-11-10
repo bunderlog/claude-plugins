@@ -1,6 +1,6 @@
 # Changelog
 
-The baloo plugin's Releases, newest first.
+The marketplace's Releases, newest first.
 
 ## 0.39.0 — 2026-11-10
 

@@ -228,8 +228,8 @@ does everything, behind a Config of its own.
   how to add it, and changes nothing itself.
 - With every other plugin of the marketplace off, each plugin's skills load in a project set up
   for the plugins, and its Hooks let through a call that breaks none of its rules.
-- At each Release tag, every plugin's `plugin.json` and its entry in the marketplace carry the same
-  version.
+- At each Release tag, every plugin's `plugin.json` carries the same version, and the marketplace's
+  entries carry none.
 - A skill writes each fact only to its kind's place in the table: a term to `.about/glossary.md`, a
   decision about how to `.about/adr/`, a feature's why and what to `.about/prd/` or the named
   tracker, agreed work to the named tracker or `.about/issues/`, a question still open to

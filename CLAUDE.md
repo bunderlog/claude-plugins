@@ -11,11 +11,12 @@ an architecture change or a new domain term; don't reopen what it already settle
 
 `mise run check` runs what CI runs: the tests in `tests/` on Python 3.9, `ruff check` on the Python,
 and `shellcheck` on `plugins/baloo/scripts/hook`. `mise run release` cuts and pushes a Release, but
-only counts commits under `plugins/baloo/` (ADR releases); a commit outside it — the tests, this
-file, the README — just needs a plain push. Commit subjects become the CHANGELOG: split unrelated
-changes into a commit per type, and write each subject for users; the format is `.hathi.yml`'s,
-which the Git hooks check: @.hathi.yml. A `feat` commit under `plugins/baloo/` names the feature's
-PRD in `.about/prd/` in its body, `PRD <feature>`, and a `fix` the PRD, ADR or Issue it brings the
-code back to, so a Verification finds it; a feature without a PRD gets one first (PRD harness).
+only counts commits under a plugin's folder in `plugins/` (ADR releases); a commit outside it — the
+tests, this file, the README — just needs a plain push. Commit subjects become the CHANGELOG: split
+unrelated changes into a commit per type, and write each subject for users; the format is
+`.hathi.yml`'s, which the Git hooks check: @.hathi.yml. A `feat` commit under `plugins/` names the
+feature's PRD in `.about/prd/` in its body, `PRD <feature>`, and a `fix` the PRD, ADR or Issue it
+brings the code back to, so a Verification finds it; a feature without a PRD gets one first (PRD
+harness).
 
 See README.md for the settings, the doctor and development in full.
