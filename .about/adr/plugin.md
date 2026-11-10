@@ -5,7 +5,7 @@ Date: 2026-11-10
 This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
 project's method — the knowledge skills and one SessionStart Hook in `sh`, no Python; `louie`,
 building — the Guidelines, each given by its task's signal or named where it fits, the verifier
-and `verify`, and to come templates and the Workflows `plan`, `ticket`, `batch` and `upgrade-all`
+and `verify`, and to come templates and the Workflows `plan`, `deliver`, `batch` and `upgrade-all`
 (PRD louie); and
 `bagheera`, the person's sessions and repos — Checks in Hooks beyond Claude Code's deny rules, the
 Status line and `doctor`, the Session review and Retro, the `short-replies` Output style, and

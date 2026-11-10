@@ -190,8 +190,6 @@ does everything, behind a Config of its own.
 - Whether bagheera writes its Status line into `~/.claude/settings.json` where none is set, after
   the person's yes, or only says once how to set it, since a plugin can't set `statusLine` itself:
   the visibility PRD settles it.
-- How large the Workflows of a set-up project may be (`workflowSizeGuideline`, `small` by default
-  on Pro, fewer than 5 agents): the delivery PRD settles it.
 
 ## Anti-goals
 

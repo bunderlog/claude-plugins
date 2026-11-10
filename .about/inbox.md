@@ -35,7 +35,7 @@ steering split into product, tech and structure. Settled once a project keeps a 
 tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
 a skill finds it, and rewrite ADR about-folder. One project keeps its tasks and bugs in Jira, and
 from 0.26.2 the Session review leaves what is still to do on a ticket to the ticket (ADR
-session-review); decide once a skill has to write there, not only read. louie's `ticket` Workflow
+session-review); decide once a skill has to write there, not only read. louie's `deliver` Workflow
 will read an Issue from the project's tracker (PRD harness), so its PRD may be where this comes up
 first.
 
