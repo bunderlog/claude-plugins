@@ -56,6 +56,11 @@ jobs:
           test "$(git log -1 --format=%s)" = "chore: scaffold from louie go-vue $version"
           mise run check
           if grep -rE '__(NAME|OWNER|DATE)__' --exclude-dir=.git .; then exit 1; fi
+          grep -qx 'module github.com/bunderlog/demo' apps/api/go.mod
+          # check fails where internal/db isn't what sqlc generates, with no database.
+          echo '// drift' >> apps/api/internal/db/models.go
+          if mise run check; then echo "check passed with internal/db drifted" >&2; exit 1; fi
+          git checkout -- apps/api/internal/db/models.go
 
   # hathi's commit and repo Checks on what the push or pull request brings.
   hathi:
