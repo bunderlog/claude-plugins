@@ -96,6 +96,15 @@ jobs:
           curl -fsS --retry 30 --retry-delay 1 --retry-all-errors http://localhost:8081/api/up; echo
           curl -fsS http://localhost:8081/ | grep '<title>demo</title>'
           curl -fsS http://localhost:8081/notes/1 | grep '<title>demo</title>'
+          # An unknown path or a wrong method under /api/ gets respond's JSON, not the mux's text.
+          nope=$(curl -sS -i http://localhost:8081/api/nope | tr -d '\r')
+          grep -qx 'HTTP/1.1 404 Not Found' <<<"$nope" || { echo "$nope" >&2; exit 1; }
+          grep -qix 'content-type: application/json' <<<"$nope" || { echo "$nope" >&2; exit 1; }
+          grep -qF '"code":"not_found"' <<<"$nope" || { echo "$nope" >&2; exit 1; }
+          post=$(curl -sS -i -X POST http://localhost:8081/api/up | tr -d '\r')
+          grep -qx 'HTTP/1.1 405 Method Not Allowed' <<<"$post" || { echo "$post" >&2; exit 1; }
+          grep -qix 'allow: GET, HEAD' <<<"$post" || { echo "$post" >&2; exit 1; }
+          grep -qF '"code":"method_not_allowed"' <<<"$post" || { echo "$post" >&2; exit 1; }
       # mise run deploy runs the pinned Kamal image with .env's secrets, which git ignores.
       - shell: bash
         working-directory: ${{ runner.temp }}/demo
