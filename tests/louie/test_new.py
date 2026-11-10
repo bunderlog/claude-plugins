@@ -397,8 +397,8 @@ class New(unittest.TestCase):
         ])
 
     # The template's app follows the vue, typescript and tailwind Guidelines where a search can
-    # tell: each component with a script is `<script setup lang="ts">` first, each is styled with
-    # theme tokens only, and each TypeScript file opens with a comment.
+    # tell: each component opens with a comment, then `<script setup lang="ts">` where it has a
+    # script, each is styled with theme tokens only, and each TypeScript file opens with a comment.
     def test_template_app_follows_the_guidelines(self):
         app = os.path.join(TEMPLATE, "apps", "app")
         palette = re.compile(
@@ -411,8 +411,10 @@ class New(unittest.TestCase):
         self.assertTrue(vue and ts)
         for rel in vue:
             body = text(os.path.join(app, rel))
+            self.assertTrue(body.startswith("<!-- "), rel)
             if "<script" in body:
-                self.assertTrue(body.startswith('<script setup lang="ts">\n'), rel)
+                after = body.split("\n", 1)[1]
+                self.assertTrue(after.startswith('<script setup lang="ts">\n'), rel)
             self.assertNotIn("[#", body, rel)
             self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b", body), rel)
             self.assertIsNone(palette.search(body), rel)
