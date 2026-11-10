@@ -1,6 +1,6 @@
 {
   "name": "baloo",
-  "version": "0.51.1",
+  "version": "0.52.0",
   "description": "The project's method for Claude Code: skills that keep a project's language, decisions, requirements and open questions explicit in .about/, and write its Issues.",
   "author": {
     "name": "Andrew Molyuk",

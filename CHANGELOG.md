@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.52.0 — 2026-11-10
+
+### baloo
+
+#### Features
+
+- baloo: name every ADR, PRD, Issue and term of the project at session start (2542bc0)
+
 ## 0.51.1 — 2026-11-10
 
 ### louie
