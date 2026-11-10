@@ -67,7 +67,8 @@ item needed an edit by hand.
   project-setup).
 - Setting up a repo that isn't the session's own, or several at once.
 - Choosing a Secrets tool for a project without `hathi`.
-- Removing the Checks that `permissions.deny` now covers: a PRD of its own.
+- Removing the Checks that `permissions.deny` now covers: deny rules are a second layer under
+  them, and each Check stays whole (ADR checks).
 - Choosing a project's other hooks, linters or tests.
 - Renaming the ADR a set-up project already keeps under another name: `doctor` names it missing,
   and the person renames it.
