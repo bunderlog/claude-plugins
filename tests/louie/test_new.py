@@ -116,7 +116,8 @@ class New(unittest.TestCase):
         self.assertIn("`acme/my-app2`", claude)
         self.assertIn(": @.hathi.yml", claude)
         self.assertIn("`mise run setup`", claude)
-        self.assertIn("git config core.hooksPath\n.githooks", claude)
+        self.assertNotIn("core.hooksPath", claude)
+        self.assertNotIn("before a commit is pushed", claude)
         stack = text(os.path.join(dest, ".about", "adr", "stack.md"))
         self.assertIn(f"\nDate: {today}\n", stack)
         for part in ("## Considered options", "## Consequences", "hathi", "Secrets", "shellcheck",
