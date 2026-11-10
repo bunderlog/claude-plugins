@@ -11,6 +11,7 @@
       }
     }
   },
+  "enableWorkflows": true,
   "enabledPlugins": {
     "baloo@bunderlog": true,
     "louie@bunderlog": true
