@@ -34,6 +34,8 @@ _SECRET_KINDS = [
 _ENV_FILE = re.compile(r"(^|/)(\.env(\.[^/]*)?|\.envrc|[^/]*\.env)\Z")
 # An Env file's template, meant to be committed.
 _TEMPLATE = re.compile(r"\.(example|sample|template|dist)\Z")
+
+
 def mask_secrets(text: str, mask: str) -> str:
     """`text` with each Secret of a kind it knows replaced by `mask`."""
     for _, pattern in _SECRET_KINDS:
