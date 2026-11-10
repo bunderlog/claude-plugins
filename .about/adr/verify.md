@@ -13,21 +13,21 @@ The `verify` Workflow runs four of it at once, one per source: the ADRs, the glo
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
 schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
 departure that blocks or a criterion not met (PRD delivery). So the user has `/louie:verify`, and
-`deliver` is to run the same Workflow as a stage. Where the session has no Workflow tool, as on Pro
-until Workflows are turned on, Claude runs the agent by its name instead, checking every source in
-one context. A Verification runs only when the user asks or agrees, as it is a whole run's tokens.
-Claude offers one, in a line and once, at the end of a task that serves an Issue or a PRD with
-acceptance criteria, before its commit or PR: there it has criteria to check against, and few tasks
-have one. The Workflow's description says so, and a line in `principles`' On every task, which
-session start prints in every session (ADR guidelines): on 2026-11-02 the description alone made
-Claude offer it in 3 of 3 runs on Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without
-the plugin in none (`evals/verify/offer`, run against the skill's description, which the Workflow's
-`whenToUse` now carries). By default it looks at the current branch's commits since the default
-branch, plus the working tree; a commit range, a branch or a PR given overrides that. It checks the
-criteria of the Issue or PRD it is given, or else of the one the branch's name, its commits or its
-files point to, and says so when it finds none rather than guessing. Checking a built feature's
-whole PRD, every criterion's test link, stays the `prd` skill's (ADR prd): a Verification looks at
-the criteria one change serves.
+`deliver` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
+Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
+context. A Verification runs only when the user asks or agrees, or as a stage of a `deliver` run
+they started, as it is a whole run's tokens. Claude offers one, in a line and once, at the end of a
+task that serves an Issue or a PRD with acceptance criteria, before its commit or PR: there it has
+criteria to check against, and few tasks have one. The Workflow's description says so, and a line in
+`principles`' On every task, which session start prints in every session (ADR guidelines): on
+2026-11-02 the description alone made Claude offer it in 3 of 3 runs on Opus but 0 of 3 on Sonnet,
+the line in 3 of 3 on both, and without the plugin in none (`evals/verify/offer`, run against the
+skill's description, which the Workflow's `whenToUse` now carries). By default it looks at the
+current branch's commits since the default branch, plus the working tree; a commit range, a branch
+or a PR given overrides that. It checks the criteria of the Issue or PRD it is given, or else of the
+one the branch's name, its commits or its files point to, and says so when it finds none rather than
+guessing. Checking a built feature's whole PRD, every criterion's test link, stays the `prd` skill's
+(ADR prd): a Verification looks at the criteria one change serves.
 
 Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that it writes nothing
 holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its

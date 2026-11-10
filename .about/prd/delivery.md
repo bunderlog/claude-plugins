@@ -45,7 +45,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
   only the person can make, and "nothing to build" with the commit that already meets the criteria.
   It changes nothing. The person settles the open decisions, and the session writes them into the
   Issue or an ADR, committed and pushed before `deliver`.
-- `/louie:deliver <Issue>`, one agent per stage unless said:
+- `/louie:deliver <Issue>`, one agent per stage unless said, stages 1 and 2 one agent:
   1. stops `blocked:` before changing anything when the repo has no remote, the tracker's client
      is missing, or the local default branch or `.about/` holds what the remote's lacks;
   2. fetches and adds a worktree under `.claude/worktrees/<slug>` on a new branch from the
@@ -67,10 +67,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
      its verdict and the Verification's report; a draft when a criterion is met with no test or
      couldn't be checked, or a departure doesn't block.
   It returns how the run ended: `done:pr-opened`, `done:draft-pr`, `done:nothing-to-build`,
-  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 24 agents (1 + 1 + 1 + 1 +
-  4 + 3 × 5 + 1), so Claude Code's `Large workflow` warning, past 25,
-  never shows, and a project sets no `workflowSizeGuideline`, which only advises Claude on a script
-  it writes itself.
+  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 23 agents (1 + 1 + 1 + 4 +
+  3 × 5 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
+  no `workflowSizeGuideline`, which only advises Claude on a script it writes itself.
 - A permission prompt in a stage pauses the run until the person answers, as for any Workflow; the
   README names the commands to allow for a run with none.
 - Setting a project up turns Workflows on, `enableWorkflows: true` in its `.claude/settings.json`
@@ -106,11 +105,13 @@ such pull request carries the Verification's verdict on each acceptance criterio
 
 - Each Workflow's `meta` is a plain literal with `name`, `description` and the `phases` its
   `phase()` calls use, and no script calls `Date.now()`, `Math.random()` or `import()`.
+  → test: tests/louie/test_workflows.py "test_meta_and_body"
 - In a project with louie and Workflows on, `/louie:plan`, `/louie:deliver` and `/louie:verify`
   are offered as commands; with louie off, none is. Checked by hand at each of their Releases.
 - `/louie:verify` on a branch that breaks an ADR's rule and leaves one PRD criterion unmet reports
   both, each with `file:line` and its source, and `git status` and the branches are the same before
-  and after.
+  and after. The report: → test: tests/workflows/verify.test.mjs "verify fails on an ADR departure
+  and an unmet criterion"; the run, checked by hand at its Release.
 - `/louie:plan` on an Issue whose criteria a commit on the default branch already meets returns
   "nothing to build" naming that commit, and leaves the repo's branches and files as they were.
 - `/louie:deliver` on an Issue with acceptance criteria, in a repo with a remote, ends
@@ -121,12 +122,17 @@ such pull request carries the Verification's verdict on each acceptance criterio
   `<slug>` as it was.
 - With its agents stubbed, `deliver` ends `failed:rework-budget` when every Verification fails on
   new criteria, after three reworks, and `failed:not-converging` when two in a row fail on the same
-  ones, and opens no pull request in either; it schedules at most 24 agents in any case.
+  ones, and opens no pull request in either; it schedules at most 23 agents in any case.
+  → test: tests/workflows/deliver.test.mjs "deliver ends failed:rework-budget after three reworks,
+  with at most 23 agents", "deliver ends failed:not-converging when two rounds fail on the same"
 - With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
   pull request as a draft, the criterion's verdict in its body.
+  → test: tests/workflows/deliver.test.mjs "deliver opens a draft when a criterion is met with no
+  test"
 - In a repo with no remote, with the tracker's client missing, or with a local commit on the default
   branch the remote lacks, `deliver` ends `blocked:` with the reason and no branch, worktree or
-  commit made.
+  commit made. The script's part: → test: tests/workflows/deliver.test.mjs "deliver stops before
+  changing anything when prepare stops, or the plan isn't ready"; the prepare stage's, by hand.
 - In a session with no Workflow tool, Claude offers the `louie:verifier` agent by name at the end
   of a task that serves an Issue or a PRD, instead of `/louie:verify` (ADR verify's offer).
 

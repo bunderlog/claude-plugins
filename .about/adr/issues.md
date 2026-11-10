@@ -1,6 +1,6 @@
 # Issues are written by a skill of their own, to the project's tracker or `.about/issues/`
 
-Date: 2026-10-01
+Date: 2026-11-10
 
 Users asked for tickets by hand: about 17 requests in 8 sessions of one project, each time over
 several messages. The `issue` skill writes one Issue per request, a bug to fix or a task to do,
@@ -20,11 +20,18 @@ a bug left for later to the Inbox, and the `inbox` skill's "file an issue" moves
 there. Session start doesn't count Issues: the count is for what waits on the user. The skill
 writes one Issue a request and none from a PRD's criteria, which stay in one place (ADR prd).
 
+louie's `deliver` Workflow takes an Issue from there to a pull request (PRD delivery): it reads the
+Issue, branches, commits, pushes and opens the pull request, each repo's flow coming from what the
+project names, its checks command, commit format, tracker and code host, rather than from the
+plugin. It never merges and never closes a tracker's Issue; an Issue in `.about/issues/` goes with
+the change that delivers it, as above.
+
 ## Considered options
 
 - A `ship` skill beside it (branch, commit, push, `merge --ff-only`, delete the branch) — asked
   for in every session of one project, but the flow is each repo's own, and a Retro already
-  recommends a project skill for a prompt typed again and again.
+  recommends a project skill for a prompt typed again and again. `deliver` stops at the pull
+  request, and takes the flow from what the project names.
 - `ticket` for the name — the `inbox` skill's word until now, and "issue" names a Stall's
   _Avoid_; but "issue" is what GitHub and Jira call it, and what users asked for.
 - Only the ticket's text in the chat, filed by the user — no duplicate search, and no check that

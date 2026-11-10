@@ -28,8 +28,8 @@ _Avoid_: "baloo" for these parts
 
 **louie**:
 The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
-where it fits, and the Verification; to come, templates for a new product and the Workflows from
-an Issue to a pull request (PRD louie).
+where it fits, the Verification, and the Workflows from an Issue to a pull request; to come,
+templates for a new product (PRD louie, PRD delivery, PRD templates).
 _Avoid_: "baloo" for these parts
 
 **`hathi`**:
@@ -173,11 +173,12 @@ _Avoid_: ticket, todo
 _In code_: the `issue` skill writes one
 
 **Verification**:
-A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
-Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. louie's agent, the
-verifier, makes it in a context of its own, so not as the change's author, one for each source when
-the `verify` Workflow runs it, and changes nothing. Unlike a code review, it doesn't hunt bugs;
-unlike Claude Code's `/verify`, it doesn't run the change; unlike a Check, it isn't a plugin's code.
+A comparison, which the user asks for or a `deliver` run makes, of a change with what the project
+agreed: its ADRs, glossary, the Guidelines that fit the repo, and the acceptance criteria of its
+Issue or PRD. louie's agent, the verifier, makes it in a context of its own, so not as the change's
+author, one for each source when the `verify` Workflow runs it, and changes nothing. Unlike a code
+review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't run the change; unlike a
+Check, it isn't a plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 

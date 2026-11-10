@@ -5,13 +5,15 @@ export const meta = {
   phases: [{ title: 'Plan' }],
 }
 
-// args: the Issue, as text (a tracker's key or URL, or a file in .about/issues/), or { issue }.
+// args: the Issue, as text (a tracker's key or URL, or a file in .about/issues/), or { issue, dir },
+// dir the worktree to plan in when /louie:deliver runs it.
 //
 // The planner reads and plans; the script decides how the run ends, from the plan's fields, never
 // from its prose (PRD delivery). The agent's name repeats louie's names.PLUGIN, as a script can't
 // import it.
 
 const issue = typeof args === 'string' ? args : (args && args.issue) || ''
+const dir = (args && args.dir) || ''
 
 const SCHEMA = {
   type: 'object',
@@ -73,7 +75,9 @@ if (!issue) return { verdict: 'blocked:no-issue', reason: 'no Issue named', repo
 
 phase('Plan')
 const plan = await agent(
-  `Issue: ${issue}\nPlan it, as your instructions say.`,
+  `Issue: ${issue}\n` +
+    (dir ? `Plan it in the worktree ${dir}: run every command there, and read the code under it.\n` : '') +
+    'Plan it, as your instructions say.',
   { agentType: 'louie:planner', schema: SCHEMA, label: 'plan' },
 )
 if (!plan) return { verdict: 'blocked:tooling', reason: 'the planner returned nothing', report: '' }
