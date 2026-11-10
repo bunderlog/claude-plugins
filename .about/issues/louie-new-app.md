@@ -59,3 +59,14 @@ Settled before planning, so the plan needn't ask:
   come with `mise run dev`.
 - The theme is Tailwind 4's `@theme` in the app's CSS, with dark mode through its tokens, and no
   `tailwind.config.js`.
+
+### 2026-11-10 · decision
+
+eslint leaves layout to prettier through `eslint-config-prettier`, pinned exactly and last in
+`eslint.config.js`: the standard, maintained way, keeping `flat/recommended`'s rules that aren't
+about layout. `flat/essential` would drop those too, and turning rules off one by one is a list
+to keep by hand.
+
+Any other tool detail with a standard, maintained answer (how pnpm 11 approves build scripts, how
+eslint lints `.vue` files with types, a root `package.json` if the workspace needs one) is the
+plan's to take, recorded as an assumption, not a decision for the person.
