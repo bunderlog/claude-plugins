@@ -46,6 +46,13 @@ class NoSecretsInContext(unittest.TestCase):
             "cat ~/.aws/credentials": "~/.aws/credentials holds secrets",
             "cat $HOME/.netrc": "$HOME/.netrc holds secrets",
             "bash -c 'cat .env'": ".env is an env file",
+            'echo "`cat .env`"': ".env is an env file",
+            "cat .e*": ".env is an env file",
+            "rev .env": ".env is an env file",
+            "python3 -c 'print(open(\".env\").read())'": ".env is an env file",
+            "node -e 'console.log(require(\"fs\").readFileSync(\".env\", \"utf8\"))'": (
+                ".env is an env file"
+            ),
             "env": env,
             "env -0": env,
             "env | grep TOKEN": env,
@@ -117,6 +124,9 @@ class NoSecretsInContext(unittest.TestCase):
             """jq -r --arg p "$p" 'select(.key|startswith($p+"-")) | .key' usage.jsonl""",
             "cat .env.example",
             "cat public.env",
+            "cat p*",
+            "cat *",
+            "python3 -c 'print(open(\"README.md\").read())'",
             "cp .env .env.bak",
             "rm .env",
             "cat ~/.ssh/id_ed25519.pub",
