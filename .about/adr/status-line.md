@@ -26,8 +26,11 @@ their own `~/.claude/settings.json`, as `python3 -E -s '<plugin data>/baloo/scri
 status-line # managed by baloo`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session
 start points at the running version's plugin folder (ADR binary), so the command stays the same
 from one version to the next. Where no settings file Claude Code reads sets `statusLine`, the
-first session start in a clone tells Claude, to tell the person, that line, once per clone; a
-headless session is told nothing.
+first session start in a clone has Claude offer the person, once per clone, to add that line, and
+Claude adds it only on their yes: to `~/.claude/settings.json` where bagheera is on there, else to
+the clone's `.claude/settings.local.json`, where bagheera is on for that clone only (ADR plugin);
+never to the committed `.claude/settings.json`, which would choose for the team. A headless
+session is told nothing.
 
 ## Considered options
 
@@ -41,7 +44,10 @@ headless session is told nothing.
   entries mix two types, which a schema and an editor handle worse.
 - Writing the bars into the command's arguments at session start — an edit shows only in the
   next session.
-- Writing the file that enables the plugin, as the Output style does — a team's committed
+- Only telling the person the line to add (until 2026-11-10) — on a clean machine the user set
+  the line and the Output style by hand, and asked for them to be added; with their yes, the
+  line is still theirs.
+- Writing the file that enables the plugin, as the Output style once did — a team's committed
   `.claude/settings.json` would get a path from one person's machine.
 - `run.py`'s path in the installed plugin, rewritten at each session start — the path changes
   with every version, so each update rewrites the settings file, and the line breaks in the
@@ -56,11 +62,10 @@ headless session is told nothing.
 
 ## Consequences
 
-- A person who never sets the line sees none; they are told once per clone.
+- A person who says no sees no line; they are asked once per clone.
 - A `statusLine` an earlier Release wrote into a clone's `.claude/settings.local.json` overrides
   the person's own until they remove it; `doctor` names it.
 - The line runs the plugin without its Hook's `sh`: before the first session start, after the
   plugin's data folder is removed, or where `python3` is missing or older than 3.9, Claude Code
   shows no line.
-- Revisit when Claude Code lets a plugin set a status line of its own, or bagheera's visibility
-  PRD decides it writes the line with the person's yes.
+- Revisit when Claude Code lets a plugin set a status line of its own.

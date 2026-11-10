@@ -187,9 +187,6 @@ does everything, behind a Config of its own.
   next touched.
 - Seeing one machine's projects from another, and bringing a person's `~/.claude/` to another
   machine: theirs.
-- Whether bagheera writes its Status line into `~/.claude/settings.json` where none is set, after
-  the person's yes, or only says once how to set it, since a plugin can't set `statusLine` itself:
-  the visibility PRD settles it.
 
 ## Anti-goals
 

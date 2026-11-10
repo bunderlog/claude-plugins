@@ -228,12 +228,3 @@ departure that blocked, fixed in 0.49.1, and these that don't:
   test helper `get` takes no `t` (`go` §4); `main.go` reads its three settings itself, where a
   `config` package comes due as they grow.
 Settled by fixing each in the template, or by deciding a rule doesn't reach a template's file.
-
-## The Status line set by hand on a clean machine
-
-2026-11-10 · user
-
-On a clean machine the user set bagheera's Status line by hand (Issue split-bagheera-louie). That
-is ADR status-line's rule, since a plugin can't set `statusLine`; whether bagheera writes it into
-`~/.claude/settings.json` after the person's yes is PRD harness's open question for the
-visibility PRD, and this is the first person who had to do it on their own. Settled in that PRD.
