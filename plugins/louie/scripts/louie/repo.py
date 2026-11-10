@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import os
 
-from louie import settings
-
 
 def root(folder: str) -> str:
     """The root of the repo `folder` is in, or "" outside a repo, where the repo is the home folder
@@ -28,8 +26,17 @@ def _claude_codes(root: str) -> bool:
     home = os.environ.get("HOME", "")
     if home and os.path.realpath(root) == os.path.realpath(home):
         return True
-    own = settings.own()
+    own = own_folder()
     if not own:
         return False
     rel = os.path.relpath(os.path.realpath(root), os.path.realpath(own))
     return rel != ".." and not rel.startswith(".." + os.sep)
+
+
+def own_folder() -> str:
+    """Claude Code's own folder, $CLAUDE_CONFIG_DIR or ~/.claude, or "" where neither is known."""
+    folder = os.environ.get("CLAUDE_CONFIG_DIR", "")
+    if folder:
+        return folder
+    home = os.environ.get("HOME", "")
+    return os.path.join(home, ".claude") if home else ""

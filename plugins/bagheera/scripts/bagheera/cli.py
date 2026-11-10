@@ -22,7 +22,6 @@ from bagheera import (
     repo,
     review,
     session_start,
-    settings,
     statusline,
     version,
 )
@@ -331,7 +330,7 @@ def condense_sessions(args: List[str], stdout: TextIO, stderr: TextIO) -> Option
         cwd = os.getcwd()
     except OSError as e:
         return fail(_os_error("getwd", "", e))
-    own = settings.own()
+    own = repo.own_folder()
     if not own:
         return fail("found neither CLAUDE_CONFIG_DIR nor a home folder")
     folder = condense.transcripts_folder(own, cwd)
