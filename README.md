@@ -35,9 +35,11 @@ remove it.
 
 The plugins have none of their own: each is on, whole, where Claude Code's `enabledPlugins` turns it
 on (PRD no-config). Your Output style and Status line are yours, in `~/.claude/settings.json`;
-session start tells you once per clone the lines to add. An old `.claude/baloo.yml` is no longer
-read, and `/bagheera:doctor` names it for you to remove. To run a formatter on Claude's edits, a
-project adds its own `PostToolUse` Hook to its `.claude/settings.json`.
+session start tells you once per clone the lines to add, and once per machine the deny rules that
+keep Secrets' files out of every session, beside bagheera's Checks (PRD deny). An old
+`.claude/baloo.yml` is no longer read, and `/bagheera:doctor` names it for you to remove. To run a
+formatter on Claude's edits, a project adds its own `PostToolUse` Hook to its
+`.claude/settings.json`.
 
 louie's Workflows, such as `/louie:verify`, run only where Claude Code's dynamic workflows are on:
 `"enableWorkflows": true` in the project's `.claude/settings.json`, which setting a project up
