@@ -44,24 +44,27 @@ class SessionStart(unittest.TestCase):
             "baloo:\n.claude/baloo.yml line 1: x\\nbaloo: run it is not a setting; ignored\n"
         ), out)
 
-    # Where the project's settings enable the plugin, a new Config picks its Output style there,
-    # once.
-    def test_output_style(self):
+    # Where no settings file sets an Output style or a Status line, session start tells, once per
+    # clone, how the person sets each in their own settings, and writes neither; a headless session
+    # doesn't use the telling up, and one already set isn't told of (PRD no-config).
+    def test_personal(self):
         dir = in_repo(self)
-        settings = os.path.join(dir, names.PROJECT_SETTINGS)
-        write(settings, ENABLE)
-        want = (
-            "picked the baloo:short-replies output style in " + settings + ": tell the user, that "
-            "it applies from their next message or session, and that to drop it they set "
-            "output-style: false in .claude/baloo.yml and pick another style, Default too, with "
-            "/output-style; the change to the team's settings is theirs to commit\n"
-        )
-        code, out, err = start(self)
-        self.assertEqual((code, err), (0, ""))
-        self.assertIn("\n" + want, out)
-        code, out, _ = start(self)
-        self.assertEqual(code, 0)
-        self.assertNotIn("picked", out)
+        user = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json")
+        write(user, ENABLE)
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
+        self.assertNotIn("no longer picks", start(self)[1])
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "cli"
+        out = start(self)[1]
+        self.assertIn("baloo no longer picks an Output style or sets a Status line", out)
+        self.assertIn('"outputStyle": "baloo:short-replies"', out)
+        self.assertIn('"statusLine": {"type": "command"', out)
+        self.assertFalse(os.path.exists(os.path.join(dir, names.LOCAL_SETTINGS)))
+        self.assertNotIn("no longer picks", start(self)[1])
+
+        dir = in_repo(self)
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"),
+              '{"outputStyle": "Explanatory", "statusLine": {"type": "command", "command": "x"}}')
+        self.assertNotIn("no longer picks", start(self)[1])
 
     # Session start writes no Git hook, leaves Claude Code's commit attribution to the project's
     # settings and the commit format to CLAUDE.md, and says nothing of either, whatever an old
@@ -79,38 +82,6 @@ class SessionStart(unittest.TestCase):
         self.assertNotIn("attribution", read(settings))
         hooks = os.path.join(dir, ".git", "hooks")
         self.assertEqual([f for f in os.listdir(hooks) if not f.endswith(".sample")], [])
-
-    # Where the plugin is enabled, a new Config sets the Status line in the project's
-    # settings.local.json, once.
-    def test_status_line(self):
-        dir = in_repo(self)
-        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"), ENABLE)
-        want = (
-            "set the baloo status line in " + os.path.join(dir, names.LOCAL_SETTINGS)
-            + ": tell the user, that it shows from their next message, and that status-line: "
-            "false in .claude/baloo.yml takes it out\n"
-        )
-        code, out, err = start(self)
-        self.assertEqual((code, err), (0, ""))
-        self.assertIn("\n" + want, out)
-        self.assertIn(
-            "status-line # managed by baloo", read(os.path.join(dir, names.LOCAL_SETTINGS))
-        )
-        self.assertNotIn("status line", start(self)[1])
-
-    # A Config whose status-line can't be read leaves the plugin's Status line as it is; only
-    # false takes it out.
-    def test_status_line_wrong_key(self):
-        dir = in_repo(self)
-        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"), ENABLE)
-        self.assertEqual(start(self)[0], 0)
-        local = os.path.join(dir, names.LOCAL_SETTINGS)
-        for yml in ["status-line: maybe\n", "status-line: [\n", "status-line: false\n"]:
-            with self.subTest(yml=yml):
-                write(os.path.join(dir, names.CONFIG), yml)
-                self.assertEqual(start(self)[0], 0)
-                kept = "status-line # managed by baloo" in read(local)
-                self.assertEqual(kept, yml != "status-line: false\n")
 
     # In a Session review's session, session start changes nothing in the repo or Claude Code's
     # settings, and only names the Guidelines.

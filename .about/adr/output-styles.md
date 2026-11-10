@@ -1,30 +1,26 @@
-# How Claude replies is an Output style, which session start picks where none is
+# How Claude replies is an Output style, which each person picks in their own settings
 
-Date: 2026-10-14
+Date: 2026-11-10
 
 The plugin ships how Claude writes its replies, such as `short-replies`, as Output styles in
 `plugins/baloo/output-styles/`, each with `keep-coding-instructions: true` so Claude Code keeps its
 own instructions for coding. Claude Code sends the active one with every request, and its own
 `outputStyle` setting picks it (`baloo:short-replies`).
 
-The Config's `output-style` key names the plugin's Output style for the repo, and a new Config
-names `short-replies`. At session start the plugin sets `outputStyle` to it, but not in a Session
-review's session (ADR session-review), and only where both hold:
-- the plugin is enabled in the project's local or project settings, or the user's: the most
-  specific of them that names `baloo@bunderlog` in `enabledPlugins` decides, as in Claude Code;
-- none of Claude Code's settings files, managed ones included, sets `outputStyle`, to any value,
-  `default` too.
-
-It writes the settings file that enables the plugin, so the style reaches whoever the plugin
-does: the project's `.claude/settings.json` for its team, its `.claude/settings.local.json` for
-one person, and that `.claude/settings.local.json` too for the user's settings, since the Config
-is the repo's and the user's own folder is Claude Code's (ADR config). A `settings.local.json` the
-plugin creates goes into the repo's `info/exclude`; a file that was there keeps the rest of its
-text as it was. `output-style: false` picks none. A plugin can't set a default Output style of its
-own, so session start writes Claude Code's setting.
+The plugin picks none: each person picks their own in `~/.claude/settings.json`,
+`baloo:short-replies` or any other, since how Claude talks to them is theirs (PRD harness, PRD
+no-config). Where no settings file Claude Code reads (the person's, the project's, the clone's local
+or the managed ones) sets `outputStyle`, the first session start in a clone tells Claude, to tell
+the person, the line to add, once per clone; a headless session is told nothing and leaves the
+telling for the next. A plugin can't set a default Output style but by `force-for-plugin`, which
+would override the person's own.
 
 ## Considered options
 
+- The Config's `output-style` key, which session start wrote into the settings file that enabled
+  the plugin where none set one (until 2026-11-10) — a committed `.claude/settings.json` chose for
+  the whole team, a clone's local file froze one person's choice, and the Config was a switch of
+  its own beside Claude Code's (PRD no-config).
 - A Guideline printed whole at session start, with a key in the Config (until 2026-09-30) — the
   plugin's own switch, but it reaches Claude once, as a Hook's output, and fades over a long
   session.
@@ -48,16 +44,7 @@ own, so session start writes Claude Code's setting.
 ## Consequences
 
 - Only one Output style is active at a time: picking another, such as Explanatory, turns
-  `short-replies` off, and the plugin leaves that choice alone.
-- It picks the style once per project, at a session start: the session may get it only from its
-  next request, or its next session.
-- A repo whose Config was made before the key has no `output-style`, so nothing is picked there
-  until its user adds the key.
-- Where the project's `.claude/settings.json` enables the plugin, the pick changes a committed
-  file: a diff to commit, and the style for everyone on the team.
-- The plugin edits a file Claude Code writes too. It replaces the file whole, so neither leaves
-  half of it, but if both write it at the same moment, one write is lost.
-- Picking Default in `/output-style` may not hold where the Config still names the style, so
-  Claude tells the user to set `output-style: false` as well.
-- Revisit when Claude Code lets a plugin set a default Output style a user can turn off, or
-  allows more than one at a time.
+  `short-replies` off.
+- A person who never adds the line gets Claude Code's default style; they are told once per clone.
+- An `outputStyle` of `baloo:short-replies` an earlier Release wrote into a clone's
+  `.claude/settings.local.json` stays until the person removes it; `doctor` names it.

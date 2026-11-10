@@ -181,10 +181,10 @@ def subagent_start(text: str, stdout: TextIO) -> int:
 
 def status_line(text: str, stdout: TextIO) -> int:
     """Claude Code's status line command (ADR status-line): it prints the Status line for what
-    Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with the bars the Config
-    of the repo it shows sets, read each time so an edit shows at the next run. A field of another
-    type than the plugin's is left out, and the rest shows; whatever else goes wrong, it prints
-    nothing, since Claude Code shows under the prompt whatever it prints."""
+    Claude Code gives it on stdin, in a terminal as wide as COLUMNS says, with its default bars
+    (PRD no-config). A field of another type than the plugin's is left out, and the rest shows;
+    whatever else goes wrong, it prints nothing, since Claude Code shows under the prompt whatever
+    it prints."""
     try:
         value, _ = json.JSONDecoder().raw_decode(text.lstrip(" \t\r\n"))
     except ValueError:
@@ -195,10 +195,6 @@ def status_line(text: str, stdout: TextIO) -> int:
     if width <= 0:
         width = 120
     layout = statusline.default()
-    if in_.current_dir:
-        got = config.read(in_.current_dir).status_layout
-        if got is not None:
-            layout = got
     stdout.write(layout.render(in_, statusline.branch(in_.current_dir), width) + "\n")
     return 0
 

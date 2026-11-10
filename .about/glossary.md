@@ -94,14 +94,14 @@ _In code_: `baloo/guidelines.py`
 
 **Output style**:
 Instructions for how Claude writes its replies, such as `short-replies`, that the plugin ships
-and Claude Code sends with every request once its own `outputStyle` setting picks one; the
-Config names the one to pick where no setting does.
+and Claude Code sends with every request once a person's own `outputStyle` setting picks one
+(ADR output-styles).
 _Avoid_: "style" alone; tone
 
 **Status line**:
 The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars, the
-Cache bar and the model, is drawn by the plugin, and set in the project's local settings where the
-Config turns it on.
+Cache bar and the model, is drawn by the plugin, and set by each person in their own settings (ADR
+status-line).
 _Avoid_: "status" alone, which is a PRD's Status
 _In code_: `baloo/statusline.py`
 

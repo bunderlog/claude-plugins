@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
-from baloo import checks, names, settings, statusline, yaml
+from baloo import checks, names, settings, yaml
 from baloo.yaml import Node
 
 
@@ -19,15 +19,6 @@ class Config:
 
     # The root of the repo whose Config this is, or "" where the repo has none (see load).
     root: str = ""
-    # The plugin's Output style that session start picks where Claude Code's settings pick none
-    # (ADR output-styles), or "" for none.
-    output_style: str = ""
-    # Whether session start sets the plugin's Status line or takes it out (ADR status-line), or
-    # None where the Config doesn't say, and the line is left as it is.
-    status_line: Optional[bool] = None
-    # The Status line's bars, their order and thresholds, or None where the Config sets none and
-    # statusline.default() applies.
-    status_layout: Optional[statusline.Layout] = None
     # Whether a Session review starts when a session ends (ADR session-review).
     session_review: bool = False
     # The command run on each file Claude edits, or "" where it is off (ADR format-on-edit).
@@ -40,12 +31,12 @@ class Config:
         return name in checks.HOOK_CHECKS
 
 
-# The plugin's Output styles, the files in its output-styles/.
-OUTPUT_STYLES = ["short-replies"]
-
 # The settings earlier Releases had and this one dropped (ADR measurement, ADR git-hooks): a Config
 # that still has one works as without it, and only doctor names it, for the user to delete.
-_REMOVED = ["stop-check", "git-hooks", "git-hook-commands", "claude-hooks", "guidelines"]
+_REMOVED = [
+    "stop-check", "git-hooks", "git-hook-commands", "claude-hooks", "guidelines", "output-style",
+    "status-line",
+]
 
 
 def _removed_at(line: int, name: str) -> str:
@@ -75,29 +66,6 @@ def _strings(value: Node) -> Optional[List[str]]:
     return ["" if item.tag == "null" else item.text for item in value.items]
 
 
-def _output_style(c: Config, key: Node, value: Node) -> List[str]:
-    if _is_false(value):
-        c.output_style = ""
-        return []
-    if value.tag != "str" or value.text not in OUTPUT_STYLES:
-        why = "is not false or one of " + ", ".join(OUTPUT_STYLES)
-        return [_wrong(key.line, key.text, why)]
-    c.output_style = value.text
-    return []
-
-
-def _status_line(c: Config, key: Node, value: Node) -> List[str]:
-    if value.tag == "map":
-        c.status_line = True
-        c.status_layout, problems = _status_layout(key.text, value)
-        return problems
-    if value.tag != "bool":
-        why = ": is not true, false or its bars and thresholds; the Status line is left as it is"
-        return [_at(key.line, key.text + why)]
-    c.status_line = value.value
-    return []
-
-
 def _session_review(c: Config, key: Node, value: Node) -> List[str]:
     if value.tag != "bool":
         return [_wrong(key.line, key.text, "is not true or false")]
@@ -110,69 +78,6 @@ def _format_on_edit(c: Config, key: Node, value: Node) -> List[str]:
     if cmd:
         c.format_on_edit = cmd
     return problems
-
-
-def _status_layout(entry: str, value: Node) -> Tuple[statusline.Layout, List[str]]:
-    """Decodes the Status line's settings, the map `value` at `entry`, and returns what is wrong
-    with them; each wrong one keeps its default, a wrong bar in the list is left out."""
-    layout = statusline.default()
-    bars = ", ".join(statusline.BARS)
-    problems: List[str] = []
-    for key, v in value.pairs:
-        setting = entry + "." + key.text
-        if key.text == "bars":
-            got = _strings(v)
-            if got is None:
-                problems.append(_wrong(key.line, setting, "is not a list of " + bars))
-                continue
-            layout.bars = []
-            for item, name in zip(v.items, got):
-                if name not in statusline.BARS:
-                    why = ": " + name + " is not one of " + bars + "; ignored"
-                    problems.append(_at(item.line, setting + why))
-                elif name in layout.bars:
-                    problems.append(_at(item.line, setting + ": " + name + " is there twice; ignored"))
-                else:
-                    layout.bars.append(name)
-        elif key.text == "thresholds":
-            if v.tag != "map":
-                problems.append(_wrong(key.line, setting, "is not a map of bars to thresholds"))
-                continue
-            for name, t in v.pairs:
-                bar = setting + "." + name.text
-                if name.text not in layout.thresholds:
-                    problems.append(_at(name.line, bar + " is not one of " + bars + "; ignored"))
-                    continue
-                got_t, why = _thresholds(layout.thresholds[name.text], t)
-                if why:
-                    problems.append(_wrong(name.line, bar, why))
-                    continue
-                if not statusline.ordered(name.text, got_t):
-                    problems.append(_wrong(name.line, bar, "turns red before yellow"))
-                    continue
-                layout.thresholds[name.text] = got_t
-        else:
-            problems.append(_at(key.line, setting + " is not a setting of status-line; ignored"))
-    return layout, problems
-
-
-def _thresholds(t: statusline.Thresholds, value: Node) -> Tuple[statusline.Thresholds, str]:
-    """A bar's thresholds `t` with those the map `value` sets, and what is wrong with them, or
-    ""."""
-    why = "is not { yellow: <percent>, red: <percent> }"
-    if value.tag != "map":
-        return t, why
-    yellow, red = t.yellow, t.red
-    for key, v in value.pairs:
-        if v.tag != "int" or not 0 <= v.value <= 100:
-            return t, why
-        if key.text == "yellow":
-            yellow = v.value
-        elif key.text == "red":
-            red = v.value
-        else:
-            return t, why
-    return statusline.Thresholds(yellow=yellow, red=red), ""
 
 
 def _command_at(line: int, name: str, value: Node) -> Tuple[str, List[str]]:
@@ -188,8 +93,6 @@ def _command_at(line: int, name: str, value: Node) -> Tuple[str, List[str]]:
 # Decodes each setting's value into a Config, and returns what is wrong with it, a problem per
 # line (see _at); a key that isn't here is not a setting.
 _KEYS: Dict[str, Callable[[Config, Node, Node], List[str]]] = {
-    "output-style": _output_style,
-    "status-line": _status_line,
     "session-review": _session_review,
     "format-on-edit": _format_on_edit,
 }
@@ -203,18 +106,6 @@ def _new_config() -> str:
 #
 # baloo's settings for this repo. Its Checks and Guidelines are always on. A wrong setting is
 # reported at session start, and its default applies.
-
-# The Output style for Claude's replies, picked at session start in the settings file that
-# enables the plugin (the project's .claude/settings.local.json for the user's settings), where no
-# settings file of Claude Code's picks one; false picks none.
-output-style: short-replies
-
-# The plugin's Status line, set at session start in .claude/settings.local.json, where no
-# settings file of Claude Code's but the user's own sets one; false takes it out. Instead of
-# true it also takes its bars, in the order shown, and the percentages at which each turns yellow
-# and red, such as { bars: [context, 5h], thresholds: { context: { yellow: 30, red: 50 } } };
-# cache's are of the cache's lifetime left, so red is below yellow.
-status-line: true
 
 # The Session review: when a session ends, a separate Claude session proposes, in .about/proposals/,
 # changes to .about/ for what the conversation settled or left open but nobody wrote down; a

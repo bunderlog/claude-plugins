@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from baloo import binlink, names, settings
+from baloo import names
 
 # The Status line's bars, by their names in the Config, in the order it shows them without one.
 BARS = ["context", "5h", "7d", "cache"]
@@ -356,9 +356,9 @@ def _quote(s: str) -> str:
     return "'" + s.replace("'", "'\\''") + "'"
 
 
-def _command(link: str) -> str:
+def command(link: str) -> str:
     """The status line command that runs the plugin through the link `link` (see binlink), marked
-    as the plugin's."""
+    as the plugin's, for the person to set in their own settings (PRD no-config)."""
     run = link + "/scripts/run.py"
     return "python3 -E -s " + _quote(run) + " status-line " + names.MARKER
 
@@ -386,54 +386,8 @@ def _line(raw: Any) -> Optional[Tuple[str, str, int, int]]:
     return got[0], got[1], got[2], got[3]
 
 
-def _ours(raw: Any) -> bool:
-    """Whether the statusLine setting `raw` is one the plugin wrote."""
+def ours(raw: Any) -> bool:
+    """Whether the statusLine setting `raw` is one the plugin wrote, as Releases before 0.38.0 did
+    into a clone's settings.local.json."""
     line = _line(raw)
     return line is not None and line[1].endswith(" " + names.MARKER)
-
-
-def set_line(project: str, root: str, data: str, on: bool) -> Tuple[bool, Optional[Exception]]:
-    """Sets the status line of the project at `project`, in the repo at `root`, or takes it out,
-    as `on`, the Config's key, says. On, it sets the plugin's in the project's settings.local.json,
-    where the plugin is enabled in its local, project or user settings and none of its local,
-    project or managed settings has a status line the plugin didn't write; the user's own gives
-    way. Off, or where one of those has a status line of its own, it takes the plugin's out. It
-    returns whether it set one where the plugin's wasn't, and what went wrong, or None: a line can
-    be set and still fail to go into info/exclude.
-
-    The command runs the plugin through the link in `data`, the plugin's data folder (see
-    binlink)."""
-    files = settings.files(project)
-    try:
-        fields = settings.read_all(files)
-    except (OSError, ValueError) as e:
-        return False, e
-    local = files[settings.LOCAL]
-    had = "statusLine" in fields[settings.LOCAL]
-    current = fields[settings.LOCAL].get("statusLine")
-    mine = had and _ours(current)
-    theirs = had and not mine
-    for scope in (settings.PROJECT, settings.MANAGED):
-        if "statusLine" in fields[scope]:
-            theirs = True
-    try:
-        if not on or theirs:
-            if mine:
-                settings.delete(local, "statusLine")
-            return False, None
-        if not mine and not settings.enabling(fields):
-            return False, None
-        link = binlink.point(data)
-        want = ("command", _command(link), 0, 60)
-        if mine and _line(current) == want:
-            return False, None
-        value = {"type": want[0], "command": want[1], "padding": want[2], "refreshInterval": want[3]}
-        created = settings.set_field(local, "statusLine", value)
-    except (OSError, ValueError) as e:
-        return False, e
-    if created:
-        try:
-            settings.exclude(root, local)
-        except (OSError, ValueError) as e:
-            return not mine, e
-    return not mine, None

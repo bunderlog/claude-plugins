@@ -1,6 +1,6 @@
-# The Status line is the plugin's, set by session start in the project's local settings
+# The Status line is the plugin's, set by each person in their own settings
 
-Date: 2026-10-31
+Date: 2026-11-10
 
 The plugin ships a Status line: the project's folder and the branch on the left, the context, 5-hour
 and 7-day Usage bars and the Cache bar centered, the Cache bar last since nothing in parentheses
@@ -20,34 +20,21 @@ is cold; it is the context's tokens again, so beside them it would say the same 
 caching off it doesn't show. Claude Code runs the line again when the cache goes cold, and the
 `statusLine` setting asks it to every 60 seconds besides, so the minutes count down while idle.
 
-The Config's `status-line` key turns it on, and a new Config has it on. Instead of `true` it takes
-`bars`, the bars shown in their order, and `thresholds`, each bar's `yellow` and `red`; one it
-leaves out keeps its default, and a wrong one is a problem at session start that keeps its default.
-The plugin reads them from the Config each time it draws the line, so an edit shows at the next
-run, not the next session.
-
-A plugin can't set Claude Code's `statusLine` itself, so at session start the plugin writes it, as
-it picks an Output style (ADR output-styles) and not in a Session review's session, where both
-hold:
-- the plugin is enabled in the project's local or project settings, or the user's;
-- none of the project's local or project settings, nor the managed ones, sets `statusLine`: the
-  user's own, for every project, gives way to the repo's key.
-
-Once the plugin's is set, one that the project or managed settings set later wins: session start
-takes the plugin's out.
-
-It always writes the project's `.claude/settings.local.json`, whichever file enables the plugin,
-since the command names a path on one machine: `python3 -E -s '<plugin data>/baloo/scripts/run.py'
+It draws its default bars at their default thresholds; no file sets them (PRD no-config). A plugin
+can't set Claude Code's `statusLine` itself, and the plugin writes none: each person sets it in
+their own `~/.claude/settings.json`, as `python3 -E -s '<plugin data>/baloo/scripts/run.py'
 status-line # managed by baloo`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session
-start points at the running version's plugin folder (ADR binary), so the command stays the same from
-one version to the next; the comment marks it as the plugin's, which session start sets again when
-its path changes, as from the Go binary's link, and takes out with `status-line: false`. A Config
-without the key, or with a value that is wrong, leaves the line as it is, so a typo in the Config
-never takes it out. A `settings.local.json` it creates goes into the repo's `info/exclude`, and one
-that was there keeps the rest of its text as it was.
+start points at the running version's plugin folder (ADR binary), so the command stays the same
+from one version to the next. Where no settings file Claude Code reads sets `statusLine`, the
+first session start in a clone tells Claude, to tell the person, that line, once per clone; a
+headless session is told nothing.
 
 ## Considered options
 
+- The Config's `status-line` key, with its `bars` and `thresholds`, which session start wrote
+  into the clone's `.claude/settings.local.json` where the plugin was enabled (until 2026-11-10) —
+  it replaced a person's own line in that repo, and was a switch of the plugin's own beside Claude
+  Code's (PRD no-config).
 - Giving way, as the Output style does, to a `statusLine` in any settings file — a user with a
   status line of their own for every project would never get the plugin's.
 - One list of bars, each a name or a name with its thresholds — shorter, but its
@@ -69,12 +56,11 @@ that was there keeps the rest of its text as it was.
 
 ## Consequences
 
-- In a repo whose Config has it on, the plugin's Status line replaces the user's own.
-- Session start sets it, after Claude Code has read the settings, so the first session may show it
-  only from its next message.
-- A repo whose Config was made before the key has no `status-line`, so the Status line stays off
-  there until its user adds the key.
+- A person who never sets the line sees none; they are told once per clone.
+- A `statusLine` an earlier Release wrote into a clone's `.claude/settings.local.json` overrides
+  the person's own until they remove it; `doctor` names it.
 - The line runs the plugin without its Hook's `sh`: before the first session start, after the
   plugin's data folder is removed, or where `python3` is missing or older than 3.9, Claude Code
   shows no line.
-- Revisit when Claude Code lets a plugin set a status line of its own.
+- Revisit when Claude Code lets a plugin set a status line of its own, or bagheera's visibility
+  PRD decides it writes the line with the person's yes.

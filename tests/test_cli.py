@@ -55,23 +55,23 @@ class StatusLine(unittest.TestCase):
                 code, out, err = run("status-line", stdin=stdin)
                 self.assertEqual((code, COLORS.sub("", out), err), (0, want, ""))
 
-    # The status-line command shows the bars the Config of the repo it is in sets, in their
-    # order.
+    # The status-line command shows its default bars, whatever an old Config of the repo it is in
+    # sets (PRD no-config).
     def test_bars(self):
         commands.env(self)
         dir = testkit.tempdir(self)
         os.mkdir(os.path.join(dir, ".git"))
-        write(os.path.join(dir, names.CONFIG), "status-line:\n  bars: [7d, context]\n")
         os.environ["COLUMNS"] = "80"
         stdin = json.dumps({
             "workspace": {"current_dir": dir}, "context_window": {"used_percentage": 12},
             "rate_limits": {"five_hour": {"used_percentage": 55},
                             "seven_day": {"used_percentage": 81}},
         })
+        _, plain, _ = run("status-line", stdin=stdin)
+        write(os.path.join(dir, names.CONFIG), "status-line:\n  bars: [7d, context]\n")
         _, out, err = run("status-line", stdin=stdin)
-        line = COLORS.sub("", out).strip()
-        self.assertTrue(line.startswith(os.path.basename(dir) + " "), line)
-        self.assertTrue(line.endswith("7d ████████░░ 81% Ctx █░░░░░░░░░ 12%"), (line, err))
+        self.assertEqual((out, err), (plain, ""))
+        self.assertIn("Ctx", COLORS.sub("", out))
 
 
 def pre_tool_use(test, stdin):

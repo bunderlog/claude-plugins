@@ -41,131 +41,15 @@ def status_line(path):
     return line["command"] if line else ""
 
 
-def want_command(data):
-    return "python3 -E -s '" + os.path.join(data, "baloo") + "/scripts/run.py' status-line # managed by baloo"
-
-
-class Sandbox(unittest.TestCase):
-    """A temporary repo with the user's and the managed settings of its own, none of them there
-    yet, and a plugin data folder."""
-
-    def setUp(self):
-        self.root = testkit.tempdir(self)
-        self.own = testkit.tempdir(self)
-        self.data = testkit.tempdir(self)
-        os.mkdir(os.path.join(self.root, ".git"))
-        patcher = mock.patch.dict(
-            os.environ,
-            {
-                "CLAUDE_CONFIG_DIR": self.own,
-                "BALOO_MANAGED_SETTINGS": os.path.join(self.own, "managed-settings.json"),
-            },
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        self.local = os.path.join(self.root, names.LOCAL_SETTINGS)
-
-    def set(self, on=True, data=None):
-        return statusline.set_line(self.root, self.root, self.data if data is None else data, on)
-
-
-class Set(Sandbox):
-    def test_set(self):
-        enabled_with_line = (
-            '{"statusLine": {"type": "command", "command": "x"}, "enabledPlugins": {"'
-            + PLUGIN_ID
-            + '": true}}'
-        )
-        for name, local, project, user, manage, shown in [
-            ("enabled in the project", "", ON, "", "", True),
-            ("enabled here", ON, "", "", "", True),
-            ("enabled for the user, who has a status line", "", "", enabled_with_line, "", True),
-            ("not enabled anywhere", "", "", "", "", False),
-            ("enabled only by managed settings", "", "", "", ON, False),
-            ("a status line here", enabled_with_line, "", "", "", False),
-            ("a status line in the project", "", enabled_with_line, "", "", False),
-            ("a status line in managed settings", "", ON, "", THEIRS, False),
-        ]:
-            with self.subTest(name):
-                self.setUp()
-                for path, text in [
-                    (self.local, local),
-                    (os.path.join(self.root, names.PROJECT_SETTINGS), project),
-                    (os.path.join(self.own, "settings.json"), user),
-                    (os.path.join(self.own, "managed-settings.json"), manage),
-                ]:
-                    if text:
-                        write(path, text)
-                before = contents(self.local)
-                self.assertEqual(self.set(), (shown, None))
-                if shown:
-                    self.assertEqual(status_line(self.local), want_command(self.data))
-                else:
-                    self.assertEqual(contents(self.local), before)
-
-    # The command runs the plugin through a link in the data folder, and a second session start
-    # changes nothing.
-    def test_links(self):
-        write(os.path.join(self.own, "settings.json"), ON)
-        self.assertEqual(self.set(), (True, None))
-        self.assertEqual(os.readlink(os.path.join(self.data, "baloo")), PLUGIN)
-        before = contents(self.local)
-        self.assertEqual(self.set(), (False, None))
-        self.assertEqual(contents(self.local), before)
-        self.assertEqual(
-            contents(os.path.join(self.root, ".git", "info", "exclude")),
-            "/" + names.LOCAL_SETTINGS + "\n",
-        )
-        self.assertEqual(os.listdir(self.data), ["baloo"])
-
-    # The plugin's own status line, from another data folder or the Go binary, is set again in
-    # place, and turned off it is taken out, the rest of the file kept; another's is left alone.
-    def test_own(self):
-        old = (
-            '{\n  "enabledPlugins": {"' + PLUGIN_ID + '": true},\n'
-            '  "statusLine": {"type": "command", "command": "\'/old/baloo\' status-line # managed '
-            'by baloo", "padding": 0}\n}\n'
-        )
-        write(self.local, old)
-        self.assertEqual(self.set(), (False, None))
-        self.assertEqual(status_line(self.local), want_command(self.data))
-        self.assertEqual(json.loads(contents(self.local))["statusLine"]["refreshInterval"], 60)
-        self.assertEqual(self.set(on=False), (False, None))
-        self.assertEqual(
-            contents(self.local), '{\n  "enabledPlugins": {"' + PLUGIN_ID + '": true}\n}\n'
-        )
-        write(self.local, THEIRS)
-        self.assertEqual(self.set(on=False), (False, None))
-        self.assertEqual(contents(self.local), THEIRS)
-
-    # The plugin's own status line gives way to one the project or managed settings set later.
-    def test_own_gives_way(self):
-        for scope in ["project", "managed"]:
-            with self.subTest(scope):
-                self.setUp()
-                write(self.local, ON)
-                self.assertEqual(self.set(), (True, None))
-                path = os.path.join(self.root, names.PROJECT_SETTINGS)
-                if scope == "managed":
-                    path = os.path.join(self.own, "managed-settings.json")
-                write(path, THEIRS)
-                self.assertEqual(self.set(), (False, None))
-                self.assertEqual(status_line(self.local), "")
-
-    # Without the data folder the status line can't be set, which is an error only where it would
-    # be.
-    def test_no_data(self):
-        self.assertEqual(self.set(data=""), (False, None))
-        write(os.path.join(self.own, "settings.json"), ON)
-        shown, err = self.set(data="")
-        self.assertFalse(shown)
-        self.assertEqual(str(err), "CLAUDE_PLUGIN_DATA is not set")
-
-    def test_broken_settings(self):
-        write(self.local, "{")
-        shown, err = self.set()
-        self.assertFalse(shown)
-        self.assertTrue(str(err).startswith(self.local + ": "), err)
+class Ours(unittest.TestCase):
+    # The command the person sets runs the plugin through the link, marked as the plugin's, and a
+    # statusLine with that mark is told from the person's own.
+    def test_command_and_ours(self):
+        cmd = statusline.command("/data/baloo")
+        self.assertEqual(cmd, "python3 -E -s '/data/baloo/scripts/run.py' status-line " + names.MARKER)
+        self.assertTrue(statusline.ours({"type": "command", "command": cmd}))
+        self.assertFalse(statusline.ours({"type": "command", "command": "my-line"}))
+        self.assertFalse(statusline.ours("nope"))
 
 
 class Link(unittest.TestCase):

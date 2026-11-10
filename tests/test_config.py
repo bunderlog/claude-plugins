@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from baloo import checks, config, guidelines, names, statusline
+from baloo import checks, config, guidelines, names
 from baloo.config import parse
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -202,99 +202,6 @@ class Parse(Case):
         self.assertEqual(got, ["true"])
 
 class Settings(Case):
-    def test_output_style(self):
-        for yml, style, problems in [
-            ("output-style: short-replies\n", "short-replies", 0),
-            ("output-style: false\n", "", 0),
-            ("output-style: true\n", "", 1),
-            ("output-style: nope\n", "", 1),
-            ("output-style: [short-replies]\n", "", 1),
-            ("# none\n", "", 0),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual((c.output_style, len(got)), (style, problems))
-
-    def test_status_line(self):
-        want_problem = (
-            ".claude/baloo.yml line 1: status-line: is not true, false or its bars and thresholds;"
-            " the Status line is left as it is"
-        )
-        for yml, on, problems in [
-            ("status-line: true\n", True, []),
-            ("status-line: false\n", False, []),
-            ("status-line: yes please\n", None, [want_problem]),
-            ("status-line: [context]\n", None, [want_problem]),
-            ("status-line: {}\n", True, []),
-            ("# none\n", None, []),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertEqual((c.status_line, got), (on, problems))
-        self.assertIsNone(parse("status-line: true\n")[0].status_layout)
-
-    # The Status line takes its bars, in order, and their thresholds; a wrong one is a problem,
-    # and its default applies, a wrong bar in the list left out. Without them the default Layout
-    # applies.
-    def test_status_layout(self):
-        t = statusline.Thresholds
-        default = {
-            "context": t(yellow=15, red=20), "cache": t(yellow=40, red=20),
-            "5h": t(yellow=70, red=85), "7d": t(yellow=80, red=95),
-        }
-        every = ["context", "5h", "7d", "cache"]
-        for yml, bars, thresholds, problems in [
-            ("status-line: {}\n", every, default, []),
-            (
-                "status-line:\n  bars: [7d, context]\n  thresholds:\n    context: {red: 50}\n"
-                "    cache: {yellow: 50, red: 10}\n",
-                ["7d", "context"],
-                dict(default, context=t(yellow=15, red=50), cache=t(yellow=50, red=10)),
-                [],
-            ),
-            ("status-line:\n  bars: []\n", [], default, []),
-            (
-                "status-line:\n  bars:\n    - context\n    - ctx\n    - context\n  thresholds:\n"
-                "    context: {yellow: 30, red: 20}\n    cache: {yellow: 10, red: 20}\n"
-                "    5h: {yellow: 101}\n    7d: {blue: 1}\n    week: {red: 1}\n  colors: true\n",
-                ["context"],
-                default,
-                [
-                    ".claude/baloo.yml line 4: status-line.bars: ctx is not one of context, 5h, 7d,"
-                    " cache; ignored",
-                    ".claude/baloo.yml line 5: status-line.bars: context is there twice; ignored",
-                    ".claude/baloo.yml line 7: status-line.thresholds.context: turns red before"
-                    " yellow; its default applies",
-                    ".claude/baloo.yml line 8: status-line.thresholds.cache: turns red before"
-                    " yellow; its default applies",
-                    ".claude/baloo.yml line 9: status-line.thresholds.5h: is not { yellow:"
-                    " <percent>, red: <percent> }; its default applies",
-                    ".claude/baloo.yml line 10: status-line.thresholds.7d: is not { yellow:"
-                    " <percent>, red: <percent> }; its default applies",
-                    ".claude/baloo.yml line 11: status-line.thresholds.week is not one of context,"
-                    " 5h, 7d, cache; ignored",
-                    ".claude/baloo.yml line 12: status-line.colors is not a setting of"
-                    " status-line; ignored",
-                ],
-            ),
-            (
-                "status-line:\n  bars: context\n  thresholds: [1]\n",
-                every,
-                default,
-                [
-                    ".claude/baloo.yml line 2: status-line.bars: is not a list of context, 5h, 7d,"
-                    " cache; its default applies",
-                    ".claude/baloo.yml line 3: status-line.thresholds: is not a map of bars to"
-                    " thresholds; its default applies",
-                ],
-            ),
-        ]:
-            with self.subTest(yml):
-                c, got = parse(yml)
-                self.assertIs(c.status_line, True)
-                layout = c.status_layout
-                self.assertEqual((layout.bars, layout.thresholds, got), (bars, thresholds, problems))
-
     # The Session review is on with its key, off without it, and on in a new Config (ADR
     # session-review).
     def test_session_review(self):
@@ -374,17 +281,13 @@ class Plugin(unittest.TestCase):
         self.assertIs(s["additionalProperties"], False)
         self.assertTrue(names.SCHEMA.endswith("/" + names.PLUGIN_DIR + "/schema.json"))
 
-    # Every Output style the Config can name is a file in the plugin's output-styles/, and the
-    # schema names the same.
+    # The plugin's one Output style is a file in its output-styles/, and the schema has no key
+    # for one (PRD no-config).
     def test_output_styles(self):
         folder = os.path.join(PLUGIN, "output-styles")
-        files = sorted(
-            f[:-3] for f in os.listdir(folder)
-            if f.endswith(".md") and os.path.isfile(os.path.join(folder, f))
-        )
-        self.assertEqual(files, sorted(config.OUTPUT_STYLES))
-        enum = [v for v in schema()["properties"]["output-style"]["enum"] if isinstance(v, str)]
-        self.assertEqual(enum, config.OUTPUT_STYLES)
+        files = sorted(f for f in os.listdir(folder) if f.endswith(".md"))
+        self.assertEqual(files, ["short-replies.md"])
+        self.assertNotIn("output-style", schema()["properties"])
 
     # Every Guideline is a file in the plugin's guidelines/, and the schema has no key for one.
     def test_guidelines(self):

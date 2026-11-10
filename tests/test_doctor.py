@@ -57,6 +57,26 @@ class Doctor(unittest.TestCase):
             self.assertIn(want, out)
         self.assertFalse(os.path.lexists(link), "doctor put the link back")
 
+    # doctor names the Output style and the Status line an earlier Release wrote into the clone's
+    # settings.local.json, and not a person's own there (PRD no-config).
+    def test_left_in_local(self):
+        dir = in_repo(self)
+        self.assertEqual(start(self)[0], 0)
+        local = os.path.join(dir, names.LOCAL_SETTINGS)
+        write(local, json.dumps({
+            "outputStyle": "baloo:short-replies",
+            "statusLine": {"type": "command", "command": "x status-line # managed by baloo"},
+        }))
+        code, out = doctor_run(self)
+        self.assertEqual(code, 1, out)
+        self.assertIn("- " + local + " has the statusLine an earlier baloo wrote", out)
+        self.assertIn("- " + local + " has the outputStyle an earlier baloo picked", out)
+        write(local, json.dumps({
+            "outputStyle": "Explanatory", "statusLine": {"type": "command", "command": "mine"},
+        }))
+        code, out = doctor_run(self)
+        self.assertNotIn(local + " has", out)
+
     # Once session start has seen the Session reviews end, doctor shows how many failed this week
     # and what they all cost.
     def test_session_review_week(self):

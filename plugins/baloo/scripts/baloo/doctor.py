@@ -9,7 +9,9 @@ import io
 import os
 from typing import List, TextIO
 
-from baloo import binlink, checks, config, guidelines, hook, names, review, version
+from baloo import (
+    binlink, checks, config, guidelines, hook, names, review, settings, statusline, version,
+)
 
 
 def run(stdout: TextIO, stderr: TextIO) -> int:
@@ -65,14 +67,14 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
         )
     else:
         w.write(f"\nConfig: {path}\n")
-    status_line = "not set" if c.status_line is None else _bool(c.status_line)
     for key, value in [
-        ("output-style", _or_none(c.output_style)),
-        ("status-line", status_line),
         ("session-review", _bool(c.session_review)),
         ("format-on-edit", _or_none(c.format_on_edit)),
     ]:
         w.write(f"  {key}\t{value}\n")
+
+    if c.root:
+        problems += _left_in_local(dir)
 
     if c.root:
         waiting = mismatches = 0
@@ -111,6 +113,26 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             stdout.write(f"- {hook.one_line(p)}\n")
     stdout.write(_columns(w.getvalue()))
     return 1 if problems else 0
+
+
+def _left_in_local(dir: str) -> List[str]:
+    """The Output style and the Status line an earlier Release wrote into the clone's
+    settings.local.json, which the plugin no longer sets (PRD no-config), for the person to
+    remove."""
+    path = settings.files(dir)[settings.LOCAL]
+    try:
+        local = settings.read_all({settings.LOCAL: path})[settings.LOCAL]
+    except (OSError, ValueError):
+        return []
+    found = []
+    if statusline.ours(local.get("statusLine")):
+        found.append(f"{path} has the statusLine an earlier {names.PLUGIN} wrote: remove it, and set "
+                     "your own in ~/.claude/settings.json")
+    style = local.get("outputStyle")
+    if isinstance(style, str) and style.startswith(names.PLUGIN + ":"):
+        found.append(f"{path} has the outputStyle an earlier {names.PLUGIN} picked: remove it, and "
+                     "pick your own in ~/.claude/settings.json")
+    return found
 
 
 def _columns(text: str) -> str:
