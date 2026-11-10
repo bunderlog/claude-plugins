@@ -129,7 +129,7 @@ class Report(unittest.TestCase):
         )
 
     # A failed call's kind comes from its error, as Claude Code words it: a denial by one of the
-    # plugin's Checks shows which one.
+    # plugin's Checks, or an earlier baloo's, shows which one.
     def test_names_the_kind_of_each_failure(self):
         for error, want in [
             (
@@ -137,6 +137,11 @@ class Report(unittest.TestCase):
                 "bypasses the Git hooks.",
                 "[2] error check Bash(x): PreToolUse:Bash hook error: bagheera:no-git-hook-bypass: "
                 "git commit --no-verify bypasses the Git hooks.",
+            ),
+            (
+                "PreToolUse:Read hook error: baloo:no-secrets-in-context: .env holds Secrets.",
+                "[2] error check Bash(x): PreToolUse:Read hook error: baloo:no-secrets-in-context: "
+                ".env holds Secrets.",
             ),
             (
                 "The user doesn't want to proceed with this tool use.",

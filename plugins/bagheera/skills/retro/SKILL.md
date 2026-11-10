@@ -32,8 +32,8 @@ stalls such a check would have caught.
   let a safe call through, or the reason it should never have been tried.
 - **Failed commands** (`exit`): a real failure, or a misused tool or shell (a glob with no
   match, `=word` in zsh, a wrong path)? Misuse that recurs needs an instruction or a check.
-- **Denials by a Check** (`check`, named by its `baloo:<check>:`): a real danger, or a false
-  alarm — a bug in that Check.
+- **Denials by a Check** (`check`, named by its `bagheera:<check>:`, or `baloo:<check>:` before
+  0.41.0): a real danger, or a false alarm — a bug in that Check.
 - **Interrupts and corrections**: what Claude did that the user stopped or redirected, and what
   would have told it beforehand.
 - **Repeated prompts**: work the user keeps asking for by hand — a skill, a hook or a Git hook.

@@ -455,7 +455,8 @@ def _kilo(n: int) -> str:
 
 # The kinds of a failed tool call, by its error; the first that matches names it.
 _KINDS: List[Tuple[str, "re.Pattern[str]"]] = [
-    ("check", re.compile(r"hook error: " + names.PLUGIN + r":[a-z-]+: ")),
+    # An earlier baloo's Checks, in sessions before 0.41.0, too.
+    ("check", re.compile(r"hook error: (?:" + names.PLUGIN + "|" + names.KNOWLEDGE + r"):[a-z-]+: ")),
     ("rejected", re.compile(r"doesn't want to proceed|User rejected")),
     ("hook", re.compile(r"hook error")),
     ("classifier", re.compile(r"auto mode classifier|auto mode cannot")),
