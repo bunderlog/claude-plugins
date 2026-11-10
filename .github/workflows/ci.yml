@@ -70,6 +70,41 @@ jobs:
           if mise run check; then echo "check passed with a failing test of apps/app" >&2; exit 1; fi
           rm apps/app/src/views/broken.test.ts
           test -z "$(git status --porcelain)"
+      # mise run dev starts Postgres, the API and Vite: /api/up answers through either, the app's
+      # page carries the product's name, and the server has run the migrations.
+      - shell: bash
+        working-directory: ${{ runner.temp }}/demo
+        run: |
+          set -euo pipefail
+          setsid mise run dev > "$RUNNER_TEMP/dev.log" 2>&1 &
+          dev=$!
+          trap 'code=$?; kill -TERM -- "-$dev" 2>/dev/null || true; [ "$code" = 0 ] || cat "$RUNNER_TEMP/dev.log"' EXIT
+          for url in http://localhost:8080/api/up http://localhost:5173/api/up; do
+            curl -fsS --retry 90 --retry-delay 2 --retry-all-errors "$url"; echo
+          done
+          curl -fsS http://localhost:5173/ | grep '<title>demo</title>'
+          test "$(docker compose exec -T db psql -U demo -d demo -tAc 'select max(version_id) from goose_db_version')" = 1
+      # The Dockerfile's image serves the API and the app's build on one port.
+      - shell: bash
+        working-directory: ${{ runner.temp }}/demo
+        run: |
+          set -euo pipefail
+          docker build -t demo .
+          docker run -d --name demo --network host -e ADDR=:8081 \
+            -e 'DATABASE_URL=postgres://demo@localhost:5433/demo?sslmode=disable' demo
+          trap 'code=$?; [ "$code" = 0 ] || docker logs demo; docker rm -f demo > /dev/null' EXIT
+          curl -fsS --retry 30 --retry-delay 1 --retry-all-errors http://localhost:8081/api/up; echo
+          curl -fsS http://localhost:8081/ | grep '<title>demo</title>'
+          curl -fsS http://localhost:8081/notes/1 | grep '<title>demo</title>'
+      # mise run deploy runs the pinned Kamal image with .env's secrets, which git ignores.
+      - shell: bash
+        working-directory: ${{ runner.temp }}/demo
+        run: |
+          set -euo pipefail
+          if mise run deploy config; then echo "deploy ran with no .env" >&2; exit 1; fi
+          cp .env.example .env
+          mise run deploy config | grep -F '"<server>"'
+          test -z "$(git status --porcelain)"
 
   # hathi's commit and repo Checks on what the push or pull request brings.
   hathi:
