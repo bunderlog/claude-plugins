@@ -3,6 +3,7 @@ copied out of this repo, runs every Hook it declares on a harmless call and lets
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import unittest
@@ -61,6 +62,31 @@ class Alone(unittest.TestCase):
                     self.assertEqual(p.returncode, 0, f"{what}: {p.stderr}")
                     self.assertNotIn('"deny"', p.stdout, what)
                     self.assertNotIn('"block"', p.stdout, what)
+        self.check_skills(name, root)
+        if name == "louie":
+            dest = os.path.join(testkit.tempdir(self), "demo")
+            p = subprocess.run(["python3", "-E", "-s", os.path.join(root, "scripts", "run.py"),
+                                "new", dest, "demo", "owner"], env=env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True, timeout=60)
+            self.assertEqual(p.returncode, 0, f"louie new: {p.stderr}")
+            self.assertTrue(os.path.isfile(os.path.join(dest, "CLAUDE.md")), p.stdout)
+
+    def check_skills(self, name, root):
+        """Each skill of the plugin copied to `root` has its name and a description, and every
+        file of the plugin it runs is in the copy."""
+        skills = os.path.join(root, "skills")
+        for skill in sorted(os.listdir(skills)) if os.path.isdir(skills) else []:
+            with open(os.path.join(skills, skill, "SKILL.md"), encoding="utf-8") as f:
+                text = f.read()
+            what = f"{name} skill {skill}"
+            match = re.match(r"---\n(.*?)\n---\n", text, re.S)
+            self.assertIsNotNone(match, f"{what}: no frontmatter")
+            fields = dict(line.split(": ", 1) for line in match.group(1).splitlines()
+                          if ": " in line and not line.startswith(" "))
+            self.assertEqual(fields.get("name"), skill, what)
+            self.assertTrue(fields.get("description"), what)
+            for rel in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^'\"\s`]+)", text):
+                self.assertTrue(os.path.exists(os.path.join(root, rel)), f"{what}: {rel}")
 
 
 if __name__ == "__main__":
