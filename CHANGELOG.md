@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.49.1 — 2026-11-10
+
+### louie
+
+#### Fixes
+
+- louie: log the go-vue template's failed response writes with the request's context (73468ff)
+
 ## 0.49.0 — 2026-11-10
 
 ### louie
