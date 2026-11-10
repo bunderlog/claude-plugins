@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.41.0 — 2026-11-10
+
+### baloo
+
+#### Breaking changes
+
+- split bagheera out of baloo: each person's session machinery, installed once (3532a7e)
+
+### bagheera
+
+#### Breaking changes
+
+- split bagheera out of baloo: each person's session machinery, installed once (3532a7e)
+
 ## 0.40.0 — 2026-11-10
 
 ### Features
