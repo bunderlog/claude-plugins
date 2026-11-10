@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.43.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: run /louie:verify as a Workflow, one verifier per source (d621ab7)
+
 ## 0.42.1 — 2026-11-10
 
 ### bagheera
