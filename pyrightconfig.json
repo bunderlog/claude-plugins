@@ -1,4 +1,4 @@
 {
-  "extraPaths": ["plugins/baloo/scripts"],
+  "extraPaths": ["plugins/bagheera/scripts", "plugins/louie/scripts"],
   "pythonVersion": "3.9"
 }
