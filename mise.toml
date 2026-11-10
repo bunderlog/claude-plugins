@@ -4,12 +4,15 @@
 python = "3.9.25"
 shellcheck = "0.11.0"
 ruff = "0.17.0"
+# Only for the tests of louie's Workflows, which Claude Code runs as JavaScript (PRD delivery).
+node = "24.22.1"
 "github:bunderlog/hathi" = "1.2.0"
 
 [tasks.check]
-description = "Test and lint the Python code, and lint the Hooks' sh"
+description = "Test and lint the Python code, test the Workflows, and lint the Hooks' sh"
 run = [
   "python -m unittest discover -s tests -t .",
+  "node --test 'tests/workflows/*.test.mjs'",
   "ruff check plugins/bagheera/scripts plugins/louie/scripts src tests",
   "shellcheck plugins/baloo/scripts/session-start plugins/bagheera/scripts/hook plugins/louie/scripts/hook",
 ]
