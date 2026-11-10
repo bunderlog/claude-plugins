@@ -28,9 +28,11 @@ func build(t *testing.T) string {
 	return dir
 }
 
-func get(h http.Handler, path string) *httptest.ResponseRecorder {
+// serve sends h a request with the method to the path and returns what h answered.
+func serve(t *testing.T, h http.Handler, method, path string) *httptest.ResponseRecorder {
+	t.Helper()
 	w := httptest.NewRecorder()
-	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+	h.ServeHTTP(w, httptest.NewRequest(method, path, nil))
 	return w
 }
 
@@ -44,7 +46,7 @@ func TestWithApp_ServesTheAppOnEveryPathButTheAPIs(t *testing.T) {
 		{"/api/up", `"status":"up"`, ""},
 	} {
 		t.Run(tc.path, func(t *testing.T) {
-			w := get(h, tc.path)
+			w := serve(t, h, http.MethodGet, tc.path)
 			if w.Code != http.StatusOK {
 				t.Fatalf("GET %s status = %d, want %d", tc.path, w.Code, http.StatusOK)
 			}
@@ -59,7 +61,7 @@ func TestWithApp_ServesTheAppOnEveryPathButTheAPIs(t *testing.T) {
 }
 
 func TestWithApp_KeepsAssetsAYear(t *testing.T) {
-	w := get(WithApp(Routes(), build(t)), "/assets/index.js")
+	w := serve(t, WithApp(Routes(), build(t)), http.MethodGet, "/assets/index.js")
 	if w.Code != http.StatusOK || w.Body.String() != "console.log(1)" {
 		t.Fatalf("GET an asset = %d %q, want %d %q", w.Code, w.Body.String(), http.StatusOK, "console.log(1)")
 	}
@@ -69,7 +71,7 @@ func TestWithApp_KeepsAssetsAYear(t *testing.T) {
 }
 
 func TestWithApp_MissingAssetIs404(t *testing.T) {
-	w := get(WithApp(Routes(), build(t)), "/assets/missing.js")
+	w := serve(t, WithApp(Routes(), build(t)), http.MethodGet, "/assets/missing.js")
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("GET a missing asset status = %d, want %d", w.Code, http.StatusNotFound)
 	}
