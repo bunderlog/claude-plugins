@@ -80,8 +80,9 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 - bagheera's Checks are off only with bagheera or its Hooks.
 - The release tool has to release several plugins under one version before the first split, and
   whether a change needs a Release depends on `plugins/` as a whole (ADR releases).
-- Helpers copied into bagheera and louie (reading a Hook's input, state kept for a session) can
-  drift apart; each plugin's tests run on their own.
+- Helpers copied into bagheera and louie (reading a Hook's input, state kept for a session) could
+  drift apart: a test keeps each copied module the same as its twin but for the plugin's name,
+  and each plugin keeps only the helpers it calls; each plugin's tests run on their own.
 - A plugin's entry script is in `scripts/`, not `bin/`: claude.ai and Cowork don't install a plugin
   with a top-level `bin/`, and nothing needs it on the Bash tool's `PATH`, since a skill can name
   its path under `${CLAUDE_PLUGIN_ROOT}/scripts/`.

@@ -22,8 +22,8 @@ caching off it doesn't show. Claude Code runs the line again when the cache goes
 
 It draws its default bars at their default thresholds; no file sets them (PRD no-config). A plugin
 can't set Claude Code's `statusLine` itself, and the plugin writes none: each person sets it in
-their own `~/.claude/settings.json`, as `python3 -E -s '<plugin data>/baloo/scripts/run.py'
-status-line # managed by baloo`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session
+their own `~/.claude/settings.json`, as `python3 -E -s '<plugin data>/bagheera/scripts/run.py'
+status-line # managed by bagheera`. The path is a link in `${CLAUDE_PLUGIN_DATA}` that each session
 start points at the running version's plugin folder (ADR binary), so the command stays the same
 from one version to the next. Where no settings file Claude Code reads sets `statusLine`, the
 first session start in a clone has Claude offer the person, once per clone, to add that line, and
