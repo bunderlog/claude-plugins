@@ -11,7 +11,7 @@ WORKFLOWS = os.path.join(
 
 class Workflows(unittest.TestCase):
     # Each Workflow's meta is the script's first statement, a plain literal with its name,
-    # description and the phases its phase() calls use, and no script calls what Claude Code makes
+    # description and the phases its phase() calls and its agents' phase use, and no script calls what Claude Code makes
     # throw or refuses (PRD delivery).
     def test_meta_and_body(self):
         names = sorted(f for f in os.listdir(WORKFLOWS) if f.endswith(".js"))
@@ -28,7 +28,7 @@ class Workflows(unittest.TestCase):
                 # A plain literal: no variable, call or spread, which drops the command.
                 self.assertNotRegex(re.sub(r"'(?:[^'\\]|\\.)*'", "''", body), r"\.\.\.|\w\(|\$\{")
                 listed = re.findall(r"\{ title: '([^']+)' \}", body)
-                called = set(re.findall(r"\bphase\('([^']+)'\)", text[meta.end():]))
+                called = set(re.findall(r"\bphase(?:\(|: )'([^']+)'", text[meta.end():]))
                 self.assertEqual(set(listed), called)
                 for banned in ("Date.now(", "Math.random(", "import(", "new Date()"):
                     self.assertNotIn(banned, text)
