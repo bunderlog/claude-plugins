@@ -1,4 +1,4 @@
-"""The plugin's commands, one for each part of the plugin, as its Hooks, Git hooks, Status line
+"""The plugin's commands, one for each part of the plugin, as its Hooks
 and skills run them through scripts/run.py (ADR binary)."""
 
 from __future__ import annotations

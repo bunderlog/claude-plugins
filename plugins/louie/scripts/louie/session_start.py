@@ -70,7 +70,7 @@ def run(session: str, stdout: TextIO, stderr: TextIO) -> int:
         try:
             binlink.point(data)
         except OSError:
-            pass  # the Status line and the old Git hooks, which run through it, say so
+            pass  # a later prompt runs session start again
     s = Start(dir, root, data, session)
     out = Lines()
     for part in PARTS:

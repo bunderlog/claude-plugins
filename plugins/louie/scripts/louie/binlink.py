@@ -1,7 +1,5 @@
 """The link in the plugin's data folder to the plugin's folder of the version running, which session
-start points at it: what the Status line, and the Git hooks an earlier Release wrote, run through, so
-their command stays the same from one version to the next (ADR binary, ADR status-line, ADR
-git-hooks)."""
+start points at it, so a later prompt knows this version's session start ran (ADR binary)."""
 
 from __future__ import annotations
 
