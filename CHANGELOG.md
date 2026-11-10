@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.46.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: add /louie:new, which starts a Go and Vue product from the go-vue template (66938fd)
+
 ## 0.45.1 — 2026-11-10
 
 ### louie
