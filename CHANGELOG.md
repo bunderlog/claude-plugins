@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.43.1 — 2026-11-10
+
+### louie
+
+#### Fixes
+
+- verify: find the Guidelines in a Workflow, and name each finding's source (5ca4c56)
+
 ## 0.43.0 — 2026-11-10
 
 ### louie
