@@ -1,7 +1,5 @@
 # louie plans several Issues first, then delivers those that are ready and don't overlap
 
-Status: proposed
-
 ## Problem
 
 A developer with several agreed Issues starts `/louie:deliver` on each, and the runs stop one by
