@@ -37,5 +37,11 @@ baloo loses its Python with the last of bagheera's moves. One feature at a time 
 ### 2026-11-10 · progress
 
 The simpler Session review and bagheera shipped with 0.41.0, louie with 0.42.0, and
-`plugins/baloo/` holds no Python. Left: the PRDs for delivery and templates, and the install
-criteria on a clean machine.
+`plugins/baloo/` holds no Python. Left: the install criteria on a clean machine, and the test
+that each plugin works with the others gone.
+
+### 2026-11-10 · progress
+
+PRD delivery and PRD templates are agreed; 0.44.1 tells once, to whoever still picks
+`baloo:short-replies`, to pick `bagheera:short-replies`. The clean machine is a new macOS account,
+with python3 from the Command Line Tools.
