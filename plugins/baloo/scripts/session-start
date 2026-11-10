@@ -1,0 +1,63 @@
+#!/bin/sh
+# baloo's one Hook (PRD louie): at session start, in a repo, how many items the Inbox holds (ADR
+# inbox) and the files in .about/ git hasn't committed (ADR about-folder), for Claude to tell the
+# user. What it prints Claude Code adds to Claude's context. It prints nothing outside a repo, in
+# the home folder or Claude Code's own, and in a Session review's session; nothing of .about/'s
+# changes in a headless one.
+set -u
+
+[ -n "${BALOO_SESSION_REVIEW:-}" ] && exit 0
+dir=${CLAUDE_PROJECT_DIR:-$PWD}
+root=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || exit 0
+own=${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}
+case $root in
+  "${HOME:-/nonexistent}" | "$own" | "$own"/*) exit 0 ;;
+esac
+
+out=""
+inbox=$root/.about/inbox.md
+if [ -f "$inbox" ]; then
+  # One item per `## ` heading outside a fenced code block; kept, where the line after its heading
+  # ends ` · kept YYYY-MM-DD`.
+  counts=$(awk '
+    /^```/ { fenced = !fenced; dated = 1; next }
+    fenced { next }
+    /^## / { n++; dated = 0; next }
+    !dated && /[^[:space:]]/ {
+      dated = 1
+      if ($0 ~ / · kept [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][[:space:]]*$/) kept++
+    }
+    END { print n + 0, kept + 0 }
+  ' "$inbox")
+  n=${counts% *} kept=${counts#* }
+  if [ "$n" -gt 0 ]; then
+    if [ "$n" -eq 1 ]; then items="1 item"; else items="$n items"; fi
+    left=""
+    if [ "$kept" -eq "$n" ]; then
+      left=", each gone through once and kept"
+    elif [ "$kept" -gt 0 ]; then
+      left=", $((n - kept)) not gone through yet"
+    fi
+    out="$out
+.about/inbox.md holds $items to consider$left: tell the user, and that /baloo:inbox goes through them"
+  fi
+fi
+
+case ${CLAUDE_CODE_ENTRYPOINT:-} in
+  sdk-*) ;;
+  *)
+    files=$(git -C "$root" status --porcelain -z --untracked-files=all -- .about 2>/dev/null |
+      tr '\0' '\n' |
+      awk 'skip { skip = 0; next }
+        { path = substr($0, 4); if (substr($0, 1, 1) ~ /[RC]/) skip = 1 }
+        path ~ /^\.about\// && path !~ /^\.about\/proposals\// { print path }' |
+      sort | awk 'NR > 1 { printf ", " } { printf "%s", $0 }')
+    if [ -n "$files" ]; then
+      out="$out
+.about/ has changes git hasn't committed: $files: tell the user, and that committing them is theirs"
+    fi
+    ;;
+esac
+
+[ -n "$out" ] && printf 'baloo:%s\n' "$out"
+exit 0

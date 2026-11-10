@@ -10,8 +10,8 @@ ruff = "0.17.0"
 description = "Test and lint the Python code, and lint the Hooks' sh"
 run = [
   "python -m unittest discover -s tests -t .",
-  "ruff check plugins/baloo/scripts plugins/bagheera/scripts src tests",
-  "shellcheck plugins/baloo/scripts/hook plugins/bagheera/scripts/hook",
+  "ruff check plugins/bagheera/scripts plugins/louie/scripts src tests",
+  "shellcheck plugins/baloo/scripts/session-start plugins/bagheera/scripts/hook plugins/louie/scripts/hook",
 ]
 
 # The tag and main are pushed together: with nothing to build, a copy that updates to the new

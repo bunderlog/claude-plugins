@@ -1,11 +1,11 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-09
+Date: 2026-11-10
 
-A Guideline is a file of working rules in `plugins/baloo/guidelines/`: `principles`, `design`,
+A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
 `dependencies` for one with a package manager's manifest, `go`, `typescript`, `vue` and `tailwind`
-for their stacks. Each is on wherever baloo is, with no switch of its own (PRD no-config). At
+for their stacks. Each is on wherever louie is, with no switch of its own (PRD no-config). At
 session start the plugin prints, for each Guideline that fits the repo, one line: when to read it
 and its path.
 Claude reads the file itself when a task calls for it. `principles` also carries the few rules
@@ -167,20 +167,18 @@ CI never gets `ci`'s line.
 
 ## Consequences
 
-- Outside a repo, and in Claude Code's own folder, there is no Config, so no Guideline is on.
-- A repo that takes up a stack, a CI or a package manager after its Config was made gets its
-  Guideline only when someone turns its key on; session start says so once, then only `doctor`.
-- A Guideline turned off on purpose, though the repo fits it, is named once all the same.
-- Session start walks the repo while a Guideline tied to a stack is off and not yet named: a few
-  milliseconds in a repo of these sizes, more in a large one.
-- Every Guideline needs a key in the Config and the schema, and the index line it prints; adding
-  one is a file and a key.
+- Outside a repo, and in Claude Code's own folder, no Guideline is named.
+- A repo that takes up a stack, a CI or a package manager has its Guideline named from the next
+  session start.
+- Session start walks the repo for the stacks: a few milliseconds in a repo of these sizes, more
+  in a large one.
+- Every Guideline needs its file and the index line it prints; adding one is a file and a line.
 - The Hook runs on every Read, whatever the file, since a Hook picks its calls by tool name; the
   Hook's `sh` starts Python only for a path with `/guidelines/` in it (ADR binary).
 - Reading a Guideline asks the user where `python3` isn't there to allow it, and where their
   own ask rule covers the file.
-- The allow covers every file in `guidelines/`, a Guideline that is off too: it is the plugin's
-  own text, and reading one is Claude's step, not the context's cost.
+- The allow covers every file in `guidelines/`, one that doesn't fit the repo too: it is the
+  plugin's own text, and reading one is Claude's step, not the context's cost.
 - `typescript` and `vue` come only after a Write that creates a file: a new component is written
   without them. `testing` comes after the first edit or Write of a test in a session, so that
   edit is made without it.

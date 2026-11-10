@@ -1,15 +1,14 @@
 # baloo glossary
 
-`baloo`, a Claude Code plugin in the `bunderlog` marketplace: skills that keep a project's
-language, decisions and requirements explicit, write its Issues, go through its Inbox, run a
-Retro or a Verification, or show the plugin's state; a Session review; Guidelines of working
-rules; Checks in the plugin's Python code that Hooks trigger; an Output style for Claude's
-replies; and a Status line.
+The plugins of the `bunderlog` marketplace: `baloo`, skills that keep a project's language,
+decisions and requirements explicit, write its Issues and go through its Inbox; `louie`,
+Guidelines of working rules and a Verification; and `bagheera`, Checks that Hooks trigger, a
+Session review, a Retro, an Output style for Claude's replies, a Status line and `doctor`.
 
 ## Distribution
 
 **Release**:
-A version of the plugin reaching its users: a tagged commit with the new version in
+A version of the plugins reaching their users: a tagged commit with the new version in each
 `plugin.json` and its section in `CHANGELOG.md`. Installed copies update only to a new Release, so
 a change made without one reaches nobody.
 _Avoid_: deploy, publish; "Release" for the GitHub Release
@@ -21,19 +20,17 @@ _Avoid_: "Release" alone
 
 ## The plugins and `hathi`
 
-bagheera shipped with 0.41.0 (PRD bagheera); louie is planned, and until it ships baloo does
-its part.
-
 **bagheera**:
 The plugin each person turns on once, for every session: Checks in Hooks beyond Claude Code's
 deny rules, the Status line and `doctor`, the Session review and Retro, the `short-replies` Output
 style, and setting a project up.
-_Avoid_: "baloo" for these parts once bagheera ships
+_Avoid_: "baloo" for these parts
 
 **louie**:
-The plugin a project turns on to build: a Guideline per stack, given when a file of its stack is
-first touched, templates for a new product, and the Workflows from an Issue to a pull request,
-`verify` among them.
+The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
+where it fits, and the Verification; to come, templates for a new product and the Workflows from
+an Issue to a pull request (PRD louie).
+_Avoid_: "baloo" for these parts
 
 **`hathi`**:
 The Go CLI a project's Git hooks and CI run on each commit: its message format, Secrets, an AI
@@ -61,36 +58,35 @@ project
 
 **Git hook**:
 A script git runs at a step of its own (`pre-commit`, `commit-msg`, `pre-push`), on every commit
-or push, whether you or Claude made it. A set-up project's own, committed, run `hathi`; the plugin
-writes none, and one an earlier Release wrote lets each commit through (ADR git-hooks).
+or push, whether you or Claude made it. A set-up project's own, committed, run `hathi`; no plugin
+writes one, and one an earlier baloo wrote lets each commit through (ADR git-hooks).
 _Avoid_: "hook" alone
-_In code_: `git_hook` in `baloo/cli.py`, for the old ones
 
 **Check**:
-Code in the plugin that a Hook triggers, such as `baloo:no-secrets-in-context`, always on where
-baloo is (ADR checks); a commit's Checks are `hathi`'s.
+Code in bagheera that a Hook triggers, such as `bagheera:no-secrets-in-context`, always on where
+bagheera is (ADR checks); a commit's Checks are `hathi`'s.
 _Avoid_: built-in check; "a Check on Claude's tool calls"
-_In code_: `baloo/checks/`; `HOOK_CHECKS`
+_In code_: `bagheera/checks/`
 
 **Guideline**:
-A file of working rules the plugin ships, for any project (`principles`, `design`), for a repo
+A file of working rules louie ships, for any project (`principles`, `design`), for a repo
 with a CI (`ci`) or a package manager (`dependencies`), or for one stack (`go`, `vue`), that a Hook
 gives Claude by its task's signal, or session start names where it fits the repo (ADR guidelines).
 _Avoid_: rule, guide; a skill, which Claude Code always lists; "Guideline" for an Output style
-_In code_: `baloo/guidelines.py`
+_In code_: `louie/guidelines.py`
 
 **Output style**:
-Instructions for how Claude writes its replies, such as `short-replies`, that the plugin ships
+Instructions for how Claude writes its replies, such as `short-replies`, that bagheera ships
 and Claude Code sends with every request once a person's own `outputStyle` setting picks one
 (ADR output-styles).
 _Avoid_: "style" alone; tone
 
 **Status line**:
-The line Claude Code shows under the prompt; the plugin's own, with the branch, the Usage bars, the
-Cache bar and the model, is drawn by the plugin, and set by each person in their own settings (ADR
+The line Claude Code shows under the prompt; bagheera's, with the branch, the Usage bars, the
+Cache bar and the model, is drawn by bagheera, and set by each person in their own settings (ADR
 status-line).
 _Avoid_: "status" alone, which is a PRD's Status
-_In code_: `baloo/statusline.py`
+_In code_: `bagheera/statusline.py`
 
 **Usage bar**:
 One of the Status line's three bars showing how much is used: the context window, and the 5-hour
@@ -141,7 +137,7 @@ _Avoid_: log, history
 A review the user asks for of how past sessions went: their Stalls, and the change to the Setup
 that would have spared each. It looks at how the work went, not at what it produced.
 _Avoid_: retrospective, post-mortem
-_In code_: the `retro` skill; `baloo/condense.py`
+_In code_: the `retro` skill; `bagheera/condense.py`
 
 **Stall**:
 A point in a session that cost the user something the Setup could have spared: a failed or
@@ -150,25 +146,24 @@ mid-change, a denial that was right, or a call that is the user's to make each t
 _Avoid_: issue, incident
 
 **Session review**:
-A review the plugin starts itself when a session ends, in every repo with baloo on: a separate
-headless session proposes, as Proposals, what the conversation settled or left open but nobody
-wrote down, and a later session asks the user about each. Unlike a Retro, it looks at what was
+A review bagheera starts itself when a session ends, in every repo: a separate headless session
+proposes, as Proposals, what the conversation settled but nobody wrote down, and a later session asks the user about each. Unlike a Retro, it looks at what was
 settled, not at how the work went.
 _Avoid_: session-end review
 
 **Proposal**:
 One change a Session review proposes to the Inbox, the glossary, an ADR or a PRD, with its ready
 edit, in `.about/proposals/<review>.md`; it reaches `.about/` only once the user accepts it, and
-waits while they defer it; once decided, it is kept in the plugin's data folder. Stale when the
+waits while they defer it; once decided, it is kept in bagheera's data folder. Stale when the
 text it changes is gone; a mismatch when the log of decisions and its file disagree.
 _Avoid_: suggestion, draft
-_In code_: `baloo/review.py`
+_In code_: `bagheera/review.py`
 
 **Inbox**:
 The file `.about/inbox.md` of what is still to consider: a decision or term still open, a bug or a
 finding left for later. An item stays until something settles it, and is then deleted.
 _Avoid_: todo, backlog, proposed ADR
-_In code_: `baloo/inbox.py`, `names.INBOX`; the `inbox` skill goes through it
+_In code_: baloo's `scripts/session-start` counts it; the `inbox` skill goes through it
 
 **Issue**:
 Work agreed to do, a bug to fix or a task: a page in the tracker the project names, or else
@@ -179,10 +174,10 @@ _In code_: the `issue` skill writes one
 
 **Verification**:
 A comparison the user asks for of a change with what the project agreed: its ADRs, glossary, the
-Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. The plugin's
+Guidelines that fit the repo, and the acceptance criteria of its Issue or PRD. louie's
 agent, the verifier, makes it in a context of its own, so not as the change's author, and changes
 nothing. Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't
-run the change; unlike a Check, it isn't the plugin's code.
+run the change; unlike a Check, it isn't a plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` skill; `agents/verifier.md`; `names.VERIFIER`
 

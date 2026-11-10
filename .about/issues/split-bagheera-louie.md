@@ -5,7 +5,7 @@
 ## Symptom
 
 Phase 5 of the move to three plugins (ADR plugin): bagheera and louie ship from this marketplace,
-and baloo is left with its knowledge skills, Guidelines and one SessionStart Hook in `sh`. Now
+and baloo is left with its knowledge skills and one SessionStart Hook in `sh`. Now
 only after `config-out-of-baloo` and `release-several-plugins`, which it needs.
 
 ## Evidence
@@ -16,8 +16,8 @@ only after `config-out-of-baloo` and `release-several-plugins`, which it needs.
 
 ## Acceptance criteria
 
-- A PRD for each move exists and has no Status line: a simpler Session review; bagheera; stack
-  Guidelines given on a file's first touch; delivery from an Issue to a pull request, `verify`
+- A PRD for each move exists and has no Status line: a simpler Session review; bagheera; louie,
+  which takes the Guidelines and the verifier; delivery from an Issue to a pull request, `verify`
   included; templates.
 - PRD harness: "With every other plugin of the marketplace off, each plugin's skills load …" holds
   for all three.
@@ -33,3 +33,9 @@ only after `config-out-of-baloo` and `release-several-plugins`, which it needs.
 
 bagheera first, after the Session review is made simpler; then louie, its PRDs in the order above;
 baloo loses its Python with the last of bagheera's moves. One feature at a time (PRD harness).
+
+### 2026-11-10 · progress
+
+The simpler Session review and bagheera shipped with 0.41.0, louie with 0.42.0, and
+`plugins/baloo/` holds no Python. Left: the PRDs for delivery and templates, and the install
+criteria on a clean machine.

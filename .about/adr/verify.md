@@ -1,16 +1,16 @@
-# A Verification is the plugin's one agent, run by the `verify` skill when the user asks or agrees
+# A Verification is louie's one agent, run by the `verify` skill when the user asks or agrees
 
-Date: 2026-11-02
+Date: 2026-11-10
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
 one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
-change to see it work; neither knows anything of `.about/`. So the plugin ships one agent,
+change to see it work; neither knows anything of `.about/`. So louie ships one agent,
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
 departure with `file:line`. It doesn't hunt bugs, which the code review does.
 
-The `verify` skill runs it with `context: fork` and `agent: baloo:verifier`, waiting for its reply,
-so the user has `/baloo:verify`; Claude can also run the agent by its name. Both run only when the
+The `verify` skill runs it with `context: fork` and `agent: louie:verifier`, waiting for its reply,
+so the user has `/louie:verify`; Claude can also run the agent by its name. Both run only when the
 user asks or agrees, as a Verification is a whole run's tokens. Claude offers one, in a line and
 once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit
 or PR: there it has criteria to check against, and few tasks have one. The skill's description
@@ -29,11 +29,11 @@ holds only by its prompt, since a plugin's agent can't set a permission mode and
 findings are its reply: the session that asked decides with the user what to fix, and sends what is
 left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox). What it
 can't check by reading, whether the change works when run, it names for `/verify`. It runs with the
-user's model, as the Session review does (ADR session-review). No Config key turns it on or off: a
-plugin's agent and skill can't be hidden from one project anyway.
+user's model, as the Session review does (ADR session-review). Nothing turns it off but louie
+itself: a plugin's agent and skill can't be hidden from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
-the agent alone (`^baloo:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
+the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
 index session start prints. Where `python3` is missing or the plugin fails, the agent starts
 without it and says it couldn't check the Guidelines.
 
@@ -53,14 +53,14 @@ without it and says it couldn't check the Guidelines.
 - Offered after every non-trivial edit of code — catches more, but offered nearly every session,
   it soon goes unread.
 - Offered before a PR only — never, in a project that commits straight to `main`.
-- Only the agent, with no skill — no `/baloo:verify`; the user would have to know
-  `@agent-baloo:verifier`.
+- Only the agent, with no skill — no `/louie:verify`; the user would have to know
+  `@agent-louie:verifier`.
 - Only a skill forked onto `general-purpose` — no agent file, but its tools can't be limited.
 - The diff put into the prompt by the skill, with no Bash — truly unable to write, but a large
   diff fills the prompt, and a PR or a run by the agent's name has none.
 - Writing its findings to the Inbox itself — it would need Edit, and what the session fixes a
   minute later would still land there.
-- The agent reading the Config itself, or the caller passing the Guidelines — the first guesses
+- The agent finding the Guidelines itself, or the caller passing them — the first guesses
   the plugin's folder and copies the index's rules into a prompt; the second is forgotten, and a
   run by the agent's name has none.
 - `review` for the name — the word is a Session review's, a Retro's and a code review's already

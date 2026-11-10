@@ -1,11 +1,12 @@
 # Three plugins in the `bunderlog` marketplace, split by who turns a part on and what it is made of
 
-Date: 2026-11-09
+Date: 2026-11-10
 
 This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
-project's method — the knowledge skills, Guidelines and one SessionStart Hook in `sh`, no Python;
-`louie`, building — a Guideline per stack given when a file of the stack is first touched,
-templates, and the Workflows `plan`, `ticket`, `batch`, `verify` and `upgrade-all`; and
+project's method — the knowledge skills and one SessionStart Hook in `sh`, no Python; `louie`,
+building — the Guidelines, each given by its task's signal or named where it fits, the verifier
+and `verify`, and to come templates and the Workflows `plan`, `ticket`, `batch` and `upgrade-all`
+(PRD louie); and
 `bagheera`, the person's sessions and repos — Checks in Hooks beyond Claude Code's deny rules, the
 Status line and `doctor`, the Session review and Retro, the `short-replies` Output style, and
 setting a project up. A part goes where who turns it on and what it is made of put it: a project
@@ -24,12 +25,11 @@ file names) is a constant in one module of that plugin, so a rename is one edit 
 the manifests and the docs.
 
 New work that leans on what a plugin already has is part of that plugin, not a plugin of its own:
-fixing a failed CI run is baloo's `ci` Guideline (ADR guidelines), which follows `debugging` and
+fixing a failed CI run is louie's `ci` Guideline (ADR guidelines), which follows `debugging` and
 hands a flaky failure to the `issue` skill.
 
-The move is made a step at a time, a Release per step, each an Issue in `.about/issues/`; until
-its step ships, a part stays in baloo, working as its own ADR says (config, git-hooks, guidelines,
-output-styles, status-line, doctor, verify).
+The move was made a step at a time, a Release per step: bagheera shipped with 0.41.0 and louie
+with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 
 ## Considered options
 
@@ -54,9 +54,12 @@ output-styles, status-line, doctor, verify).
   the skills.
 - Workflows in a plugin of their own, or in baloo — building is louie's job, and in baloo they
   would need code beyond its one session-start Hook.
+- The Guidelines in baloo, louie taking only the stacks' (until 2026-11-10) — giving a Guideline
+  by its task's signal takes Hooks in Python, and baloo would no longer be markdown alone; the
+  rules on every task reach Claude from louie's session start just the same.
 - Setting a project up in baloo — baloo is off in a repo until the repo is set up.
 - A second plugin for fixing a failed CI run — it would find the local command to reproduce a
-  failure on its own, which baloo's `ci` Guideline already does.
+  failure on its own, which louie's `ci` Guideline already does.
 
 ## Consequences
 
