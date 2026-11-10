@@ -38,11 +38,12 @@ item needed an edit by hand.
     unless the project already checks Secrets in a hook of its own.
   - The Git hooks: `.githooks/` with `commit-msg`, `pre-commit` and `pre-push`, each as `hathi
     hooks print <hook>` prints it; in a repo with husky (`.husky/`), the same three hooks there,
-    `hathi check <hook>` first and the project's own lines after; in one with lefthook, a `hathi`
-    command first in each of the three; husky's older setup in `package.json`, or another
-    manager, stops it with what it found.
+    `hathi check <hook>` first and the project's own lines after; lefthook, `pre-commit`'s
+    framework, husky's older setup in `package.json`, or another manager stops it with what it
+    found, since none of the machine's repos uses one and its YAML needs more than the standard
+    library to edit.
   - The command that turns the hooks on, in the README's `## Development` section, the section
-    added where there is none.
+    added where there is none; in `CLAUDE.md` where the repo has no README.
   - The ADR `.about/adr/repo-setup.md`, in ADR adr-format's form: whether the project runs
     `hathi`, what checks Secrets, and what an earlier baloo left that the run removed.
 - It keeps what the project already has: its other settings, the rest of `CLAUDE.md`, the README
@@ -52,9 +53,10 @@ item needed an edit by hand.
 - It ends by giving the command that turns the Git hooks on in this clone, and running `doctor`.
 - Run again in a set-up repo, it changes no file.
 - `doctor` names, in a repo, each item of the list the checked-out files lack, a line each, with
-  `/bagheera:setup` as the fix; a repo with none of them gets one line, that it isn't set up. A
-  missing item is a problem, as `doctor`'s others are. It checks the README for the command, the
-  ADR by its file, and `.hathi.yml` for each `conventional-commits` type.
+  `/bagheera:setup` as the fix; a repo whose `.claude/settings.json` doesn't turn baloo on gets
+  one line, that it isn't set up. A missing item is a problem, as `doctor`'s others are. It
+  checks the README for the command, the ADR by its file, and `.hathi.yml` for each
+  `conventional-commits` type.
 - bagheera's session start says once per clone, the clone known by its root's path and the mark
   kept in bagheera's data folder for good, in a repo that lacks any item, that the repo isn't set
   up and `/bagheera:setup` does it; nothing in a headless session.

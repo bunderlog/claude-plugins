@@ -25,9 +25,11 @@ Why things are the way they are is in [.about/adr/](.about/adr/).
 
 ## Git hooks
 
-No plugin writes a Git hook: a project's own, committed in `.githooks/`, run `hathi`, and its CI
-runs the same `hathi` (PRD project-setup). A Git hook an earlier baloo wrote into `.git/hooks`
-now lets each commit through, saying so and how to remove it.
+A project's own Git hooks, committed in `.githooks/`, run `hathi`, and its CI runs the same
+`hathi` (PRD project-setup). `/bagheera:setup` writes that Setup, its Git hooks among it, into the
+repo for you to commit, and `/bagheera:doctor` names what a repo lacks of it (PRD setup). A Git
+hook an earlier baloo wrote into `.git/hooks` now lets each commit through, saying so and how to
+remove it.
 
 ## Settings
 

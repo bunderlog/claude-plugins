@@ -1,9 +1,11 @@
 # The plugin writes no Git hook; a project's own run `hathi`, and an old one of the plugin's passes
 
-Date: 2026-11-09
+Date: 2026-11-11
 
-The plugin writes no Git hook and checks no commit: a project set up for the plugins commits its
-own Git hooks, which run `hathi` (PRD project-setup), and its CI runs the same `hathi`. Session
+No plugin's Hook writes a Git hook, and none checks a commit: a project set up for the plugins
+commits its own Git hooks, which run `hathi` (PRD project-setup), and its CI runs the same `hathi`.
+Only bagheera's setup skill, which the person runs, writes them into the working tree, for the
+person to commit (PRD setup). Session
 start leaves `.git/hooks` and husky's files as they are, says nothing of Git hooks, and neither
 turns off Claude Code's commit attribution nor tells Claude a commit format: the project's
 committed settings and `CLAUDE.md`, which imports `.hathi.yml`, do (PRD harness).
