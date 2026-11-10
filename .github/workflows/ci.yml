@@ -55,12 +55,21 @@ jobs:
           version=$(python3 -E -s "$GITHUB_WORKSPACE/plugins/louie/scripts/run.py" version)
           test "$(git log -1 --format=%s)" = "chore: scaffold from louie go-vue $version"
           mise run check
-          if grep -rE '__(NAME|OWNER|DATE)__' --exclude-dir=.git .; then exit 1; fi
+          if grep -rE '__(NAME|OWNER|DATE)__' --exclude-dir=.git --exclude-dir=node_modules .; then exit 1; fi
           grep -qx 'module github.com/bunderlog/demo' apps/api/go.mod
           # check fails where internal/db isn't what sqlc generates, with no database.
           echo '// drift' >> apps/api/internal/db/models.go
           if mise run check; then echo "check passed with internal/db drifted" >&2; exit 1; fi
           git checkout -- apps/api/internal/db/models.go
+          grep -q '"name": "@demo/app"' apps/app/package.json
+          # The lockfile is keyed by path: the product's name is in none of it.
+          if grep -qw demo pnpm-lock.yaml; then echo "pnpm-lock.yaml holds the name" >&2; exit 1; fi
+          # check fails where a test of apps/app fails.
+          printf '%s\n' 'import { expect, test } from "vitest";' '' 'test("fails", () => {' \
+            '  expect(1).toBe(2);' '});' > apps/app/src/views/broken.test.ts
+          if mise run check; then echo "check passed with a failing test of apps/app" >&2; exit 1; fi
+          rm apps/app/src/views/broken.test.ts
+          test -z "$(git status --porcelain)"
 
   # hathi's commit and repo Checks on what the push or pull request brings.
   hathi:
