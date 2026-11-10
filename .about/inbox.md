@@ -210,3 +210,12 @@ comment, and the user said to stop only when it is truly unclear. Settled by dec
 `deliver` takes a plan already made (its report, with the decisions written into the Issue), or
 whether the planner treats a choice with a recommended option that no criterion or ADR rules out
 as an assumption rather than a decision.
+
+## A Check that fails lets the call through without a trace
+
+2026-11-10 · code review
+
+`scripts/hook` drops `run.py`'s stderr and exits 0 for every Hook but session start (ADR binary),
+so a Check that raises lets the tool call through and leaves nothing to find later. Settled by
+deciding whether `pre-tool-use` keeps its last failure in `${CLAUDE_PLUGIN_DATA}` for `doctor` to
+show, or by keeping it as it is, since session start already says when no Check runs at all.
