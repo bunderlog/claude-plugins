@@ -50,6 +50,14 @@ registered without a method and its handler switches on the method, or a small w
 the mux's plain-text 404 and 405 with `respond`'s JSON, keeping the `Allow` header. The wrapper
 keeps `Routes` reading as one line per route; the switch needs no response capture.
 
+### 2026-11-10 · decision
+
+The wrapper: when `mux.Handler(r)` finds no pattern, the mux's own 404 and 405 go out through
+`respond.Error`, with the `Allow` header the mux set. Routes keep their method patterns, one line
+each, a route a product adds needs no method handling of its own, and `Allow` stays right by
+itself. No catch-all `/api/` route: a method-less `/api/` pattern takes `POST /api/up` and answers
+404 instead of 405.
+
 ### 2026-11-10 · fix option
 
 The database package: `Open` moving into `internal/db` gives one name, at the cost of a
