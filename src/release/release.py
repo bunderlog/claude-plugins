@@ -1,30 +1,19 @@
-"""Makes a Release of the baloo plugin (ADR releases). It is not part of the plugin, so a change to
-it needs no Release. Run it from anywhere in the repo:
+"""Makes a Release of every plugin in the marketplace, under one version (ADR releases). It is not
+part of a plugin, so a change to it needs no Release. Run it from anywhere in the repo:
 
     python3 src/release/release.py    make a Release from the commits since the last one
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "plugins",
-        "baloo",
-        "scripts",
-    ),
-)
-
-from baloo import names  # noqa: E402
+from typing import Dict, List, Optional
 
 
 class Error(Exception):
@@ -39,11 +28,10 @@ class Commit:
     message: str
 
 
-# The paths whose change needs a Release, and whose commits alone count for its version and
-# CHANGELOG: the plugin. Its tests are in tests/, outside it.
-CHANGES = [names.PLUGIN_DIR]
+# The marketplace's manifest, from the repo's root: its plugins, each with the folder it is in.
+MARKETPLACE = ".claude-plugin/marketplace.json"
 
-CHANGELOG_HEADER = "# Changelog\n\nThe " + names.PLUGIN + " plugin's Releases, newest first.\n"
+CHANGELOG_HEADER = "# Changelog\n\nThe marketplace's Releases, newest first.\n"
 
 # A Conventional Commits subject: type, optional scope, optional `!`, description.
 _SUBJECT = re.compile(r"^(\w+)(?:\(([^)]*)\))?(!)?: (.+)$", re.A)
@@ -95,6 +83,21 @@ def next_version(version: str, commits: List[Commit], changed: bool) -> str:
 def section(version: str, date: str, commits: List[Commit]) -> str:
     """The CHANGELOG section for `version`: its breaking changes, features and fixes, oldest
     first."""
+    return f"## {version} — {date}\n\n{_body(commits, '###')}"
+
+
+def sections(version: str, date: str, by_plugin: Dict[str, List[Commit]]) -> str:
+    """The CHANGELOG section for `version` of several plugins: a part per plugin with commits, in
+    the order given, each with its breaking changes, features and fixes; with one plugin, as
+    section has it."""
+    if len(by_plugin) == 1:
+        return section(version, date, next(iter(by_plugin.values())))
+    parts = [f"### {name}\n\n{_body(commits, '####')}" for name, commits in by_plugin.items() if commits]
+    body = "\n".join(parts) if parts else "No feature changes or fixes.\n"
+    return f"## {version} — {date}\n\n{body}"
+
+
+def _body(commits: List[Commit], level: str) -> str:
     body = ""
     for title, keep in (
         ("Breaking changes", _breaking),
@@ -106,14 +109,12 @@ def section(version: str, date: str, commits: List[Commit]) -> str:
             continue
         if body:
             body += "\n"
-        body += f"### {title}\n\n"
+        body += f"{level} {title}\n\n"
         for c in listed:
             m = _parts(c)
             scope = m[2] + ": " if m[2] else ""
             body += f"- {scope}{m[4]} ({c.sha})\n"
-    if not body:
-        body = "No feature changes or fixes.\n"
-    return f"## {version} — {date}\n\n{body}"
+    return body or "No feature changes or fixes.\n"
 
 
 def _git(root: str, *args: str) -> str:
@@ -126,18 +127,46 @@ def _git(root: str, *args: str) -> str:
     return p.stdout.strip()
 
 
-def version(root: str) -> str:
-    """The plugin's version, in its manifest in the repo at `root`."""
-    path = os.path.join(root, names.MANIFEST)
+def plugins(root: str) -> Dict[str, str]:
+    """The marketplace's plugins in the repo at `root`, each by its name with its folder from the
+    root, in the marketplace's order."""
     try:
-        with open(path, encoding="utf-8") as f:
-            text = f.read()
-    except OSError as e:
-        raise Error(f"{names.MANIFEST}: {e.strerror or e}") from e
-    m = re.search(r'"version":\s*"([^"]*)"', text)
-    if not m or not m.group(1):
-        raise Error(f"{names.MANIFEST} has no version")
-    return m.group(1)
+        with open(os.path.join(root, MARKETPLACE), encoding="utf-8") as f:
+            listed = json.load(f).get("plugins", [])
+    except (OSError, ValueError) as e:
+        raise Error(f"{MARKETPLACE}: {e}") from e
+    found = {}
+    for p in listed:
+        source = p.get("source") if isinstance(p, dict) else None
+        if isinstance(source, str) and source.startswith("./"):
+            found[p.get("name", source)] = source[2:].rstrip("/")
+    if not found:
+        raise Error(f"{MARKETPLACE} lists no plugin in this repo")
+    return found
+
+
+def _manifest(folder: str) -> str:
+    return folder + "/.claude-plugin/plugin.json"
+
+
+def version(root: str) -> str:
+    """The version every plugin's manifest in the repo at `root` carries; an Error where one has
+    none or they differ (ADR releases)."""
+    got = {}
+    for name, folder in plugins(root).items():
+        path = os.path.join(root, _manifest(folder))
+        try:
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+        except OSError as e:
+            raise Error(f"{_manifest(folder)}: {e.strerror or e}") from e
+        m = re.search(r'"version":\s*"([^"]*)"', text)
+        if not m or not m.group(1):
+            raise Error(f"{_manifest(folder)} has no version")
+        got[name] = m.group(1)
+    if len(set(got.values())) > 1:
+        raise Error("the plugins' versions differ: " + ", ".join(f"{n} {v}" for n, v in got.items()))
+    return next(iter(got.values()))
 
 
 def _read(path: str) -> Optional[str]:
@@ -148,9 +177,20 @@ def _read(path: str) -> Optional[str]:
         return None
 
 
+def _commits(root: str, since: str, paths: List[str]) -> List[Commit]:
+    """The commits in `since` that change one of `paths`, oldest first."""
+    log = _git(root, "log", "--reverse", "--format=%h%x00%B%x1e", since, "--", *paths)
+    commits = []
+    for entry in log.split("\x1e"):
+        sha, _, message = entry.strip().partition("\x00")
+        if sha:
+            commits.append(Commit(sha, message.strip()))
+    return commits
+
+
 def release(root: str, today: str) -> str:
-    """Makes a Release in the repo at `root` from the commits since the last `v*` tag: it writes
-    the next version to the manifest and a section to CHANGELOG.md, commits these and tags the
+    """Makes a Release in the repo at `root` from the commits since the last `v*` tag that change a
+    plugin: it writes the next version to every plugin's manifest and a section to CHANGELOG.md, commits these and tags the
     commit, signed, for `mise run release` to push with main. It returns the version."""
     try:
         clean = _git(root, "status", "--porcelain") == ""
@@ -159,6 +199,8 @@ def release(root: str, today: str) -> str:
     if not clean:
         raise Error("commit or stash your changes first")
     current = version(root)
+    folders = plugins(root)
+    changes = list(folders.values())
     since = "HEAD"
     changed = True
     try:
@@ -167,37 +209,36 @@ def release(root: str, today: str) -> str:
         tag = ""
     if tag:
         if tag[1:] != current:
-            raise Error(f"the last tag is {tag}, but {names.MANIFEST} says {current}")
+            raise Error(f"the last tag is {tag}, but the plugins' manifests say {current}")
         since = tag + "..HEAD"
-        changed = _git(root, "diff", "--name-only", tag, "HEAD", "--", *CHANGES) != ""
-    log = _git(root, "log", "--reverse", "--format=%h%x00%B%x1e", since, "--", *CHANGES)
-    commits = []
-    for entry in log.split("\x1e"):
-        sha, _, message = entry.strip().partition("\x00")
-        if sha:
-            commits.append(Commit(sha, message.strip()))
+        changed = _git(root, "diff", "--name-only", tag, "HEAD", "--", *changes) != ""
+    by_plugin = {name: _commits(root, since, [folder]) for name, folder in folders.items()}
+    commits = _commits(root, since, changes)
     new = next_version(current, commits, changed)
     if not new:
-        raise Error(f"nothing to release: {' '.join(CHANGES)} is unchanged since v{current}")
+        raise Error(f"nothing to release: {' '.join(changes)} is unchanged since v{current}")
 
     # Every file is read and checked before any is written, so a failure leaves none half done.
-    manifest = os.path.join(root, names.MANIFEST)
-    text = _read(manifest)
-    if text is None:
-        raise Error(f"open {manifest}: no such file or directory")
-    bumped = re.sub(r'("version":\s*")[^"]*"', lambda m: m.group(1) + new + '"', text)
+    out = {}
+    for folder in folders.values():
+        manifest = os.path.join(root, _manifest(folder))
+        text = _read(manifest)
+        if text is None:
+            raise Error(f"open {manifest}: no such file or directory")
+        out[manifest] = re.sub(r'("version":\s*")[^"]*"', lambda m: m.group(1) + new + '"', text)
     file = os.path.join(root, "CHANGELOG.md")
     old = _read(file)
     if old is None:
         old = CHANGELOG_HEADER
-    entry = "\n" + section(new, today, commits)
+    entry = "\n" + sections(new, today, by_plugin)
     at = old.find("\n## ")
     changelog = old[:at] + entry + old[at:] if at >= 0 else old + entry
-    for path, out in ((manifest, bumped), (file, changelog)):
+    out[file] = changelog
+    for path, text in out.items():
         with open(path, "w", encoding="utf-8", newline="") as f:
-            f.write(out)
+            f.write(text)
 
-    _git(root, "add", names.MANIFEST, "CHANGELOG.md")
+    _git(root, "add", *(_manifest(folder) for folder in folders.values()), "CHANGELOG.md")
     msg = "chore(release): " + new
     push = f"git push --atomic origin main v{new}"
     if subprocess.run(["git", "-C", root, "commit", "-q", "-m", msg], stdout=sys.stderr).returncode:

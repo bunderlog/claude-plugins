@@ -4,7 +4,6 @@ import os
 import sys
 import unittest
 
-from baloo import names
 from tests import testkit
 
 _spec = importlib.util.spec_from_file_location(
@@ -86,10 +85,19 @@ def commit(root, rel, text, message):
     testkit.git(root, "commit", "-q", "-m", message)
 
 
-def released(test):
-    """A repo whose last Release is v0.3.1, with a CHANGELOG."""
+MANIFEST = "plugins/baloo/.claude-plugin/plugin.json"
+
+
+def released(test, names=("baloo",)):
+    """A repo whose last Release is v0.3.1 of the marketplace's plugins `names`, with a
+    CHANGELOG."""
     root = testkit.repo(test)
-    write(root, names.MANIFEST, json.dumps({"name": "baloo", "version": "0.3.1"}, indent=2) + "\n")
+    write(root, release.MARKETPLACE, json.dumps({"name": "m", "plugins": [
+        {"name": n, "source": "./plugins/" + n} for n in names
+    ]}))
+    for n in names:
+        write(root, f"plugins/{n}/.claude-plugin/plugin.json",
+              json.dumps({"name": n, "version": "0.3.1"}, indent=2) + "\n")
     write(root, "CHANGELOG.md", release.CHANGELOG_HEADER + "\n## 0.3.1 — 2026-09-01\n\nOld.\n")
     testkit.git(root, "add", ".")
     testkit.git(root, "commit", "-q", "-m", "chore(release): 0.3.1")
@@ -104,7 +112,7 @@ class Release(unittest.TestCase):
         root = released(self)
         commit(root, "tests/test_x.py", "x", "feat: a test only")
         commit(root, "src/release/release.py", "x", "feat: the tool only")
-        commit(root, names.PLUGIN_DIR + "/skills/x/SKILL.md", "x", "fix(skills): a fix")
+        commit(root, "plugins/baloo/skills/x/SKILL.md", "x", "fix(skills): a fix")
         sha = testkit.git(root, "rev-parse", "--short", "HEAD").strip()
         with self.assertRaises(release.Error) as caught:
             release.release(root, "2026-10-14")
@@ -146,12 +154,41 @@ class Release(unittest.TestCase):
 
     def test_tag_and_manifest_disagree(self):
         root = released(self)
-        commit(root, names.MANIFEST, '{"version": "0.4.0"}\n', "chore: bump by hand")
+        commit(root, MANIFEST, '{"version": "0.4.0"}\n', "chore: bump by hand")
         with self.assertRaises(release.Error) as caught:
             release.release(root, "2026-10-14")
         self.assertEqual(
             str(caught.exception),
-            "the last tag is v0.3.1, but plugins/baloo/.claude-plugin/plugin.json says 0.4.0",
+            "the last tag is v0.3.1, but the plugins' manifests say 0.4.0",
+        )
+
+
+    # With two plugins, one Release raises both to one version, a commit counting for the plugin
+    # it changes, under that plugin's part of the CHANGELOG (ADR releases).
+    def test_two_plugins(self):
+        root = released(self, ("baloo", "louie"))
+        commit(root, "plugins/baloo/skills/x/SKILL.md", "x", "fix(skills): a fix")
+        fix = testkit.git(root, "rev-parse", "--short", "HEAD").strip()
+        commit(root, "plugins/louie/skills/y/SKILL.md", "y", "feat: a workflow")
+        feat = testkit.git(root, "rev-parse", "--short", "HEAD").strip()
+        with self.assertRaises(release.Error):  # the tag, without a key
+            release.release(root, "2026-11-10")
+        self.assertEqual(release.version(root), "0.4.0")
+        with open(os.path.join(root, "CHANGELOG.md")) as f:
+            self.assertIn(
+                f"\n## 0.4.0 — 2026-11-10\n\n### baloo\n\n#### Fixes\n\n- skills: a fix ({fix})\n"
+                f"\n### louie\n\n#### Features\n\n- a workflow ({feat})\n",
+                f.read(),
+            )
+
+    # Plugins whose manifests disagree on the version make no Release.
+    def test_versions_differ(self):
+        root = released(self, ("baloo", "louie"))
+        commit(root, "plugins/louie/.claude-plugin/plugin.json", '{"version": "0.1.0"}\n', "chore: x")
+        with self.assertRaises(release.Error) as caught:
+            release.release(root, "2026-11-10")
+        self.assertEqual(
+            str(caught.exception), "the plugins' versions differ: baloo 0.3.1, louie 0.1.0"
         )
 
 
