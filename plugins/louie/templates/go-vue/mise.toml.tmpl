@@ -1,8 +1,12 @@
 # Every tool pinned to an exact version, and every task run from here; CI runs the same `mise run
-# check` (ADR stack). The apps add their tools here and their part of check as they come.
+# check` (ADR stack). Each app adds its tools here and its part of check as it comes.
 [tools]
 shellcheck = "0.11.0"
 "github:bunderlog/hathi" = "1.2.0"
+go = "1.26.10" # apps/api/go.mod's toolchain (ADR stack)
+golangci-lint = "2.15.0" # at its defaults, with no config (ADR stack)
+sqlc = "1.31.1" # the header of apps/api/internal/db/*.go
+"go:github.com/pressly/goose/v3/cmd/goose" = "3.27.2" # apps/api/migrations' CLI (ADR stack)
 
 [tasks.setup]
 description = "Install the tools and turn the Git hooks on in this clone"
@@ -11,7 +15,16 @@ run = [
   "git config core.hooksPath .githooks",
 ]
 
-# Until the apps exist the Git hooks are the only code, so check lints them (ADR stack).
+# Needs no database: sqlc diff compares internal/db with what sqlc generates from queries/ and
+# migrations/ (ADR stack).
 [tasks.check]
-description = "Lint the Git hooks' sh"
-run = "shellcheck .githooks/*"
+description = "Lint the Git hooks' sh; check, build, vet, lint and test apps/api"
+run = [
+  "shellcheck .githooks/*",
+  "cd apps/api && sqlc diff && go build ./... && go vet ./... && golangci-lint run && go test ./...",
+]
+
+[tasks.sqlc]
+description = "Generate apps/api/internal/db from apps/api/queries and the migrations"
+dir = "apps/api"
+run = "sqlc generate"

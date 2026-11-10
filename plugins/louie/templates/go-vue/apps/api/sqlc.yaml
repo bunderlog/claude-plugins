@@ -1,0 +1,13 @@
+# sqlc generates internal/db from the queries in queries/ and the schema goose's migrations build;
+# `mise run sqlc` regenerates it, and `mise run check` fails where it differs (ADR stack).
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries/"
+    schema: "migrations/"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db/"
+        emit_empty_slices: true
+        sql_package: "pgx/v5"

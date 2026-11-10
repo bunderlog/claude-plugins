@@ -17,6 +17,10 @@ from louie import binlink, names, version
 
 # A product's name, usable as a Go, npm and Kamal name.
 NAME = re.compile(r"[a-z][a-z0-9-]*")
+# The owner's name on GitHub, which stands in the Go module's path: letters, digits and single
+# hyphens, not at either end, and at most 39 of them.
+OWNER = re.compile(r"[A-Za-z0-9](?:-?[A-Za-z0-9])*")
+_OWNER_MAX = 39
 # The template's folder in the plugin.
 TEMPLATE = os.path.join(binlink.PLUGIN, names.TEMPLATES, names.TEMPLATE)
 # The template's folder whose files git runs, which are written executable whatever mode the
@@ -67,8 +71,11 @@ def _refusal(target: str, name: str, owner: str) -> str:
         return (
             f"the name {name!r} isn't lowercase letters, digits and hyphens starting with a letter"
         )
-    if not owner.strip():
-        return "the owner is empty"
+    if not OWNER.fullmatch(owner) or len(owner) > _OWNER_MAX:
+        return (
+            f"the owner {owner!r} isn't at most {_OWNER_MAX} letters, digits and single hyphens, "
+            "not starting or ending with one"
+        )
     if not target:
         return "no folder is given"
     if shutil.which("git") is None:
