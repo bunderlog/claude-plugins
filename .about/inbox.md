@@ -213,24 +213,6 @@ as an assumption rather than a decision. `deliver` on several Issues plans them 
 building any and lists every decision in one report (PRD batch), which leaves only `/louie:plan`'s
 own plan going unused.
 
-## What a fresh `go-vue` repo still departs from louie's Guidelines in
-
-2026-11-10 · verify
-
-A verifier run on a repo fresh from `/louie:new` (0.49.0) against louie's Guidelines found one
-departure that blocked, fixed in 0.49.1, and these that don't:
-- `internal/handler/handler.go`: the `ServeMux` answers an unknown `/api/` path or a wrong method
-  with its own plain-text 404 or 405, not `respond`'s JSON (`go` §3); the first to fix once a
-  client calls the API.
-- `App.vue` and `HomeView.vue` open with no comment, where every `.ts` file does (`typescript`
-  §5, which `vue` doesn't ask of a component).
-- `CLAUDE.md` restates `mise.toml`'s `setup`, and asks for `mise run check` before a push that
-  no hook runs (`writing-for-agents` §2 and §6).
-- Smaller: `internal/database` beside sqlc's `internal/db`, two names for one thing (`go` §1); the
-  test helper `get` takes no `t` (`go` §4); `main.go` reads its three settings itself, where a
-  `config` package comes due as they grow.
-Settled by fixing each in the template, or by deciding a rule doesn't reach a template's file.
-
 ## A Check that fails lets the call through without a trace
 
 2026-11-10 · code review
