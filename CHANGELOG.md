@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.49.0 — 2026-11-10
+
+### louie
+
+#### Features
+
+- louie: run the go-vue template with mise run dev and deploy it with Kamal (4e07a46)
+
 ## 0.48.0 — 2026-11-10
 
 ### louie
