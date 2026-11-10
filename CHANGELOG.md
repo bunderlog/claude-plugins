@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.45.1 — 2026-11-10
+
+### louie
+
+#### Fixes
+
+- deliver: stop only on the Issue's own decisions, and leave no empty worktree (097c5ea)
+
 ## 0.45.0 — 2026-11-10
 
 ### louie
