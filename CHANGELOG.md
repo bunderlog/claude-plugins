@@ -2,6 +2,26 @@
 
 The marketplace's Releases, newest first.
 
+## 0.50.0 — 2026-11-10
+
+### bagheera
+
+#### Features
+
+- bagheera: offer to add its Status line and Output style, and add them on a yes (681ec6e)
+
+#### Fixes
+
+- bagheera: refuse the simple variants of a Git hook bypass (883e103)
+- bagheera: refuse showing an env file through a pattern or an inline script (ce17c44)
+- bagheera: quote the Session review's decision command for any path (5d116a5)
+
+### louie
+
+#### Fixes
+
+- bagheera: refuse the simple variants of a Git hook bypass (883e103)
+
 ## 0.49.1 — 2026-11-10
 
 ### louie
