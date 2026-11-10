@@ -197,3 +197,16 @@ slow reference), checked with Hypothesis or fast-check, is a third way: an indep
 with no literal. Settled by an eval case where Claude restates the code's formula as the
 expected value, or leaves logic untested, and the line changes that (ADR evals), or by dropping
 the idea.
+
+## `deliver` re-plans and stops on a decision the earlier plan didn't raise
+
+2026-11-10 · session
+
+`/louie:deliver` runs `louie:plan` afresh, so each run's plan can find a decision the plan before
+it didn't: Issue louie-new-scaffold stopped on the `.tmpl` storage after `/louie:plan` raised only
+what `mise run check` runs, and Issue louie-new-api on whether the server opens a database after
+`/louie:plan` raised only the example migration. Each stop costs a planner run and a decision
+comment, and the user said to stop only when it is truly unclear. Settled by deciding whether
+`deliver` takes a plan already made (its report, with the decisions written into the Issue), or
+whether the planner treats a choice with a recommended option that no criterion or ADR rules out
+as an assumption rather than a decision.
