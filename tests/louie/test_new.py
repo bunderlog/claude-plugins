@@ -16,6 +16,11 @@ from tests.louie.commands import PLUGIN, run
 
 TEMPLATE = os.path.join(PLUGIN, "templates", "go-vue")
 MARKS = ("__NAME__", "__OWNER__", "__DATE__")
+# hathi's Secret Check: a password in a URL unless it is a placeholder, and an Env file unless it is
+# a template of one.
+URL_PASSWORD = re.compile(r"\b[A-Za-z][A-Za-z0-9+.-]*://[^\t-\r :/@]*:[^\t-\r /@$<{*][^\t-\r /@]*@")
+ENV_FILE = re.compile(r"(^|/)(\.env(\.[^/]*)?|\.envrc|[^/]*\.env)$")
+ENV_TEMPLATE = re.compile(r"\.(example|sample|template|dist)$")
 
 
 def files(root):
@@ -78,10 +83,15 @@ class New(unittest.TestCase):
         self.assertEqual(files(dest), sorted([
             ".about/adr/stack.md", ".claude/settings.json", ".githooks/commit-msg",
             ".githooks/pre-commit", ".githooks/pre-push", ".github/workflows/ci.yml",
-            ".gitignore", ".hathi.yml", "CLAUDE.md", "mise.toml",
+            ".gitignore", ".hathi.yml", "CLAUDE.md", "mise.toml", "README.md",
+            "Dockerfile", ".dockerignore", "docker-compose.yml", "config/deploy.yml",
+            ".kamal/secrets", ".env.example",
             "apps/api/go.mod", "apps/api/go.sum", "apps/api/sqlc.yaml",
             "apps/api/cmd/server/main.go", "apps/api/internal/handler/handler.go",
-            "apps/api/internal/handler/handler_test.go", "apps/api/internal/respond/respond.go",
+            "apps/api/internal/handler/handler_test.go", "apps/api/internal/handler/app.go",
+            "apps/api/internal/handler/app_test.go", "apps/api/internal/respond/respond.go",
+            "apps/api/internal/database/database.go",
+            "apps/api/internal/database/database_test.go", "apps/api/migrations/migrations.go",
             "apps/api/internal/db/db.go", "apps/api/internal/db/models.go",
             "apps/api/internal/db/notes.sql.go", "apps/api/migrations/00001_notes.sql",
             "apps/api/queries/notes.sql",
@@ -171,6 +181,19 @@ class New(unittest.TestCase):
         )
         mise = text(os.path.join(dest, "mise.toml"))
         self.assertIn('"github:bunderlog/hathi" = "1.2.0"', mise)
+        self.assertIn(
+            '\nDATABASE_URL = "postgres://my-app2@localhost:5433/my-app2?sslmode=disable"\n', mise
+        )
+        self.assertIn('[tasks.dev]\ndescription = ', mise)
+        self.assertIn('depends = ["dev:api", "dev:app"]\n', mise)
+        self.assertIn('run = "docker compose up -d --wait db"\n', mise)
+        self.assertIn('run = "go run ./cmd/server"\n', mise)
+        self.assertIn("pnpm exec vite --strictPort", mise)
+        self.assertIn("[tasks.deploy]\n", mise)
+        self.assertRegex(mise, r"ghcr\.io/basecamp/kamal:v\d+\.\d+\.\d+ ")
+        self.assertIn("--env-file .env", mise)
+        self.assertNotIn("ruby", mise)
+        self.assertNotIn("gem:", mise)
         for pin in ('go = "1.26.10"', 'golangci-lint = "2.15.0"', 'sqlc = "1.31.1"',
                     '"go:github.com/pressly/goose/v3/cmd/goose" = "3.27.2"', 'node = "24.22.1"',
                     'pnpm = "11.28.8"'):
@@ -188,11 +211,87 @@ class New(unittest.TestCase):
         ci = text(os.path.join(dest, ".github", "workflows", "ci.yml"))
         self.assertIn("mise run check", ci)
         self.assertIn("hathi check ci", ci)
+        self.check_deploy(dest, mise, ignored)
 
         self.assertEqual(out.splitlines()[-1], (
             f"! cd {shlex.quote(dest)} && mise trust && mise run setup && git add -A && "
             f'git commit -m "chore: scaffold from louie go-vue {version.read()}"'
         ))
+
+    # The local database takes no password, and Kamal deploys the Dockerfile's image with the
+    # secrets of an ignored .env; only the server and the registry are left for the person.
+    def check_deploy(self, dest, mise, ignored):
+        self.assertFalse(URL_PASSWORD.search("postgres://u:$PW@localhost/db"))
+        for rel in files(dest):
+            body = text(os.path.join(dest, rel))
+            self.assertIsNone(URL_PASSWORD.search(body), rel)
+            self.assertFalse(ENV_FILE.search(rel) and not ENV_TEMPLATE.search(rel), rel)
+            if rel not in ("config/deploy.yml", "README.md"):
+                for mark in ("<server>", "<registry>"):
+                    self.assertFalse(mark in body, f"{rel} holds {mark}")
+
+        compose = text(os.path.join(dest, "docker-compose.yml"))
+        self.assertIn("image: postgres:17-alpine\n", compose)
+        self.assertIn("POSTGRES_HOST_AUTH_METHOD: trust\n", compose)
+        self.assertIn("POSTGRES_USER: my-app2\n", compose)
+        self.assertIn(":5433:5432", compose)
+        self.assertNotIn("POSTGRES_PASSWORD", compose)
+
+        deploy = text(os.path.join(dest, "config", "deploy.yml"))
+        self.assertEqual(set(re.findall(r"<[^<>\s]*>", deploy)), {"<server>", "<registry>"})
+        self.assertIn("\nservice: my-app2\nimage: acme/my-app2\n", deploy)
+        self.assertIn("  app_port: 8080\n  healthcheck:\n    path: /api/up\n", deploy)
+        self.assertIn("  server: <registry>", deploy)
+        self.assertIn("\naccessories:\n  db:\n    image: postgres:17-alpine\n", deploy)
+        self.assertIn("    host: <server>\n", deploy)
+
+        secrets = text(os.path.join(dest, ".kamal", "secrets"))
+        example = text(os.path.join(dest, ".env.example"))
+        keys = {line.split("=", 1)[0] for line in example.splitlines()
+                if line and not line.startswith("#")}
+        self.assertEqual(keys, set(re.findall(r"\$([A-Z_]+)", secrets)))
+        for line in example.splitlines():
+            if line and not line.startswith("#"):
+                self.assertTrue(line.endswith("="), line)
+        self.assertIn(
+            "\nDATABASE_URL=postgres://my-app2:$POSTGRES_PASSWORD@my-app2-db:5432/", secrets
+        )
+        for line in ("/.env", "/.env.*", "!/.env.example"):
+            self.assertIn(line, ignored)
+
+        dockerfile = text(os.path.join(dest, "Dockerfile"))
+        for tool, image in (("go", "golang:{}-alpine"), ("node", "node:{}-alpine"),
+                            ("pnpm", "pnpm@{}")):
+            pin = re.search(rf'^{tool} = "([^"]+)"', mise, re.M).group(1)
+            self.assertIn(image.format(pin), dockerfile, tool)
+        self.assertIn("FROM gcr.io/distroless/static-debian12:nonroot\n", dockerfile)
+        self.assertIn("ENV APP_DIR=/app ADDR=:8080\n", dockerfile)
+        ignore = text(os.path.join(dest, ".dockerignore")).splitlines()
+        for line in (".git", ".env", ".env.*", "**/node_modules"):
+            self.assertIn(line, ignore)
+
+        api = os.path.join(dest, "apps", "api")
+        self.assertIn('"github.com/acme/my-app2/migrations"',
+                      text(os.path.join(api, "internal", "database", "database.go")))
+        self.assertIn("//go:embed *.sql\n", text(os.path.join(api, "migrations", "migrations.go")))
+        main = text(os.path.join(api, "cmd", "server", "main.go"))
+        for part in ('"github.com/acme/my-app2/internal/database"', "DATABASE_URL", "APP_DIR",
+                     "handler.WithApp("):
+            self.assertIn(part, main)
+        self.assertIn("github.com/pressly/goose/v3 v3.27.2", text(os.path.join(api, "go.mod")))
+        self.assertIn('server: { proxy: { "/api": "http://localhost:8080" } }',
+                      text(os.path.join(dest, "apps", "app", "vite.config.ts")))
+
+        stack = text(os.path.join(dest, ".about", "adr", "stack.md"))
+        for part in ("Kamal", "kamal-proxy", "`mise run dev`", "`mise run deploy setup`",
+                     "git, mise and Docker"):
+            self.assertIn(part, stack)
+        readme = text(os.path.join(dest, "README.md"))
+        self.assertTrue(readme.startswith("# my-app2\n"), readme)
+        for part in ("git, mise and Docker",
+                     "gh repo create acme/my-app2 --private --source . --push", "mise run dev",
+                     "mise run deploy setup", "`<server>`", "`<registry>`", "`.env.example`"):
+            self.assertIn(part, readme)
 
     # A path with a space or a quote comes back quoted for the shell.
     def test_quotes_the_path(self):
