@@ -24,6 +24,9 @@ CALLS = {
     "PostToolUseFailure": {"hook_event_name": "PostToolUseFailure", "tool_name": "Bash",
                            "tool_input": {"command": "false"}, "error": "exit 1"},
     "SubagentStart": {"hook_event_name": "SubagentStart", "agent_type": "louie:verifier"},
+    "Stop": {"hook_event_name": "Stop", "stop_hook_active": False},
+    "Notification": {"hook_event_name": "Notification", "message": "Claude needs your permission",
+                     "notification_type": "permission_prompt"},
 }
 
 

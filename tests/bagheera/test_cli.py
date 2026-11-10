@@ -44,19 +44,19 @@ class StatusLine(unittest.TestCase):
     # another type left out, and nothing for what isn't JSON.
     def test_status_line(self):
         commands.env(self)
-        # 44 columns leave 40 for the line, which centers the 18 of the bar after 11 spaces.
+        # 44 columns leave 40 for the line, which centers the 5 of the context after 17 spaces.
         os.environ["COLUMNS"] = "44"
         for stdin, want in [
-            ('{"context_window": {"used_percentage": 12}}', " " * 11 + "Ctx █░░░░░░░░░ 12%\n"),
+            ('{"context_window": {"used_percentage": 12}}', " " * 17 + "▤ 12%\n"),
             ('{"effort": "high", "context_window": {"used_percentage": 12}}',
-             " " * 11 + "Ctx █░░░░░░░░░ 12%\n"),
+             " " * 17 + "▤ 12%\n"),
             ("nope", ""),
         ]:
             with self.subTest(stdin=stdin):
                 code, out, err = run("status-line", stdin=stdin)
                 self.assertEqual((code, COLORS.sub("", out), err), (0, want, ""))
 
-    # The status-line command shows its default bars, whatever an old Config of the repo it is in
+    # The status-line command shows its default figures, whatever an old Config of the repo it is in
     # sets (PRD no-config).
     def test_bars(self):
         commands.env(self)
@@ -72,7 +72,58 @@ class StatusLine(unittest.TestCase):
         write(os.path.join(dir, names.OLD_CONFIG), "status-line:\n  bars: [7d, context]\n")
         _, out, err = run("status-line", stdin=stdin)
         self.assertEqual((out, err), (plain, ""))
-        self.assertIn("Ctx", COLORS.sub("", out))
+        self.assertIn("▤", COLORS.sub("", out))
+
+
+class Waiting(unittest.TestCase):
+    def marks(self):
+        folder = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], "waiting")
+        return sorted(os.listdir(folder)) if os.path.isdir(folder) else []
+
+    # A turn's end, a permission asked and a question asked mark the session waiting, saying
+    # nothing; its next prompt and its end clear the mark (PRD visibility).
+    def test_marks(self):
+        dir = in_repo(self)
+        event = {"session_id": "s1", "cwd": dir, "transcript_path": ""}
+        for command, extra in [("stop", {}), ("notification", {}),
+                               ("pre-tool-use", {"tool_name": "AskUserQuestion",
+                                                 "tool_input": {"questions": []}})]:
+            with self.subTest(command=command):
+                code, out, err = run(command, stdin=json.dumps(dict(event, **extra)))
+                self.assertEqual((code, out, err), (0, "", ""))
+                self.assertEqual(self.marks(), ["s1"])
+                clear = "user-prompt-submit" if command != "notification" else "session-end"
+                run(clear, stdin=json.dumps(event))
+                self.assertEqual(self.marks(), [])
+
+    # A headless session, a Session review's among them, is never marked waiting.
+    def test_headless(self):
+        dir = in_repo(self)
+        event = json.dumps({"session_id": "s1", "cwd": dir})
+        os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-cli"
+        run("stop", stdin=event)
+        del os.environ["CLAUDE_CODE_ENTRYPOINT"]
+        os.environ[review.ENV] = "1"
+        run("stop", stdin=event)
+        self.assertEqual(self.marks(), [])
+
+    # The line counts the sessions waiting but its own and the projects needing attention, as the
+    # last check found, and starts no check itself where that is fresh.
+    def test_line(self):
+        dir = in_repo(self)
+        data = os.environ["CLAUDE_PLUGIN_DATA"]
+        for session in ("s1", "s2"):
+            run("stop", stdin=json.dumps({"session_id": session, "cwd": dir}))
+        other = testkit.repo(self)
+        write(os.path.join(other, names.INBOX), "## A\n")
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "o", "s.jsonl"),
+              json.dumps({"type": "user", "cwd": other}) + "\n")
+        run("attention")
+        self.assertFalse(os.path.exists(os.path.join(data, "attention.running")))
+        os.environ["COLUMNS"] = "120"
+        _, out, _ = run("status-line", stdin=json.dumps({"session_id": "s1"}))
+        self.assertTrue(COLORS.sub("", out).rstrip().endswith("⧗ 1 · ⚑ 1"), out)
+        self.assertFalse(os.path.exists(os.path.join(data, "attention.running")))
 
 
 def pre_tool_use(test, stdin):

@@ -162,6 +162,34 @@ class Doctor(unittest.TestCase):
         )
 
 
+class Machine(unittest.TestCase):
+    # doctor lists the machine's projects that need attention, each thing with what to do, and
+    # counts the rest; another project's needs aren't its problems, so it still exits 0, in a repo
+    # or outside one (PRD visibility).
+    def test_machine(self):
+        dir = in_repo(self)
+        set_up(dir)
+        self.assertEqual(start(self)[0], 0)
+        other = testkit.repo(self)
+        write(os.path.join(other, names.INBOX), "## A\n\n2026-11-10 · session\n")
+        quiet = testkit.repo(self)
+        folder = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects")
+        for name, cwd in [("o", other), ("q", quiet)]:
+            write(os.path.join(folder, name, "s.jsonl"), json.dumps({"type": "user", "cwd": cwd}) + "\n")
+        code, out = doctor_run(self)
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"  {other}:\n    - 1 Inbox item not gone through: /baloo:inbox there\n", out)
+        self.assertIn("  need nothing  1\n  not set up    2\n", out)
+        commands.chdir(self, testkit.tempdir(self))
+        del os.environ["CLAUDE_PROJECT_DIR"]
+        code, out = doctor_run(self)
+        self.assertIn(f"  {other}:\n", out)
+
+    def test_none_found(self):
+        in_repo(self)
+        self.assertIn("days:\n  none found\n", doctor_run(self)[1])
+
+
 class Columns(unittest.TestCase):
     # Each run of lines with a tab aligns its first cells two spaces past the widest, as Go's
     # tabwriter did; a line without one ends the run.
