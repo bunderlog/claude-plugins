@@ -13,7 +13,8 @@ icon and a number in place of a label and a bar: `▤ 12% 120K` the context with
 on, `↻ 40m` the cache; `⧗ 3` the sessions waiting and `⚑ 2` the projects, each only when it isn't 0.
 The groups of the middle and of the right are a grey `·` apart, as Claude Code's own footer has it,
 a group's parts a space. The whole line is grey while all is well, `±` and `↑` too, as work in
-progress is; a figure's icon and number turn yellow and red together at its thresholds, the details
+progress is, but for the folder, light cyan, and the branch, light blue as Claude Code draws inline
+code, so the eye finds which project and branch a terminal shows; a figure's icon and number turn yellow and red together at its thresholds, the details
 after it stay grey, and `⧗`, `⚑` and `⇡` are yellow, since each shown is something to do. The folder
 is the last part of the path Claude Code runs in (`workspace.project_dir`, else `current_dir`), not
 of the folder a command moved to, so a terminal shows which project, or which worktree of one, a

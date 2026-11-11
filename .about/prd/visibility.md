@@ -130,8 +130,9 @@ waiting without the line.
   branch, every number with its details, the part and the model; no bar is drawn at any width.
   → test: tests/bagheera/test_statusline.py "Marks.test_marks"
 - In a line too narrow for all of it, the details go first, then the model, and the part stays; with
-  nothing over a threshold and nothing waiting, every part of the line is grey; a context of 22%
-  shows its icon and number in red, and its tokens grey.
+  nothing over a threshold and nothing waiting, every part of the line is grey but the folder and
+  the branch (PRD status-line); a context of 22% shows its icon and number in red, and its tokens
+  grey.
   → test: tests/bagheera/test_statusline.py "Render.test_narrow"
   → test: tests/bagheera/test_statusline.py "Render.test_context_colors"
   → test: tests/bagheera/test_statusline.py "Marks.test_all_grey"

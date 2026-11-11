@@ -79,6 +79,9 @@ do that they would otherwise have done later or not at all.
   → test: tests/bagheera/test_statusline.py "Work.test_outside"
 - `±N` and `↑N` are grey, as work in progress is, and `⇡` is yellow.
   → test: tests/bagheera/test_statusline.py "Work.test_shown"
+- The project's folder is light cyan and the branch light blue, as Claude Code draws inline code.
+  → test: tests/bagheera/test_statusline.py "Render.test_folder"
+  → test: tests/bagheera/test_statusline.py "Work.test_shown"
   → test: tests/bagheera/test_statusline.py "Restart.test_restart"
 - In this repo, the whole line, with PRD visibility's part, draws in under 300 ms on the
   maintainer's machine, checked by hand.
