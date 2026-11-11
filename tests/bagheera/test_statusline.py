@@ -102,6 +102,7 @@ MODEL = ', "model": {"display_name": "Opus 5.5"}, "effort": {"level": "high"}'
 
 
 GREY, YELLOW, RED = "\x1b[90m", "\x1b[33m", "\x1b[31m"
+CYAN, BLUE = "\x1b[96m", "\x1b[38;2;177;185;249m"
 
 
 class Render(unittest.TestCase):
@@ -161,12 +162,13 @@ class Render(unittest.TestCase):
         self.assertTrue(got.endswith("   Opus 5.5"), got)
 
     # The project's folder comes before the branch, so it's clear which project a terminal shows:
-    # the one Claude Code runs in, not the folder a command moved to; both grey.
+    # the one Claude Code runs in, not the folder a command moved to; the folder light cyan and the
+    # branch light blue.
     def test_folder(self):
         in_ = parse('{"workspace": {"current_dir": "/w/shop/apps/web", "project_dir": "/w/shop"}}')
         colored = default().render(in_, "main", 120)
         self.assertTrue(plain(colored).startswith("shop main"), plain(colored))
-        self.assertIn(GREY + "shop main", colored)
+        self.assertIn(CYAN + "shop\x1b[00m " + BLUE + "main\x1b[00m", colored)
         in_ = parse('{"workspace": {"current_dir": "/w/notes"}}')
         self.assertEqual(plain(default().render(in_, "", 120)).strip(), "notes")
 
@@ -342,7 +344,7 @@ class Work(unittest.TestCase):
         in_ = usage(MODEL)
         colored = default().render(in_, "main", 120, statusline.Marks(changed=3, ahead=2))
         self.assertTrue(plain(colored).startswith("main ±3 ↑2   "), plain(colored))
-        self.assertIn(GREY + "main ±3 ↑2", colored)
+        self.assertIn(BLUE + "main\x1b[00m " + GREY + "±3\x1b[00m " + GREY + "↑2", colored)
         narrow = plain(default().render(in_, "main", 50, statusline.Marks(changed=3, ahead=2)))
         self.assertTrue(narrow.startswith("main ±3 ↑2"), narrow)
         self.assertNotIn("Opus", narrow)
