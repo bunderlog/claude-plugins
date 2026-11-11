@@ -148,6 +148,9 @@ _RESET = "\x1b[00m"
 
 # The colors of the line: grey while all is well, yellow and red past a threshold.
 _GREY, _YELLOW, _RED = "90", "33", "31"
+# The project's folder light cyan and the branch light blue, as Claude Code draws inline code, so
+# the eye finds which project and branch a terminal shows.
+_FOLDER, _BRANCH = "96", "38;2;177;185;249"
 
 # Each part's icon, in place of its label.
 _ICONS = {"context": "▤", "5h": "◷", "7d": "◷", "cache": "↻"}
@@ -312,7 +315,8 @@ class Layout:
 
     def render(self, in_: Input, branch: str, columns: int, m: Optional[Marks] = None) -> str:
         """The Status line for a terminal `columns` wide, grey but for what is past a threshold:
-        the project's folder, the branch and what isn't committed or pushed on the left, the parts
+        the project's folder light cyan, the branch light blue and, grey, what isn't committed or
+        pushed on the left, the parts
         centered, and on the right how many sessions wait, how many projects need attention and a
         restart, in yellow where there, and the model with its effort flush with the right edge,
         the groups a dot apart. When the line is too narrow it drops the details, then the model,
@@ -320,16 +324,15 @@ class Layout:
         m = m or Marks()
         width = max(40, columns - _MARGIN)
         folder = os.path.basename((in_.project_dir or in_.current_dir).rstrip("/"))
-        work = [s + str(n) for s, n in (("±", m.changed), ("↑", m.ahead)) if n > 0]
-        tail = " ".join(([branch] if branch else []) + work)
+        work = [_grey(s + str(n)) for s, n in (("±", m.changed), ("↑", m.ahead)) if n > 0]
+        tail = " ".join(([_paint(_BRANCH, branch)] if branch else []) + work)
         marks = [_paint(_YELLOW, icon + " " + str(n))
                  for icon, n in ((WAITING, m.waiting), (ATTENTION, m.attention)) if n > 0]
         if m.restart:
             marks.append(_paint(_YELLOW, RESTART + " " + m.restart))
 
         def left_of(name: str) -> str:
-            text = " ".join(p for p in (name, tail) if p)
-            return _grey(text) if text else ""
+            return " ".join(p for p in ((_paint(_FOLDER, name) if name else ""), tail) if p)
 
         left = left_of(folder)
         model = _model(in_)
