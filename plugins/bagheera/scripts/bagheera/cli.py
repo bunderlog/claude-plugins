@@ -156,6 +156,8 @@ def status_line(text: str, stdout: TextIO) -> int:
     if width <= 0:
         width = 120
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "") or binlink.data_of(sys.argv[0])
+    if data:
+        statusline.limits(in_, data)
     found = attention.read(data) if data else attention.Found()
     # The branch and what isn't committed or pushed are of the folder Claude Code is in, as the
     # branch always was; the version installed, of the project, or the user's outside a repo.

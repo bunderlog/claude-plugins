@@ -425,6 +425,54 @@ def restart(data: str, session: str, root: str) -> str:
     return ".".join(there.split(".")[:2])
 
 
+# The file of the plugin's data folder that keeps the latest 5-hour and 7-day limits any session
+# got (PRD status-line).
+LIMITS = "limits.json"
+
+
+def _latest(given: Limit, kept: Any) -> Limit:
+    """Of the limit `given` and the one `kept` as [used_percentage, resets_at], the highest
+    percentage whose reset is still ahead: use only grows until the limit resets. A given one
+    without its reset counts as ahead."""
+    t = now()
+    got = Limit()
+    if given.used_percentage is not None and (given.resets_at is None or given.resets_at > t):
+        got = given
+    if isinstance(kept, list) and len(kept) == 2:
+        k = Limit(_num(kept[0]), _num(kept[1]))
+        if (k.used_percentage is not None and k.resets_at is not None and k.resets_at > t
+                and (got.used_percentage is None or k.used_percentage > got.used_percentage)):
+            got = k
+    return got
+
+
+def limits(in_: Input, data: str) -> None:
+    """Sets `in_`'s 5-hour and 7-day limits to the latest any session got, kept in the plugin's
+    data folder `data`, and keeps them there where they are newer: Claude Code gives each session
+    only what its own last reply said (PRD status-line)."""
+    path = os.path.join(data, LIMITS)
+    try:
+        with open(path, encoding="utf-8") as f:
+            kept = _obj(json.load(f))
+    except (OSError, ValueError):
+        kept = {}
+    in_.five_hour = _latest(in_.five_hour, kept.get("five_hour"))
+    in_.seven_day = _latest(in_.seven_day, kept.get("seven_day"))
+    keep = {
+        name: [limit.used_percentage, limit.resets_at]
+        for name, limit in (("five_hour", in_.five_hour), ("seven_day", in_.seven_day))
+        if limit.used_percentage is not None and limit.resets_at is not None
+    }
+    if keep and keep != kept:
+        try:
+            tmp = f"{path}.{os.getpid()}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(keep, f)
+            os.replace(tmp, path)
+        except OSError:
+            pass
+
+
 # How long the line waits for git, in seconds, before it shows what it last got.
 WAIT = 0.15
 # The file of the plugin's data folder that keeps what the line last got from git, by folder.
