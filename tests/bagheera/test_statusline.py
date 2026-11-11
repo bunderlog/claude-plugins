@@ -387,6 +387,47 @@ class Restart(unittest.TestCase):
             self.assertEqual(f.read(), manifest)
 
 
+class Limits(unittest.TestCase):
+    NOW = at(24, 14, 0)
+    FIVE, SEVEN = NOW + 3 * 3600, NOW + 4 * 86400
+
+    def setUp(self):
+        patcher = mock.patch.object(statusline, "now", lambda: float(self.NOW))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.data = testkit.tempdir(self)
+
+    def shown(self, limits):
+        """The 5-hour and 7-day figures a session given the `limits` shows, as text."""
+        in_ = parse('{"rate_limits": ' + json.dumps(limits) + "}")
+        statusline.limits(in_, self.data)
+        return plain(Layout(["5h", "7d"], default().thresholds).render(in_, "", 120)).strip()
+
+    def limit(self, used, resets):
+        return {"used_percentage": used, "resets_at": resets}
+
+    # A session given no limits, or older ones, shows the latest another session was given in the
+    # same windows (PRD status-line).
+    def test_latest(self):
+        self.assertEqual(self.shown({}), "")
+        both = {"five_hour": self.limit(3, self.FIVE), "seven_day": self.limit(81, self.SEVEN)}
+        self.assertEqual(self.shown(both), "◷ 3% 17:00 · ◷ 81% Mon")
+        self.assertEqual(self.shown({}), "◷ 3% 17:00 · ◷ 81% Mon")
+        self.assertEqual(self.shown({"seven_day": self.limit(80, self.SEVEN)}), "◷ 3% 17:00 · ◷ 81% Mon")
+        self.assertEqual(self.shown({"five_hour": self.limit(5, self.FIVE)}), "◷ 5% 17:00 · ◷ 81% Mon")
+        self.assertEqual(self.shown({}), "◷ 5% 17:00 · ◷ 81% Mon")
+
+    # Once a limit resets, the session given the new window's shows it, lower as it is, and a
+    # limit whose reset has passed shows in none (PRD status-line).
+    def test_reset(self):
+        self.shown({"five_hour": self.limit(90, self.NOW - 60), "seven_day": self.limit(81, self.SEVEN)})
+        self.assertEqual(self.shown({}), "◷ 81% Mon")
+        self.shown({"five_hour": self.limit(3, self.NOW + 60)})
+        self.NOW += 120
+        self.assertEqual(self.shown({"five_hour": self.limit(3, self.NOW - 60)}), "◷ 81% Mon")
+        self.assertEqual(self.shown({"five_hour": self.limit(4, self.FIVE)}), "◷ 4% 17:00 · ◷ 81% Mon")
+
+
 class Fits(unittest.TestCase):
     # In 120 columns, with everything, the line shows every part with its details and the model;
     # where nothing else is left to drop, the folder's name is cut short.
