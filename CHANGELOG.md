@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.56.0 — 2026-11-11
+
+### bagheera
+
+#### Features
+
+- bagheera: show the project's folder light cyan and the branch light blue in the Status line (d7afc37)
+
 ## 0.55.0 — 2026-11-11
 
 ### bagheera
