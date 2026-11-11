@@ -11,6 +11,9 @@ repo, for the user, which only a restart runs, then the model with its effort. E
 icon and a number in place of a label and a bar: `▤ 12% 120K` the context with its tokens, `◷ 42%
 02:42` the 5-hour limit with when it resets, `◷ 61% Sat` the 7-day one with the weekday it resets
 on, `↻ 40m` the cache; `⧗ 3` the sessions waiting and `⚑ 2` the projects, each only when it isn't 0.
+The 5-hour and 7-day limits are the account's, but Claude Code gives a session only what its own
+last reply said, none before it has fetched them: the line shows the latest any session got, kept
+in the plugin's data folder, the highest percentage whose reset is still ahead (PRD status-line).
 The groups of the middle and of the right are a grey `·` apart, as Claude Code's own footer has it,
 a group's parts a space. The whole line is grey while all is well, `±` and `↑` too, as work in
 progress is, but for the folder, light cyan, and the branch, light blue as Claude Code draws inline
@@ -102,6 +105,10 @@ told nothing.
   a session it stays near 98% and says nothing; the time left is what tells whether to send the
   next message now or `/compact` first.
 - The last miss's cause beside it for a while after a miss — it seldom tells what to do.
+- Only the limits Claude Code gives the session (until 2026-11-11) — a new session showed none for
+  a minute or two, and a resumed one its last reply's, with no 5-hour where its window began since.
+- The limits kept by when they were got — Claude Code doesn't say when a session got its own, so
+  a stale session's would pass for new; the higher percentage in a window needs no time.
 
 ## Consequences
 

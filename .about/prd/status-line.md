@@ -8,6 +8,12 @@ front of the person, waits for `git status`; and a session that runs an older ba
 installed tells only Claude, through a Hook's text, which Claude may or may not pass on (on
 2026-11-11 a session here ran 0.51.1 with 0.52.0 installed).
 
+The 5-hour and 7-day Usage figures are the account's, but Claude Code gives each session only what
+its own last reply said: a new session shows neither until Claude Code has fetched them, a minute
+or two after it starts, and a resumed one shows those of its last reply, a 7-day figure behind the
+other sessions' and no 5-hour at all where its window began since (on 2026-11-11, `◷ 80% Sun` in a
+resumed session beside `◷ 3% 18:50 · ◷ 81% Sun` in another).
+
 ## Users
 
 - Each person who set bagheera's Status line (ADR status-line).
@@ -33,6 +39,10 @@ do that they would otherwise have done later or not at all.
   (ADR doctor). The session's version is the one its session start ran, even once a later
   session's start points the Status line's link at a newer copy (ADR binary). The Release gives
   every plugin one version, so bagheera's stands for all three.
+- The 5-hour and 7-day Usage figures show the latest any session of the person's got from Claude
+  Code, kept in the plugin's data folder: of what Claude Code gives the session and what is kept,
+  the highest percentage whose reset is still ahead, since use only grows until the limit resets;
+  one whose reset has passed shows nowhere.
 - The line runs `git` for `±` and `↑` each time it draws, and waits for it at most 150 ms; past
   that, it shows the counts it last got in that folder, or none.
 - Where the line doesn't fit, PRD visibility's order holds (the details, then the model); `±N`,
@@ -44,6 +54,8 @@ do that they would otherwise have done later or not at all.
 
 - Commits behind the upstream (`↓N`): they need a fetch, and without one they mislead.
 - A branch not checked out, and another project's uncommitted work.
+- Fetching the limits itself: it would open a socket each draw, and Claude Code fetches them.
+- Telling one account's limits from another's on the same machine: they are kept as one.
 - The session's cost, lines added and removed, the Output style, Claude Code's version: they
   change no decision, or seldom, and take room every time.
 
@@ -75,6 +87,12 @@ do that they would otherwise have done later or not at all.
 - In a line too narrow for all of it, `±N`, `↑N` and `⇡` stay while the details and the model go.
   → test: tests/bagheera/test_statusline.py "Work.test_shown"
   → test: tests/bagheera/test_statusline.py "Fits.test_all_in_120"
+- A session given no limits shows `◷ 3%` and `◷ 81%` once another session was given them; one
+  given 7-day at 80% and no 5-hour shows the 3% and the 81% another was given in the same windows;
+  a session given 4% after its 5-hour window reset shows 4%, not the 3% kept; and a limit whose
+  reset has passed shows in none.
+  → test: tests/bagheera/test_statusline.py "Limits.test_latest"
+  → test: tests/bagheera/test_statusline.py "Limits.test_reset"
 - Outside a repo, the line shows no `±` and no `↑`.
   → test: tests/bagheera/test_statusline.py "Work.test_outside"
 - `±N` and `↑N` are grey, as work in progress is, and `⇡` is yellow.
