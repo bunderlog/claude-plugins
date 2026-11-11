@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.57.0 — 2026-11-11
+
+### bagheera
+
+#### Features
+
+- bagheera: show the latest 5-hour and 7-day limits any session got in the Status line (ca1439a)
+
 ## 0.56.0 — 2026-11-11
 
 ### bagheera
