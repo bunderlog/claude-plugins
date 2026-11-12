@@ -61,8 +61,12 @@ def _writes_hooks_path(args: List[str]) -> bool:
     writes = False
     value = False
     for a in args:
+        redirect = _REDIRECT.fullmatch(a)
         if value:
             value = False
+        elif redirect:
+            # Its target, where it is the next word, is no value either.
+            value = not redirect[1]
         elif a in ("--unset", "--unset-all", "--add", "--replace-all"):
             writes = True
         elif a in _CONFIG_VALUED:
@@ -75,6 +79,9 @@ def _writes_hooks_path(args: List[str]) -> bool:
         return False
     return writes or len(words) > 1
 
+
+# A redirection, `2>/dev/null` or the `2>` the split leaves of `2>&1`, with its target.
+_REDIRECT = re.compile(r"\d*(?:>>?|<|&>>?)(.*)", re.S)
 
 # git config's options that take the next argument as their value, which is no key.
 _CONFIG_VALUED = ["-f", "--file", "--blob", "--type", "--default", "--comment", "--value"]
