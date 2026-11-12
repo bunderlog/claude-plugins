@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-02
+Date: 2026-11-12
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -56,8 +56,11 @@ asks what a review is asked; run it after the prompt changes.
 
 The suites live in `evals/` at the repo root, outside the plugin: an install doesn't carry them,
 and a change to one needs no Release (ADR releases). `--eval-dir` takes no path outside the plugin,
-so they run from the repo's root, each case naming the plugin in its `plugins:`, which may only
-point under the folder a run starts in. They run by hand, as `mise run eval`, which grants Write
+so they run from the repo's root, each case naming in its `plugins:` every plugin whose skill,
+Guideline or Workflow it tests, such as louie beside baloo for the Inbox's format or
+`/louie:verify` since the split (ADR plugin), so it measures the setup users run; a path there may
+only point under the folder a run starts in.
+They run by hand, as `mise run eval`, which grants Write
 and Edit, when a skill's text changes, not in CI: each run makes real model calls, and CI would
 need an API key.
 
