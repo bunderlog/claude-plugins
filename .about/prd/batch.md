@@ -4,9 +4,8 @@
 
 A developer with several agreed Issues starts `/louie:deliver` on each, and the runs stop one by
 one, each on a decision its plan found only then: Issues louie-new-scaffold and louie-new-api each
-stopped mid-way on a choice the earlier `/louie:plan` hadn't raised (Inbox, "`deliver` re-plans and
-stops on a decision the earlier plan didn't raise"). Runs started side by side can also change the
-same files, and their pull requests then conflict on the default branch.
+stopped mid-way on a choice the earlier `/louie:plan` hadn't raised. Runs started side by side can
+also change the same files, and their pull requests then conflict on the default branch.
 
 ## Users
 
@@ -49,8 +48,7 @@ one report, before any commit; and no two pull requests of one run conflict on t
   `blocked:none` when none did, or `blocked:no-issue` or `blocked:too-many` before any agent runs.
 - At most 23 agents per Issue, as PRD delivery has, and one more for each discarded worktree. A
   run on more than one Issue can pass 25, so Claude Code's `Large workflow` warning shows for it.
-- At its Release, ADR issues says `deliver` takes several Issues, and the Inbox item on `deliver`
-  re-planning says what this settles of it.
+- At its Release, ADR issues says `deliver` takes several Issues.
 
 ## Non-goals
 
@@ -59,7 +57,8 @@ one report, before any commit; and no two pull requests of one run conflict on t
 - Ordering Issues by what depends on what, beyond the files their plans change.
 - Answering a plan's decisions or writing them into the Issue: the person's, before running the
   Issue again.
-- The person handing `/louie:deliver` a plan already made: the Inbox item stays for that.
+- The person handing `/louie:deliver` a plan already made: declined on 2026-11-12, as a way to
+  build the planner recommends is now an assumption the plan builds on (PRD delivery).
 - Rerunning an Issue that ended `failed:` or `blocked:`, Issues in another repo, or more than five
   at once.
 

@@ -16,7 +16,7 @@ costs little: about 3,200 characters in this repo, the largest of the machine's 
 - Claude, in every session of a project that turns baloo on, and the person, who reads it to
   answer "what did we decide about X" without opening files.
 - Not for: a project that keeps its PRDs or Issues in a tracker, whose pages session start doesn't
-  list (Inbox, "Where each kind of project knowledge lives").
+  list (ADR issues, ADR prd).
 
 ## Success signal
 

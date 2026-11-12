@@ -83,10 +83,9 @@ Settled by a sandbox that runs Git hooks and lets a skill read the session's Tra
 dropping these cases; each is kept only once it fails without the plugin (ADR evals). From
 2026-11-09 `verify` becomes a louie Workflow and `doctor` and `retro` bagheera's (ADR plugin), so
 each case moves with its part, in the PRD of that move. On 2026-11-12 none of the three is in
-`evals/`, having only been run by hand; `evals/verify/offer` is another case, the offer of a
-Verification. Rechecked 2026-11-12 on Claude Code 2.1.322: a run granted
-`Bash(git *)` still refuses to start while `~/.docker/contexts` holds a link, even with
-`DOCKER_CONFIG` set to an empty folder.
+`evals/`, having only been run by hand (`evals/verify/offer` is another case, the offer of a
+Verification), and on Claude Code 2.1.322 a run granted `Bash(git *)` still refuses to start while
+`~/.docker/contexts` holds a link, even with `DOCKER_CONFIG` set to an empty folder.
 
 ## A commit's body says why
 
@@ -95,10 +94,11 @@ Verification. Rechecked 2026-11-12 on Claude Code 2.1.322: a run granted
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
 typo, Problem → Solution → Implications for a subtle fix; an LLM writes it in the session that
-made the change, and asks the user for what it doesn't know. baloo checks only a commit's format
-(`conventional-commits`) and says nothing of a body. Its half on comments became a line in
-`principles` on 2026-11-12 (case `evals/principles/why-comment`); a case for a body needs the
-agent to commit, with Bash, which the sandbox doesn't run yet (see the item on verify's cases).
+made the change, and asks the user for what it doesn't know. `hathi` checks only a commit's
+format (`conventional-commits`) and nothing says what its body holds. Its half on comments became
+a line in `principles` on 2026-11-12 (case `evals/principles/why-comment`); a case for a body
+needs the agent to commit, with Bash, which the sandbox doesn't run yet (see the item on verify's
+cases).
 Settled by an eval case where Claude writes a body that only restates the diff, failing without
 the rule and passing with it (ADR evals): then lines in `principles`; or by dropping the idea.
 
