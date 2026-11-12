@@ -100,13 +100,39 @@ def _leak(command: str, dir: str) -> str:
     """Why the shell command `command`, run in `dir`, would show a Secret, or "" when it wouldn't:
     the first of its programs that would, but an env whose pipeline keeps only the names, and a
     command whose output a variable takes, unless an echo or a printf then prints that variable."""
+    spelled = _spelled_out(command)
     command, held = _captured(command, dir)
     found = programs(command)
     for i, p in enumerate(found):
+        if spelled:
+            p = Program(p.name, [_unset(a, spelled) for a in p.args], p.env, p.piped)
         why = _shows(p, dir) or _prints_held(p, held)
         if why and not (_dumps_env(p) and _keeps_names(found[i:])):
             return why
     return ""
+
+
+# A for loop's header, `for S in a b`, with its variable and the words it takes.
+_FOR = re.compile(r"\bfor\s+([A-Za-z_]\w*)\s+in\s+([^;\n]*)", re.A)
+# What makes a word more than the text it spells: an expansion, a pattern or a redirection.
+_EXPANDS = re.compile(r"[$`*?\[<>(]")
+
+
+def _spelled_out(command: str) -> List[str]:
+    """The variables of the shell command `command` whose every value it spells out: a for loop's
+    over plain words, set nowhere else in it. Showing one shows nothing the session hasn't seen."""
+    found: List[str] = []
+    for m in _FOR.finditer(command):
+        rest = command[: m.start()] + command[m.end() :]
+        named = re.search(r"(?<![\w$])(?<!\$\{)" + m[1] + r"\b", rest, re.A)
+        if not _EXPANDS.search(m[2]) and not named:
+            found.append(m[1])
+    return found
+
+
+def _unset(arg: str, names: List[str]) -> str:
+    """The argument `arg` without its expansions of the variables `names`."""
+    return _VARIABLE.sub(lambda m: "" if (m[1] or m[2]) in names else m[0], arg)
 
 
 # A variable assigned a command's output, `T=$(…)` or `T="$(…)"`, at the start of a word.
@@ -444,7 +470,7 @@ def _names_only(p: Program) -> bool:
 
 def _alternatives(pattern: str) -> List[str]:
     """The grep pattern `pattern` split on its `|` and `\\|` outside parentheses: each of them
-    matches on its own."""
+    matches on its own. A basic pattern's `\\(`, `\\)` and `\\|` come back as `(`, `)` and `|`."""
     found = [""]
     depth = 0
     i = 0
@@ -454,6 +480,9 @@ def _alternatives(pattern: str) -> List[str]:
             found.append("")
             i += 1 if c == "|" else 2
             continue
+        if pattern.startswith(("\\(", "\\)", "\\|"), i):
+            c = pattern[i + 1]
+            i += 1
         depth += {"(": 1, ")": -1}.get(c, 0)
         found[-1] += c
         i += 1
