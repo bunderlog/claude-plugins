@@ -1,6 +1,6 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-11-09
+2026-10-03 · user · kept 2026-11-12
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. From 2026-11-09 they
@@ -9,39 +9,9 @@ detected for a Config. Settled by deciding which stacks get one, or none. Kept t
 a project in that stack takes up the plugins; `python`, this repo's stack from 0.26.0 (ADR
 binary), waits until a measurement shows the Guidelines a Hook gives from 0.27.0 are followed.
 
-## Guidelines for concerns across stacks
-
-2026-10-03 · user · kept 2026-11-09
-
-`security` (input, authorization, Secrets in code), `api-design` (versions, compatibility) and
-`observability` (logs, errors, metrics) as baloo's Guidelines. Settled by deciding which earn a
-Guideline of their own rather than rules in `principles` or `design`. `principles` already asks
-that a change be observable in production, and the Checks keep Secrets out of commits and
-Claude's context; kept until a session shows a gap they leave, which a week of three projects in
-2026-10 didn't.
-
-## Where each kind of project knowledge lives
-
-2026-10-05 · user · kept 2026-11-09
-
-A project can keep part of its knowledge outside the repo, in a tool such as Jira, Confluence,
-GitHub Issues or a wiki. Agreed so far: the project names where each kind lives (requirements, bugs,
-tasks, decisions, test plans, the glossary), and a skill writes there through its connector or
-command-line client, else to `.about/`, as ADR issues and ADR prd already do for two kinds;
-technical ADRs stay with the code, apart from the project's decisions; what a Session review finds
-for a kind kept in an outside tool goes to the local Inbox, for a person to move. To weigh:
-Sancrisoft's risk register handed from spec to QA, Squad's opportunity solution tree, Kiro's
-steering split into product, tech and structure. Settled once a project keeps a kind in an outside
-tool, or `.about/` takes a new kind: then decide where the map of kinds to places lives and how
-a skill finds it, and rewrite ADR about-folder. One project keeps its tasks and bugs in Jira, and
-from 0.26.2 the Session review leaves what is still to do on a ticket to the ticket (ADR
-session-review); decide once a skill has to write there, not only read. louie's `deliver` Workflow
-will read an Issue from the project's tracker (PRD harness), so its PRD may be where this comes up
-first.
-
 ## A plugin for another audience, such as ad managers
 
-2026-10-14 · user · kept 2026-11-09
+2026-10-14 · user · kept 2026-11-12
 
 baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
 2026-10-14 for installing by choice and different audiences, and not done: no such user exists
@@ -91,7 +61,7 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 
 ## Eval cases for verify, doctor and retro
 
-2026-11-01 · evals · kept 2026-11-09
+2026-11-01 · evals · kept 2026-11-12
 
 Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
 scripts). On 2026-11-02 Bash was granted by moving every link out of `~/.docker` for the run
@@ -112,11 +82,13 @@ isn't enough) and back after it, with `--allow-tools 'Bash(git *)' 'Bash(python3
 Settled by a sandbox that runs Git hooks and lets a skill read the session's Transcript, or by
 dropping these cases; each is kept only once it fails without the plugin (ADR evals). From
 2026-11-09 `verify` becomes a louie Workflow and `doctor` and `retro` bagheera's (ADR plugin), so
-each case moves with its part, in the PRD of that move.
+each case moves with its part, in the PRD of that move. On 2026-11-12 none of the three is in
+`evals/`, having only been run by hand; `evals/verify/offer` is another case, the offer of a
+Verification.
 
 ## A commit's body and a code comment say why
 
-2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-09
+2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-12
 
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
@@ -131,7 +103,7 @@ or lines in `principles`; or by dropping the idea.
 
 ## Property-based tests where no literal can be the expected value
 
-2026-11-08 · Missing Semester 2026, Code Quality · kept 2026-11-09
+2026-11-08 · Missing Semester 2026, Code Quality · kept 2026-11-12
 
 `testing` §3 takes expected values from outside the code and, where nothing independent exists,
 runs the code instead of testing it. A property (a round trip, an invariant, agreement with a
