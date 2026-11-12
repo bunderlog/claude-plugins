@@ -40,7 +40,9 @@ On 2026-11-12 `principles` got a case where a fix departs from the obvious way i
 comments, graded on a comment saying why. The plugin made it worse: Opus wrote that comment in 2
 of 3 runs without the plugin and in 0 of 3 with it, Sonnet in none either way, as "match the
 existing style" and "the least code" read as leaving it out. With a line in On every task that a
-comment says what the code can't, both scored 1.00.
+comment says what the code can't, both scored 1.00. A case for property-based tests, a fast
+rewrite of a slow function, was dropped the same day: without the plugin Opus and Sonnet kept the
+slow version and checked the fast one against it on random inputs in 6 of 6 runs.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

@@ -100,17 +100,6 @@ agent to commit, with Bash, which the sandbox doesn't run yet (see the item on v
 Settled by an eval case where Claude writes a body that only restates the diff, failing without
 the rule and passing with it (ADR evals): then lines in `principles`; or by dropping the idea.
 
-## Property-based tests where no literal can be the expected value
-
-2026-11-08 · Missing Semester 2026, Code Quality · kept 2026-11-12
-
-`testing` §3 takes expected values from outside the code and, where nothing independent exists,
-runs the code instead of testing it. A property (a round trip, an invariant, agreement with a
-slow reference), checked with Hypothesis or fast-check, is a third way: an independent check
-with no literal. Settled by an eval case where Claude restates the code's formula as the
-expected value, or leaves logic untested, and the line changes that (ADR evals), or by dropping
-the idea.
-
 ## `deliver` re-plans and stops on a decision the earlier plan didn't raise
 
 2026-11-10 · session · kept 2026-11-12
