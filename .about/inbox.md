@@ -163,3 +163,21 @@ own plan going unused.
 so a Check that raises lets the tool call through and leaves nothing to find later. Settled by
 deciding whether `pre-tool-use` keeps its last failure in `${CLAUDE_PLUGIN_DATA}` for `doctor` to
 show, or by keeping it as it is, since session start already says when no Check runs at all.
+
+## `no-secrets-in-context` denies far more harmless work than Secrets
+
+2026-11-12 · assessment
+
+Of its 31 denials from 2026-10-13 to 2026-11-12, labeled with `/bagheera:assess`, 6 kept a Secret
+out and 25 stopped harmless work; `no-git-hook-bypass` was right in 6 of 8. The real 6 were all an
+Env file shown through a filter that lets values through (`cat .env`, `grep -v pass`, a `sed` that
+masks only some lines). The false ones, by kind:
+- `env` piped to `grep -c`, or to names only (`grep -o '^NAME'`, a split on `=`);
+- an Env file read through `sed 's/=.*/…/'`, or `grep -l`, `grep -o` for names or one plain key;
+- a token read into a shell variable and sent with `curl`, never printed;
+- misreads: `*.pub*` taken for a private key, jq's `.key`, `env` inside a heredoc, `ssh-add -L`,
+  a `$TOKEN` piped to `sha256sum`.
+`no-git-hook-bypass`'s 2 false ones set `core.hooksPath` to a folder of hooks (`.husky`) or to
+`/dev/null` in a test's scratch repo. Settled by deciding which kinds the Check lets through
+(ADR checks), each with a test that a real denial of the six still denies, or by keeping it as
+it is, since Claude found another way or went on after 30 of the 31.

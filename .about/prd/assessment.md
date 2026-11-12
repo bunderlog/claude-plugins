@@ -70,8 +70,8 @@ rather than a measurement made by hand.
 - Turning a part off from the report.
 - What a user is asked after a week of use (PRD status-line, PRD visibility): no session shows it.
 - PRD delivery's and PRD batch's signals: a Workflow runs in the background and its result reaches
-  the session as a notification once it ends; where its verdict can be read from is settled once
-  a louie Workflow has run on this machine, in a change of this PRD.
+  the session's Transcript as a task-notification once it ends, so a later change of this PRD can
+  count them from there (seen on 2026-11-12, the first louie Workflow run on this machine).
 
 ## Anti-goals
 
