@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.61.0 — 2026-11-12
+
+### louie
+
+#### Features
+
+- louie: build on a way to build the plan recommends, and list its assumptions in the PR (f784a5d)
+
 ## 0.60.0 — 2026-11-12
 
 ### louie
