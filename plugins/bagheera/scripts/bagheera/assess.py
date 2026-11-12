@@ -52,14 +52,14 @@ def record(data: str, session: str, transcript: str, root: str) -> Optional[Dict
     """Counts the session `session` from its Transcript `transcript`, in the repo at `root`, and
     appends its record to the data folder `data`; None, and nothing appended, for a headless
     session or a Transcript it can't read."""
-    r = count(session, transcript, root)
+    r = _count(session, transcript, root)
     if r is None:
         return None
     _append(os.path.join(_folder(data), SESSIONS), r)
     return r
 
 
-def count(session: str, transcript: str, root: str) -> Optional[Dict[str, Any]]:
+def _count(session: str, transcript: str, root: str) -> Optional[Dict[str, Any]]:
     """The record of the session `session`: names, paths of `.about/` files, ids and numbers only."""
     try:
         with open(transcript, "rb") as f:
@@ -203,7 +203,7 @@ def backfill(data: str, config: str) -> int:
         session = os.path.basename(transcript)[: -len(".jsonl")]
         if session in known:
             continue
-        root = repo.root(_cwd(transcript))
+        root = repo.root(condense.cwd(transcript))
         if root and not _own(root, config) and record(data, session, transcript, root):
             n += 1
     os.makedirs(_folder(data), mode=0o700, exist_ok=True)
@@ -216,20 +216,6 @@ def _own(root: str, config: str) -> bool:
     """Whether `root` is the home folder or Claude Code's own, where no session is counted."""
     home = os.path.expanduser("~")
     return root in (home, config) or root.startswith(config.rstrip("/") + "/")
-
-
-def _cwd(transcript: str) -> str:
-    """The folder the session of the Transcript `transcript` started in, from its first line that
-    names one; "" where none does."""
-    try:
-        with open(transcript, encoding="utf-8", errors="replace") as f:
-            for line in f:
-                m = re.search(r'"cwd":"((?:[^"\\]|\\.)*)"', line)
-                if m:
-                    return json.loads('"' + m.group(1) + '"')
-    except (OSError, ValueError):
-        pass
-    return ""
 
 
 @dataclass
@@ -281,7 +267,8 @@ def report(data: str, days: int, only: str, now: datetime, evals: str) -> str:
     out = [
         f"{names.PLUGIN} assessment: the last {days} days, from {since}; (in brackets) the {days} "
         "before",
-        f"Sessions: {cur.sessions} ({old.sessions}), in {len(cur.repos)} repo(s)",
+        f"Sessions counted (PRD assessment): {cur.sessions} ({old.sessions}), in "
+        f"{len(cur.repos)} repo(s)",
         "",
         "Checks' denials (ADR checks, ADR measurement):",
     ]
@@ -430,7 +417,5 @@ def _unlabeled(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> List[str]:
             call = calls.get(d.get("id"), "?")
             out.append(f"  {r['session']} {d.get('id')} {d.get('check')}: {call}")
     if not out:
-        return ["Denials to label: none"]
-    return [
-        f"Denials to label, `{names.PLUGIN} assess label <session> <call> {REAL}|{FALSE}` each:"
-    ] + out
+        return ["Denials to label (ADR checks): none"]
+    return [f"Denials to label (ADR checks), with /{names.PLUGIN}:assess:"] + out

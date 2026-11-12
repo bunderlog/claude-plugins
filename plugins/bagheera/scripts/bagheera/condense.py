@@ -776,6 +776,20 @@ def _plugin_of(text: str) -> str:
     return names.BUILD if head.startswith(_GUIDELINES) else "other"
 
 
+def cwd(path: str) -> str:
+    """The folder the session of the Transcript file `path` started in, from its first line that
+    names one; "" where none does or the file can't be read."""
+    try:
+        with open(path, "rb") as f:
+            for raw in f:
+                for _, line in _lines(raw):
+                    if _str(line, "cwd"):
+                        return line["cwd"]
+    except OSError:
+        pass
+    return ""
+
+
 def facts(transcript: Union[str, bytes]) -> Facts:
     """What PRD assessment counts of the Transcript `transcript`. Only names, paths, ids and
     numbers leave here, never what the session said (ADR transcripts)."""
