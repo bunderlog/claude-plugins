@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.61.1 — 2026-11-13
+
+### louie
+
+#### Fixes
+
+- louie: head a plan's choices for the person "Open decisions", as the glossary names them (ac83e83)
+
 ## 0.61.0 — 2026-11-12
 
 ### louie
