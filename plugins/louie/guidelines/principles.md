@@ -11,6 +11,9 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - A commit holds only this task's changes: leave other pending changes unstaged, or ask.
 - Write the least code that solves the stated problem: nothing speculative, no options nobody
   asked for.
+- A comment says what the code can't: why not the obvious way, a choice correctness rests on,
+  where a constant comes from. A fix that departs from the obvious way gets one, even in a file
+  with none, so a later tidy-up doesn't undo it.
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
 - A task that serves an Issue or a PRD with acceptance criteria ends, before its commit or PR,
