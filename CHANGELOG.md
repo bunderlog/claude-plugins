@@ -2,6 +2,15 @@
 
 The marketplace's Releases, newest first.
 
+## 0.58.2 — 2026-11-12
+
+### bagheera
+
+#### Fixes
+
+- bagheera: stop denying a read of git config core.hooksPath with a redirect (0f72675)
+- bagheera: stop denying names-only greps with \( \|, and loop values a command spells out (a96c606)
+
 ## 0.58.1 — 2026-11-12
 
 ### bagheera
