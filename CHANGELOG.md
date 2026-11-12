@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.59.0 — 2026-11-12
+
+### bagheera
+
+#### Features
+
+- bagheera: name in doctor the last Check that failed and let a call through (ca420fe)
+
 ## 0.58.4 — 2026-11-12
 
 ### baloo
