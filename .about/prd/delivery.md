@@ -43,7 +43,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - `/louie:plan <Issue>` reads the Issue, what in `.about/` it touches and the code, and returns a
   plan: what changes where and which criterion each change serves, its confidence, the decisions
   only the person can make, and "nothing to build" with the commit that already meets the criteria.
-  It changes nothing. The person settles the open decisions, and the session writes them into the
+  It changes nothing. The person settles the Open decisions, and the session writes them into the
   Issue or an ADR, committed and pushed before `deliver`.
 - `/louie:deliver <Issue>`, one agent per stage unless said, stages 1 and 2 one agent:
   1. stops `blocked:` before changing anything when the repo has no remote, the tracker's client
@@ -54,9 +54,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
      worktree stays after the run, and every later stage works in it;
   3. plans again, stopping when the Issue has no acceptance criteria, leaves a decision open, or
      has nothing to build, and then discarding the worktree and branch it made, which hold
-     nothing; a question outside the Issue's criteria is not a decision for the person, nor is a
-     way to build the planner recommends that no criterion, ADR or the Issue rules out: it is an
-     assumption the plan builds on;
+     nothing; a question outside the Issue's criteria is not an Open decision, nor is a way to
+     build the planner recommends that no criterion, ADR or the Issue rules out: each is an
+     Assumption the plan builds on;
   4. implements in commits in the project's format, with the checks the project's `CLAUDE.md` or
      README names (`mise run check`, `make verify`) passing on the last one, or stops
      `blocked:checks` with their output; a change that delivers an Issue kept in

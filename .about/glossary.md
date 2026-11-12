@@ -192,6 +192,30 @@ Check, it isn't a plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 
+## Building
+
+**Plan**:
+louie's answer for an Issue before it is built: each change, where it goes and the acceptance
+criterion it serves, how sure it is, its Open decisions and Assumptions; or nothing to build,
+naming the commit that already meets the criteria. Making one changes nothing.
+_Avoid_: "plan" for Claude Code's plan mode's, which follows no Issue
+_In code_: the `plan` Workflow; `agents/planner.md`
+
+**Open decision**:
+A choice only the person can make, which the Issue, the ADRs and the code leave open, such as a
+behavior another decision set. A Plan with one stops `deliver` until it is written into the Issue
+or an ADR; one found elsewhere waits in the Inbox. Unlike an Assumption, a Plan doesn't take it.
+_Avoid_: decision for the person; "decision" alone, which an ADR's is once taken
+_In code_: a Plan's `decisions`; the verdict `needs-decision`
+
+**Assumption**:
+What a Plan takes as given without asking the person, with what would change if it is wrong: a
+way to build it recommends that no criterion, ADR or the Issue rules out, or a question outside
+the Issue's criteria that it leaves out. The pull request lists them for review, and one the
+review rejects is changed in that pull request: it isn't an Open decision, which stops only a run
+not yet building.
+_In code_: a Plan's `assumptions`
+
 ## Retired terms
 
 - **Config** — `.claude/baloo.yml`, a repo's settings for the plugin, each Check and Guideline

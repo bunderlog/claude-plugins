@@ -16,8 +16,8 @@ also change the same files, and their pull requests then conflict on the default
 ## Success signal
 
 In the runs of `/louie:deliver` on several Issues in the month after its Release, no Issue stops
-on a decision after its implementation started: every decision for the person comes in the run's
-one report, before any commit; and no two pull requests of one run conflict on the default branch.
+on a decision after its implementation started: every Open decision comes in the run's one
+report, before any commit; and no two pull requests of one run conflict on the default branch.
 
 ## Scope
 
@@ -30,8 +30,8 @@ one report, before any commit; and no two pull requests of one run conflict on t
 - First each Issue is prepared, one after another, as stages 1 and 2 of PRD delivery do: a
   worktree and branch of its own. Then all are planned at once. No Issue is implemented until
   every plan is in.
-- An Issue goes on only when its plan is ready. One whose plan stops (a decision for the person,
-  no acceptance criteria, low confidence, nothing to build, a tool failing) ends as its plan does,
+- An Issue goes on only when its plan is ready. One whose plan stops (an Open decision, no
+  acceptance criteria, low confidence, nothing to build, a tool failing) ends as its plan does,
   with the worktree and branch it made discarded.
 - Of the ready Issues, taken in the order the person named them, one whose plan changes a file an
   earlier Issue that goes on also changes ends `blocked:overlaps`, naming that Issue and the files,
