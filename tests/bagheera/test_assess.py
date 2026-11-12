@@ -123,13 +123,13 @@ class Assess(unittest.TestCase):
         os.remove(os.path.join(self.dir, "s2.jsonl"))
         report = self.report()
         self.assertIn("real 0, false 1, unlabeled 1", report)
-        self.assertIn("Denials to label: none", report)
+        self.assertIn("Denials to label (ADR checks): none", report)
 
     def test_a_record_outlives_its_transcript(self):
         self.session("s1", line("user", "hi", at="2026-09-01T09:00:00.000Z"))
         os.remove(os.path.join(self.dir, "s1.jsonl"))
-        self.assertIn("Sessions: 0 (0)", self.report(30))
-        self.assertIn("Sessions: 1 (0)", self.report(90))
+        self.assertIn("(PRD assessment): 0 (0)", self.report(30))
+        self.assertIn("(PRD assessment): 1 (0)", self.report(90))
 
     def test_a_proposal_waiting_ten_days(self):
         write(os.path.join(self.root, ".about/proposals/20261102T120000Z-s1.md"),
@@ -139,6 +139,81 @@ class Assess(unittest.TestCase):
         self.assertIn(
             f"Proposals waiting (PRD visibility): 1, the longest 10 days, in "
             f"{os.path.basename(self.root)}", self.report())
+
+    def test_skills_session_start_and_a_subagents_reads(self):
+        write(os.path.join(self.root, ".about/prd/export.md"), "# Export\n\nIn `src/export/`.\n")
+        prd = os.path.join(self.root, ".about/prd/export.md")
+        sub = os.path.join(self.dir, "s1", "subagents", "agent-a.jsonl")
+        write(sub, call("r1", "Read", {"file_path": prd}, "2026-11-10T09:00:00.000Z") + "\n"
+              + result("r1") + "\n")
+        start = {"hookEvent": "SessionStart", "type": "hook_additional_context",
+                 "content": ["Guidelines, the rules\nmore", "bagheera:\nx"]}
+        self.session(
+            "s1",
+            json.dumps({"type": "attachment", "attachment": start}),
+            json.dumps({"type": "attachment", "attachment": {
+                "hookEvent": "SessionStart", "type": "hook_success", "content": "baloo:\nADRs"}}),
+            call("k1", "Skill", {"skill": "baloo:prd"}),
+            call("k2", "Skill", {"skill": "someone:else"}),
+            line("user", "<command-name>/bagheera:assess</command-name>"),
+            call("e1", "Edit", {"file_path": os.path.join(self.root, "src/export/csv.go")},
+                 "2026-11-10T09:05:00.000Z"),
+            result("e1", at="2026-11-10T09:05:00.000Z"),
+        )
+        report = self.report()
+        self.assertIn("  baloo:prd: 1 (0)", report)
+        self.assertIn("  bagheera:assess: 1 (0)", report)
+        self.assertNotIn("someone:else", report)
+        self.assertIn("  louie: 26 (0)", report)
+        self.assertIn("  bagheera: 11 (0)", report)
+        self.assertIn("  baloo: 11 (0)", report)
+        self.assertIn("after a read of it: 1 of 1", report)
+
+    def test_session_review_decisions(self):
+        self.session("s1", line("user", "hi"))
+        repo = review.repo(self.root)
+        lines = [
+            ["2026-11-01T10:00:00Z", repo, "R", "P1", "inbox", "add", "accepted"],
+            ["2026-11-01T10:00:00Z", repo, "R", "P2", "adr", "edit", "accepted-edited"],
+            ["2026-11-01T10:00:00Z", repo, "R", "P3", "glossary", "add", "rejected"],
+            ["2026-09-20T10:00:00Z", repo, "Q", "P1", "inbox", "add", "deferred"],
+            ["2026-11-01T10:00:00Z", "other", "R", "P4", "inbox", "add", "accepted"],
+        ]
+        write(os.path.join(self.data, "session-review", "session-review.log"),
+              "".join("\t".join(f) + "\n" for f in lines))
+        report = self.report()
+        self.assertIn("  accepted: 2 (0)", report)
+        self.assertIn("  rejected: 1 (0)", report)
+        self.assertIn("  deferred: 0 (1)", report)
+        self.assertIn("  Inbox items added: 1 (0)", report)
+
+    def test_the_command_counts_transcripts_on_disk_once_and_labels(self):
+        config = testkit.tempdir(self)
+        os.environ["CLAUDE_CONFIG_DIR"] = config
+        os.environ["CLAUDE_PLUGIN_DATA"] = self.data
+        os.environ["CLAUDE_PROJECT_DIR"] = self.root
+        folder = os.path.join(config, "projects", "-repo")
+        session = json.dumps({"type": "user", "cwd": self.root, "entrypoint": "cli",
+                              "timestamp": "2026-11-10T09:00:00.000Z", "message": {"content": "hi"}})
+        write(os.path.join(folder, "old.jsonl"), session + "\n" + call(
+            "d1", "Bash", {"command": "cat .env"}) + "\n" + denied(
+            "d1", "no-secrets-in-context", ".env") + "\n")
+        home = json.dumps({"type": "user", "cwd": config, "message": {"content": "hi"}})
+        write(os.path.join(folder, "own.jsonl"), home + "\n")
+
+        def cmd(*args):
+            out, err = io.StringIO(), io.StringIO()
+            return cli.run(list(args), io.StringIO(), out, err), out.getvalue(), err.getvalue()
+
+        code, out, _ = cmd("assess", "--days", "3650")
+        self.assertEqual(code, 0)
+        self.assertEqual([r["session"] for r in assess.records(self.data)], ["old"])
+        self.assertIn("old d1 no-secrets-in-context: Bash(cat .env)", out)
+        os.remove(os.path.join(self.data, "assessment", "sessions.jsonl"))
+        cmd("assess")
+        self.assertEqual(assess.records(self.data), [])
+        self.assertEqual(cmd("assess", "label", "old", "d1", "real")[0], 1)
+        self.assertEqual(cmd("assess", "--days", "0")[0], 2)
 
     def test_stale_eval_suites_only_where_the_repo_has_evals(self):
         write(os.path.join(self.root, "plugins/baloo/skills/adr/SKILL.md"), "v1\n")
@@ -155,11 +230,9 @@ class Assess(unittest.TestCase):
 
     def test_each_figure_names_what_it_decides_for(self):
         self.session("s1", line("user", "hi"))
-        heads = [h for h in self.report().split("\n\n")]
-        for head in heads[1:]:
-            first = head.split("\n")[0]
-            if first.startswith("Denials to label"):
-                continue
+        blocks = self.report().split("\n\n")
+        firsts = [blocks[0].split("\n")[1]] + [b.split("\n")[0] for b in blocks[1:]]
+        for first in firsts:
             self.assertRegex(first, r"^(PRD|ADR) |\((PRD|ADR) ", first)
 
 
@@ -200,8 +273,11 @@ class SessionEnd(unittest.TestCase):
         del os.environ[review.ENV]
         os.environ["CLAUDE_PROJECT_DIR"] = testkit.tempdir(self)
         self.end()
-        time.sleep(1)
-        self.assertEqual(assess.records(self.data), [])
+        # A session counted after them is the only record, once its count is written.
+        os.environ["CLAUDE_PROJECT_DIR"] = self.root
+        text = json.dumps({"session_id": "s2", "transcript_path": self.transcript})
+        cli.run(["session-end"], io.StringIO(text), io.StringIO(), io.StringIO())
+        self.assertEqual([r["session"] for r in self.wait()], ["s2"])
 
 
 if __name__ == "__main__":
