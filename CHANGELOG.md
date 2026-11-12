@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.60.0 — 2026-11-12
+
+### louie
+
+#### Features
+
+- louie: leave a comment saying why when a fix departs from the obvious way (3261f83)
+
 ## 0.59.0 — 2026-11-12
 
 ### bagheera
