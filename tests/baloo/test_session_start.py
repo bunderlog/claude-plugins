@@ -68,7 +68,8 @@ class SessionStart(unittest.TestCase):
         write(os.path.join(self.dir, ".about/adr/new.md"), "# New\n")
         write(os.path.join(self.dir, ".about/proposals/r.md"), "# Session review r\n")
         index = ("ADRs, each .about/adr/<name>.md:\n- new: New\n"
-                 "Before a task's first edit, read the ADR, PRD or Issue above that it touches\n")
+                 "Before a task's first edit, read the ADR, PRD or Issue above that it touches, "
+                 "and say where the code already breaks it\n")
         self.assertEqual(
             self.start(),
             "baloo:\n" + index + ".about/ has changes git hasn't committed: .about/adr/new.md, "
@@ -127,7 +128,8 @@ class SessionStart(unittest.TestCase):
             "baloo:\nADRs, each .about/adr/<name>.md:\n- bare\n"
             "Issues, each .about/issues/<name>.md:\n- fix: Fix the thing\n"
             "Terms in .about/glossary.md: One\n"
-            "Before a task's first edit, read the ADR, PRD or Issue above that it touches; "
+            "Before a task's first edit, read the ADR, PRD or Issue above that it touches, "
+            "and say where the code already breaks it; "
             "write the glossary's terms as it uses them\n",
         )
 

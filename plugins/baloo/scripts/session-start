@@ -51,7 +51,7 @@ if [ $# -gt 0 ]; then
         close(ARGV[i])
       }
       if (n["adr"] + n["prd"] + n["issues"] > 0) {
-        say = "Before a task'"'"'s first edit, read the ADR, PRD or Issue above that it touches"
+        say = "Before a task'"'"'s first edit, read the ADR, PRD or Issue above that it touches, and say where the code already breaks it"
       }
       if (nterms > 0) {
         say = say (say == "" ? "Write" : "; write") " the glossary'"'"'s terms as it uses them"
