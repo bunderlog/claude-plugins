@@ -2,6 +2,19 @@
 
 The marketplace's Releases, newest first.
 
+## 0.58.0 — 2026-11-12
+
+### bagheera
+
+#### Features
+
+- bagheera: count each session at its end and report how useful each part of bunderlog is (cf27b7c)
+
+#### Fixes
+
+- retro: send a Check's or a skill's fix to bunderlog's plugins, not to baloo (f026b67)
+- bagheera: name what each Assessment figure decides for; read Transcripts via condense (4143d2f)
+
 ## 0.57.0 — 2026-11-11
 
 ### bagheera
