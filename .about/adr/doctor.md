@@ -6,29 +6,29 @@ Session start says what it changed and what went wrong, but not what is on: whic
 why, which Git hook runs which version, which version runs. A Git hook running a link to an older
 binary, with nothing saying so, went unnoticed in this repo. So the plugin has `doctor`, which shows
 its state in the repo it runs in, its problems first, each with what fixes it: the plugin's folder
-and version running and the link the Status line runs (ADR status-line), the Config's
-settings, whether a Session review runs and how many Proposals wait or disagree with their files
-(ADR session-review), each Check on or off and whether by its key or by default, and the last
-one that failed in the running version (ADR checks), and the Guidelines on and off, and each item
-of PRD project-setup's list the repo lacks, which `/bagheera:setup` adds (PRD setup); a setting an earlier Release had and this one removed is
-one of its problems, for the user to delete, which session start leaves out (ADR measurement).
-Last, in any folder, it lists the machine's projects that need attention, each thing with its
-folder and what to do, the sessions waiting for their person and since when, and how many projects
-need nothing and how many aren't set up (PRD visibility); these aren't its problems, since they
-are other repos'. It exits 1 when it finds a problem, 0 otherwise, and prints the same text for the
-user and for Claude.
+and version running and the link the Status line runs (ADR status-line), the Config's settings,
+whether a Session review runs and how many Proposals wait or disagree with their files (ADR
+session-review), each Check on or off and whether by its key or by default, and the last one that
+failed in the running version (ADR checks), and the Guidelines on and off, and each item of PRD
+project-setup's list the repo lacks, which `/bagheera:setup` adds (PRD setup); a setting an earlier
+Release had and this one removed is one of its problems, for the user to delete, which session start
+leaves out (ADR measurement). Last, in any folder, it lists the machine's projects that need
+attention, each thing with its folder and what to do, the sessions waiting for their person and
+since when, and how many projects need nothing and how many aren't set up (PRD visibility); these
+aren't its problems, since they are other repos'. It exits 1 when it finds a problem, 0 otherwise,
+and prints the same text for the user and for Claude.
 
-It only reads, but keeps what it found of the machine's projects in the plugin's data folder,
-where the Status line reads it (ADR status-line): what fixes a problem is the next session start,
-a file or a Config key that is the user's to change, which it names, `/bagheera:setup`, or, for a
-Check that failed, the Release that fixes it, which the user asks for in an issue. The versions it compares are local, the
-running plugin's with the link's target and with the one Claude Code records as installed for the
-project, in its own folder's `plugins/installed_plugins.json`; it asks GitHub for nothing. Claude Code loads a plugin
-only when it starts, so a session started before an update runs the version before for hours: on
-2026-10-14 a project ran 0.24.1 and 0.21.1 for a week with 0.25.1 installed. A newer version
-installed is a problem a restart fixes, and the next prompt in such a session tells Claude, once,
-to tell the user; that file is Claude Code's and undocumented, so a shape it can't read says
-nothing.
+It only reads, but keeps what it found of the machine's projects in the plugin's data folder, where
+the Status line reads it (ADR status-line): what fixes a problem is the next session start, a file
+or a Config key that is the user's to change, which it names, `/bagheera:setup`, or, for a Check
+that failed, the Release that fixes it, which the user asks for in an issue. The versions it
+compares are local, the running plugin's with the link's target and with the one Claude Code records
+as installed for the project, in its own folder's `plugins/installed_plugins.json`; it asks GitHub
+for nothing. Claude Code loads a plugin only when it starts, so a session started before an update
+runs the version before for hours: on 2026-10-14 a project ran 0.24.1 and 0.21.1 for a week with
+0.25.1 installed. A newer version installed is a problem a restart fixes, and the next prompt in
+such a session tells Claude, once, to tell the user; that file is Claude Code's and undocumented, so
+a shape it can't read says nothing.
 
 The plugin isn't on the PATH, so the `doctor` skill runs it as `python3 -E -s
 <plugin>/scripts/run.py doctor`, as `retro` runs `condense` (ADR binary), and answers the user's

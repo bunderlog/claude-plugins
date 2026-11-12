@@ -46,11 +46,11 @@ waiting without the line.
 - A turn the person interrupted isn't waiting: they are at it. A headless session, a Session
   review's among them, and a subagent never wait.
 - The Status line has little room, so it gives up its bars to make room for one short part:
-  - The whole line is grey while all is well: the folder, the branch, the icons, the numbers and
-    the model. Each Usage bar and the Cache bar becomes an icon and its number, which turn yellow
-    or red together at the thresholds that color the bar today: `▤ 12% 120K` for the context, `◷ 42% 02:42` for the
-    5-hour limit, `◷ 61% Sat` for the 7-day one, `↻ 40m` for the cache. The details after the
-    number (tokens, reset times) stay grey and have no parentheses. A group's parts are a space
+  - The whole line is grey while all is well: the folder, the branch, the icons, the numbers and the
+    model. Each Usage bar and the Cache bar becomes an icon and its number, which turn yellow or red
+    together at the thresholds that color the bar today: `▤ 12% 120K` for the context, `◷ 42% 02:42`
+    for the 5-hour limit, `◷ 61% Sat` for the 7-day one, `↻ 40m` for the cache. The details after
+    the number (tokens, reset times) stay grey and have no parentheses. A group's parts are a space
     apart, the groups a grey `·`, as Claude Code's own footer has them.
   - The part, before the model, names nothing: a yellow `⧗` and how many sessions wait, then a
     yellow `⚑` and how many projects need attention, each only when it isn't 0, since each shown
@@ -60,12 +60,13 @@ waiting without the line.
   - It leaves out the session it draws for, but not the other sessions or the needs of its own
     project.
 - The line draws from what bagheera last found, at most 60 seconds old, and never waits for the
-  check itself; ADR status-line and ADR doctor are rewritten with the change that builds this, and the
-  glossary's Usage bar and Cache bar, which are no bars once it is built, renamed.
+  check itself; ADR status-line and ADR doctor are rewritten with the change that builds this, and
+  the glossary's Usage bar and Cache bar, which are no bars once it is built, renamed.
 - `doctor`, in any folder, adds the machine's projects: each that needs attention, a line for each
-  thing, with its folder and what to do, a waiting session's line saying since when it waits; then how many need nothing and how many aren't set up.
-  They aren't `doctor`'s problems: its exit code stays about the repo it runs in, and outside a repo
-  about the plugin and the person's settings alone.
+  thing, with its folder and what to do, a waiting session's line saying since when it waits; then
+  how many need nothing and how many aren't set up. They aren't `doctor`'s problems: its exit code
+  stays about the repo it runs in, and outside a repo about the plugin and the person's settings
+  alone.
 - Both only read, apart from bagheera's data folder: no file in a project, no git config, no
   network.
 

@@ -88,9 +88,10 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
 
 - In a set-up project, reading the committed files shows each item of the list: the marketplace,
   baloo on, the deny rules, attribution off, no `statusLine` or `outputStyle`; the import in
-  `CLAUDE.md`; `.hathi.yml` with its types, where it has `hathi`; the hook folder with `hathi
-  check <hook>` first in each hook; the command in the README; `.about/proposals/` and
-  `.claude/worktrees/` in `.gitignore`; the exact `hathi` pin; the ADR; and no `.claude/baloo.yml`. Checked by hand.
+  `CLAUDE.md`; `.hathi.yml` with its types, where it has `hathi`; the hook folder with `hathi check
+  <hook>` first in each hook; the command in the README; `.about/proposals/` and
+  `.claude/worktrees/` in `.gitignore`; the exact `hathi` pin; the ADR; and no `.claude/baloo.yml`.
+  Checked by hand.
 - In a fresh clone of a set-up project with `hathi`, after the README's command, a commit with the
   message `wip` and a commit that adds a made-up AWS access key ID (`AKIA` and 16 random
   characters from A–Z and 2–7, not a published example) are each refused, and `hathi doctor`

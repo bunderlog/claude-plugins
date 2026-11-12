@@ -89,10 +89,12 @@ rather than a measurement made by hand.
   with a 50 MB Transcript, the record appears once the detached process ends, and the Hook's run
   time differs from the release before by less than a tenth.
 - A headless session, a Session review's own session, and a session outside a repo add no record.
-  → test: tests/bagheera/test_assess.py "test_no_count_in_a_headless_session_a_session_review_or_outside_a_repo"
+  → test: tests/bagheera/test_assess.py
+  "test_no_count_in_a_headless_session_a_session_review_or_outside_a_repo"
 - Of a session with three edits to files an ADR names, two after a Read of that ADR, the report
   counts "2 of 3" for PRD index.
-  → test: tests/bagheera/test_assess.py "test_index_counts_edits_after_a_read_of_the_adr_naming_them"
+  → test: tests/bagheera/test_assess.py
+  "test_index_counts_edits_after_a_read_of_the_adr_naming_them"
 - A denial by `no-secrets-in-context` followed by the same file read through another command, and
   one followed by nothing, are counted "another-way" and "nothing"; one prefixed
   `baloo:no-secrets-in-context:` counts for the same Check.
