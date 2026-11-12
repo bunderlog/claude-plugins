@@ -1,9 +1,9 @@
 """doctor: the plugin's state in the repo it runs in, its problems first, each with what fixes it
 (ADR doctor): the plugin running and the link its Status line runs, the Session review's
-Proposals, and the Checks; what an earlier baloo left in the clone, for the person to remove; and
-what the repo lacks of being set up, which /bagheera:setup adds (PRD setup); the deny rules
-the person's own settings lack (PRD deny); and the machine's projects that need attention and the
-sessions waiting, which aren't its problems (PRD visibility). It changes nothing but what the
+Proposals, and the Checks, with the last one that failed; what an earlier baloo left in the
+clone, for the person to remove; and what the repo lacks of being set up, which /bagheera:setup
+adds (PRD setup); the deny rules the person's own settings lack (PRD deny); and the machine's
+projects that need attention and the sessions waiting, which aren't its problems (PRD visibility). It changes nothing but what the
 plugin's data folder keeps of them."""
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import time
 from typing import List, TextIO
 
 from bagheera import (
-    attention, binlink, checks, deny, hook, names, repo, review, settings, setup, version,
+    attention, binlink, checks, deny, failure, hook, names, repo, review, settings, setup, version,
 )
 
 
@@ -103,6 +103,9 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             f"  failed this week\t{failed}\n  cost this week\t${cost:.2f}\n"
         )
 
+    failed = failure.problem(data) if data else None
+    if failed:
+        problems.append(failed)
     w.write("\nChecks in Claude Code's hooks, always on:\n")
     for name in sorted(checks.HOOK_CHECKS):
         w.write(f"  {name}\ton\n")

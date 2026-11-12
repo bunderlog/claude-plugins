@@ -1,10 +1,11 @@
 import json
 import os
 import unittest
+from unittest import mock
 
-from bagheera import doctor, names, review, version
+from bagheera import doctor, failure, names, review, version
 from tests import testkit
-from tests.bagheera import commands, test_review
+from tests.bagheera import commands, test_cli, test_review
 from tests.bagheera.commands import PLUGIN, in_repo, run, set_up, start, write
 
 
@@ -149,6 +150,32 @@ class Doctor(unittest.TestCase):
         _, out = doctor_run(self)
         self.assertIn("no-secrets-in-context  on\n", out)
         self.assertNotIn("Git hooks in ", out)
+
+    # A Check that raises lets the call through, and doctor names it, where in the plugin's code
+    # it failed, but no word of the call, until another version runs (ADR checks).
+    def test_check_failed(self):
+        dir = in_repo(self)
+        set_up(dir)
+        self.assertEqual(start(self)[0], 0)
+        secret = "cat .env.s3cr3t"
+        with mock.patch("bagheera.checks.no_secrets_in_context", side_effect=KeyError(secret)):
+            self.assertEqual(run("pre-tool-use", stdin=test_cli.bash(secret)), (0, "", ""))
+        code, out = doctor_run(self)
+        self.assertEqual(code, 1, out)
+        self.assertRegex(
+            out, r"\n- bagheera:no-secrets-in-context failed on a Bash call at [0-9: -]+ "
+            r"\(KeyError at bagheera/cli\.py:\d+\) and let it through: report it at "
+            r"https://github\.com/bunderlog/claude-plugins/issues; the Release that fixes it "
+            r"stops showing this\n"
+        )
+        self.assertNotIn("s3cr3t", out)
+        kept = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], failure.FILE)
+        with open(kept, encoding="utf-8") as f:
+            self.assertNotIn("s3cr3t", f.read())
+        with open(kept, encoding="utf-8") as f:
+            failed = json.load(f)
+        write(kept, json.dumps(dict(failed, version="0.0.1")))
+        self.assertEqual(doctor_run(self)[0], 0)
 
     # Without the plugin's data folder, the link can't be checked: a problem.
     def test_no_data(self):

@@ -20,6 +20,7 @@ from bagheera import (
     checks,
     condense,
     doctor,
+    failure,
     hook,
     names,
     once,
@@ -226,8 +227,8 @@ _RUN_IT_YOURSELF = (
 
 def pre_tool_use(text: str, stdout: TextIO) -> int:
     """The PreToolUse Hook of the Checks a Hook runs (ADR checks): it runs the ones the Config turns
-    on, and denies the call when one would. It says nothing of input it can't read, and Claude Code
-    runs the call as usual."""
+    on, and denies the call when one would. It says nothing of input it can't read, or where a Check
+    raises, and Claude Code runs the call as usual; a Check that raises is kept for doctor."""
     call = _tool_call(text)
     try:
         dir = hook.project()
@@ -238,14 +239,20 @@ def pre_tool_use(text: str, stdout: TextIO) -> int:
     cwd = call.get("cwd") or dir
     if call.get("tool_name") == "AskUserQuestion":
         return waiting(text, stdout)
-    if call.get("tool_name") == "Bash":
-        command = (call.get("tool_input") or {}).get("command") or ""
-        why = checks.no_git_hook_bypass(command)
+    tool = call.get("tool_name") or ""
+    check = "no-git-hook-bypass"
+    try:
+        if tool == "Bash":
+            command = (call.get("tool_input") or {}).get("command") or ""
+            why = checks.no_git_hook_bypass(command)
+            if why:
+                return _deny(stdout, f"{names.PLUGIN}:{check}: {why}{_RUN_IT_YOURSELF}")
+        check = "no-secrets-in-context"
+        why = checks.no_secrets_in_context(call, cwd)
         if why:
-            return _deny(stdout, f"{names.PLUGIN}:no-git-hook-bypass: {why}{_RUN_IT_YOURSELF}")
-    why = checks.no_secrets_in_context(call, cwd)
-    if why:
-        return _deny(stdout, f"{names.PLUGIN}:no-secrets-in-context: {why}")
+            return _deny(stdout, f"{names.PLUGIN}:{check}: {why}")
+    except Exception as e:
+        failure.record(os.environ.get("CLAUDE_PLUGIN_DATA", ""), check, tool, e)
     return 0
 
 
