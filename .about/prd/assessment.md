@@ -31,16 +31,17 @@ rather than a measurement made by hand.
 - At each session's end, bagheera counts that session from its Transcript, read only through
   `condense` (ADR transcripts), which gains the events the count needs: each Read and Edit with
   its path, in order; each skill loaded, by name; what followed a Check's denial; and the length of
-  each plugin's session start text, told apart by its first line. The count runs in the process the
-  Session review already starts detached, from the Transcript the SessionEnd Hook already reads.
+  each plugin's session start text, told apart by its first line. The count runs in a process of
+  its own the SessionEnd Hook starts detached, which reads the Transcript itself.
 - It appends one record to bagheera's data folder: the session's id and date, the repo as the
-  Session review's log names it (its origin's URL, or its root), the plugins' versions, and counts
-  per part. A record holds names, paths of `.about/` files and numbers, never the session's text.
-  Records are kept until the person deletes them.
+  Session review's log names it (its origin's URL, or its root), the repo's root and the
+  Transcript's path on this machine, bagheera's version, and counts per part. A record holds names,
+  paths and numbers, never the session's text. Records are kept until the person deletes them.
 - What a record counts:
   - each Check's denials, by its `bagheera:<check>:` prefix or `baloo:<check>:` before 0.41.0,
-    and what followed each: a fix, the same effect another way, or nothing (ADR measurement);
-  - each skill loaded;
+    and what followed each in its turn: a later call that worked on what the denial named
+    (another way), other calls (went on), or none (nothing), close to ADR measurement's reading;
+  - each of bunderlog's skills loaded;
   - the edits to a file an ADR or PRD names, and of those, the ones it was read before, as PRD
     index counts them;
   - the characters each plugin's session start put in the context.
@@ -84,21 +85,30 @@ rather than a measurement made by hand.
 - A session in a repo with bagheera on, whose prompts and tool output hold `AKIAIOSFODNN7EXAMPLE`
   and the word `zebra-umbrella`, ends: one record is appended to bagheera's data folder, holding
   neither string nor any prompt's text.
+  → test: tests/bagheera/test_assess.py "test_a_record_holds_no_text_of_the_session"
 - The SessionEnd Hook reads the Transcript once, as before the feature, and counts nothing itself:
   with a 50 MB Transcript, the record appears once the detached process ends, and the Hook's run
   time differs from the release before by less than a tenth.
 - A headless session, a Session review's own session, and a session outside a repo add no record.
+  → test: tests/bagheera/test_assess.py "test_no_count_in_a_headless_session_a_session_review_or_outside_a_repo"
 - Of a session with three edits to files an ADR names, two after a Read of that ADR, the report
   counts "2 of 3" for PRD index.
+  → test: tests/bagheera/test_assess.py "test_index_counts_edits_after_a_read_of_the_adr_naming_them"
 - A denial by `no-secrets-in-context` followed by the same file read through another command, and
-  one followed by nothing, are counted "same effect another way" and "nothing"; one prefixed
+  one followed by nothing, are counted "another-way" and "nothing"; one prefixed
   `baloo:no-secrets-in-context:` counts for the same Check.
+  → test: tests/bagheera/test_assess.py "test_what_followed_a_denial"
 - Labeled with the label command, a denial counts in its Check's real or false share in the next
   report; a denial whose Transcript was deleted before it was labeled counts as unlabeled.
+  → test: tests/bagheera/test_assess.py "test_labels_count_and_a_deleted_transcript_stays_unlabeled"
 - After its Transcripts are deleted, a session's record still counts in a report over 90 days.
+  → test: tests/bagheera/test_assess.py "test_a_record_outlives_its_transcript"
 - With `plugins/baloo/skills/adr/SKILL.md` changed in a commit after the latest result of
   `evals/adr/`, the report run in this repo names `adr` with that result; run in a repo without
   `evals/`, it says nothing of evals.
+  → test: tests/bagheera/test_assess.py "test_stale_eval_suites_only_where_the_repo_has_evals"
 - A Proposal written to a repo's `.about/proposals/` 10 days ago and not decided shows as waiting
   10 days, under that repo.
+  → test: tests/bagheera/test_assess.py "test_a_proposal_waiting_ten_days"
 - Each figure in the report names the PRD or ADR it decides for.
+  → test: tests/bagheera/test_assess.py "test_each_figure_names_what_it_decides_for"

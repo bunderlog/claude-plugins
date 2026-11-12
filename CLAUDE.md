@@ -3,10 +3,10 @@
 This repo is the `bunderlog` marketplace's source: `plugins/baloo/` (the knowledge skills and one
 `sh` session-start Hook), `plugins/louie/` (the Guidelines and the Hooks that give them, the agents
 and the Workflows) and `plugins/bagheera/` (the Checks in Hooks, the Status line, doctor, the
-Session review, Retro and the Output style) are what ships, louie's and bagheera's Python in their
-`scripts/`, standard library only, Python 3.9 and later, sharing no code (ADR plugin);
-`tests/<plugin>/` tests each, and `src/release/release.py` makes and tags Releases of all three
-under one version. A session here runs the plugins from the last Release, not this checkout — see
+Session review, Retro, the assessment and the Output style) are what ships, louie's and
+bagheera's Python in their `scripts/`, standard library only, Python 3.9 and later, sharing no
+code (ADR plugin); `tests/<plugin>/` tests each, and `src/release/release.py` makes and tags
+Releases of all three under one version. A session here runs the plugins from the last Release, not this checkout — see
 README.md's Development section for trying an edit first.
 
 `.about/` holds this project's own decisions (ADRs, glossary, Inbox) — read it before proposing

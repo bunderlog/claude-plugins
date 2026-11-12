@@ -59,6 +59,16 @@ branch, `±5` counts what `git status` lists and `↑2` the commits not pushed. 
 `⧗ 3` says three sessions wait for you, `⚑ 2` that two projects need attention, which
 `/bagheera:doctor` names, and `⇡ 0.54` that a restart runs the newer version installed.
 
+## Assessment
+
+bagheera counts each session on this machine at its end, in its data folder: names and numbers
+only, never what the session said. `/bagheera:assess` reports from those counts, over the last 30
+days beside the 30 before, how useful each part of bunderlog is and how well it works: each Check's
+denials and what followed them, the skills loaded, how often an ADR or PRD was read before an edit
+to what it names, session start's size, the Session review's Proposals, and in this repo the eval
+suites whose skill changed since they last ran. It asks you to label each denial real or false
+(PRD assessment). Nothing leaves the machine.
+
 ## Development
 
 This repo uses its own plugins: `.claude/settings.json` installs `baloo` and `louie` from GitHub,
