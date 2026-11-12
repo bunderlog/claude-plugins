@@ -199,3 +199,13 @@ it, it finds it 6 runs of 6. When the case was written it failed without the plu
 (ADR evals). A guess, not checked: session start's index sends Claude to the ADRs in place of the
 code. Settled by comparing the arms' Reads and Greps with `--keep-temp`, then changing what sends
 Claude away from the code, or the `adr` skill's line on checking the code.
+
+## The Session review writes an add with a Before, which `review-decision` won't read
+
+2026-11-12 · session
+
+webui's review `20261108T084049Z-47f49750` P1 was `glossary · add` with a Before block, the line
+the new term goes after, and `review-decision` refused it: "can't be read (an add has After and no
+Before)". Applied by turning it into an edit by hand. An add to the glossary or an ADR needs a
+place, which only a Before gives. Settled by the review writing such a Proposal as an edit, or by
+`review-decision` taking an add's Before as its anchor.
