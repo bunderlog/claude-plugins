@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.58.4 — 2026-11-12
+
+### baloo
+
+#### Fixes
+
+- baloo: ask at session start where the code already breaks the ADR a task touches (ae567dc)
+
+### bagheera
+
+#### Fixes
+
+- bagheera: read a Session review's add with a Before as the edit it is (e5862c9)
+
 ## 0.58.3 — 2026-11-12
 
 ### bagheera
