@@ -108,7 +108,8 @@ def _index(root: str, reads: List[Tuple[int, str]], edits: List[Tuple[int, str]]
     got = {"edits": 0, "read_before": 0}
     for t, path in edits:
         rel = _relative(root, path)
-        if rel is None or rel.startswith(".about/"):
+        # The project's knowledge is no code, a worktree's own `.about/` neither.
+        if rel is None or rel.startswith(".about/") or "/.about/" in rel:
             continue
         naming = [doc for doc, paths in docs.items() if any(_names(p, rel) for p in paths)]
         if not naming:

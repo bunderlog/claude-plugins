@@ -97,6 +97,19 @@ class Assess(unittest.TestCase):
         )
         self.assertIn("after a read of it: 2 of 3", self.report())
 
+    def test_index_leaves_out_edits_to_a_worktrees_about_folder(self):
+        write(os.path.join(self.root, ".about/adr/docs.md"),
+              "# Docs\n\nPRDs live in `.about/prd/`, the code in `src/orders/`.\n")
+        worktree = os.path.join(self.root, ".claude/worktrees/pr-1")
+        self.session(
+            "s1",
+            call("e1", "Edit", {"file_path": os.path.join(worktree, ".about/prd/export.md")}),
+            result("e1"),
+            call("e2", "Edit", {"file_path": os.path.join(worktree, "src/orders/place.go")}),
+            result("e2"),
+        )
+        self.assertIn("after a read of it: 0 of 1", self.report())
+
     def test_what_followed_a_denial(self):
         self.session(
             "s1",
