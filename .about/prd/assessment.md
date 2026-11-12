@@ -53,8 +53,7 @@ rather than a measurement made by hand.
     repo's `.about/proposals/` and the runs log, the Inbox items proposed and the longest a
     Proposal has waited (PRD visibility);
   - where the repo has `evals/`, each suite whose skill's text changed in a commit after the suite's
-    latest result in `evals/results/`, with that result; a suite named for no skill is named by its
-    folder.
+    latest result in `evals/results/`, with that result.
 - A Check's denial is labeled real or false by the maintainer, named by its session and tool call:
   the report lists the unlabeled ones, each with its call as `condense` masks it, while its
   Transcript still exists, and a command stores the label. One whose Transcript is gone unlabeled

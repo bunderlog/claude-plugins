@@ -9,8 +9,9 @@ each part against that thesis, and the parts nothing confirmed are removed.
 How it was measured, so it can be run again: the source is Claude Code's session Transcripts, one
 JSONL file per session, of about three weeks up to 2026-10-07 on two machines, with baloo and
 without, read by scripts kept outside this repo. From now on bagheera counts each session at its
-end, by these rules, and its report gives the figures (PRD assessment); a Check's prefix is
-`bagheera:<check>:` since 0.41.0. A session is baloo's where its
+end and reports the figures (PRD assessment): of these events, a Check's denials, with what
+followed each told apart as another way, other calls or nothing, and an ADR or PRD read in time;
+the rest still by hand. A Check's prefix is `bagheera:<check>:` since 0.41.0. A session is baloo's where its
 session start's context names the plugin; a Session review's own session is told by its
 `sdk-cli` entrypoint and its first prompt, and left out of every other count. The events and what
 counts for each:

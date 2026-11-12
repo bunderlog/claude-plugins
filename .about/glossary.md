@@ -3,7 +3,8 @@
 The plugins of the `bunderlog` marketplace: `baloo`, skills that keep a project's language,
 decisions and requirements explicit, write its Issues and go through its Inbox; `louie`,
 Guidelines of working rules and a Verification; and `bagheera`, Checks that Hooks trigger, a
-Session review, a Retro, an Output style for Claude's replies, a Status line and `doctor`.
+Session review, a Retro, an Assessment, an Output style for Claude's replies, a Status line and
+`doctor`.
 
 ## Distribution
 
@@ -22,8 +23,8 @@ _Avoid_: "Release" alone
 
 **bagheera**:
 The plugin each person turns on once, for every session: Checks in Hooks beyond Claude Code's
-deny rules, the Status line and `doctor`, the Session review and Retro, the `short-replies` Output
-style, and setting a project up.
+deny rules, the Status line and `doctor`, the Session review, Retro and Assessment, the
+`short-replies` Output style, and setting a project up.
 _Avoid_: "baloo" for these parts
 
 **louie**:
@@ -140,6 +141,13 @@ A review the user asks for of how past sessions went: their Stalls, and the chan
 that would have spared each. It looks at how the work went, not at what it produced.
 _Avoid_: retrospective, post-mortem
 _In code_: the `retro` skill; `bagheera/condense.py`
+
+**Assessment**:
+bagheera's count of each session on the machine at its end, and its report from those counts of
+how useful each part of bunderlog is and how well it works. It counts names and numbers, never
+what the session said.
+_Avoid_: measurement, which is a count made by hand (ADR measurement); telemetry
+_In code_: the `assess` skill; `bagheera/assess.py`
 
 **Stall**:
 A point in a session that cost the user something the Setup could have spared: a failed or
