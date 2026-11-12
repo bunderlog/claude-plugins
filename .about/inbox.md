@@ -187,13 +187,3 @@ and no date line, and the `adr` skill, which says the format, didn't load. Since
 2026-11-09 (ADR plugin) the format is louie's Guideline, and the case's `plugins:` names baloo
 alone, which no user runs. Settled by naming louie in the case too, or by baloo's session start
 naming the Inbox's format beside its count.
-
-## The Session review writes an add with a Before, which `review-decision` won't read
-
-2026-11-12 · session
-
-webui's review `20261108T084049Z-47f49750` P1 was `glossary · add` with a Before block, the line
-the new term goes after, and `review-decision` refused it: "can't be read (an add has After and no
-Before)". Applied by turning it into an edit by hand. An add to the glossary or an ADR needs a
-place, which only a Before gives. Settled by the review writing such a Proposal as an edit, or by
-`review-decision` taking an add's Before as its anchor.
