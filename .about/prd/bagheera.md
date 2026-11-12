@@ -47,6 +47,8 @@ person set from bagheera's command draws.
 
 - With bagheera installed and baloo off, in a repo, Claude's `cat .env` and `git commit
   --no-verify` are refused, and `doctor` runs; with baloo on and bagheera off, neither is refused.
+- A Check that raises lets the tool call through, and `doctor` then names that Check, the tool
+  and where in the plugin's code it failed, without the call's text, until another version runs.
 - bagheera's and baloo's `plugin.json` carry the same version at each Release tag.
 - A session's end with bagheera on starts a Session review, which loads baloo's `glossary` and
   `adr` skills from the folder beside bagheera's.

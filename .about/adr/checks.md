@@ -1,6 +1,6 @@
 # Each Check a Hook runs is always on
 
-Date: 2026-11-11
+Date: 2026-11-12
 
 The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are bagheera's (ADR
 plugin), and always on, outside a repo too: they guard against accidents where nobody set anything
@@ -20,7 +20,11 @@ looks past wrappers such as `sudo`, `timeout` and `env`, into `sh -c`, `eval` an
 substitutions, and a pattern such as `.e*` stands for the files it matches; what it can't follow,
 such as a file copied first and shown after, goes through. Where `python3` is
 missing or the plugin fails, it says nothing, and the call runs: session start has already said
-that no Check runs that session (ADR binary).
+that no Check runs that session (ADR binary). A Check that raises lets the call run too, and
+`pre-tool-use` keeps the last such failure in `${CLAUDE_PLUGIN_DATA}`, its Check, tool and place
+in the plugin's code but no word of the call or the error's message, which may carry a Secret;
+`doctor` names it as a problem while the version that failed runs (ADR doctor), since the
+Hook's stderr is dropped and nothing else would.
 
 Claude Code's `Read` deny rules, in a set-up project's settings (PRD project-setup) and in each
 person's own (PRD deny), are a second layer under `no-secrets-in-context`, not its replacement:
@@ -53,6 +57,10 @@ symlink, and hold where the plugin fails.
   defaults, which only a comment told apart.
 - Each key at the top of the Config — ten keys mixed with the other settings.
 - A Hook per Check — a Python start per Check on every Bash call, each reading the Config.
+- A failed Check kept with the call's text or the error's message (2026-11-12) — easier to
+  debug, but either can carry the Secret the call names, into a file outside every deny rule.
+- A failed Check shown by session start, or for a week whatever runs — `doctor` is where state
+  is asked for, and the Release that fixes the Check is what ends the failure.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
 - `no-destructive-commands` (until 2026-10-07), denying a Bash command that destroys work beyond
   undo, such as `git push --force`, `rm -rf /` or `git reset --hard` with changes to lose, and

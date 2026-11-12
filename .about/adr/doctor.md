@@ -1,6 +1,6 @@
 # The plugin's `doctor` shows its state, run by the `doctor` skill, and changes nothing
 
-Date: 2026-11-11
+Date: 2026-11-12
 
 Session start says what it changed and what went wrong, but not what is on: which Checks run and
 why, which Git hook runs which version, which version runs. A Git hook running a link to an older
@@ -8,9 +8,9 @@ binary, with nothing saying so, went unnoticed in this repo. So the plugin has `
 its state in the repo it runs in, its problems first, each with what fixes it: the plugin's folder
 and version running and the link the Status line runs (ADR status-line), the Config's
 settings, whether a Session review runs and how many Proposals wait or disagree with their files
-(ADR session-review), each Check on or off and whether by its key or by default (ADR checks), and
-the Guidelines on and off, and each item of PRD project-setup's list the repo lacks, which
-`/bagheera:setup` adds (PRD setup); a setting an earlier Release had and this one removed is
+(ADR session-review), each Check on or off and whether by its key or by default, and the last
+one that failed in the running version (ADR checks), and the Guidelines on and off, and each item
+of PRD project-setup's list the repo lacks, which `/bagheera:setup` adds (PRD setup); a setting an earlier Release had and this one removed is
 one of its problems, for the user to delete, which session start leaves out (ADR measurement).
 Last, in any folder, it lists the machine's projects that need attention, each thing with its
 folder and what to do, the sessions waiting for their person and since when, and how many projects
@@ -19,8 +19,9 @@ are other repos'. It exits 1 when it finds a problem, 0 otherwise, and prints th
 user and for Claude.
 
 It only reads, but keeps what it found of the machine's projects in the plugin's data folder,
-where the Status line reads it (ADR status-line): what fixes a problem is the next session start, a file or a Config key that is the
-user's to change, which it names, or `/bagheera:setup`. The versions it compares are local, the
+where the Status line reads it (ADR status-line): what fixes a problem is the next session start,
+a file or a Config key that is the user's to change, which it names, `/bagheera:setup`, or, for a
+Check that failed, the Release that fixes it, which the user asks for in an issue. The versions it compares are local, the
 running plugin's with the link's target and with the one Claude Code records as installed for the
 project, in its own folder's `plugins/installed_plugins.json`; it asks GitHub for nothing. Claude Code loads a plugin
 only when it starts, so a session started before an update runs the version before for hours: on

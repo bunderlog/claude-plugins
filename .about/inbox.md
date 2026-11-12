@@ -156,17 +156,6 @@ building any and lists every decision in one report (PRD batch), which leaves on
 own plan going unused. Waiting costs little for now: the Assessment of
 2026-11-12 counted no session that loaded `deliver` or `plan` in 30 days.
 
-## A Check that fails lets the call through without a trace
-
-2026-11-10 · code review · kept 2026-11-12
-
-`scripts/hook` drops `run.py`'s stderr and exits 0 for every Hook but session start (ADR binary),
-so a Check that raises lets the tool call through and leaves nothing to find later. Settled by
-deciding whether `pre-tool-use` keeps its last failure in `${CLAUDE_PLUGIN_DATA}` for `doctor` to
-show, or by keeping it as it is, since session start already says when no Check runs at all.
-Still so in 0.58.2 (`scripts/hook` drops stderr), and nothing has shown a Check failing yet,
-since nothing records it.
-
 ## Does the index get the ADR or PRD read before an edit?
 
 2026-11-12 · assessment · kept 2026-11-12
