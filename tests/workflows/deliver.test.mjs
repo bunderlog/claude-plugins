@@ -39,6 +39,12 @@ test('deliver opens a draft when a criterion is met with no test', async () => {
   assert.match(calls.find((c) => c.label === 'pull request').prompt, /as a draft[\s\S]*met-untested: c1/)
 })
 
+test('deliver lists the plan\'s assumptions in the pull request\'s body, for the person to review', async () => {
+  const planned = { ...ready, plan: { changes: [], decisions: [], assumptions: ['templates kept as .tmpl files; else they move'] } }
+  const { calls } = await run('deliver', 'x.md', stages({ planned }))
+  assert.match(calls.find((c) => c.label === 'pull request').prompt, /Assumptions[^\n]*\n- templates kept as \.tmpl files; else they move/)
+})
+
 test('deliver ends failed:rework-budget after three reworks, with at most 23 agents', async () => {
   const s = stages({ verifications: [fail(1), fail(2), fail(3), fail(4)] })
   let verifies = 0

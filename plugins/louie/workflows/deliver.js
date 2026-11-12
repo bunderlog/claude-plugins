@@ -174,6 +174,8 @@ async function build(r) {
     verification.not_checked.length > 0 ||
     !verification.criteria.length
 
+  // The plan builds on its assumptions rather than stop for them: the person reviews them here.
+  const assumptions = (r.planned.plan && r.planned.plan.assumptions) || []
   const body = [
     `Delivers ${r.issue}.`,
     '',
@@ -182,6 +184,7 @@ async function build(r) {
       ? verification.criteria.map((c) => `- ${c.verdict}: ${c.criterion} — ${c.why}`)
       : ['- none found by the Verification']),
     '',
+    ...(assumptions.length ? ['Assumptions the plan made, to review:', ...assumptions.map((a) => `- ${a}`), ''] : []),
     'The app was not run; check its behavior by hand or with Claude Code\'s /verify.',
     '',
     'Verification:',

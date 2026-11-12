@@ -46,7 +46,7 @@ const SCHEMA = {
     },
     decisions: {
       type: 'array',
-      description: 'the choices only the person can make; empty when the Issue, the ADRs and the code settle every one',
+      description: 'the choices only the person can make; empty when the Issue, the ADRs and the code settle every one. A way to build you recommend that none of them rules out is an assumption, not a decision',
       items: {
         type: 'object',
         properties: {

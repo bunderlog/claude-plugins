@@ -54,7 +54,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
      worktree stays after the run, and every later stage works in it;
   3. plans again, stopping when the Issue has no acceptance criteria, leaves a decision open, or
      has nothing to build, and then discarding the worktree and branch it made, which hold
-     nothing; a question outside the Issue's criteria is not a decision for the person;
+     nothing; a question outside the Issue's criteria is not a decision for the person, nor is a
+     way to build the planner recommends that no criterion, ADR or the Issue rules out: it is an
+     assumption the plan builds on;
   4. implements in commits in the project's format, with the checks the project's `CLAUDE.md` or
      README names (`mise run check`, `make verify`) passing on the last one, or stops
      `blocked:checks` with their output; a change that delivers an Issue kept in
@@ -65,8 +67,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
      ending `failed:rework-budget` after the third, and `failed:not-converging` sooner when a
      round fails on the same criteria and departures as the one before;
   7. pushes the branch and opens a pull request to the default branch, its body each criterion with
-     its verdict and the Verification's report; a draft when a criterion is met with no test or
-     couldn't be checked, or a departure doesn't block.
+     its verdict, the plan's assumptions for the person to review, and the Verification's report;
+     a draft when a criterion is met with no test or couldn't be checked, or a departure doesn't
+     block.
   It returns how the run ended: `done:pr-opened`, `done:draft-pr`, `done:nothing-to-build`,
   `blocked:<why>` or `failed:<why>`, with the reason. That is at most 23 agents (1 + 1 + 1 + 4 +
   3 × 5 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
@@ -130,6 +133,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
   pull request as a draft, the criterion's verdict in its body.
   → test: tests/workflows/deliver.test.mjs "deliver opens a draft when a criterion is met with no
   test"
+- With its agents stubbed, the pull request's body lists the plan's assumptions.
+  → test: tests/workflows/deliver.test.mjs "deliver lists the plan's assumptions in the pull
+  request's body, for the person to review"
 - In a repo with no remote, with the tracker's client missing, or with a local commit on the default
   branch the remote lacks, `deliver` ends `blocked:` with the reason and no branch, worktree or
   commit made. The script's part: → test: tests/workflows/deliver.test.mjs "deliver stops before
