@@ -35,7 +35,10 @@ edits to a file an ADR or PRD names, the share where it was read earlier in the 
   - the terms of `.about/glossary.md`, each line outside a fenced code block that starts with
     `**<name>**:`, by its name alone, on one line;
   - one line telling Claude to read the ADR, PRD or Issue a task touches before its first edit,
-    where any is listed, and to use the glossary's words, where it has terms.
+    and to say where the code already breaks it, where any is listed, and to use the glossary's
+    words, where it has terms. With the titles alone Claude read only the ADRs that fit and less
+    code, and missed code that breaks one (eval case `adr/code-contradicts-adr`, 2026-11-12: 0 of
+    3 on Sonnet, 3 of 3 without the plugin; with this clause 2 of 3, and 3 of 3 on Opus).
 - A kind with nothing to list is left out, and so is the whole index where no kind has anything.
 - The index stops at 8,000 characters: each kind it didn't reach in full, in the order above,
   ends with a line saying how many it left out and their folder or file.

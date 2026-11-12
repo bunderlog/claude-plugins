@@ -188,18 +188,6 @@ and no date line, and the `adr` skill, which says the format, didn't load. Since
 alone, which no user runs. Settled by naming louie in the case too, or by baloo's session start
 naming the Inbox's format beside its count.
 
-## With the plugin, Claude misses code that already breaks an ADR
-
-2026-11-12 · evals
-
-`adr/code-contradicts-adr` (gift cards, while `ExpressCheckout` already calls Billing against ADR
-integration) scored on 2026-11-12 0.67 with the plugin and 1.00 without on Opus, 0.33 and 1.00 on
-Sonnet: with it, Claude builds the answer on the ADRs and never mentions `express.py`; without
-it, it finds it 6 runs of 6. When the case was written it failed without the plugin on Sonnet
-(ADR evals). A guess, not checked: session start's index sends Claude to the ADRs in place of the
-code. Settled by comparing the arms' Reads and Greps with `--keep-temp`, then changing what sends
-Claude away from the code, or the `adr` skill's line on checking the code.
-
 ## The Session review writes an add with a Before, which `review-decision` won't read
 
 2026-11-12 · session
