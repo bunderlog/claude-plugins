@@ -89,12 +89,12 @@ if (plan.tool_failed) [verdict, reason] = ['blocked:tooling', plan.tool_error ||
 else if (plan.build === 'nothing-to-build') [verdict, reason] = ['done:nothing-to-build', plan.evidence]
 else if (!plan.criteria.length) [verdict, reason] = ['blocked:no-criteria', 'the Issue has no acceptance criteria']
 else if (plan.confidence === 'low') [verdict, reason] = ['blocked:low-confidence', plan.confidence_reason]
-else if (plan.decisions.length) [verdict, reason] = ['needs-decision', `${plan.decisions.length} decision(s) for the person`]
+else if (plan.decisions.length) [verdict, reason] = ['needs-decision', `${plan.decisions.length} Open decision(s)`]
 
 const lines = [`Issue: ${plan.issue}`, `Verdict: ${verdict}${reason ? ` — ${reason}` : ''}`]
 lines.push(`Confidence: ${plan.confidence} — ${plan.confidence_reason}`)
 if (plan.decisions.length) {
-  lines.push('', 'Decisions for the person:')
+  lines.push('', 'Open decisions:')
   plan.decisions.forEach((d, i) => {
     lines.push(`${i + 1}. ${d.question}`)
     d.options.forEach((o) => lines.push(`   - ${o}`))

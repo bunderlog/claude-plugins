@@ -127,7 +127,7 @@ test('deliver on several Issues prepares them one at a time and plans them all b
 
 test('deliver on several Issues delivers the ready ones and lists the decisions of the rest', async () => {
   const decision = { question: 'Which store?', options: ['files', 'sqlite'], recommended: 'files, as nothing needs a query' }
-  const planned = { b: { verdict: 'needs-decision', reason: '1 decision(s) for the person', report: 'p', plan: { changes: [], decisions: [decision] } } }
+  const planned = { b: { verdict: 'needs-decision', reason: '1 Open decision(s)', report: 'p', plan: { changes: [], decisions: [decision] } } }
   const s = many({ planned })
   const { result } = await run('deliver', { issues: ['a', 'b', 'c'] }, s)
   assert.equal(result.verdict, 'done:some')
@@ -135,7 +135,7 @@ test('deliver on several Issues delivers the ready ones and lists the decisions 
   assert.equal(result.results[1].worktree, '')
   assert.ok(s.events.includes('discard b'))
   assert.deepEqual(result.decisions, [{ issue: 'b', ...decision }])
-  assert.match(result.report, /b: Which store\?\n {3}- files\n {3}- sqlite\n {3}Recommended: files/)
+  assert.match(result.report, /Open decisions:\n[\s\S]*b: Which store\?\n {3}- files\n {3}- sqlite\n {3}Recommended: files/)
 })
 
 test('deliver on several Issues holds back one whose plan changes a file an earlier one does', async () => {

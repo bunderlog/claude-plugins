@@ -1,7 +1,7 @@
 export const meta = {
   name: 'deliver',
   description: 'Take agreed Issues to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed with up to three reworks, and the pull request.',
-  whenToUse: 'When the user asks to deliver, build or implement agreed Issues up to pull requests, usually after /louie:plan and once their decisions are written into the Issues. Takes one to five Issues: each its key or URL in the tracker the project names, or its file in .about/issues/. Several are all planned before any is built, and every decision for the person comes in one report. Leaves the person\'s checkout as it is.',
+  whenToUse: 'When the user asks to deliver, build or implement agreed Issues up to pull requests, usually after /louie:plan and once their decisions are written into the Issues. Takes one to five Issues: each its key or URL in the tracker the project names, or its file in .about/issues/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
   phases: [
     { title: 'Prepare' },
     { title: 'Plan' },
@@ -249,7 +249,7 @@ const verdict = delivered === each.length ? 'done:all' : delivered ? 'done:some'
 const lines = ['Issues:']
 each.forEach((x) => lines.push(`- ${x.issue}: ${x.verdict}${x.pr_url ? ` ${x.pr_url}` : x.reason ? ` — ${x.reason}` : ''}`))
 if (decisions.length) {
-  lines.push('', 'Decisions for the person:')
+  lines.push('', 'Open decisions:')
   decisions.forEach((d, i) => {
     lines.push(`${i + 1}. ${d.issue}: ${d.question}`)
     d.options.forEach((o) => lines.push(`   - ${o}`))
