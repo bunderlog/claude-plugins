@@ -1,6 +1,6 @@
 # A Session review proposes, after each session, what it settled but nobody wrote down
 
-Date: 2026-11-10
+Date: 2026-11-12
 
 A session often settles a term or a decision that nobody records, and it is lost when the session
 closes. In every repo with baloo on, the `SessionEnd` Hook runs the plugin's
@@ -37,6 +37,8 @@ started and the first eight characters of the ended session's id, such as
 `adr` or `prd`, the kind `add`, `edit` or `delete`, a line of why, and the ready edit, the text it
 changes under `Before:` and the text it puts there under `After:`, each in a `~~~` fence after a
 blank line, which the plugin also reads as a ``` one, as a reviewer sometimes writes it anyway.
+An `add` with a Before, the text the new text goes after, which a reviewer sometimes writes too,
+the plugin reads as the edit it is: it is listed and logged like any edit, not refused as unread.
 The blank line is for a project's Markdown linter, which reads the folder on disk though git leaves
 it out: without it each fence failed `markdownlint`'s MD031 in one project in 2026-10. Lines longer
 than a project allows still can, as a Before copies the project's own text. Its tools
