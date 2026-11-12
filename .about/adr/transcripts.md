@@ -1,12 +1,14 @@
 # A Retro reads Transcripts only through the plugin's condenser, which masks Secrets
 
-Date: 2026-10-14
+Date: 2026-11-12
 
 A Transcript keeps every tool call's full output, so it can hold a Secret a Check missed. The
 `retro` skill reads Transcripts only through the plugin's `condense`, never the raw file, so a Retro
 doesn't Leak that Secret into one more context and Transcript. `condense` keeps what a Retro needs:
 the user's prompts and commands, failed and refused tool calls, interrupts, repeated calls and
-expensive ones; a denial by a Check is known by its `baloo:<check>:` prefix.
+expensive ones; a denial by a Check is known by its `bagheera:<check>:` prefix, or `baloo:<check>:`
+before 0.41.0. bagheera's count of each session at its end (PRD assessment) reads it only through
+`condense` too, which keeps the events that count needs.
 
 A call's cost is the tokens it added to the context, read from the `usage` Claude Code records with
 the next response: what Anthropic counted, in tokens, not dollars. A session's report names its
@@ -25,9 +27,10 @@ first catches a known key however short; the second, one of a kind no list has y
 `no-secrets-in-context` doesn't deny reading a raw Transcript: that would also stop looking into
 one for anything else, a grep that only counts lines too. The rule rests on the skill's text.
 
-When a Stall's cause is in baloo itself, such as a Check's false alarm or a skill's rule, a Retro
-writes out an issue to file on `bunderlog/claude-plugins` rather than a change: a project's copy of
-the plugin is replaced by its next Release. In this repo, the plugin's own, it makes the change.
+When a Stall's cause is in one of bunderlog's plugins, such as a Check's false alarm or a skill's
+rule, a Retro writes out an issue to file on `bunderlog/claude-plugins` rather than a change: a
+project's copy of the plugin is replaced by its next Release. In this repo, the plugins' own, it
+makes the change.
 
 ## Considered options
 

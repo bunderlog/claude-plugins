@@ -1,6 +1,6 @@
 # baloo keeps what a measurement of its use confirmed, and drops what only added friction
 
-Date: 2026-10-31
+Date: 2026-11-12
 
 baloo was built on the thesis that enforcing the rules in code, in Hooks and Git hooks, is a niche
 of its own beside the project's knowledge. A measurement of how baloo was actually used checked
@@ -8,7 +8,9 @@ each part against that thesis, and the parts nothing confirmed are removed.
 
 How it was measured, so it can be run again: the source is Claude Code's session Transcripts, one
 JSONL file per session, of about three weeks up to 2026-10-07 on two machines, with baloo and
-without; the scripts that read them are kept outside this repo. A session is baloo's where its
+without, read by scripts kept outside this repo. From now on bagheera counts each session at its
+end, by these rules, and its report gives the figures (PRD assessment); a Check's prefix is
+`bagheera:<check>:` since 0.41.0. A session is baloo's where its
 session start's context names the plugin; a Session review's own session is told by its
 `sdk-cli` entrypoint and its first prompt, and left out of every other count. The events and what
 counts for each:
@@ -73,6 +75,9 @@ it for the user to delete (ADR config, ADR doctor).
 
 ## Considered options
 
+- A measurement run by hand, on scripts kept outside this repo (until 2026-11-12) — nothing to
+  ship, but each run waited on someone writing it again, and Transcripts older than 30 days were
+  gone before it could read them.
 - Turning the parts off by default and keeping their code — no Config breaks, but code, tests and
   docs kept for parts the measurement found nothing for.
 - Narrower questions, such as only before a change to the Config that turns a Check off — fewer
