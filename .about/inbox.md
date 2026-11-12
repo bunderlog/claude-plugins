@@ -176,14 +176,3 @@ a read of it, and above 0 in webui. Before the index (0.52.0, 2026-11-10) it was
 edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after a read.
 Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
 index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
-
-## The eval case `open-question` loads baloo alone, without the Inbox's format
-
-2026-11-12 · evals
-
-On 2026-11-12 `adr/open-question` scored 0.67 with the plugin on Opus, 3 runs out of 3 failing
-`inbox-item`: Claude wrote the open question into `.about/inbox.md` as a bullet, with no `## <title>`
-and no date line, and the `adr` skill, which says the format, didn't load. Since the split of
-2026-11-09 (ADR plugin) the format is louie's Guideline, and the case's `plugins:` names baloo
-alone, which no user runs. Settled by naming louie in the case too, or by baloo's session start
-naming the Inbox's format beside its count.
