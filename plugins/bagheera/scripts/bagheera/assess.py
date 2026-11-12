@@ -389,13 +389,13 @@ def _evals(root: str) -> Optional[List[str]]:
 def _changed(root: str, path: str) -> str:
     """When the last commit changing `path` in the repo at `root` was made, UTC, ISO 8601."""
     try:
-        p = subprocess.run(["git", "-C", root, "log", "-1", "--format=%cI", "--", path],
+        p = subprocess.run(["git", "-C", root, "log", "-1", "--format=%ct", "--", path],
                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
     except OSError:
         return ""
-    s = p.stdout.strip()
     try:
-        return datetime.fromisoformat(s).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        at = datetime.fromtimestamp(int(p.stdout.strip()), timezone.utc)
+        return at.strftime("%Y-%m-%dT%H:%M:%S")
     except ValueError:
         return ""
 
