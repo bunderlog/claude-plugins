@@ -352,6 +352,23 @@ class Show(unittest.TestCase):
                 got = show(repo_with(self), testkit.tempdir(self), "s")
                 self.assertEqual("R1 P2 glossary edit" in got, want, got)
 
+    # An add with a Before, the line its text goes after, reads as the edit it is: shown, and
+    # logged once its After is in the file.
+    def test_an_add_with_a_before_is_an_edit(self):
+        root, data = repo_with(self), testkit.tempdir(self)
+        write(
+            os.path.join(root, names.PROPOSALS, "R2.md"),
+            "# Session review R2\n\n## P1 · glossary · add · .about/glossary.md · Cart\n\n"
+            "Before:\n~~~markdown\nA thing.\n~~~\n\n"
+            "After:\n~~~markdown\nA thing.\n\n**Cart**:\nWhat a customer means to buy.\n~~~\n",
+        )
+        self.assertIn("  R2 P1 glossary edit .about/glossary.md: Cart\n", show(root, data, "s1") + "\n")
+        write(
+            os.path.join(root, names.GLOSSARY),
+            "# Glossary\n\n**Order**:\nA thing.\n\n**Cart**:\nWhat a customer means to buy.\n",
+        )
+        review.decide(root, data, "R2", "P1", review.ACCEPTED)
+
     # The Proposals are shown once a session, until each is decided, those for the Inbox too (PRD
     # bagheera); the log gets a line a decision, with the repo's origin; the
     # file goes once each is decided and applied.

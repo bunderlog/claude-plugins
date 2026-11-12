@@ -391,6 +391,9 @@ def parse(review: str, text: str) -> List[Proposal]:
         elif block and (line.startswith("~~~") or line.startswith("```")):
             fence = line[:3]
     for p in found:
+        # An add with a Before, the text it goes after, is an edit that keeps its Before.
+        if p.kind == "add" and p.before and p.after:
+            p.kind = "edit"
         if not p.problem:
             p.problem = _invalid(p)
     return found
