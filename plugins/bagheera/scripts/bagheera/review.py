@@ -481,6 +481,27 @@ def _log_lines(file: str) -> List[str]:
     return [line[:-1] if line.endswith("\r") else line for line in lines]
 
 
+@dataclass
+class Logged:
+    """One decision in the log: when (UTC), the repo, the review, the Proposal, its target, its
+    kind and the decision."""
+
+    at: str
+    repo: str
+    review: str
+    id: str
+    target: str
+    kind: str
+    decision: str
+
+
+def log(data: str) -> List[Logged]:
+    """Every decision the log in the plugin's data folder `data` holds, oldest first (PRD
+    assessment)."""
+    fields = (line.split("\t") for line in _log_lines(_log_file(data)))
+    return [Logged(*f) for f in fields if len(f) == _LOG_FIELDS]
+
+
 def _decisions(data: str, repo: str) -> Dict[str, Tuple[str, int]]:
     """The decisions the log holds for the repo `repo`, by review and Proposal: the last one, and
     how many times it was deferred."""

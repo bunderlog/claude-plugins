@@ -10,9 +10,11 @@ import re
 import shutil
 import sys
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, TextIO
 
 from bagheera import (
+    assess,
     attention,
     binlink,
     checks,
@@ -95,6 +97,15 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         return setup_repo(add, stdout, stderr)
     if args and args[0] == "condense":
         code = condense_sessions(args[1:], stdout, stderr)
+        if code is not None:
+            return code
+    if len(args) == 4 and args[0] == "assess-count":
+        data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
+        if data:
+            assess.record(data, args[1], args[2], args[3])
+        return 0
+    if args and args[0] == "assess":
+        code = assess_report(args[1:], stdout, stderr)
         if code is not None:
             return code
     stderr.write(USAGE + "\n")
@@ -249,10 +260,11 @@ def _deny(stdout: TextIO, reason: str) -> int:
 
 
 def session_end(text: str, stdout: TextIO) -> int:
-    """The SessionEnd Hook's part (ADR session-review): in a repo, it starts a Session review of
-    the session that ended and returns at once. It says nothing and never fails the exit: without
-    the Transcript, `claude`, or the plugin's folder or data folder, and in a Session review's own
-    session, it does nothing."""
+    """The SessionEnd Hook's part (ADR session-review): in a repo, it starts the count of the
+    session that ended (PRD assessment) and a Session review of it, and returns at once. It says
+    nothing and never fails the exit: without the Transcript, `claude`, or the plugin's folder or
+    data folder, and in a Session review's own session, it does nothing; nor does the count in a
+    headless session."""
     _not_waiting(text)
     data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
@@ -270,6 +282,12 @@ def session_end(text: str, stdout: TextIO) -> int:
     root = repo.root(dir)
     if not root:
         return 0
+    if not review.headless() and transcript_path:
+        try:
+            script = os.path.join(binlink.PLUGIN, "scripts", "run.py")
+            assess.start(data, script, session, transcript_path, root)
+        except OSError:
+            pass
     claude = shutil.which("claude")
     try:
         with open(transcript_path, "rb") as f:
@@ -475,6 +493,44 @@ def condense_sessions(args: List[str], stdout: TextIO, stderr: TextIO) -> Option
     if len(sessions) > 1:
         parts.append(condense.summary(sessions))
     stdout.write("\n\n".join(parts) + "\n")
+    return 0
+
+
+def assess_report(args: List[str], stdout: TextIO, stderr: TextIO) -> Optional[int]:
+    """The `assess` command (PRD assessment): the report over every repo, or those whose name holds
+    `--repo`'s, over the last `--days` days, 30 by default; it first counts, once, the sessions
+    whose Transcripts were on disk before. `assess label` labels a Check's denial real or false.
+    None for arguments it doesn't take."""
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "") or binlink.data_of(sys.argv[0])
+    if not data:
+        stderr.write(f"{names.PLUGIN} assess: found no data folder of the plugin\n")
+        return 1
+    if len(args) == 4 and args[0] == "label":
+        why = assess.label(data, args[1], args[2], args[3])
+        if why:
+            stderr.write(f"{names.PLUGIN} assess: {why}\n")
+            return 1
+        return 0
+    days, only = assess.DAYS, ""
+    while args:
+        if len(args) < 2 or args[0] not in ("--days", "--repo"):
+            return None
+        if args[0] == "--days":
+            n = _atoi(args[1])
+            if n is None or n < 1:
+                return None
+            days = n
+        else:
+            only = args[1]
+        args = args[2:]
+    own = repo.own_folder()
+    if own:
+        assess.backfill(data, own)
+    try:
+        here = repo.root(hook.project())
+    except OSError:
+        here = ""
+    stdout.write(assess.report(data, days, only, datetime.now(timezone.utc), here) + "\n")
     return 0
 
 

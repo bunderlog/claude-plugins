@@ -729,3 +729,134 @@ def latest(folder: str, n: int) -> List[Session]:
 
 _CLEAR = re.compile(r"/clear\b", re.A)
 
+
+@dataclass
+class Denial:
+    """A tool call a Check denied: the call's id, the Check, the call by what it acts on, and what
+    followed it in the turn: another-way (a later call that worked acts on what the denial named),
+    went-on (other calls) or nothing (ADR measurement)."""
+
+    id: str
+    check: str
+    call: str
+    followed: str = "nothing"
+
+
+@dataclass
+class Facts:
+    """What PRD assessment counts of one session: when each file was read and edited, by path, in
+    nanoseconds since the epoch; the skills loaded, by name; the Checks' denials; and how many
+    characters each plugin's session start put in the context."""
+
+    headless: bool = False
+    start: str = ""
+    reads: List[Tuple[int, str]] = field(default_factory=list)
+    edits: List[Tuple[int, str]] = field(default_factory=list)
+    skills: List[str] = field(default_factory=list)
+    denials: List[Denial] = field(default_factory=list)
+    session_start: Dict[str, int] = field(default_factory=dict)
+
+
+_EDITS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
+_DENIED = re.compile(
+    r"hook error: (?:" + names.PLUGIN + "|" + names.KNOWLEDGE + r"):([a-z-]+): (\S*)"
+)
+# The plugins whose session start Facts tells apart, by the name its text starts with; louie's
+# index of Guidelines starts with its own words instead.
+_STARTS = (names.PLUGIN, names.KNOWLEDGE, names.BUILD)
+_GUIDELINES = "Guidelines,"
+
+
+def _plugin_of(text: str) -> str:
+    """The plugin whose session start printed `text`, or "other"."""
+    head = text.split("\n", 1)[0]
+    for name in _STARTS:
+        if head.startswith(name + ":"):
+            return name
+    return names.BUILD if head.startswith(_GUIDELINES) else "other"
+
+
+def facts(transcript: Union[str, bytes]) -> Facts:
+    """What PRD assessment counts of the Transcript `transcript`. Only names, paths, ids and
+    numbers leave here, never what the session said (ADR transcripts)."""
+    f = Facts()
+    calls: Dict[str, Tuple[str, str, Dict[str, Any], Optional[int]]] = {}
+    # The session's moves in order: a call by its id, or "" where the user typed a prompt.
+    moves: List[str] = []
+    failed: Dict[str, str] = {}
+    first: Optional[int] = None
+    cwd = ""
+    for _, line in _lines(transcript):
+        kind = _str(line, "type")
+        if _str(line, "cwd"):
+            cwd = line["cwd"]
+        if headless(_str(line, "entrypoint")):
+            f.headless = True
+        t = _nanos(_str(line, "timestamp"))
+        if t is not None and (first is None or t < first):
+            first = t
+        if kind == "attachment":
+            a = line.get("attachment")
+            if isinstance(a, dict) and a.get("hookEvent") == "SessionStart":
+                content = a.get("content")
+                texts = content if isinstance(content, list) else [content]
+                for text in texts:
+                    if isinstance(text, str) and text and not text.startswith("{"):
+                        p = _plugin_of(text)
+                        f.session_start[p] = f.session_start.get(p, 0) + len(text)
+            continue
+        bs = _blocks(line.get("message"))
+        if kind == "assistant":
+            for b in bs:
+                if b.type == "tool_use" and b.name and b.id:
+                    calls[b.id] = (b.name, _call(b.name, b.input, cwd), b.input, t)
+                    moves.append(b.id)
+                    if b.name == "Skill" and _typed(b.input.get("skill"), str):
+                        f.skills.append(b.input["skill"])
+            continue
+        if kind != "user" or line.get("isMeta"):
+            continue
+        results = [b for b in bs if b.type == "tool_result"]
+        for b in results:
+            if b.is_error:
+                failed[b.tool_use_id] = _text_of(_content(b.content))
+        if results:
+            continue
+        text = _text_of(bs)
+        typ = _human(text)
+        if typ == "command":
+            name = _command_text(text).split(" ", 1)[0].lstrip("/")
+            if ":" in name:
+                f.skills.append(name)
+        if typ in ("prompt", "command"):
+            moves.append("")
+    for id in moves:
+        if not id or id in failed:
+            continue
+        name, _, input, t = calls[id]
+        path = input.get("file_path") or input.get("notebook_path")
+        if t is None or not isinstance(path, str):
+            continue
+        if name == "Read":
+            f.reads.append((t, path))
+        elif name in _EDITS:
+            f.edits.append((t, path))
+    for i, id in enumerate(moves):
+        m = _DENIED.search(failed.get(id, "")) if id else None
+        if not m:
+            continue
+        d = Denial(id, m.group(1), _clip(calls[id][1], _CALL_CHARS))
+        target = os.path.basename(m.group(2).rstrip(":,.")) if m.group(2) else ""
+        for later in moves[i + 1 :]:
+            if not later:
+                break
+            if d.followed == "nothing":
+                d.followed = "went-on"
+            if later not in failed and target and target in calls[later][1]:
+                d.followed = "another-way"
+                break
+        f.denials.append(d)
+    if first is not None:
+        f.start = _format(first)
+    return f
+
