@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.58.1 — 2026-11-12
+
+### bagheera
+
+#### Fixes
+
+- bagheera: find stale eval suites where git prints commit times in UTC (822f121)
+
 ## 0.58.0 — 2026-11-12
 
 ### bagheera
