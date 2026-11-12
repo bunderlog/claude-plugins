@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.58.3 — 2026-11-12
+
+### bagheera
+
+#### Fixes
+
+- bagheera: leave edits to a worktree's .about/ out of the Assessment's index figure (0f4cb25)
+
 ## 0.58.2 — 2026-11-12
 
 ### bagheera

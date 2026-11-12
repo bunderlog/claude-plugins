@@ -1,6 +1,6 @@
 {
   "name": "louie",
-  "version": "0.58.2",
+  "version": "0.58.3",
   "description": "Building with Claude Code: working guidelines for any project and each stack, given to Claude when a task calls for them, and an agent that verifies a change against the project's decisions and acceptance criteria.",
   "author": {
     "name": "Andrew Molyuk",
