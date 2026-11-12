@@ -84,7 +84,9 @@ dropping these cases; each is kept only once it fails without the plugin (ADR ev
 2026-11-09 `verify` becomes a louie Workflow and `doctor` and `retro` bagheera's (ADR plugin), so
 each case moves with its part, in the PRD of that move. On 2026-11-12 none of the three is in
 `evals/`, having only been run by hand; `evals/verify/offer` is another case, the offer of a
-Verification.
+Verification. Rechecked 2026-11-12 on Claude Code 2.1.322: a run granted
+`Bash(git *)` still refuses to start while `~/.docker/contexts` holds a link, even with
+`DOCKER_CONFIG` set to an empty folder.
 
 ## A commit's body says why
 
