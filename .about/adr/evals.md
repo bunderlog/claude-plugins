@@ -36,6 +36,12 @@ both unasked. `verify` got a case where a task that serves an Issue ends with an
 Verification, never made without the plugin; the cases for `verify` itself, `doctor` and `retro`
 can't run in the sandbox as it is (Inbox).
 
+On 2026-11-12 `principles` got a case where a fix departs from the obvious way in a file with no
+comments, graded on a comment saying why. The plugin made it worse: Opus wrote that comment in 2
+of 3 runs without the plugin and in 0 of 3 with it, Sonnet in none either way, as "match the
+existing style" and "the least code" read as leaving it out. With a line in On every task that a
+comment says what the code can't, both scored 1.00.
+
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
 none of their runs on Opus or Sonnet, and the plugin's Guidelines and session start still scored

@@ -86,20 +86,19 @@ each case moves with its part, in the PRD of that move. On 2026-11-12 none of th
 `evals/`, having only been run by hand; `evals/verify/offer` is another case, the offer of a
 Verification.
 
-## A commit's body and a code comment say why
+## A commit's body says why
 
 2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-12
 
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
 typo, Problem → Solution → Implications for a subtle fix; an LLM writes it in the session that
-made the change, and asks the user for what it doesn't know. A comment says what the code can't:
-why not the obvious way, a choice correctness rests on, where a constant comes from, a TODO with
-its reason, a lesson a long debugging taught. baloo checks only a commit's format
-(`conventional-commits`) and says nothing of a body or a comment. Settled by an eval case where
-Claude writes a body that only restates the diff, or leaves out a why-not comment a later edit
-undoes, failing without the rules and passing with them (ADR evals): then a Guideline of its own
-or lines in `principles`; or by dropping the idea.
+made the change, and asks the user for what it doesn't know. baloo checks only a commit's format
+(`conventional-commits`) and says nothing of a body. Its half on comments became a line in
+`principles` on 2026-11-12 (case `evals/principles/why-comment`); a case for a body needs the
+agent to commit, with Bash, which the sandbox doesn't run yet (see the item on verify's cases).
+Settled by an eval case where Claude writes a body that only restates the diff, failing without
+the rule and passing with it (ADR evals): then lines in `principles`; or by dropping the idea.
 
 ## Property-based tests where no literal can be the expected value
 
