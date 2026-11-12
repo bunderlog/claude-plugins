@@ -1,6 +1,6 @@
 ---
 description: Data from outside is parsed once where it comes in, into types that can't hold an illegal value, and the code behind trusts those types.
-plugins: ["../../../plugins/baloo"]
+plugins: ["../../../plugins/baloo", "../../../plugins/louie"]
 max_turns: 30
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
 ---

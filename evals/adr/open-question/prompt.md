@@ -1,6 +1,6 @@
 ---
 description: A question left open is an item in .about/inbox.md with its options, not an ADR.
-plugins: ["../../../plugins/baloo"]
+plugins: ["../../../plugins/baloo", "../../../plugins/louie"]
 max_turns: 30
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
 ---
