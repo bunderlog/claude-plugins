@@ -163,3 +163,13 @@ own plan going unused.
 so a Check that raises lets the tool call through and leaves nothing to find later. Settled by
 deciding whether `pre-tool-use` keeps its last failure in `${CLAUDE_PLUGIN_DATA}` for `doctor` to
 show, or by keeping it as it is, since session start already says when no Check runs at all.
+
+## Does the index get the ADR or PRD read before an edit?
+
+2026-11-12 · assessment
+
+PRD index's success signal: of the edits to a file an ADR or PRD names, more than half come after
+a read of it, and above 0 in webui. Before the index (0.52.0, 2026-11-10) it was 9 of 65 code
+edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after a read.
+Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
+index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
