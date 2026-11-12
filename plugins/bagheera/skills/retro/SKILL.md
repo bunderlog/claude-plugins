@@ -68,10 +68,10 @@ Fix the project, not the user's own setup: their dotfiles and `~/.claude/` only 
 What the user set on purpose (a rule they wrote in CLAUDE.md, a setting they chose) is theirs:
 where it caused a stall, say what it cost in a line and ask, rather than rewrite it.
 
-Say where each fix lives: this project, or a plugin or Claude Code itself. A fix to baloo (a
-Check's false alarm, a skill's rule) is an issue to file on `bunderlog/claude-plugins`, written
-out for the user, unless this project is baloo's own repo; one to Claude Code or another plugin
-is a report to send. Neither is a change to their installed copy.
+Say where each fix lives: this project, or a plugin or Claude Code itself. A fix to one of
+bunderlog's plugins (a Check's false alarm, a skill's rule) is an issue to file on
+`bunderlog/claude-plugins`, written out for the user, unless this project is that repo; one to
+Claude Code or another plugin is a report to send. Neither is a change to their installed copy.
 
 ## Report
 
