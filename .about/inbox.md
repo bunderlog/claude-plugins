@@ -111,3 +111,19 @@ a read of it, and above 0 in webui. Before the index (0.52.0, 2026-11-10) it was
 edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after a read.
 Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
 index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
+
+## `no-git-hook-bypass` denies turning the Git hooks on
+
+2026-11-13 · assess
+
+Of the Check's 4 denials in the 30 days from 2026-10-14, labelled with `/bagheera:assess`, all 4
+are false and none is real. One, a read of `core.hooksPath` with a redirect, 0.58.2 settled. The
+other three stand on this commit: `git config core.hooksPath .githooks`, twice, which turns a
+project's own Git hooks on, as PRD setup's own run does, and `git -c core.hooksPath=/dev/null
+rev-parse --git-path hooks`, which asks git where the hooks are and commits nothing. The Check
+reads the command's words (ADR checks), so it can't tell the value that turns the hooks on from
+the one that skips them, nor a command that commits from one that doesn't. Settled by deciding
+whether it denies `core.hooksPath` only when the value is `/dev/null` or empty, or only on a
+command that can run a hook (`commit`, `merge`, `push`, `rebase`), or stays as it is because four
+denials in a month are too few to narrow it on. Its counterpart `no-secrets-in-context` is 4 real
+of 6 in the same window and is not in question.
