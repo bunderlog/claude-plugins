@@ -11,12 +11,12 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from bagheera import names, settings, statusline
+from bagheera import names, settings, statusline, version
 
 MARKETPLACE_SOURCE = {"source": "github", "repo": names.MARKETPLACE_REPO}
-PLUGINS = [names.KNOWLEDGE + "@" + names.MARKETPLACE, names.BUILD + "@" + names.MARKETPLACE]
+PLUGINS = list(names.PROJECT_PLUGINS)
 DENY = [
     "Read(**/.env)", "Read(**/.env.local)", "Read(**/.env.*.local)", "Read(**/.env.development)",
     "Read(**/.env.production)", "Read(**/.env.staging)", "Read(**/.env.test)", "Read(**/.envrc)",
@@ -99,6 +99,23 @@ def started(root: str) -> bool:
     """Whether the repo at `root` was set up at all: its .claude/settings.json turns baloo on."""
     plugins = _json(os.path.join(root, names.PROJECT_SETTINGS)).get("enabledPlugins")
     return isinstance(plugins, dict) and plugins.get(PLUGINS[0]) is True
+
+
+def turned_on(root: str) -> List[Tuple[str, str]]:
+    """For each plugin setting a project up turns on that the repo at `root` turns on in its
+    .claude/settings.json, its name and the version Claude Code records as installed for the repo,
+    "" where it records none (PRD setup). Nothing where Claude Code records no install at all,
+    which says nothing about any plugin."""
+    if version.records() is None:
+        return []
+    try:
+        fields = settings.read(os.path.join(root, names.PROJECT_SETTINGS))
+    except (OSError, ValueError):
+        return []
+    on = fields.get("enabledPlugins")
+    if not isinstance(on, dict):
+        return []
+    return [(p, version.installed(root, p)) for p in PLUGINS if on.get(p) is True]
 
 
 def hooks_off(root: str) -> str:

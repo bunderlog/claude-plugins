@@ -2,9 +2,10 @@
 (ADR doctor): the plugin running and the link its Status line runs, the Session review's
 Proposals, and the Checks, with the last one that failed; what an earlier baloo left in the
 clone, for the person to remove; and what the repo lacks of being set up, which /bagheera:setup
-adds (PRD setup); the deny rules the person's own settings lack (PRD deny); and the machine's
-projects that need attention and the sessions waiting, which aren't its problems (PRD visibility). It changes nothing but what the
-plugin's data folder keeps of them."""
+adds, and the plugins it turns on without having them installed, or installed from an older
+Release (PRD setup); the deny rules the person's own settings lack (PRD deny); and the machine's
+projects that need attention and the sessions waiting, which aren't its problems (PRD
+visibility). It changes nothing but what the plugin's data folder keeps of them."""
 
 from __future__ import annotations
 
@@ -31,6 +32,9 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
     w = io.StringIO()
 
     w.write(f"\nPlugin:\n  running\t{binlink.PLUGIN} ({version.read()})\n")
+    turned_on = setup.turned_on(root) if root else []
+    for plugin, there in turned_on:
+        w.write(f"  {plugin}\t{there or 'not installed'}\n")
     newer = version.newer_installed(root) if root else ""
     if newer:
         problems.append(
@@ -84,6 +88,22 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
         else:
             for item in setup.missing(root):
                 problems.append(f"{item} is missing: {names.SETUP_SKILL} adds it")
+        # The bagheera installed stands for the Release the machine has, the three plugins
+        # carrying one version at each (PRD bagheera); the plugin running is no use, since for
+        # these two a stale install is the version that runs.
+        release = version.installed(root)
+        for plugin, there in turned_on:
+            if not there:
+                problems.append(
+                    f"{root} turns {plugin} on, but Claude Code has no install of it for this "
+                    "project, so nothing of it loads here: install it with /plugin, project "
+                    "scope"
+                )
+            elif version.older(there, release):
+                problems.append(
+                    f"{plugin} {there} is installed for this project, older than the {release} "
+                    f"this machine has: run claude plugin update {plugin}"
+                )
 
     if root:
         waiting = mismatches = 0

@@ -26,10 +26,12 @@ class Doctor(unittest.TestCase):
         code, out = doctor_run(self)
         self.assertEqual(code, 0, out)
         link = os.path.join(os.environ["CLAUDE_PLUGIN_DATA"], names.PLUGIN)
+        key = len(names.BUILD_ID) + 2  # the block's widest key, so every line lines up under it
         for want in [
             "bagheera " + version.read() + " doctor in " + dir + "\n\nNo problems.\n",
-            "\nPlugin:\n  running  " + PLUGIN + " (" + version.read() + ")\n",
-            "  link     " + link + " -> " + PLUGIN + "\n",
+            "\nPlugin:\n  " + "running".ljust(key) + PLUGIN + " (" + version.read() + ")\n",
+            "  " + names.KNOWLEDGE_ID.ljust(key) + version.read() + "\n",
+            "  " + "link".ljust(key) + link + " -> " + PLUGIN + "\n",
             "no-secrets-in-context  on\n",
         ]:
             self.assertIn(want, out)
@@ -100,7 +102,6 @@ class Doctor(unittest.TestCase):
         dir = in_repo(self)
         set_up(dir)
         self.assertEqual(start(self)[0], 0)
-        installed = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json")
         want = (
             f"- this session runs bagheera {version.read()}, but 99.0.0 is installed for this "
             "project: restart Claude Code to run it\n"
@@ -121,11 +122,70 @@ class Doctor(unittest.TestCase):
             ("not a list", False),
         ]:
             with self.subTest(entries=entries):
-                write(installed, json.dumps({"plugins": {names.PLUGIN_ID: entries}}))
+                commands.installed(dir, **{names.PLUGIN_ID: entries})
                 code, out = doctor_run(self)
                 self.assertEqual((code, want in out), (1 if problem else 0, problem), out)
-        write(installed, "{")
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+              "{")
         self.assertEqual(doctor_run(self)[0], 0)
+
+    # A plugin the repo turns on that Claude Code has no install of for it, or has an install of
+    # from an older Release, is a problem, since the project doesn't get what it turned on; with no
+    # record of any install, doctor says nothing of any plugin's version (PRD setup).
+    def test_project_plugins(self):
+        dir = in_repo(self)
+        set_up(dir)
+        self.assertEqual(start(self)[0], 0)
+        def entry(v, project=dir, scope="project"):
+            return {"scope": scope, "version": v, "projectPath": project}
+
+        missing = (f"- {dir} turns {names.BUILD_ID} on, but Claude Code has no install of it for "
+                   "this project, so nothing of it loads here: install it with /plugin, project "
+                   "scope\n")
+        stale = (f"- {names.BUILD_ID} 0.0.1 is installed for this project, older than the "
+                 f"{version.read()} this machine has: run claude plugin update {names.BUILD_ID}\n")
+        for louie, wanted in [
+            ([], missing),
+            ([entry("0.0.1", project="/elsewhere")], missing),
+            ([entry("0.0.1")], stale),
+            ([entry("0.0.1", project="/elsewhere"), entry("0.0.1", "", "user")], stale),
+            ([entry(version.read())], ""),
+            ([entry("99.0.0")], ""),
+        ]:
+            with self.subTest(louie=louie):
+                commands.installed(dir, **{names.BUILD_ID: louie})
+                code, out = doctor_run(self)
+                self.assertEqual((code, missing in out, stale in out),
+                                 (1 if wanted else 0, wanted == missing, wanted == stale), out)
+        # A key set to false isn't turned on, so neither problem is its; setting a project up turns
+        # both on, so the repo now lacks that item instead, which is setup's problem, not this one.
+        with open(os.path.join(dir, names.PROJECT_SETTINGS), encoding="utf-8") as f:
+            fields = json.load(f)
+        fields["enabledPlugins"] = {names.KNOWLEDGE_ID: True, names.BUILD_ID: False}
+        write(os.path.join(dir, names.PROJECT_SETTINGS), json.dumps(fields))
+        commands.installed(dir, **{names.BUILD_ID: []})
+        out = doctor_run(self)[1]
+        self.assertNotIn(missing, out)
+        self.assertNotIn(names.BUILD_ID + " 0.0.1", out)
+
+    # With no record of what is installed, doctor says nothing of any plugin's version: the file is
+    # Claude Code's and undocumented, so an unreadable one is no evidence of anything (ADR doctor).
+    def test_no_records(self):
+        dir = in_repo(self)
+        set_up(dir)
+        self.assertEqual(start(self)[0], 0)
+        installed = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins",
+                                 "installed_plugins.json")
+        for text in ["{", json.dumps({"plugins": []}), ""]:
+            with self.subTest(text=text):
+                write(installed, text)
+                code, out = doctor_run(self)
+                self.assertEqual(code, 0, out)
+                self.assertNotIn(names.BUILD_ID, out)
+        os.remove(installed)
+        code, out = doctor_run(self)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn(names.BUILD_ID, out)
 
     # A link that points elsewhere, such as at the version before, is a problem.
     def test_link_elsewhere(self):

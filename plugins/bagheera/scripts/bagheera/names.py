@@ -11,6 +11,11 @@ PLUGIN_ID = PLUGIN + "@" + MARKETPLACE
 KNOWLEDGE = "baloo"
 # The plugin a project turns on to build, which setting a project up turns on beside baloo.
 BUILD = "louie"
+# The two as Claude Code's settings name them: what setting a project up turns on, and so what a
+# project needs installed to get what it turned on (PRD setup).
+KNOWLEDGE_ID = KNOWLEDGE + "@" + MARKETPLACE
+BUILD_ID = BUILD + "@" + MARKETPLACE
+PROJECT_PLUGINS = (KNOWLEDGE_ID, BUILD_ID)
 # The repo of the marketplace, on GitHub.
 MARKETPLACE_REPO = MARKETPLACE + "/claude-plugins"
 # The skill that sets a repo up, as the user runs it (PRD setup).

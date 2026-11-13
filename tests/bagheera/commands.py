@@ -6,10 +6,10 @@ import io
 import json
 import os
 import unittest
-from typing import Tuple
+from typing import Any, List, Tuple
 from unittest import mock
 
-from bagheera import cli, deny, names, setup
+from bagheera import cli, deny, names, setup, version
 from tests import testkit
 
 # The plugin's folder in this repo.
@@ -77,6 +77,17 @@ def set_up(dir: str) -> None:
     write(os.path.join(dir, "README.md"), "Run `git config core.hooksPath .githooks`.\n")
     write(os.path.join(dir, ".gitignore"), "".join(p + "\n" for p in setup.IGNORED))
     write(os.path.join(dir, setup.ADR), "# This repo checks Secrets with gitleaks\n")
+    installed(dir)
+
+
+def installed(dir: str, **plugins: List[Any]) -> None:
+    """Records every plugin as installed for the repo at `dir` at the version running, so doctor
+    finds none turned on without an install (PRD setup); `plugins` overrides one by its id."""
+    here = {p: [{"scope": "project", "version": version.read(), "projectPath": dir}]
+            for p in (names.PLUGIN_ID,) + names.PROJECT_PLUGINS}
+    here.update({p: v for p, v in plugins.items()})
+    write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+          json.dumps({"plugins": here}))
 
 
 def run(*args: str, stdin: str = "") -> Tuple[int, str, str]:

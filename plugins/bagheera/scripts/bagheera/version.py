@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Any, Dict, Optional
 
 from bagheera import binlink, names, repo
 
@@ -22,18 +23,27 @@ def read() -> str:
     return v if isinstance(v, str) and v else "dev"
 
 
-def installed(root: str) -> str:
-    """The version Claude Code records as installed for the repo at `root`, in its own folder's
-    plugins/installed_plugins.json: the project's or local install, else the user's; "" where it
-    records none, or the file has another shape, as it is Claude Code's and undocumented."""
+def records() -> Optional[Dict[str, Any]]:
+    """What Claude Code records as installed, by plugin, from its own folder's
+    plugins/installed_plugins.json; None where the file isn't there or has another shape, as it is
+    Claude Code's and undocumented, and nothing can be said of any plugin's version."""
     own = repo.own_folder()
+    if not own:
+        return None
     try:
         with open(os.path.join(own, "plugins", "installed_plugins.json"), encoding="utf-8") as f:
             data = json.load(f)
-        entries = data["plugins"][names.PLUGIN_ID]
+        plugins = data["plugins"]
     except (OSError, ValueError, KeyError, TypeError):
-        return ""
-    if not own or not isinstance(entries, list):
+        return None
+    return plugins if isinstance(plugins, dict) else None
+
+
+def installed(root: str, plugin: str = names.PLUGIN_ID) -> str:
+    """The version Claude Code records as installed of `plugin` for the repo at `root`: the install
+    for this project, whatever its scope, else the user's; "" where it records none."""
+    entries = (records() or {}).get(plugin)
+    if not isinstance(entries, list):
         return ""
     here = os.path.realpath(root)
     found = {"": ""}
@@ -61,3 +71,9 @@ def newer_installed(root: str) -> str:
     there = installed(root)
     running, newer = _numbers(read()), _numbers(there)
     return there if running and newer and newer > running else ""
+
+
+def older(version: str, than: str) -> bool:
+    """Whether `version` is a Release before `than`; False where either isn't a Release."""
+    a, b = _numbers(version), _numbers(than)
+    return bool(a and b and a < b)

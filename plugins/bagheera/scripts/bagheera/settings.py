@@ -48,10 +48,10 @@ def files(project: str) -> Dict[str, str]:
 
 def read_all(paths: Dict[str, str]) -> Dict[str, Dict[str, Any]]:
     """Every settings file in `paths`, its top-level fields, by Scope."""
-    return {scope: _read(paths.get(scope, "")) for scope in SCOPES}
+    return {scope: read(paths.get(scope, "")) for scope in SCOPES}
 
 
-def _read(path: str) -> Dict[str, Any]:
+def read(path: str) -> Dict[str, Any]:
     """The settings file at `path`, its top-level fields; one that isn't there, or is empty, has
     none."""
     if not path:
