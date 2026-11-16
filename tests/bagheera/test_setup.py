@@ -394,6 +394,10 @@ class Setup(unittest.TestCase):
         first = tree(self.dir)
         self.record(**{names.BUILD_ID: [], names.KNOWLEDGE_ID: [
             {"scope": "project", "version": "0.0.1", "projectPath": self.dir}]})
+        # The real one rewrites the project's settings with their keys reordered.
+        self.stand_in("claude", "python3 -c 'import json; p = \".claude/settings.json\"; "
+                      "s = json.load(open(p)); json.dump(dict(reversed(list(s.items()))), "
+                      "open(p, \"w\"))'")
         out = self.setup()
         here = os.path.realpath(self.dir)
         self.assertEqual(self.calls("claude"), [

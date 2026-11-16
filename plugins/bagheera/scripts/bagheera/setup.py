@@ -318,8 +318,16 @@ def run(root: str, add_hathi: Optional[bool]) -> Result:
         result.left.append(
             f"write {ADR}: whether the repo runs hathi, what checks Secrets, and what an earlier "
             "baloo left that this run removed")
+    project = os.path.join(root, names.PROJECT_SETTINGS)
     for args in _plugin_commands(root):
+        kept = _read(project)
         _record(result, " ".join(args), _command(root, args, TIMEOUT))
+        # An install at project scope rewrites .claude/settings.json with its keys reordered,
+        # though the plugin is already on there: put the committed text back, so the run leaves
+        # no diff the person has to read (PRD setup).
+        if _read(project) != kept and _json(project) == json.loads(kept):
+            with open(project, "w", encoding="utf-8") as f:
+                f.write(kept)
     if hooks_ok:
         _hooks_on(root, where, result)
     return result
