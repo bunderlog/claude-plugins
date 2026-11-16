@@ -336,7 +336,9 @@ class Work(unittest.TestCase):
         with slow_git(self):
             start = time.monotonic()
             self.assertEqual(statusline.work(dir, data), statusline.Work("main", 1, 0))
-            self.assertLess(time.monotonic() - start, statusline.WAIT + 0.1)
+            # Well short of the fake git's second, with room for a loaded machine: WAIT + 0.1 failed
+            # once in a full run that took 56 s instead of 15.
+            self.assertLess(time.monotonic() - start, 0.5)
             self.assertEqual(statusline.work(dir, testkit.tempdir(self)), statusline.Work())
 
     # They show grey one space after the branch, and stay when the details and the model go.
