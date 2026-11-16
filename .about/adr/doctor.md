@@ -22,13 +22,13 @@ for the user and for Claude.
 
 It only reads, but keeps what it found of the machine's projects in the plugin's data folder, where
 the Status line reads it (ADR status-line): what fixes a problem is the next session start, a file
-or a Config key that is the user's to change, which it names, `/bagheera:setup`, the `/plugin` or
-`claude plugin update` that installs what the repo turns on, since a plugin reaches a teammate from
-the committed settings only as the folder is trusted (ADR plugin) and nothing installs it
-afterwards, or, for a Check that failed, the Release that fixes it, which the user asks for in an
-issue. The versions it compares are local, the running plugin's with the link's target and with the
-one Claude Code records as installed for the project, in its own folder's
-`plugins/installed_plugins.json`; it asks GitHub for nothing. It reads that file for the other
+or a Config key that is the user's to change, which it names, `/bagheera:setup`, which also
+installs or updates what the repo turns on, since a plugin reaches a teammate from the committed
+settings only as the folder is trusted (ADR plugin) and nothing else installs it afterwards, or,
+for a Check that failed, the Release that fixes it, which the user asks for in an issue. The
+versions it compares are local, the running plugin's with the link's target and with the one Claude
+Code records as installed for the project, in its own folder's `plugins/installed_plugins.json`; it
+asks GitHub for nothing. It reads that file for the other
 plugins the repo turns on too, where the comparison runs the other way, since for those an install
 older than the Release is the version that runs: the bagheera installed stands for the Release the
 machine has, the three carrying one version at each (PRD bagheera). Claude Code loads a plugin only
@@ -58,6 +58,10 @@ Claude.
 
 - Asking GitHub for the latest Release — it would name an update the user hasn't installed, at a
   call per session; what was installed and not yet run is the gap.
+- Naming `/plugin` or `claude plugin update` for the person to run (until 2026-11-16) — no command
+  of the plugin's runs Claude Code's, but each project needed its own session and typing, and on
+  2026-11-16 four projects still had baloo 0.29.1 to 0.62.0 installed with 0.63.1 released;
+  `/bagheera:setup` runs the same command, and the other projects' too (PRD setup).
 
 ## Consequences
 
