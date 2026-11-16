@@ -1,6 +1,6 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-11-12
+2026-10-03 · user · kept 2026-11-16
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `python`, `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. From 2026-11-09 they
@@ -11,7 +11,7 @@ binary), waits until a measurement shows the Guidelines a Hook gives from 0.27.0
 
 ## A plugin for another audience, such as ad managers
 
-2026-10-14 · user · kept 2026-11-12
+2026-10-14 · user · kept 2026-11-16
 
 baloo split into smaller plugins, so a role installs only what it needs, was weighed again on
 2026-10-14 for installing by choice and different audiences, and not done: no such user exists
@@ -61,7 +61,7 @@ Found in a survey of plugin repos on 2026-10-14, for that layout:
 
 ## Eval cases for verify, doctor and retro
 
-2026-11-01 · evals · kept 2026-11-12
+2026-11-01 · evals · kept 2026-11-16
 
 Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
 scripts). On 2026-11-02 Bash was granted by moving every link out of `~/.docker` for the run
@@ -89,7 +89,7 @@ Verification), and on Claude Code 2.1.322 a run granted `Bash(git *)` still refu
 
 ## A commit's body says why
 
-2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-12
+2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-16
 
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
