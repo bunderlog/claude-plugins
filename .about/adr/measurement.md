@@ -1,6 +1,6 @@
 # baloo keeps what a measurement of its use confirmed, and drops what only added friction
 
-Date: 2026-11-12
+Date: 2026-11-16
 
 baloo was built on the thesis that enforcing the rules in code, in Hooks and Git hooks, is a niche
 of its own beside the project's knowledge. A measurement of how baloo was actually used checked
@@ -10,8 +10,9 @@ How it was measured, so it can be run again: the source is Claude Code's session
 JSONL file per session, of about three weeks up to 2026-10-07 on two machines, with baloo and
 without, read by scripts kept outside this repo. From now on bagheera counts each session at its end
 and reports the figures (PRD assessment): of these events, a Check's denials, with what followed
-each told apart as another way, other calls or nothing, and an ADR or PRD read in time; the rest
-still by hand. A Check's prefix is `bagheera:<check>:` since 0.41.0. A session is baloo's where its
+each told apart as another way, other calls or nothing; an ADR or PRD read in time; a Git hook's
+failure, fixed or nothing; a Guideline in the context before the first edit of its files; and
+louie's Workflows' runs and how each ended; the rest still by hand. A Check's prefix is `bagheera:<check>:` since 0.41.0. A session is baloo's where its
 session start's context names the plugin; a Session review's own session is told by its `sdk-cli`
 entrypoint and its first prompt, and left out of every other count. The events and what counts for
 each:
@@ -23,8 +24,10 @@ each:
   starts with `baloo:<check>:`. What followed: for a question, the user's answer; for a denial,
   a fix, nothing, or the same files changed by another command later in the turn ("the same
   effect another way").
-- A Git hook's failure: a commit or push whose output starts with `baloo:<check>:`; it was fixed
-  when the next commit or push passed without a flag that skips the Git hooks.
+- A Git hook's failure: a commit or push whose output starts with `baloo:<check>:`, or, since the
+  commit Checks are `hathi`'s, holds its line `<check>: …; run: hathi explain <check>`; it was
+  fixed when the next commit or push of the same kind passed without a flag that skips the Git
+  hooks, a pass `no-git-hook-bypass` keeps out of any session bagheera counts.
 - A Guideline read in time: a Read of the Guideline's file before the first edit of a file on its
   subject, out of the sessions with such an edit; `.about/` read in time, the same before the
   first edit to code.
