@@ -759,7 +759,8 @@ class Facts:
     nanoseconds since the epoch; the skills loaded, by name; the Checks' denials; how many
     characters each plugin's session start put in the context; when louie's Hook gave each
     Guideline, by name; the failures of `hathi`'s Checks in Git hooks; and each of louie's
-    Workflows run, by name, with the status its task-notification ended it with, or ""."""
+    Workflows run, by name, with the status its task-notification ended it with, or "", and its run
+    id, which names the folder of its agents' Transcripts, or ""."""
 
     headless: bool = False
     start: str = ""
@@ -770,7 +771,7 @@ class Facts:
     session_start: Dict[str, int] = field(default_factory=dict)
     guidelines: List[Tuple[int, str]] = field(default_factory=list)
     hathi: List[HathiFailure] = field(default_factory=list)
-    workflows: List[Tuple[str, str]] = field(default_factory=list)
+    workflows: List[Tuple[str, str, str]] = field(default_factory=list)
 
 
 _EDITS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
@@ -797,6 +798,8 @@ _HATHI = re.compile(r"^([a-z0-9-]+): .*; run: hathi explain \1[ \t\r]*$", re.M)
 _NOTIFICATION = "<task-notification>"
 _TOOL_USE_ID = re.compile(r"<tool-use-id>([^<]*)</tool-use-id>")
 _STATUS = re.compile(r"<status>([^<]*)</status>")
+# A Workflow run's id, as the Workflow tool's result names it: a folder's plain name, never a path.
+_RUN = re.compile(r"[A-Za-z0-9_-]+")
 
 
 def _plugin_of(text: str) -> str:
@@ -836,6 +839,7 @@ def facts(transcript: Union[str, bytes]) -> Facts:
     # louie's Workflows run, by call id and name, and the status each call's task ended with.
     workflows: List[Tuple[str, str]] = []
     ends: Dict[str, str] = {}
+    runs: Dict[str, str] = {}
     first: Optional[int] = None
     cwd = ""
     for _, line in _lines(transcript):
@@ -888,6 +892,10 @@ def facts(transcript: Union[str, bytes]) -> Facts:
                 failed[b.tool_use_id] = _text_of(_content(b.content))
             if b.tool_use_id in git:
                 printed[b.tool_use_id] = _text_of(_content(b.content))
+            result = line.get("toolUseResult")
+            run = result.get("runId") if isinstance(result, dict) else None
+            if isinstance(run, str) and _RUN.fullmatch(run):
+                runs[b.tool_use_id] = run
         if results:
             continue
         text = _text_of(bs)
@@ -930,10 +938,34 @@ def facts(transcript: Union[str, bytes]) -> Facts:
         f.denials.append(d)
     f.hathi = _hathi(moves, git, printed, failed)
     # A Workflow call whose result is an error started no run, so it has no end to count.
-    f.workflows = [(name, ends.get(id, "")) for id, name in workflows if id not in failed]
+    f.workflows = [
+        (name, ends.get(id, ""), runs.get(id, "")) for id, name in workflows if id not in failed
+    ]
     if first is not None:
         f.start = _format(first)
     return f
+
+
+def usage(transcript: Union[str, bytes]) -> Dict[str, Tuple[int, int, int, int]]:
+    """The tokens the Transcript `transcript`'s responses used, by model: input, output, cache
+    written and cache read, each message counted once, though Claude Code repeats its usage on each
+    of its lines; a message Claude Code wrote itself, or whose usage isn't numbers, counts none."""
+    seen = set()
+    out: Dict[str, Tuple[int, int, int, int]] = {}
+    keys = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
+    for _, line in _lines(transcript):
+        message = line.get("message")
+        if _str(line, "type") != "assistant" or _response(message) is None:
+            continue
+        mid, model = message["id"], message.get("model") or "?"
+        if mid in seen:
+            continue
+        seen.add(mid)
+        # _response took only a usage whose counts are numbers or missing.
+        i, o, w, r = (message["usage"].get(k) or 0 for k in keys)
+        had = out.get(model, (0, 0, 0, 0))
+        out[model] = (had[0] + i, had[1] + o, had[2] + w, had[3] + r)
+    return out
 
 
 def _hathi(
