@@ -160,16 +160,19 @@ EVERY_TASK = "## On every task"
 IN_ZSH = "## In zsh"
 
 
-def index(plugin: str, on: Dict[str, bool], shell: str) -> Tuple[str, Optional[str]]:
+def index(
+    plugin: str, on: Dict[str, bool], shell: str, given: bool = False
+) -> Tuple[str, Optional[str]]:
     """What session start tells Claude of the Guidelines `on` in the plugin at `plugin`: a line for
-    each, when to read it and its path, but those a Hook gives (see for_file and for_command),
+    each, when to read it and its path, but those a Hook gives (see for_file and for_command)
+    unless `given`, as for the verifier, whom no such Hook reaches,
     after the rules for every task when principles is on, and the rules zsh needs where
     `shell`, the Bash tool's, is zsh. With none on it is "". When the rules can't be read, it is
     the lines without them, and why; else why is None."""
     lines = [
         f"- {g.when}: {_path(plugin, g.name)}"
         for g in ALL
-        if on.get(g.name) and g.name not in _GIVEN
+        if on.get(g.name) and (given or g.name not in _GIVEN)
     ]
     if not lines:
         return "", None

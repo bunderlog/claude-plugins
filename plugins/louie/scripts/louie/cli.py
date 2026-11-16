@@ -133,8 +133,9 @@ def allow_guideline(text: str, stdout: TextIO) -> int:
 
 def subagent_start(text: str, stdout: TextIO) -> int:
     """The SubagentStart Hook of the plugin's verifier (ADR verify): it tells the agent, which
-    session start's context doesn't reach, the Guidelines the Config turns on, as session start
-    names them. For another agent, or with none on, it says nothing."""
+    session start's context doesn't reach, the Guidelines that fit the repo, as session start
+    names them, and those a Hook gives too, since no Hook gives them to the verifier. For another
+    agent, or with none on, it says nothing."""
     call = hook.decode(text)
     if call is None:
         return 0
@@ -144,7 +145,7 @@ def subagent_start(text: str, stdout: TextIO) -> int:
         dir = hook.project()
     except (hook.Mismatch, OSError):
         return 0
-    index, _ = hook.guideline_index(repo.root(dir))
+    index, _ = hook.guideline_index(repo.root(dir), given=True)
     if not index:
         return 0
     hook.write(stdout, {"hookSpecificOutput": {

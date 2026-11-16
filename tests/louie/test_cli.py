@@ -99,6 +99,7 @@ class SubagentStart(unittest.TestCase):
         dir = in_repo(self)
         verifier = '{"agent_type": "louie:verifier"}'
         write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
+        write(os.path.join(dir, "go.mod"), "module x\n")
         for name, stdin, want in [
             ("the verifier", verifier,
              "dark mode: " + os.path.join(PLUGIN, "guidelines", "tailwind.md")),
@@ -114,6 +115,9 @@ class SubagentStart(unittest.TestCase):
                 hook = json.loads(out)["hookSpecificOutput"]
                 self.assertEqual(hook["hookEventName"], "SubagentStart")
                 self.assertTrue(hook["additionalContext"].endswith(want))
+                # The Guidelines a Hook gives, which no Hook gives the verifier, are named too.
+                for given in ("go.md", "testing.md", "debugging.md", "dependencies.md"):
+                    self.assertIn(os.path.join(PLUGIN, "guidelines", given), hook["additionalContext"])
 
 
 def condense_project(test):

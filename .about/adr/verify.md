@@ -1,6 +1,6 @@
 # A Verification is louie's verifier, one per source, run by the `verify` Workflow when asked
 
-Date: 2026-11-10
+Date: 2026-11-16
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -38,8 +38,9 @@ user's model, as the Session review does (ADR session-review). Nothing turns it 
 itself: a plugin's agent and Workflow can't be hidden from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
-the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the same Guidelines
-index session start prints. A Workflow's agents start with no `SubagentStart` (seen 2026-11-10), so
+the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the Guidelines index
+session start prints, with a line too for each that fits but a Hook gives, since no such Hook
+reaches the agent. A Workflow's agents start with no `SubagentStart` (seen 2026-11-10), so
 there the verifier takes louie's folder from Claude Code's `plugins/installed_plugins.json` and
 reads the Guidelines that fit itself. Where `python3` is missing or the plugin fails, the agent
 starts without the index and does the same.

@@ -70,14 +70,15 @@ def context(out: TextIO, event: str, text: str) -> None:
     write(out, {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}})
 
 
-def guideline_index(root: str) -> Tuple[str, Optional[str]]:
-    """What Claude is told of the Guidelines on in the repo at `root` (see guidelines.on_in), in
+def guideline_index(root: str, given: bool = False) -> Tuple[str, Optional[str]]:
+    """What Claude is told of the Guidelines on in the repo at `root` (see guidelines.on_in), the
+    ones a Hook gives too where `given` (see guidelines.index), in
     the plugin's folder that Claude Code gives a Hook as CLAUDE_PLUGIN_ROOT, for the Bash tool's
     shell, CLAUDE_CODE_SHELL or the user's SHELL; with why it is short, or None."""
     plugin = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     shell = os.environ.get("CLAUDE_CODE_SHELL", "") or os.environ.get("SHELL", "")
     on = guidelines.on_in(root)
-    index, why = guidelines.index(plugin, on, os.path.basename(shell) if shell else ".")
+    index, why = guidelines.index(plugin, on, os.path.basename(shell) if shell else ".", given)
     if index and not plugin:
         return "", "CLAUDE_PLUGIN_ROOT is not set"
     return index, why
