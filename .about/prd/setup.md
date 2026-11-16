@@ -157,13 +157,18 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 - Run a second time, the script leaves every file's content as the first run left it.
 - It makes no commit, and `git config --local --list` differs before and after only in
   `core.hooksPath`, set to `.githooks` where it was unset, and left where it already was.
+  → test: tests/bagheera/test_setup.py "Setup.test_second_run"
+  → test: tests/bagheera/test_setup.py "Setup.test_hooks_on"
 - In a repo with husky, it runs `npm install` there, checked with a stand-in `npm` on the `PATH`;
   with one that exits non-zero, it names `npm install` with the error, and still writes every
   item.
+  → test: tests/bagheera/test_setup.py "Setup.test_husky"
 - With `hathi` added and none on the `PATH`, it runs `mise use --global
   "github:bunderlog/hathi@latest"`, checked with a stand-in `mise` that puts a `hathi` on the
   `PATH`, and pins that `hathi`'s version in `mise.toml`; with neither on the `PATH`, it stops
   naming mise, and writes nothing.
+  → test: tests/bagheera/test_setup.py "Setup.test_installs_hathi"
+  → test: tests/bagheera/test_setup.py "Setup.test_stops"
 - In a repo with husky's setup in `package.json`, it stops naming that setup, and writes nothing.
 - `doctor` in a set-up repo whose `.claude/settings.json` lacks `attribution` and whose
   `.gitignore` lacks `.claude/worktrees/` names those two and no other item, each with
@@ -185,8 +190,10 @@ person has, has it installed or updated by that same run, with no `/plugin` type
   `claude plugin install louie@bunderlog --scope project` and `claude plugin update
   baloo@bunderlog --scope project` in the repo, checked with a stand-in `claude` on the `PATH`
   that records its arguments and folder, and changes no committed file.
+  → test: tests/bagheera/test_setup.py "Setup.test_plugins"
 - With no `claude` on the `PATH`, or one that exits non-zero, the script names each plugin with
   its command and the error, still writes every other item, and exits 1.
+  → test: tests/bagheera/test_setup.py "Setup.test_plugins_failed"
 - The list the script gives the skill holds each of the machine's projects that is set up and
   lacks an item, has a plugin not installed or older than the Release, or has its Git hooks off,
   and neither one that isn't set up nor the repo the session is in.
