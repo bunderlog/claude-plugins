@@ -89,10 +89,12 @@ def _layout(root: str) -> _Layout:
 
 @dataclass
 class _Item:
-    """One item of the list, as doctor names it, and whether the repo has it."""
+    """One item of the list, as doctor names it, whether the repo has it, and what doctor says
+    where it doesn't, "" for "<name> is missing"."""
 
     name: str
     present: bool
+    lack: str = ""
 
 
 def started(root: str) -> bool:
@@ -145,6 +147,11 @@ def missing(root: str) -> List[str]:
     return [i.name for i in _items(root) if not i.present]
 
 
+def problems(root: str) -> List[str]:
+    """What doctor says of each item of the list the repo at `root` lacks."""
+    return [i.lack or f"{i.name} is missing" for i in _items(root) if not i.present]
+
+
 def _items(root: str) -> List[_Item]:
     """Each item of the list that applies to the repo at `root`, and whether it has it."""
     s = _json(os.path.join(root, names.PROJECT_SETTINGS))
@@ -161,8 +168,11 @@ def _items(root: str) -> List[_Item]:
              not [r for r in DENY if r not in _deny(s)]),
         _Item("attribution off in .claude/settings.json",
              s.get("attribution") == {"commit": "", "pr": ""}),
+        # An item that is the absence of keys reads as a double negative in "<name> is missing".
         _Item("statusLine and outputStyle left out of .claude/settings.json",
-             "statusLine" not in s and "outputStyle" not in s),
+             "statusLine" not in s and "outputStyle" not in s,
+             "statusLine or outputStyle in .claude/settings.json, where each person sets their "
+             "own"),
     ]
     fmt = _format_file(root, has_hathi)
     if fmt:

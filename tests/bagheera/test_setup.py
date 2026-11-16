@@ -92,7 +92,7 @@ class Setup(unittest.TestCase):
         self.assertIn("git config core.hooksPath .githooks", out)
         self.assertEqual(self.doctor_missing(), [
             "- the ADR .about/adr/repo-setup.md on how this repo is set up is missing: "
-            "/bagheera:setup adds it"])
+            "/bagheera:setup fixes it"])
         write(self.path(".about/adr/repo-setup.md"), "# This repo runs hathi\n")
         self.assertEqual(self.doctor_missing(), [])
 
@@ -293,11 +293,14 @@ class Setup(unittest.TestCase):
         write(self.path(".about/adr/repo-setup.md"), "# x\n")
         s = self.settings()
         del s["attribution"]
+        s["outputStyle"] = "Explanatory"
         write(self.path(names.PROJECT_SETTINGS), json.dumps(s))
         write(self.path(".gitignore"), "/.about/proposals/\n")
         self.assertEqual(self.doctor_missing(), [
-            "- attribution off in .claude/settings.json is missing: /bagheera:setup adds it",
-            "- /.claude/worktrees/ in .gitignore is missing: /bagheera:setup adds it",
+            "- attribution off in .claude/settings.json is missing: /bagheera:setup fixes it",
+            "- statusLine or outputStyle in .claude/settings.json, where each person sets their "
+            "own: /bagheera:setup fixes it",
+            "- /.claude/worktrees/ in .gitignore is missing: /bagheera:setup fixes it",
         ])
 
     # Session start says once per clone that the repo isn't set up, and never in a set-up repo or

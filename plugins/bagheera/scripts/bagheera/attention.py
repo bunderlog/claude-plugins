@@ -293,8 +293,8 @@ def needs(root: str, data: str) -> List[Need]:
         out.append(Need(f"{n} Proposal{'s' if n > 1 else ''} wait",
                         "open a session there, which asks about each"))
     if setup.started(root):
-        for item in setup.missing(root):
-            out.append(Need(f"{item} is missing", SETUP_FIX))
+        for problem in setup.problems(root):
+            out.append(Need(problem, SETUP_FIX))
     for plugin, there, release in setup.old_installs(root):
         out.append(Need(f"{plugin} {there} is installed, older than the {release} this machine "
                         "has", f"claude plugin update {plugin} there"))

@@ -86,8 +86,8 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             problems.append(f"{root} isn't set up for bunderlog's plugins: {names.SETUP_SKILL} "
                             "sets it up")
         else:
-            for item in setup.missing(root):
-                problems.append(f"{item} is missing: {names.SETUP_SKILL} adds it")
+            for problem in setup.problems(root):
+                problems.append(f"{problem}: {names.SETUP_SKILL} fixes it")
         for plugin, there in turned_on:
             if not there:
                 problems.append(
