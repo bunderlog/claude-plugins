@@ -101,13 +101,3 @@ needs the agent to commit, with Bash, which the sandbox doesn't run yet (see the
 cases).
 Settled by an eval case where Claude writes a body that only restates the diff, failing without
 the rule and passing with it (ADR evals): then lines in `principles`; or by dropping the idea.
-
-## Does the index get the ADR or PRD read before an edit?
-
-2026-11-12 · assessment · kept 2026-11-12
-
-PRD index's success signal: of the edits to a file an ADR or PRD names, more than half come after
-a read of it, and above 0 in webui. Before the index (0.52.0, 2026-11-10) it was 9 of 65 code
-edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after a read.
-Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
-index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
