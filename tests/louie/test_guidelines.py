@@ -124,7 +124,7 @@ class Index(unittest.TestCase):
                 text, why = guidelines.index(plugin, {"principles": True}, shell)
                 self.assertIsNone(why)
                 self.assertEqual("- one\nIn zsh:\n- quote globs\n" in text, want)
-        text, _ = guidelines.index(plugin, {"go": True}, "zsh")
+        text, _ = guidelines.index(plugin, {"tailwind": True}, "zsh")
         self.assertNotIn("zsh", text)
 
     def test_index(self):
@@ -135,9 +135,12 @@ class Index(unittest.TestCase):
         lines = (
             "Read a file when its task comes up:\n"
             f"- {when('principles')}: {os.path.join(plugin, 'guidelines', 'principles.md')}\n"
-            f"- {when('go')}: {os.path.join(plugin, 'guidelines', 'go.md')}"
+            f"- {when('tailwind')}: {os.path.join(plugin, 'guidelines', 'tailwind.md')}"
         )
-        on = {"principles": True, "go": True, "vue": True, "typescript": True, "testing": True}
+        on = {
+            "principles": True, "go": True, "tailwind": True, "vue": True, "typescript": True,
+            "testing": True,
+        }
         text, why = guidelines.index(plugin, on, "")
         self.assertTrue(text.endswith(lines), text)
         principles = os.path.join(plugin, "guidelines", "principles.md")
@@ -187,17 +190,18 @@ class ForFile(unittest.TestCase):
                 "guidelines/typescript.md": "# TypeScript\n\nNo any.\n",
                 "guidelines/vue.md": "# Vue\n\nScript setup.\n",
                 "guidelines/testing.md": "# Testing\n\nRed first.\n",
+                "guidelines/go.md": "# Go\n\nWrap errors.\n",
             },
         )
-        on = {"typescript": True, "vue": True, "testing": True}
+        on = {"typescript": True, "vue": True, "testing": True, "go": True}
         for rel, want in [
             ("src/a.ts", ["typescript"]),
             ("src/App.vue", ["typescript", "vue"]),
-            ("x/a_test.go", []),
+            ("x/a_test.go", ["go"]),
             ("src/a.test.ts", ["typescript"]),
             ("tests/test_a.py", []),
             ("src/__tests__/a.js", []),
-            ("src/a.go", []),
+            ("src/a.go", ["go"]),
             ("README.md", []),
             ("src/testing.ts", ["typescript"]),
         ]:
@@ -205,7 +209,7 @@ class ForFile(unittest.TestCase):
                 text = guidelines.for_file(plugin, temp(self), "", rel, on)
                 got = [
                     name
-                    for name in ("typescript", "vue", "testing")
+                    for name in ("typescript", "vue", "testing", "go")
                     if f"The {name} Guideline applies to {rel}" in text
                 ]
                 self.assertEqual(got, want)

@@ -271,6 +271,7 @@ def _for_agents(rel: str) -> bool:
 BY_PATH: Dict[str, Callable[[str], bool]] = {
     "typescript": _has_ext(".ts", ".tsx", ".mts", ".cts", ".vue"),
     "vue": _has_ext(".vue"),
+    "go": _has_ext(".go"),
     "writing-for-agents": _for_agents,
 }
 

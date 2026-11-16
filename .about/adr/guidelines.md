@@ -1,6 +1,6 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-10
+Date: 2026-11-16
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -14,15 +14,15 @@ tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a 
 `=` fails the whole command there. Outside a repo session start names none. How Claude
 writes its replies is not a Guideline but an Output style (ADR output-styles).
 
-Only `go` and `tailwind` wait for Claude to read them: a Guideline was read before an edit on its
-subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement); in a week of 2026-10
-it was 0 of 30 for `debugging` and the others tied to a task, while those a Hook gives came before
-the first edit of their subject in 15 of 22 cases, after it in the rest. A Hook gives Claude the
-whole file, as its added context, the first time in a session that a signal of its subject or
-task comes:
+Only `tailwind`, which no file's type signals, waits for Claude to read it: a Guideline was read
+before an edit on its subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement);
+in a week of 2026-10 it was 0 of 30 for `debugging` and the others tied to a task, while those a
+Hook gives came before the first edit of their subject in 15 of 22 cases, after it in the rest. A
+Hook gives Claude the whole file, as its added context, the first time in a session that a signal
+of its subject or task comes:
 - `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
-  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, and a text an agent reads for
-  `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
+  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, `.go` for `go`, and a text an agent reads
+  for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
   under `.claude/agents/`, `commands/` or `skills/`). Claude reads a file before it edits it, so
   the Guideline is in context before the first edit of it.
 - The same, but on an edit only: a package manager's manifest for `dependencies`, which a Read
@@ -120,6 +120,8 @@ CI never gets `ci`'s line.
 - `testing` on a Read of a test too (until 2026-10-19) — in context before the first edit of a
   test, but a test read to answer a question about a design gave it, and Claude Sonnet then
   coded instead of answering (see above).
+- Only the index line for `go` too (until 2026-11-16) — Claude read it before the first edit of a
+  `.go` file in 0 of 17 sessions from 2026-10-17 to 2026-11-16 (PRD assessment).
 - Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
   a Guideline before an edit on its subject in 5 of 79 cases (ADR measurement).
 - Only the index line for the Guidelines tied to a task (until 2026-10-14) — Claude read
@@ -197,7 +199,7 @@ CI never gets `ci`'s line.
 - Every Bash command runs the Hook's Python once more after it.
 - Every Read runs the Hook's `sh` once more, and a Guideline a Hook gives adds 2,000 to 6,000
   characters to a session once its subject or task comes up.
-- Whether `go` and `tailwind` are read is Claude's call; a rule that must always hold goes among
+- Whether `tailwind` is read is Claude's call; a rule that must always hold goes among
   the ones `principles` prints whole.
 - Revisit when Claude Code lets a project hide a plugin's skills, when a measurement finds a
   Guideline given where its task never came, or when Claude Code lets a plugin ship rules.
