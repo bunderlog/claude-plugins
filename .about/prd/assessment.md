@@ -3,7 +3,7 @@
 ## Problem
 
 Whether a part of bunderlog stays (a Check, a skill, a Guideline, a Workflow, session start's
-context) is decided from one-off measurements: the last, of three weeks up to 2026-10-07, ran on
+context, a Check of `hathi`'s) is decided from one-off measurements: the last, of three weeks up to 2026-10-07, ran on
 scripts kept outside this repo (ADR measurement), and the Transcripts it read are deleted by
 Claude Code after 30 days. No PRD's success signal that sessions could answer is counted without
 writing a script by hand, and the eval suites run only when someone remembers (ADR evals). So the
@@ -20,7 +20,8 @@ maintainer learns that a part stopped paying off, or got worse, only when a sess
 The success signals that sessions and bagheera's data folder can answer, PRD index's and PRD
 session-review's, and PRD visibility's longest wait of a Proposal, go from counted by hand to
 answered by one command, and the next decision to keep or drop a part cites that command's report
-rather than a measurement made by hand.
+rather than a measurement made by hand. Each of baloo, louie, bagheera and `hathi` has its own
+figures in it, so that decision can be about a part of any of them.
 
 ## Scope
 
@@ -28,10 +29,14 @@ rather than a measurement made by hand.
   real, an ADR or PRD read before an edit to what it names.
 - **Quality**: what a part does when used is right: a Check's denials mostly real, a skill's eval
   better with the plugin than without.
+- bagheera alone counts, for every part of bunderlog: baloo's, louie's, its own and `hathi`'s,
+  from the Transcript; the other plugins and `hathi` add nothing for it.
 - At each session's end, bagheera counts that session from its Transcript, read only through
   `condense` (ADR transcripts), which gains the events the count needs: each Read and Edit with
-  its path, in order; each skill loaded, by name; what followed a Check's denial; and the length of
-  each plugin's session start text, told apart by its first line. The count runs in a process of
+  its path, in order; each skill loaded, by name; what followed a Check's denial; the length of
+  each plugin's session start text, told apart by its first line; each Guideline louie's Hook
+  gave; each commit or push a Git hook running `hathi` stopped, and the commits and pushes after
+  it; and each of louie's Workflows run, with its task-notification. The count runs in a process of
   its own the SessionEnd Hook starts detached, which reads the Transcript itself.
 - It appends one record to bagheera's data folder: the session's id and date, the repo as the
   Session review's log names it (its origin's URL, or its root), the repo's root and the
@@ -44,9 +49,34 @@ rather than a measurement made by hand.
   - each of bunderlog's skills loaded;
   - the edits to a file an ADR or PRD names, and of those, the ones it was read before, as PRD
     index counts them;
-  - the characters each plugin's session start put in the context.
+  - the characters each plugin's session start put in the context;
+  - each Check of `hathi`'s that stopped a `git commit` or `git push`, by the line it prints
+    (`<check>: …; run: hathi explain <check>`), and what followed in the session: fixed, a later
+    command of the same kind (a commit for a commit, a push for a push) that passed, which fixes
+    every failure of that kind before it; or nothing (ADR measurement). A pass with a flag that
+    skips the Git hooks can't follow, as `no-git-hook-bypass` denies it and counts that denial. A
+    `hathi check` run by hand is no Git hook's failure;
+  - each Guideline in the context: given by louie's Hook, whose added context names it (`The
+    <name> Guideline applies to …`), or a Read of its file in louie's `guidelines/`; session
+    start's index and the rules of `principles` it prints whole in every session are not counted.
+    For a Guideline a Read of its file kind gives or Claude reads (ADR guidelines: `go` for `.go`,
+    `typescript`, `vue`, `writing-for-agents`), whether it was in the context before the session's
+    first edit of such a file; `testing` and `dependencies` come after their first edit by design,
+    so for them and the rest only the sessions they came in;
+  - each of louie's Workflows run (`plan`, `deliver`, `verify`), a Workflow tool call running one,
+    and how it ended as the task-notification of that run's task says (completed, failed,
+    stopped), or no end where none reached the Transcript. Its skill loaded counts as a skill
+    besides.
+- The first report after a Release that adds a figure counts again each record without it whose
+  Transcript is still on disk, appending a new record for it; once the Transcript is gone, the
+  record is left out of that figure, and the figure says how many sessions it covers.
 - A report command, over every repo on the machine or one named, over the last 30 days by default
-  or a number of days given, with the window before it beside each figure:
+  or a number of days given, with the window before it beside each figure, headed for bunderlog
+  and grouped by whose part it is: first the sessions counted, then baloo (its skills, PRD index,
+  its session start), louie (its skills, Guidelines, Workflows, its session start), bagheera (its
+  skills, the Checks' denials and those to label, the Session review, the Proposals waiting, its
+  session start), `hathi` (its Git hooks' failures); a stale eval suite under its skill's plugin,
+  and a session start of no plugin's in the first group:
   - per part, the sessions it was used in and its outcomes;
   - PRD index's and PRD session-review's signals as those PRDs state them;
   - the Session review's Proposals accepted, rejected and deferred, from its log; and from each
@@ -69,9 +99,10 @@ rather than a measurement made by hand.
 - Showing anything in the Status line or at session start: the report is asked for.
 - Turning a part off from the report.
 - What a user is asked after a week of use (PRD status-line, PRD visibility): no session shows it.
-- PRD delivery's and PRD batch's signals: a Workflow runs in the background and its result reaches
-  the session's Transcript as a task-notification once it ends, so a later change of this PRD can
-  count them from there (seen on 2026-11-12, the first louie Workflow run on this machine).
+- PRD delivery's and PRD batch's own success signals: the report counts the Workflows' runs and
+  ends, not what came of their pull requests.
+- `hathi`'s runs outside a session: a commit made in a terminal, and CI. Only what a session's
+  Transcript shows is counted.
 
 ## Anti-goals
 
@@ -113,3 +144,20 @@ rather than a measurement made by hand.
   → test: tests/bagheera/test_assess.py "test_a_proposal_waiting_ten_days"
 - Each figure in the report names the PRD or ADR it decides for.
   → test: tests/bagheera/test_assess.py "test_each_figure_names_what_it_decides_for"
+- A session's `git commit` printing `conventional-commits: …; run: hathi explain
+  conventional-commits`, then a commit that passed, counts one failure of `conventional-commits`,
+  fixed; one with no commit after it counts one failure, nothing; a failed commit followed only by
+  a push that passed counts nothing; a `hathi check commit-msg` run in Bash counts no failure.
+- Of two sessions each editing a `.ts` file, one where louie's Hook gave `typescript` after a Read
+  before that edit and one with no Read before it, the report counts `typescript` "1 of 2"; a
+  session where the Hook gave `debugging` counts it in one session; session start's index alone
+  counts no Guideline.
+- A session that ran louie's `verify` Workflow, whose task-notification says it completed, and one
+  that ran `plan` with no task-notification, count `verify` 1 run, completed 1, and `plan` 1 run,
+  no end 1.
+- The report's figures stand under baloo, louie, bagheera and `hathi`, in that order, each figure
+  under the plugin whose part it counts, the Checks' denials under bagheera and the skills each
+  under its own plugin; its first line names bunderlog.
+- Of two records of the Release before, without the new figures, one whose Transcript is still on
+  disk counts in the new figures of the next report, and one whose Transcript is gone counts in
+  the old figures only: the new figures say they cover 1 session.
