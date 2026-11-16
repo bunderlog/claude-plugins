@@ -88,6 +88,8 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
   its path under `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 - bagheera is the one plugin that writes outside the repo its session runs in: because a person
   installs it once for every project of theirs, `/bagheera:setup` completes the machine's other
-  projects from one session, and only those that turn baloo on already (PRD setup). baloo and
-  louie act on the repo they are on in and no other.
+  projects from one session, and only those that turn baloo on already (PRD setup). It also
+  installs and updates baloo and louie in Claude Code's install records, and `hathi` in the
+  person's global mise config, where a project it sets up needs them. baloo and louie act on the
+  repo they are on in and no other.
 - Revisit when a part is wanted on in a way its plugin isn't, or when the copied helpers outgrow a few hundred lines.

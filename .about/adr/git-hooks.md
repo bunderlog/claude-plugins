@@ -34,8 +34,8 @@ them, and only `doctor` names them for the user to delete (ADR config).
   commits.
 - Failing a commit through an old Git hook — every commit in a clone not yet set up would stop for
   a hook nobody there wrote.
-- The person runs the command that turns the hooks on, which the setup skill printed (until
-  2026-11-16) — one command, but each clone set up still ran no hook until the person typed it,
+- The person runs the command that turns the Git hooks on, which the setup skill printed (until
+  2026-11-16) — one command, but each clone set up still ran no Git hook until the person typed it,
   and the other projects the skill completed needed it typed in each.
 
 ## Consequences
