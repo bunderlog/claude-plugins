@@ -28,10 +28,11 @@ Hook's stderr is dropped and nothing else would.
 
 `no-git-hook-bypass` lets `git config core.hooksPath` through only where it turns a project's own
 Git hooks on: the clone's local config, set to `.githooks` or `.husky/_`, the folders a set-up
-project keeps them in (PRD project-setup), and only where that folder is in the repo. Every other
-value, scope (`--global`, `--system`, `--file`) or an unset is denied, since a path with no hooks
-in it turns them all off; so is `core.hooksPath` set for one command, through `-c` or
-`GIT_CONFIG_*`, whatever the subcommand.
+project keeps them in (PRD project-setup), and only where git tracks a file in that folder: one
+merely there, made empty a moment before, would turn them all off. Every other value, scope
+(`--global`, `--system`, `--file`) or an unset is denied, since a path with no hooks in it turns
+them all off; so is `core.hooksPath` set for one command, through `-c` or `GIT_CONFIG_*`, whatever
+the subcommand.
 
 Claude Code's `Read` deny rules, in a set-up project's settings (PRD project-setup) and in each
 person's own (PRD deny), are a second layer under `no-secrets-in-context`, not its replacement:

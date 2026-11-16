@@ -6,6 +6,7 @@ import os
 import re
 from typing import List
 
+from bagheera.checks.git import Error, git
 from bagheera.checks.shell import has_flag, programs, split_git
 
 
@@ -117,7 +118,16 @@ def _turns_hooks_on(options: List[str], args: List[str], cwd: str) -> bool:
         return False
     value = os.path.normpath(words[1])
     root = _repo_root(folder)
-    return value in _HOOK_FOLDERS and bool(root) and os.path.isdir(os.path.join(root, value))
+    return value in _HOOK_FOLDERS and bool(root) and _tracked(root, value)
+
+
+def _tracked(root: str, folder: str) -> bool:
+    """Whether git tracks a file in `folder` of the repo at `root`. A folder merely there, such as
+    one just made empty, would turn every Git hook off, so it must hold the project's hooks."""
+    try:
+        return bool(git(root, "ls-files", "--", folder).strip())
+    except (Error, OSError):
+        return False
 
 
 def _repo_root(folder: str) -> str:

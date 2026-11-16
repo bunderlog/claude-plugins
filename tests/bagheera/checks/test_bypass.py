@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tempfile
 import unittest
 
@@ -90,8 +91,7 @@ class NoGitHookBypass(unittest.TestCase):
     def test_allows_turning_the_repos_own_hooks_on(self):
         # ADR checks: core.hooksPath set in the clone to a hooks folder that is in the repo.
         with tempfile.TemporaryDirectory() as dir:
-            for folder in [".git", ".githooks", os.path.join(".husky", "_"), "src"]:
-                os.makedirs(os.path.join(dir, folder))
+            _repo(dir, ".githooks", os.path.join(".husky", "_"), "src")
             src = os.path.join(dir, "src")
             for command, cwd in [
                 ("git config core.hooksPath .githooks", dir),
@@ -108,8 +108,7 @@ class NoGitHookBypass(unittest.TestCase):
 
     def test_denies_any_other_write_of_hooks_path(self):
         with tempfile.TemporaryDirectory() as dir:
-            for folder in [".git", ".githooks"]:
-                os.makedirs(os.path.join(dir, folder))
+            _repo(dir, ".githooks")
             for command in [
                 "git config core.hooksPath .husky/_",
                 "git config core.hooksPath hooks",
@@ -138,3 +137,27 @@ class NoGitHookBypass(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HooksFolder(unittest.TestCase):
+    def test_denies_a_hooks_folder_git_doesnt_track(self):
+        # A folder just made, empty or with an untracked file, would turn every Git hook off.
+        with tempfile.TemporaryDirectory() as dir:
+            _repo(dir)
+            os.makedirs(os.path.join(dir, ".githooks"))
+            self.assertEqual(no_git_hook_bypass("git config core.hooksPath .githooks", dir), HOOKS_PATH)
+            with open(os.path.join(dir, ".githooks", "pre-commit"), "w") as f:
+                f.write("#!/bin/sh\nexit 0\n")
+            self.assertEqual(no_git_hook_bypass("git config core.hooksPath .githooks", dir), HOOKS_PATH)
+            subprocess.run(["git", "-C", dir, "add", ".githooks"], check=True)
+            self.assertEqual(no_git_hook_bypass("git config core.hooksPath .githooks", dir), "")
+
+
+def _repo(dir, *folders):
+    """A git repo at `dir` with each of `folders`, a hook of it tracked."""
+    subprocess.run(["git", "init", "-q", dir], check=True)
+    for folder in folders:
+        os.makedirs(os.path.join(dir, folder))
+        with open(os.path.join(dir, folder, "pre-commit"), "w") as f:
+            f.write("#!/bin/sh\nexit 0\n")
+        subprocess.run(["git", "-C", dir, "add", folder], check=True)
