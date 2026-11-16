@@ -1,6 +1,6 @@
 # Three plugins in the `bunderlog` marketplace, split by who turns a part on and what it is made of
 
-Date: 2026-11-10
+Date: 2026-11-16
 
 This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
 project's method — the knowledge skills and one SessionStart Hook in `sh`, no Python; `louie`,
@@ -86,4 +86,8 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 - A plugin's entry script is in `scripts/`, not `bin/`: claude.ai and Cowork don't install a plugin
   with a top-level `bin/`, and nothing needs it on the Bash tool's `PATH`, since a skill can name
   its path under `${CLAUDE_PLUGIN_ROOT}/scripts/`.
+- bagheera is the one plugin that writes outside the repo its session runs in: because a person
+  installs it once for every project of theirs, `/bagheera:setup` completes the machine's other
+  projects from one session, and only those that turn baloo on already (PRD setup). baloo and
+  louie act on the repo they are on in and no other.
 - Revisit when a part is wanted on in a way its plugin isn't, or when the copied helpers outgrow a few hundred lines.
