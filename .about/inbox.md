@@ -130,3 +130,15 @@ result with its tokens, agents and minutes (PRD delivery). ADR evals has a case 
 text it tests, kept only once it fails without the plugin; this line has none. Settled by a case in
 `evals/principles/` run with and without the plugin the next time the suites run: kept if Claude
 leaves the figures out without it, the line dropped if Claude gives them anyway.
+
+## The verifier's SubagentStart Hook names none of the Guidelines a Hook gives
+
+2026-11-16 · assess
+
+`subagent-start` (`plugins/louie/scripts/louie/cli.py:134`) gives the verifier session start's
+index, which leaves out every Guideline a Hook gives: `typescript`, `vue`, `go`, `testing`,
+`debugging`, `writing-for-agents`, `ci`, `dependencies`. A verifier run as an agent, outside the
+`verify` Workflow, is never told they fit, though ADR verify says it gets "the same Guidelines
+index session start prints" and its prompt says the list is the ones that fit. Settled by
+`subagent-start` listing every Guideline that fits the repo, or by ADR verify saying the agent
+reads the rest from louie's folder as in a Workflow.
