@@ -7,7 +7,7 @@ from __future__ import annotations
 import glob
 import os
 import re
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from bagheera.checks.secrets import ALLOW_SECRET, is_env_file
 from bagheera.checks.shell import Program, base, has_flag, programs, split, split_git
@@ -19,8 +19,14 @@ _PUBLIC_KEY = re.compile(r"(^|[._-])pub(lic)?([._-]|\Z)")
 _SECRET_PART = re.compile(
     r"\w*KEY|\w*TOKEN|\w*SECRET|PASSWORD|PASSWD|PASS|CREDENTIALS?|PAT", re.A
 )
-# A variable whose value the shell puts in: not `${NAME:+word}`, which puts in the word.
-_VARIABLE = re.compile(r"\$(?:\{([A-Za-z_]\w*)(?!\w|:?\+)|([A-Za-z_]\w*))", re.A)
+# The most characters of a Secret's start that show too little of it to use: `${TOKEN:0:6}`, or
+# what a sed keeps after the `=`. A longer one could be a whole short password.
+_PREFIX = 6
+# A variable whose value the shell puts in: not `${NAME:+word}`, which puts in the word, nor
+# `${NAME:0:6}`, which puts in no more than _PREFIX of its first characters.
+_VARIABLE = re.compile(
+    r"\$(?:\{([A-Za-z_]\w*)(?!\w|:?\+|:0?:[1-%d]\})|([A-Za-z_]\w*))" % _PREFIX, re.A
+)
 _HOME = re.compile(r"^(~|\$HOME|\$\{HOME\})(/|\Z)")
 
 # Files that hold Secrets, by their path from the home folder or any other.
@@ -46,6 +52,8 @@ _INLINE_CODE = {
     "ruby": ["-e"], "php": ["-r"],
 }
 _QUOTED = re.compile(r"([\"'`])([^\"'`]+)\1")
+# What code puts before a name it compares, not opens: `f.endswith(".env")`, `name == ".env"`.
+_COMPARED = re.compile(r"(?:\.(?:ends|starts)_?[Ww]ith\(|[=!]==?)\s*\Z")
 # The characters that make a path a pattern the shell expands.
 _GLOB = re.compile(r"[*?\[]")
 
@@ -264,7 +272,7 @@ def _shows(p: Program, dir: str) -> str:
         elif p.name in _READERS and i != pattern and not a.startswith("-"):
             file = a
         why = _secret_file(file, dir)
-        if why and not _hides_values(p, i):
+        if why and not _hides_values(p, i, dir):
             return why
     show = _PRINTERS.get(p.name)
     if show is not None:
@@ -367,11 +375,15 @@ _PRINTERS: Dict[str, Callable[[Program, str], str]] = {
 
 def _inline_code(p: Program, dir: str) -> str:
     """Why the code the interpreter `p` is given to run, not a script's file, would show a Secret:
-    a file it names in quotes holds one."""
+    a file it names in quotes holds one. Quoted text with a space in it is taken for a sentence or
+    a command, not a file's name, and a name the code compares, for one it doesn't open."""
     options = _INLINE_CODE[p.name]
     for i, a in enumerate(p.args[:-1]):
         if a in options:
-            for m in _QUOTED.finditer(p.args[i + 1]):
+            code = p.args[i + 1]
+            for m in _QUOTED.finditer(code):
+                if re.search(r"\s", m[2]) or _COMPARED.search(code[: m.start()]):
+                    continue
                 why = _secret_file(m[2], dir)
                 if why:
                     return why
@@ -386,15 +398,34 @@ _NO_LINES = (
 )
 
 
-def _hides_values(p: Program, at: int) -> bool:
-    """Whether the program `p` shows no value of the file its argument at `at` names: a grep that
-    prints only a count or the files' names, or only the names before `=`. Another reader, as
-    `cut -d= -f1`, prints a line with no `=` whole, as the next line of a value over several is."""
-    if p.name not in _GREPS:
-        return False
+def _hides_values(p: Program, at: int, dir: str) -> bool:
+    """Whether the program `p`, run in `dir`, shows no value of the file its argument at `at`
+    names: a grep that prints only a count or the files' names, or only the names before `=`.
+    Another reader, as `cut -d= -f1` or `sed 's/=.*//'`, prints a line with no `=` whole, as the
+    next line of a value over several is, so it hides the values only of an Env file whose every
+    line is blank, a comment or has an `=`."""
     drop = 2 if p.args[at] == "<" else 1
     rest = Program(p.name, p.args[:at] + p.args[at + drop :])
-    return has_flag(p.args, *_NO_LINES) or _names_only(rest)
+    if p.name in _GREPS:
+        return has_flag(p.args, *_NO_LINES) or _names_only(rest)
+    file = p.args[at + 1] if p.args[at] == "<" else p.args[at].lstrip("<")
+    return _names_only(rest) and _one_line_values(file, dir)
+
+
+def _one_line_values(path: str, dir: str) -> bool:
+    """Whether every line of the Env file at `path`, from `dir`, is blank, a comment or has an
+    `=`: none is part of a value over several lines. A pattern or a file that can't be read
+    doesn't count."""
+    if _GLOB.search(path):
+        return False
+    p = os.path.expanduser(_HOME.sub(lambda m: "~" + m[2], path))
+    try:
+        with open(os.path.join(dir, p), encoding="utf-8", errors="replace") as f:
+            return all(
+                not s or s.startswith("#") or "=" in s for s in (line.strip() for line in f)
+            )
+    except OSError:
+        return False
 
 
 # A redirection of the output, `>` or `>>`, with its target when it is in the same word.
@@ -447,15 +478,14 @@ def _names_only(p: Program) -> bool:
         return bool(_AWK_NAMES.fullmatch(args))
     if p.name == "sed":
         script = args.removeprefix("-E ").removeprefix("-e ").strip()
-        if len(script) < 2 or script[0] != "s":
+        # The first command drops what follows each line's `=`; the rest change only what is left.
+        first, *rest = [_substitution(c) for c in script.split(";")]
+        if first is None or None in rest:
             return False
-        parts = script[2:].split(script[1])
-        return (
-            len(parts) == 3
-            and parts[0] == "=.*"
-            and not any(c in parts[1] for c in "&\\")
-            and parts[2] in ("", "g")
-        )
+        find, put = first
+        m = _SED_MASK.fullmatch(re.sub(r"\\([(){}])", r"\1", find))
+        kept = put.replace("\\1", "") if m and (m[1] or m[2]) else put
+        return bool(m) and "&" not in kept and "\\" not in kept
     if p.name == "grep":
         # The pattern is the first word but a flag, where no -e or -f gives it: the rest are files.
         words = [a for a in p.args if not a.startswith("-")]
@@ -466,6 +496,24 @@ def _names_only(p: Program) -> bool:
             and all(_NAME_MATCH.fullmatch(a) for a in _alternatives(words[0]))
         )
     return False
+
+
+# A sed `s` command's pattern, a basic one's `\(` `\)` `\{` `\}` read as an extended one's, that
+# finds each line's first `=` and all after it: whole, with `(=)` kept for `\1`, or with a group
+# of at most _PREFIX characters after it, `=(.{4})`.
+_SED_MASK = re.compile(r"(?:=|(\(=\))|=(\(\.\{[1-%d]\}\)))\.\*" % _PREFIX)
+
+
+def _substitution(command: str) -> Optional[Tuple[str, str]]:
+    """The pattern and the replacement of the sed command `command` when it is an `s` with no flag
+    but `g`, which prints nothing of its own; None when it is another."""
+    c = command.strip()
+    if len(c) < 2 or c[0] != "s":
+        return None
+    parts = c[2:].split(c[1])
+    if len(parts) != 3 or parts[2] not in ("", "g"):
+        return None
+    return parts[0], parts[1]
 
 
 def _alternatives(pattern: str) -> List[str]:
