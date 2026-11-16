@@ -193,8 +193,8 @@ def _items(root: str) -> List[_Item]:
     if where is None:
         out.append(_Item("Git hooks setup can read", False))
     elif has_hathi:
-        hooks_ok = all(_hathi_first(_read(os.path.join(root, where.folder, h)), h) for h in HOOKS)
-        out.append(_Item(f"the Git hooks in {where.folder}/ running hathi first", hooks_ok))
+        hooks_ok = all(_runs_hathi(_read(os.path.join(root, where.folder, h)), h) for h in HOOKS)
+        out.append(_Item(f"the Git hooks in {where.folder}/ running hathi", hooks_ok))
     else:
         hooks_ok = bool(SECRETS_TOOL.search(_read(os.path.join(root, where.folder, "pre-commit"))))
         out.append(_Item(f"a pre-commit hook in {where.folder}/ that checks for Secrets",
@@ -276,7 +276,7 @@ def run(root: str, add_hathi: Optional[bool]) -> Result:
             text = _drop_baloo_lines(text)
             if not text.strip() and where is GITHOOKS:
                 text = _hathi(["hooks", "print", hook])
-            elif not _hathi_first(text, hook):
+            elif not _runs_hathi(text, hook):
                 text = _put_first(text, f'hathi check {hook} "$@" || exit $?')
             put(rel, text, 0o755)
     hooks_ok = hathi or bool(
@@ -506,14 +506,13 @@ def _add_types(text: str) -> str:
         f"\nconventional-commits:\n  {_default_types()}\n")
 
 
-def _hathi_first(text: str, hook: str) -> bool:
-    """Whether the Git hook script `text` runs `hathi check <hook>` before anything else."""
-    for line in text.splitlines():
-        s = line.strip()
-        if not s or s.startswith("#"):
-            continue
-        return re.match(r"(exec\s+)?hathi\s+check\s+" + re.escape(hook) + r"\b", s) is not None
-    return False
+def _runs_hathi(text: str, hook: str) -> bool:
+    """Whether the Git hook script `text` runs `hathi check <hook>` on a line of its own. Where
+    in the hook is the project's choice: a `pre-push` that runs its own checks first and then
+    `exec hathi check pre-push "$@"` counts, and putting hathi first there too would run it
+    twice, the second run finding no pushed refs left on stdin (PRD setup)."""
+    return re.search(r"^\s*(exec\s+)?hathi\s+check\s+" + re.escape(hook) + r"\b", text,
+                     re.M) is not None
 
 
 def _put_first(text: str, line: str) -> str:

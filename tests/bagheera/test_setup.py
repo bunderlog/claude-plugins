@@ -151,6 +151,17 @@ class Setup(unittest.TestCase):
         self.assertEqual(setup.missing(self.dir), [
             f"the ADR {setup.ADR} on how this repo is set up"])
 
+    # A pre-push that runs the project's own check and then hathi stays as it is, and doctor
+    # names only the ADR missing.
+    def test_keeps_hathi_last(self):
+        hook = '#!/bin/sh\nmise run check </dev/null || exit 1\nexec hathi check pre-push "$@"\n'
+        write(self.path(".githooks/pre-push"), hook, 0o755)
+        self.setup("--hathi")
+        self.assertEqual(read(self.path(".githooks/pre-push")), hook)
+        self.assertEqual(self.doctor_missing(), [
+            "- the ADR .about/adr/repo-setup.md on how this repo is set up is missing: "
+            "/bagheera:setup fixes it"])
+
     # The project's own settings stay as they were.
     def test_keeps_settings(self):
         write(self.path(names.PROJECT_SETTINGS), json.dumps({
