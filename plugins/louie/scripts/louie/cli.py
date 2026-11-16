@@ -13,6 +13,7 @@ from louie import (
     binlink,
     guidelines,
     hook,
+    knowledge,
     names,
     new,
     once,
@@ -158,8 +159,10 @@ def subagent_start(text: str, stdout: TextIO) -> int:
 def post_tool_use(text: str, stdout: TextIO) -> int:
     """The PostToolUse Hook on Claude's reads, edits and Bash commands, and the PostToolUseFailure
     Hook on its Bash commands. For a file in the repo, or a command, it gives Claude the Guidelines
-    of its subject or its task, once a session (ADR guidelines). In a Session review's session it
-    does nothing."""
+    of its subject or its task, once a session (ADR guidelines). For a file in the repo, in the
+    main thread, it names first, in the same added context, the ADRs and PRDs that concern it,
+    once a session each, but those Claude read there (PRD index); a subagent's call, which carries
+    an `agent_id`, names and marks none. In a Session review's session it does nothing."""
     if os.environ.get(hook.REVIEW_ENV, ""):
         return 0
     call = hook.decode(text)
@@ -170,6 +173,7 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         event = hook.text(call, "hook_event_name") or "PostToolUse"
         session = hook.text(call, "session_id")
         tool = hook.text(call, "tool_name")
+        agent = hook.text(call, "agent_id")
         given_input = hook.object_(call, "tool_input")
         path = hook.text(given_input, "file_path")
         command = hook.text(given_input, "command")
@@ -211,8 +215,18 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
         )
     except OSError:
         given = ""
-    if given:
-        hook.context(stdout, event, f"{names.PLUGIN}:\n{given}\n")
+    named = ""
+    if not agent:
+        try:
+            if tool == "Read":
+                knowledge.mark_read(data, session, rel)
+            named = knowledge.for_file(data, session, root, rel)
+        except OSError:
+            named = ""
+    # The names before the Guidelines, whose thousands of characters would bury them.
+    told = "\n\n".join(t for t in (named, given) if t)
+    if told:
+        hook.context(stdout, event, f"{names.PLUGIN}:\n{told}\n")
     return 0
 
 

@@ -106,16 +106,23 @@ edits to a file an ADR or PRD names, the share where it was read earlier in the 
   context the lines `.about/adr/a.md: A is decided` and then `b`'s, and the words "read" and
   "before" you edit; a later Read or Edit of `src/pay/refund.go` in the same session names no ADR
   or PRD, and the same Read in a new session names `a` and `b` again.
+  → test: tests/louie/test_knowledge.py "Names.test_names_once_a_session"
 - An Edit or a Write of a file no ADR or PRD names, of a file under `.about/` or a worktree's
   `.about/`, or of a file outside the repo names no ADR or PRD; neither does a Read of
   `src/pay/charge.go` in a session that read `.about/adr/a.md` and `.about/prd/b.md` with the Read
   tool before it.
+  → test: tests/louie/test_knowledge.py "Names.test_names_nothing_where_none_is_due"
 - A Read of `src/pay/charge.go` by a subagent names no ADR or PRD, and the main thread's next
   Read of it names `a` and `b`; so does one after a subagent read `.about/adr/a.md`.
+  → test: tests/louie/test_knowledge.py "Names.test_a_subagent_names_and_marks_nothing"
 - The first Read of `src/pay/charge.go` in a repo with a `go.mod` gives the `go` Guideline and
   names `a` and `b` in one added context.
+  → test: tests/louie/test_knowledge.py "Names.test_comes_with_the_guidelines"
 - A Write that creates `src/pay/new.go`, before any Read in the session, names `b`.
+  → test: tests/louie/test_knowledge.py "Names.test_a_write_that_creates_a_file"
 - A file 6 ADRs and 1 PRD name gives the first 5 ADRs by file name, then a line saying 2 more
   name it, in `.about/adr/` and `.about/prd/`; those 2 are named at the next Read, Edit or Write of
   a file one of them names, the same file too.
+  → test: tests/louie/test_knowledge.py "Names.test_names_five_then_the_rest"
 - With `BALOO_SESSION_REVIEW` set, or in a repo with no `.about/`, the Hook names no ADR or PRD.
+  → test: tests/louie/test_knowledge.py "Names.test_names_nothing_in_a_review_or_without_about"

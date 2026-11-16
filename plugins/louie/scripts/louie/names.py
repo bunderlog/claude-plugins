@@ -19,3 +19,7 @@ LOCAL_SETTINGS = ".claude/settings.local.json"
 TEMPLATES = "templates"
 TEMPLATE = "go-vue"
 TEMPLATE_SUFFIX = ".tmpl"
+# The project's ADRs and PRDs, from the repo's root, that the PostToolUse Hook names at the file
+# they concern (PRD index).
+ADRS = ".about/adr/"
+PRDS = ".about/prd/"
