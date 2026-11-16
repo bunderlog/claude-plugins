@@ -120,3 +120,13 @@ index if it moved past half, otherwise change how it asks or drop the rule (ADR 
 took 56 s instead of the usual 15 s, and passed alone three times and in the next full run. It
 asserts `statusline.work` returns within `WAIT + 0.1` s, a margin a loaded machine overruns.
 Settled by a margin that holds under load, or a test that doesn't time the wall clock.
+
+## No eval case for the rule to name what a Workflow run took
+
+2026-11-16 · verify
+
+PR #11 adds a line to louie's `principles`, printed on every task: give a louie Workflow run's
+result with its tokens, agents and minutes (PRD delivery). ADR evals has a case written before the
+text it tests, kept only once it fails without the plugin; this line has none. Settled by a case in
+`evals/principles/` run with and without the plugin the next time the suites run: kept if Claude
+leaves the figures out without it, the line dropped if Claude gives them anyway.
