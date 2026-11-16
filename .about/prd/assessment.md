@@ -55,7 +55,8 @@ figures in it, so that decision can be about a part of any of them.
     command of the same kind (a commit for a commit, a push for a push) that passed, which fixes
     every failure of that kind before it; or nothing (ADR measurement). A pass with a flag that
     skips the Git hooks can't follow, as `no-git-hook-bypass` denies it and counts that denial. A
-    `hathi check` run by hand is no Git hook's failure;
+    `hathi check` run by hand is no Git hook's failure. The commits and pushes of the agents of a
+    Workflow the session ran count as the session's, each agent's in its own order;
   - each Guideline in the context: given by louie's Hook, whose added context names it (`The
     <name> Guideline applies to …`), or a Read of its file in louie's `guidelines/`; session
     start's index and the rules of `principles` it prints whole in every session are not counted.

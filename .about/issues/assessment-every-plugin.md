@@ -48,3 +48,9 @@ and whether it printed a `hathi explain` line, a Workflow call with its task's n
 `_count` adds the fields; `report` groups by plugin. Records without the new fields are recounted
 the way `backfill` counts, once, by a mark per figure. Risk: `condense` is shared with the Retro
 and the Session review (ADR transcripts); new events must not change what those read.
+
+### 2026-11-16 · decision
+
+`hathi`'s failures count the commits and pushes of a Workflow's agents too (their Transcripts under
+`subagents/workflows/`), each agent's failures fixed only by a later pass in that agent's own
+Transcript: louie's `deliver` commits from its agents, where `hathi` runs as well.
