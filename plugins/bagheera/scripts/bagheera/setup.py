@@ -35,6 +35,7 @@ HATHI_OLDEST = (1, 2, 0)
 MISE_HATHI = ["mise", "use", "--global", "github:bunderlog/hathi@latest"]
 # How long, in seconds, a command a run makes may take before it counts as failed.
 TIMEOUT = 120
+# husky's `npm install` fetches every dependency of the project, not one tool, so it gets longer.
 NPM_TIMEOUT = 600
 COMMITLINT = [
     "commitlint.config.js", "commitlint.config.cjs", "commitlint.config.mjs",
@@ -348,12 +349,13 @@ def _hooks_on(root: str, where: _Layout, result: Result) -> None:
     if now:
         result.failed.append(
             f"{where.command}: core.hooksPath is {now} in this clone, not {where.hooks_path}, so "
-            f"git doesn't run the hooks in {where.folder}/; setup leaves it as it is")
+            f"git doesn't run the Git hooks in {where.folder}/; setup leaves it as it is")
         return
     args = where.command.split()
     error = _command(root, args, NPM_TIMEOUT if where is HUSKY else TIMEOUT)
     if not error and _git_config(root, "core.hooksPath") != where.hooks_path:
-        error = f"core.hooksPath isn't {where.hooks_path} after it, so husky didn't turn the hooks on"
+        error = (f"core.hooksPath isn't {where.hooks_path} after it, so husky didn't turn the Git "
+                 "hooks on")
     _record(result, where.command, error)
 
 
