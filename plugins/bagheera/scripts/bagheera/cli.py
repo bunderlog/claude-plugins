@@ -33,7 +33,8 @@ from bagheera import (
 )
 
 USAGE = (
-    "usage: bagheera version | doctor | setup [--hathi | --no-hathi] |\n"
+    "usage: bagheera version | doctor |\n"
+    "  setup [--in <project>] [--hathi | --no-hathi] | setup --others |\n"
     "  session-start [UserPromptSubmit] | status-line |\n"
     "  pre-tool-use | session-end | user-prompt-submit | stop | notification | attention |\n"
     "  review-decision <review> <proposal> accepted|accepted-edited|rejected|deferred |\n"
@@ -93,9 +94,16 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
         return review_decision(args[1:], stdout, stderr)
     if args == ["proposals"]:
         return proposals(stdout, stderr)
-    if args and args[0] == "setup" and args[1:] in ([], ["--hathi"], ["--no-hathi"]):
-        add = {"--hathi": True, "--no-hathi": False}.get(args[1]) if args[1:] else None
-        return setup_repo(add, stdout, stderr)
+    if args == ["setup", "--others"]:
+        return setup_others(stdout, stderr)
+    if args and args[0] == "setup":
+        rest = args[1:]
+        where = ""
+        if rest[:1] == ["--in"] and len(rest) > 1:
+            where, rest = rest[1], rest[2:]
+        if rest in ([], ["--hathi"], ["--no-hathi"]):
+            add = {"--hathi": True, "--no-hathi": False}.get(rest[0]) if rest else None
+            return setup_repo(add, where, stdout, stderr)
     if args and args[0] == "condense":
         code = condense_sessions(args[1:], stdout, stderr)
         if code is not None:
@@ -402,19 +410,33 @@ def proposals(stdout: TextIO, stderr: TextIO) -> int:
     return 0
 
 
-def setup_repo(add_hathi: Optional[bool], stdout: TextIO, stderr: TextIO) -> int:
-    """The setup skill's run (PRD setup): it sets the repo up, printing what it changed and what
-    is left for the skill and the user; where it can't, it writes nothing and says why."""
+def setup_repo(add_hathi: Optional[bool], where: str, stdout: TextIO,
+               stderr: TextIO) -> int:
+    """The setup skill's run (PRD setup): it sets a repo up, the session's own or the project at
+    `where`, printing what it changed and what is left for the skill and the user; where it can't,
+    it writes nothing and says why."""
     prefix = f"{names.PLUGIN} setup: "
-    try:
-        dir = hook.project()
-    except OSError as e:
-        stderr.write(f"{prefix}{e}\n")
-        return 1
-    root = repo.root(dir)
-    if not root:
-        stderr.write(f"{prefix}{dir} is not in a repo\n")
-        return 1
+    if where:
+        root = repo.root(where)
+        if not root:
+            stderr.write(f"{prefix}{where} is not in a repo\n")
+            return 1
+        # Another project is only completed, never started: one that isn't set up is its owner's
+        # to set up from a session there, where the hathi question is theirs to answer (PRD setup).
+        if not setup.started(root):
+            stderr.write(f"{prefix}{root} isn't set up: run {names.SETUP_SKILL} in a session "
+                         "there\n")
+            return 1
+    else:
+        try:
+            dir = hook.project()
+        except OSError as e:
+            stderr.write(f"{prefix}{e}\n")
+            return 1
+        root = repo.root(dir)
+        if not root:
+            stderr.write(f"{prefix}{dir} is not in a repo\n")
+            return 1
     try:
         result = setup.run(root, add_hathi)
     except (setup.Stop, OSError) as e:
@@ -428,6 +450,28 @@ def setup_repo(add_hathi: Optional[bool], stdout: TextIO, stderr: TextIO) -> int
         stdout.write("nothing to change\n")
     if result.left:
         stdout.write("left:\n" + "".join(f"  {line}\n" for line in result.left))
+    return 0
+
+
+def setup_others(stdout: TextIO, stderr: TextIO) -> int:
+    """The machine's other projects the setup skill can complete from this session: each with what
+    it lacks and whether a run there needs the hathi question answered (PRD setup)."""
+    try:
+        dir = hook.project()
+    except OSError as e:
+        stderr.write(f"{names.PLUGIN} setup: {e}\n")
+        return 1
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
+    found = attention.check(data, repo.own_folder(), time.time())
+    roots = attention.lacking(found, repo.root(dir))
+    if not roots:
+        stdout.write("no other project to set up\n")
+        return 0
+    for root in roots:
+        missing = setup.missing(root)
+        hathi = "has .hathi.yml" if os.path.exists(os.path.join(root, setup.HATHI)) else (
+            "no .hathi.yml: ask whether to add hathi")
+        stdout.write(f"{root}\n  lacks\t{', '.join(missing)}\n  hathi\t{hathi}\n")
     return 0
 
 

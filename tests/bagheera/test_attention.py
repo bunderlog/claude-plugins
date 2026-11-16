@@ -55,6 +55,36 @@ class Projects(unittest.TestCase):
         self.assertEqual(attention.projects(testkit.tempdir(self), NOW), [])
 
 
+class Lacking(unittest.TestCase):
+    # The projects /bagheera:setup can complete from another session are those set up and lacking
+    # an item: not one that isn't set up, whose owner may have chosen not to, not one whose needs
+    # are of another kind, and not the repo the session is in (PRD setup).
+    def test_lacking(self):
+        commands.env(self)
+        here, done, lacks, other, fresh = (testkit.repo(self) for _ in range(5))
+        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX)
+        found = attention.Found(NOW, [
+            attention.Project(here, True, [item]),
+            attention.Project(lacks, True, [item]),
+            attention.Project(done, False, [item]),          # not set up: its owner's call
+            attention.Project(other, True, [attention.Need("2 Proposals wait", "open a session")]),
+            attention.Project(fresh, True, []),
+        ])
+        self.assertEqual(attention.lacking(found, here), [lacks])
+        # From outside any repo every one of them is another project.
+        self.assertEqual(attention.lacking(found, ""), [here, lacks])
+
+    # A subfolder of the session's repo is the same project, so it is left out too.
+    def test_lacking_subfolder(self):
+        commands.env(self)
+        here = testkit.repo(self)
+        sub = os.path.join(here, "apps", "web")
+        os.makedirs(sub)
+        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX)
+        found = attention.Found(NOW, [attention.Project(here, True, [item])])
+        self.assertEqual(attention.lacking(found, sub), [])
+
+
 class Needs(unittest.TestCase):
     def repo(self):
         dir = commands.in_repo(self)

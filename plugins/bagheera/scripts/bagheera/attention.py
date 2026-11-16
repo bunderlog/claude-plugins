@@ -34,6 +34,9 @@ STALE = 120
 KEPT = 7 * 24 * 3600
 # How much of a Transcript's end is read for an entry after a mark.
 TAIL = 256 * 1024
+# What a project lacking an item of the list is told to do, which is also how `lacking` knows
+# that need from the others.
+SETUP_FIX = names.SETUP_SKILL + " there"
 
 
 @dataclass
@@ -291,7 +294,7 @@ def needs(root: str, data: str) -> List[Need]:
                         "open a session there, which asks about each"))
     if setup.started(root):
         for item in setup.missing(root):
-            out.append(Need(f"{item} is missing", f"{names.SETUP_SKILL} there"))
+            out.append(Need(f"{item} is missing", SETUP_FIX))
     command = setup.hooks_off(root)
     if command:
         out.append(Need("its Git hooks are off in this clone", command))
@@ -303,6 +306,15 @@ def needs(root: str, data: str) -> List[Need]:
 
 
 # The check
+
+
+def lacking(found: Found, here: str) -> List[str]:
+    """The roots of the projects `found` that are set up and lack an item of the list, but the repo
+    at `here`: the ones /bagheera:setup can do from another project's session (PRD setup). A repo
+    that isn't set up is left out, since its owner may have chosen not to."""
+    mine = main_tree(here) if here else ""
+    return [p.root for p in found.projects
+            if p.set_up and p.root != mine and any(n.fix == SETUP_FIX for n in p.needs)]
 
 
 def check(data: str, config: str, now: float) -> Found:

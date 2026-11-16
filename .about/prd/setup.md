@@ -150,17 +150,25 @@ project that turns a plugin on without an install of it, `doctor` says so.
   plugin update louie@bunderlog`; with an install of that same version, or with the key set to
   `false`, it names neither. An install recorded for the repo under any scope counts, a `user`
   one where the repo has none.
+  → test: tests/bagheera/test_doctor.py "Doctor.test_project_plugins"
 - With `installed_plugins.json` gone, or holding a shape the code can't read, `doctor` names
   neither problem and says nothing of any plugin's installed version, bagheera's own included.
+  → test: tests/bagheera/test_doctor.py "Doctor.test_no_records"
 - The list the script gives the skill holds each of the machine's projects that is set up and
   lacks an item, and neither one that isn't set up nor the repo the session is in.
+  → test: tests/bagheera/test_attention.py "Lacking.test_lacking"
+  → test: tests/bagheera/test_attention.py "Lacking.test_lacking_subfolder"
+  → test: tests/bagheera/test_setup.py "Setup.test_others"
 - The script, given a project that is set up and lacks an item, leaves its working tree holding
   every item of PRD project-setup's list but the ADR, and makes no commit there; given one that
   isn't set up, it names it and writes nothing.
+  → test: tests/bagheera/test_setup.py "Setup.test_in_another_project"
 - Given two projects of which one's `package.json` holds husky's setup, the script names that one
   with what stopped it, and leaves the other holding every item.
+  → test: tests/bagheera/test_setup.py "Setup.test_in_another_project_stops"
 - The script named no other project writes nothing outside the session's own repo, checked by a
   test that compares every other project's files before and after.
+  → test: tests/bagheera/test_setup.py "Setup.test_leaves_other_projects"
 - In a session in one project, with two others lacking an item and one of those without
   `.hathi.yml`, `/bagheera:setup` asks the `hathi` question once, for that project alone, and
   after the run and the commits `doctor` names no item missing in either. Checked by hand once.

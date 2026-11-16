@@ -1,9 +1,10 @@
 import json
 import os
 import subprocess
+import time
 import unittest
 
-from bagheera import names
+from bagheera import names, setup
 from tests import testkit
 from tests.bagheera.commands import in_repo, read, run, start, write
 
@@ -43,6 +44,13 @@ class Setup(unittest.TestCase):
         code, out, err = run("setup", *args)
         self.assertEqual((code, err), (0, ""), out)
         return out
+
+    def set_up_elsewhere(self):
+        """Another project of the machine's, set up but lacking every item but the plugins."""
+        other = testkit.repo(self)
+        write(os.path.join(other, names.PROJECT_SETTINGS),
+              json.dumps({"enabledPlugins": {p: True for p in setup.PLUGINS}}))
+        return other
 
     def settings(self):
         return json.loads(read(self.path(names.PROJECT_SETTINGS)))
@@ -197,6 +205,74 @@ class Setup(unittest.TestCase):
                 self.assertEqual(tree(self.dir), {**before, **files})
                 for rel in files:
                     os.remove(self.path(rel))
+
+    # setup --in completes another project that is set up, writing nothing in the session's own
+    # repo and making no commit there; one that isn't set up it names and leaves alone (PRD setup).
+    def test_in_another_project(self):
+        self.setup("--hathi")
+        mine = tree(self.dir)
+        other = testkit.repo(self)
+        write(os.path.join(other, "README.md"), "# Other\n")
+
+        # Not set up at all: its owner's to set up from a session there.
+        code, out, err = run("setup", "--in", other)
+        self.assertEqual(code, 1, out)
+        self.assertIn("isn't set up: run /bagheera:setup in a session there", err)
+        self.assertEqual(tree(other), {"README.md": "# Other\n"})
+
+        # Set up but lacking items: the run completes it.
+        write(os.path.join(other, names.PROJECT_SETTINGS),
+              json.dumps({"enabledPlugins": {p: True for p in setup.PLUGINS}}))
+        code, out, err = run("setup", "--in", other, "--hathi")
+        self.assertEqual((code, err), (0, ""), out)
+        # Only the ADR is left, which the skill writes, as in the session's own repo.
+        missing = setup.missing(other)
+        self.assertEqual(len(missing), 1, missing)
+        self.assertIn(setup.ADR, missing[0])
+        self.assertEqual(tree(self.dir), mine, "it wrote in the session's own repo")
+        self.assertEqual(
+            subprocess.run(["git", "-C", other, "log", "--oneline"], stdout=subprocess.PIPE,
+                           stderr=subprocess.DEVNULL, text=True).stdout, "",
+            "it committed in the other project")
+
+    # Of two projects, the one whose run stops is named with what stopped it and nothing is
+    # written there; the other is still completed (PRD setup).
+    def test_in_another_project_stops(self):
+        stops, works = (self.set_up_elsewhere() for _ in range(2))
+        write(os.path.join(stops, "package.json"),
+              '{"husky": {"hooks": {"pre-commit": "npm test"}}}')
+        before = tree(stops)
+        code, out, err = run("setup", "--in", stops, "--hathi")
+        self.assertEqual(code, 1, out)
+        self.assertIn("husky's hooks in package.json", err)
+        self.assertEqual(tree(stops), before)
+        code, out, err = run("setup", "--in", works, "--hathi")
+        self.assertEqual((code, err), (0, ""), out)
+        self.assertEqual([m for m in setup.missing(works) if setup.ADR not in m], [])
+
+    # A run with no other project named leaves every other project's files as they were.
+    def test_leaves_other_projects(self):
+        others = [self.set_up_elsewhere() for _ in range(2)]
+        before = [tree(o) for o in others]
+        self.setup("--hathi")
+        self.assertEqual([tree(o) for o in others], before)
+
+    # setup --others names each project that is set up and lacks an item, what it lacks and
+    # whether a run there needs the hathi question answered; with none, it says so.
+    def test_others(self):
+        self.setup("--hathi")
+        self.assertEqual(run("setup", "--others")[1], "no other project to set up\n")
+        other = self.set_up_elsewhere()
+        folder = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "a")
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
+        write(os.path.join(folder, "1.jsonl"),
+              json.dumps({"type": "user", "timestamp": stamp, "cwd": other}) + "\n")
+        code, out, err = run("setup", "--others")
+        self.assertEqual((code, err), (0, ""), out)
+        self.assertIn(other + "\n", out)
+        self.assertIn("  hathi\tno .hathi.yml: ask whether to add hathi\n", out)
+        self.assertIn("attribution off in .claude/settings.json", out)
+        self.assertNotIn(self.dir + "\n", out, "it offered the session's own repo")
 
     # Without hathi, setup writes no Git hook, and doctor names the Secrets check missing.
     def test_no_hathi(self):
