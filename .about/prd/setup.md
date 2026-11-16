@@ -34,11 +34,14 @@ the same day `doctor` named 5 projects lacking an item, each needing a session o
 The 2 half set-up repos and every repo the person sets up after the Release are set up by the
 skill alone: after its one run and the person's commit, `doctor` names no missing item, and no
 item needed an edit by hand. The 5 projects `doctor` named lacking an item on 2026-11-13 hold
-every item after one session in one of them, with no session opened in the others; and in each
-project that turns a plugin on without an install of it, `doctor` says so.
+every item after one session in one of them, with no session opened in the others; and each
+project that turns a plugin on without an install of it, or with one older than the Release the
+person has, has it installed or updated by that same run, with no `/plugin` typed by hand.
 
 ## Scope
 
+- `/bagheera:setup` does every part of setting a project up that it can do itself, and `doctor`
+  names what is still wrong, with `/bagheera:setup` as the fix for each part the skill does.
 - `/bagheera:setup` in a repo makes the working tree hold what PRD project-setup lists, and
   nothing else, leaving the commit to the person. Its mechanical part is a script of bagheera's,
   the same code `doctor` checks with; the skill asks the question, runs it, and writes the ADR.
@@ -46,9 +49,12 @@ project that turns a plugin on without an install of it, `doctor` says so.
   - `enabledPlugins` with `baloo@bunderlog` and `louie@bunderlog`, and `enableWorkflows`; not
     bagheera, which each person installs.
   - Where the project has no `.hathi.yml`, the skill asks once whether to add `hathi` (yes
-    recommended). On yes, `hathi` must be on the machine, else it stops and says to install it
-    with mise or brew; the pin in `mise.toml` is the installed version, 1.2.0 or later, and a
-    second run leaves it. On no, it writes no Git hook, and the item stays missing for `doctor`
+    recommended). On yes, where `hathi` isn't on the `PATH` or is older than 1.2.0, it installs
+    the latest with `mise use --global "github:bunderlog/hathi@latest"`, mise being how `hathi`'s
+    README installs it; with no `mise` on the `PATH`, or where that fails, it stops, says to
+    install `hathi` with mise, and writes nothing. The pin in `mise.toml` is the installed
+    version, 1.2.0 or later, and a second run leaves it. On no, it writes no Git hook, and the
+    item stays missing for `doctor`
     unless the project already checks Secrets in a hook of its own.
   - The Git hooks: `.githooks/` with `commit-msg`, `pre-commit` and `pre-push`, each as `hathi
     hooks print <hook>` prints it; in a repo with husky (`.husky/`), the same three hooks there,
@@ -64,7 +70,18 @@ project that turns a plugin on without an install of it, `doctor` says so.
   and `.gitignore`, its hook lines after `hathi`. It removes only what an earlier baloo wrote: its
   Git hooks in `.git/hooks`, a committed `outputStyle`, `.claude/baloo.yml`, and in the clone's
   `settings.local.json` the `statusLine` and `outputStyle` `doctor` already names as baloo's.
-- It ends by giving the command that turns the Git hooks on in this clone, and running `doctor`.
+- It installs each plugin `doctor` names not installed for the repo, `claude plugin install
+  <name>@bunderlog --scope project` run in the repo, and updates each it names older than the
+  Release, `claude plugin update <name>@bunderlog` with the scope of the install recorded. Neither
+  changes a committed file, since the project scope's `enabledPlugins` already turns the plugin
+  on. Where `claude` isn't on the `PATH` or the command fails, it names the plugin with the
+  command and the error, and the rest of the run is still done. What it installed or updated
+  loads from the next session, which the report says.
+- It turns the Git hooks on in this clone, where git doesn't run them from the committed folder
+  yet (PRD project-setup), by running the command it writes into the README: `git config
+  core.hooksPath .githooks`, or husky's `npm install`. Where that command fails, it names it with
+  the error for the person to run, and the rest of the run is still done. It ends by running
+  `doctor`.
 - Run again in a set-up repo, it changes no file.
 - `doctor` names, in a repo, each item of the list the checked-out files lack, a line each, with
   `/bagheera:setup` as the fix; a repo whose `.claude/settings.json` doesn't turn baloo on gets
@@ -75,17 +92,19 @@ project that turns a plugin on without an install of it, `doctor` says so.
   (`baloo@bunderlog`, `louie@bunderlog`) whose key in the repo's `.claude/settings.json` is true
   and for which Claude Code records no install, and each whose recorded install is older than the
   bagheera installed on the machine, which is the Release the person has, since the three plugins
-  carry one version at each Release (PRD bagheera): the first says to install it with `/plugin`,
-  project scope, the second to run `claude plugin update <name>@bunderlog`. An install counts for
+  carry one version at each Release (PRD bagheera), each with `/bagheera:setup` as the fix. An
+  install counts for
   the repo when its `projectPath` is the repo, whatever its scope, else when its scope is `user`,
   as `doctor` already reads bagheera's own version from `plugins/installed_plugins.json`, which
   is Claude Code's and undocumented, so a shape it can't read says nothing. Each is a problem of
   the repo `doctor` runs in, and ADR doctor is amended by the change that builds this.
-- `/bagheera:setup` offers the machine's other projects `doctor` names as lacking an item (PRD
+- `/bagheera:setup` offers the machine's other projects `doctor` names as lacking an item or with
+  a plugin not installed or older than the Release, or with its Git hooks off in that clone (PRD
   visibility), whether or not its own repo lacked one or its run stopped, and does in each
-  project the person picks what it does in its own: the same script, the `hathi` question where
-  the project has no `.hathi.yml`, asked for every picked project in one round, the ADR, and the
-  command that turns that clone's Git hooks on. It offers only a project that is set up: one that
+  project the person picks what it does in its own: the same script, installing and updating the
+  plugins, the `hathi` question where the project has no `.hathi.yml`, asked for every picked
+  project in one round, the ADR, and turning that clone's Git hooks on. It offers only a project
+  that is set up: one that
   isn't is told once per clone and nothing more, since its owner may have chosen not to. A picked
   project whose run stops is named with what stopped it, and the others are still done. Each
   project's commit stays the person's, and the skill ends by saying which files it wrote in which
@@ -96,12 +115,11 @@ project that turns a plugin on without an install of it, `doctor` says so.
 
 ## Non-goals
 
-- Installing `hathi` or mise, and turning a clone's Git hooks on: the person does (PRD
-  project-setup).
+- Installing mise: the person does.
 - Setting up, from another project's session, a repo that isn't set up at all: the person runs
   the skill in it, where the `hathi` question is theirs to answer.
-- Installing or updating a plugin: `doctor` names it, and the person runs `/plugin` or `claude
-  plugin update`.
+- Installing bagheera itself, or a plugin the repo's `.claude/settings.json` doesn't turn on.
+- Restarting the session so a plugin installed or updated loads in it.
 - Telling a project that a newer version exists on GitHub: the versions compared are local (ADR
   doctor).
 - Choosing a Secrets tool for a project without `hathi`.
@@ -113,7 +131,8 @@ project that turns a plugin on without an install of it, `doctor` says so.
 
 ## Anti-goals
 
-- The skill commits, pushes, or changes git's config.
+- The skill commits, pushes, or changes git's config beyond `core.hooksPath`, set only to turn
+  the project's committed Git hooks on.
 - A project's own setting, hook line or `CLAUDE.md` text is lost or reordered beyond putting
   `hathi` first.
 - A set-up repo is told at each session start that it isn't set up.
@@ -136,8 +155,15 @@ project that turns a plugin on without an install of it, `doctor` says so.
 - In a repo whose `CLAUDE.md` holds other text, the text stays, and one `@.hathi.yml` line is
   added.
 - Run a second time, the script leaves every file's content as the first run left it.
-- It makes no commit, and `git config --local --list` is the same before and after.
-- With `hathi` added and none on the `PATH`, it stops naming mise and brew, and writes nothing.
+- It makes no commit, and `git config --local --list` differs before and after only in
+  `core.hooksPath`, set to `.githooks` where it was unset, and left where it already was.
+- In a repo with husky, it runs `npm install` there, checked with a stand-in `npm` on the `PATH`;
+  with one that exits non-zero, it names `npm install` with the error, and still writes every
+  item.
+- With `hathi` added and none on the `PATH`, it runs `mise use --global
+  "github:bunderlog/hathi@latest"`, checked with a stand-in `mise` that puts a `hathi` on the
+  `PATH`, and pins that `hathi`'s version in `mise.toml`; with neither on the `PATH`, it stops
+  naming mise, and writes nothing.
 - In a repo with husky's setup in `package.json`, it stops naming that setup, and writes nothing.
 - `doctor` in a set-up repo whose `.claude/settings.json` lacks `attribution` and whose
   `.gitignore` lacks `.claude/worktrees/` names those two and no other item, each with
@@ -145,17 +171,25 @@ project that turns a plugin on without an install of it, `doctor` says so.
 - bagheera's session start in a repo that isn't set up says so in the first session of a clone,
   not in the second, and never in a set-up repo or a headless session.
 - In a repo whose `.claude/settings.json` turns `louie@bunderlog` on and for which Claude Code
-  records no install of it, `doctor` names it a problem, with `/plugin` and project scope; with
-  an install of 0.34.0 recorded while the bagheera installed is 0.61.1, it names it with `claude
-  plugin update louie@bunderlog`; with an install of that same version, or with the key set to
+  records no install of it, `doctor` names it a problem, with `/bagheera:setup`; with an install
+  of 0.34.0 recorded while the bagheera installed is 0.61.1, it names it older, with
+  `/bagheera:setup`; with an install of that same version, or with the key set to
   `false`, it names neither. An install recorded for the repo under any scope counts, a `user`
   one where the repo has none.
   → test: tests/bagheera/test_doctor.py "Doctor.test_project_plugins"
 - With `installed_plugins.json` gone, or holding a shape the code can't read, `doctor` names
   neither problem and says nothing of any plugin's installed version, bagheera's own included.
   → test: tests/bagheera/test_doctor.py "Doctor.test_no_records"
+- In a repo that turns `louie@bunderlog` on with no install of it, and `baloo@bunderlog` on with
+  an install of 0.34.0 at project scope while the bagheera installed is 0.61.1, the script runs
+  `claude plugin install louie@bunderlog --scope project` and `claude plugin update
+  baloo@bunderlog --scope project` in the repo, checked with a stand-in `claude` on the `PATH`
+  that records its arguments and folder, and changes no committed file.
+- With no `claude` on the `PATH`, or one that exits non-zero, the script names each plugin with
+  its command and the error, still writes every other item, and exits 1.
 - The list the script gives the skill holds each of the machine's projects that is set up and
-  lacks an item, and neither one that isn't set up nor the repo the session is in.
+  lacks an item, has a plugin not installed or older than the Release, or has its Git hooks off,
+  and neither one that isn't set up nor the repo the session is in.
   → test: tests/bagheera/test_attention.py "Lacking.test_lacking"
   → test: tests/bagheera/test_attention.py "Lacking.test_lacking_subfolder"
   → test: tests/bagheera/test_setup.py "Setup.test_others"

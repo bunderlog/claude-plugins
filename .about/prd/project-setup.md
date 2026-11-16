@@ -58,8 +58,8 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
   a template (`.env.example`, `.env.sample`) stays readable. A `~/` rule is relative to each
   person's home, not a path into anyone's.
 - A clone's Git hooks are on when git runs hooks from the committed folder: `core.hooksPath` is
-  `.githooks`, husky's `.husky/_`, or lefthook has installed its hooks. The person runs the one
-  command, never a plugin.
+  `.githooks`, husky's `.husky/_`, or lefthook has installed its hooks. bagheera's setup skill
+  runs the one command (PRD setup), or the person does; no plugin's Hook does.
 - Setting a project up removes what baloo wrote before: its Git hooks in `.git/hooks` (each begins
   with the line `# managed by baloo`) or its line in husky's, a committed `outputStyle`, and a
   `statusLine` or `outputStyle` in the clone's `.claude/settings.local.json`, and
@@ -71,8 +71,8 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
 
 ## Non-goals
 
-- Installing `hathi` or mise on a machine: the person does, with mise or brew.
-- Turning a clone's Git hooks on: the person runs the one command.
+- Installing mise on a machine: the person does; bagheera's setup skill installs `hathi` with it
+  (PRD setup).
 - The setup skill itself: it ships with bagheera (Issue split-bagheera-louie).
 - Choosing a project's other hooks (lint, tests): they stay as the project has them.
 - What a hook does when `hathi` isn't installed: it fails, so the person installs it; `hathi`'s own

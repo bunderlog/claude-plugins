@@ -35,8 +35,8 @@ waiting without the line.
   | --- | --- | --- |
   | Proposals wait | `.about/proposals/` holds a Proposal `doctor` counts as waiting or as a mismatch, deferred ones included | open a session there, which asks about each |
   | Setup lacks an item | the repo's `.claude/settings.json` turns baloo on, and `doctor` would name an item of PRD project-setup's list missing | `/bagheera:setup` there |
-  | An old install | the repo's `.claude/settings.json` turns baloo or louie on, and Claude Code records an install of it for the repo older than the bagheera installed, as `doctor` names it there (PRD setup) | `claude plugin update <name>@bunderlog` there |
-  | Git hooks off | git tracks Git hooks in one of the layouts PRD setup knows (`.githooks/`, `.husky/`), and this clone's `core.hooksPath` isn't that layout's | the command for its layout (PRD setup) |
+  | A plugin not installed or old | the repo's `.claude/settings.json` turns baloo or louie on, and Claude Code records no install of it for the repo, or one older than the bagheera installed, as `doctor` names it there (PRD setup) | `/bagheera:setup` there |
+  | Git hooks off | git tracks Git hooks in one of the layouts PRD setup knows (`.githooks/`, `.husky/`), and this clone's `core.hooksPath` isn't that layout's | `/bagheera:setup` there |
   | Inbox not gone through | an item of `.about/inbox.md` whose first non-blank line after its heading doesn't end ` · kept <date>`, as baloo's session start counts them | `/baloo:inbox` there |
   | A session waits | a session a person runs ended its turn, asks for a permission, or asks a question (`AskUserQuestion`), and no prompt has followed, it hasn't ended, and its Claude Code still runs | switch to that session |
 
@@ -110,8 +110,8 @@ waiting without the line.
   after `git config core.hooksPath .githooks` runs there, it doesn't.
   → test: tests/bagheera/test_attention.py "Needs.test_hooks_off"
 - A repo whose `.claude/settings.json` turns louie on, with an install of it recorded for the repo
-  older than the bagheera installed, needs attention, with `claude plugin update
-  louie@bunderlog` there; once the install recorded is of the same version, it doesn't.
+  older than the bagheera installed, needs attention, with `/bagheera:setup` there; once the
+  install recorded is of the same version, it doesn't.
   → test: tests/bagheera/test_attention.py "Needs.test_old_install"
 - An Inbox whose every item has ` · kept <date>` on the first non-blank line after its heading
   doesn't make its project need attention; one with an item that hasn't, does.
