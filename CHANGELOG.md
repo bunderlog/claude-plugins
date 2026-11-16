@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.64.1 — 2026-11-16
+
+### bagheera
+
+#### Fixes
+
+- bagheera: leave a Git hook that runs hathi last as it is, and count it in doctor (145dd89)
+
 ## 0.64.0 — 2026-11-16
 
 ### bagheera
