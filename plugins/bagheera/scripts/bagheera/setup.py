@@ -151,7 +151,7 @@ def _items(root: str) -> List[_Item]:
              not [r for r in DENY if r not in _deny(s)]),
         _Item("attribution off in .claude/settings.json",
              s.get("attribution") == {"commit": "", "pr": ""}),
-        _Item("no statusLine or outputStyle in .claude/settings.json",
+        _Item("statusLine and outputStyle left out of .claude/settings.json",
              "statusLine" not in s and "outputStyle" not in s),
     ]
     fmt = _format_file(root, has_hathi)
