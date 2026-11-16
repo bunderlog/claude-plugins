@@ -42,5 +42,31 @@ class GuidelineKinds(unittest.TestCase):
                     self.assertEqual(assess._BY_KIND[name](path), louie(path))
 
 
+class KnowledgeNames(unittest.TestCase):
+    def test_louie_names_an_adr_at_the_files_the_assessment_counts(self):
+        # louie's copy of the Assessment's rule for which file an ADR or a PRD names (ADR plugin),
+        # so its Hook names one where the Assessment counts an edit (PRD index); the ADRs and files
+        # of the Assessment's own tests.
+        from bagheera import assess
+        from louie import knowledge
+
+        texts = [
+            "# Orders\n\nOrders live in `src/orders/` and `src/orders/place.go`.\n",
+            "# Docs\n\nPRDs live in `.about/prd/`, the code in `src/orders/`.\n",
+        ]
+        for text in texts:
+            with self.subTest(text=text):
+                self.assertEqual(knowledge.PATH.findall(text), assess._PATH.findall(text))
+        files = [
+            "src/orders/place.go", "src/orders/cancel.go", "README.md",
+            ".claude/worktrees/pr-1/.about/prd/export.md",
+            ".claude/worktrees/pr-1/src/orders/place.go",
+        ]
+        for path in ["src/orders", "src/orders/place.go", ".about/prd"]:
+            for rel in files:
+                with self.subTest(path=path, rel=rel):
+                    self.assertEqual(knowledge.names(path, rel), assess._names(path, rel))
+
+
 if __name__ == "__main__":
     unittest.main()
