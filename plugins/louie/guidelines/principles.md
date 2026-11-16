@@ -23,6 +23,9 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - A task that serves an Issue or a PRD with acceptance criteria ends, before its commit or PR,
   with one line offering `/louie:verify`, or the `louie:verifier` agent where the session has no
   Workflow tool; run it only if the user agrees.
+- Give a `/louie:plan`, `/louie:deliver` or `/louie:verify` run's result with the tokens, agents
+  and minutes its task-notification's `<usage>` names (`subagent_tokens`, `agent_count`,
+  `duration_ms`).
 - Stop a process by its id (`kill $!`) or with `pkill -f '[w]eb-server'`: a plain
   `pkill -f web-server` matches the shell running it too, and kills it.
 - Something found and left for later (a bug, a code review's finding, a decision still open)
