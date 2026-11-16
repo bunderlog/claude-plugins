@@ -309,9 +309,10 @@ def needs(root: str, data: str) -> List[Need]:
 
 
 def lacking(found: Found, here: str) -> List[str]:
-    """The roots of the projects `found` that are set up and lack an item of the list, but the repo
-    at `here`: the ones /bagheera:setup can do from another project's session (PRD setup). A repo
-    that isn't set up is left out, since its owner may have chosen not to."""
+    """The roots of the projects `found` that turn baloo on and still lack an item of the list, but
+    the repo at `here`: the ones /bagheera:setup can complete from another project's session (PRD
+    setup). A repo that turns baloo on nowhere is left out, since its owner may have chosen not to
+    set it up at all."""
     mine = main_tree(here) if here else ""
     return [p.root for p in found.projects
             if p.set_up and p.root != mine and any(n.fix == SETUP_FIX for n in p.needs)]

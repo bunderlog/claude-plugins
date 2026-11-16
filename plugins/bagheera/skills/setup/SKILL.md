@@ -18,7 +18,8 @@ the machine's other projects that lack an item, and do the same in each the user
    `python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' setup --hathi` on yes, `--no-hathi` on
    no, and no flag where `.hathi.yml` is there.
 3. Exit 1 means it wrote nothing; its `bagheera setup:` line says why and what the user does,
-   such as installing `hathi` with mise or brew. Tell them, and stop.
+   such as installing `hathi` with mise or brew. Keep that line for the report, skip the ADR, and
+   go on: the machine's other projects don't depend on this repo's run.
 4. Otherwise it prints what it `changed:` and `removed:`, and what is `left:`.
 
 ## The ADR
@@ -32,18 +33,20 @@ run removed, from its `removed:` lines. Write only what the run and the repo sho
 ## The machine's other projects
 
 Then run `python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' setup --others`, whatever this
-repo's run did, even where it stopped or had nothing to change. It prints each project that is set
-up and lacks an item, with what it lacks and whether it has `.hathi.yml`. Do this every time: the
-user can't see those projects from here.
+repo's run did. It prints each of the machine's projects that turns baloo on and still lacks an
+item, with what it lacks and whether it has `.hathi.yml`. Do this every time: the user can't see
+those projects from here.
 
 1. With `no other project to set up`, skip to Report.
-2. Otherwise ask the user which to complete, with the AskUserQuestion tool, naming each project's
-   folder and what it lacks; and, in the same round, one question per project without `.hathi.yml`,
-   whether to add `hathi` there (recommended: yes). Taking none is an answer.
-3. For each project picked, run `python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' setup --in
-   <its folder>`, with `--hathi` or `--no-hathi` where it has no `.hathi.yml`, and write its ADR
+2. Otherwise ask the user which to complete: one AskUserQuestion question, `multiSelect: true`,
+   an option per project naming its folder and what it lacks. Picking none is an answer, and ends
+   this section.
+3. Then, for the projects picked that have no `.hathi.yml`, ask whether to add `hathi` there
+   (recommended: yes), one question each, four to a round until every one of them is answered.
+4. For each project picked, run `python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' setup --in
+   <its folder>`, with `--hathi` or `--no-hathi` where it had no `.hathi.yml`, and write its ADR
    as above, in that project. Exit 1 means it wrote nothing there: keep its `bagheera setup:` line
-   for the report and go on to the next project.
+   for the report and go on to the next project. Every project picked is run or has a line.
 
 ## Report
 

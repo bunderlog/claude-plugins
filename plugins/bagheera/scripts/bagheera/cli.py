@@ -421,11 +421,12 @@ def setup_repo(add_hathi: Optional[bool], where: str, stdout: TextIO,
         if not root:
             stderr.write(f"{prefix}{where} is not in a repo\n")
             return 1
-        # Another project is only completed, never started: one that isn't set up is its owner's
-        # to set up from a session there, where the hathi question is theirs to answer (PRD setup).
+        # Another project is only completed, never started: one that turns baloo on nowhere is
+        # its owner's to set up from a session there, where the hathi question is theirs to
+        # answer (PRD setup).
         if not setup.started(root):
-            stderr.write(f"{prefix}{root} isn't set up: run {names.SETUP_SKILL} in a session "
-                         "there\n")
+            stderr.write(f"{prefix}{root} doesn't turn baloo on: run {names.SETUP_SKILL} in a "
+                         "session there to set it up\n")
             return 1
     else:
         try:
@@ -454,8 +455,9 @@ def setup_repo(add_hathi: Optional[bool], where: str, stdout: TextIO,
 
 
 def setup_others(stdout: TextIO, stderr: TextIO) -> int:
-    """The machine's other projects the setup skill can complete from this session: each with what
-    it lacks and whether a run there needs the hathi question answered (PRD setup)."""
+    """The machine's other projects the setup skill can complete from this session: each that
+    turns baloo on and still lacks an item, with what it lacks and whether a run there needs the
+    hathi question answered (PRD setup)."""
     try:
         dir = hook.project()
     except OSError as e:
@@ -465,7 +467,7 @@ def setup_others(stdout: TextIO, stderr: TextIO) -> int:
     found = attention.check(data, repo.own_folder(), time.time())
     roots = attention.lacking(found, repo.root(dir))
     if not roots:
-        stdout.write("no other project to set up\n")
+        stdout.write("no other project to complete\n")
         return 0
     for root in roots:
         missing = setup.missing(root)

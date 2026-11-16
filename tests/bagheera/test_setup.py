@@ -46,7 +46,7 @@ class Setup(unittest.TestCase):
         return out
 
     def set_up_elsewhere(self):
-        """Another project of the machine's, set up but lacking every item but the plugins."""
+        """Another project of the machine's, turning baloo on but lacking every other item."""
         other = testkit.repo(self)
         write(os.path.join(other, names.PROJECT_SETTINGS),
               json.dumps({"enabledPlugins": {p: True for p in setup.PLUGINS}}))
@@ -217,7 +217,7 @@ class Setup(unittest.TestCase):
         # Not set up at all: its owner's to set up from a session there.
         code, out, err = run("setup", "--in", other)
         self.assertEqual(code, 1, out)
-        self.assertIn("isn't set up: run /bagheera:setup in a session there", err)
+        self.assertIn("doesn't turn baloo on: run /bagheera:setup in a session there", err)
         self.assertEqual(tree(other), {"README.md": "# Other\n"})
 
         # Set up but lacking items: the run completes it.
@@ -261,7 +261,7 @@ class Setup(unittest.TestCase):
     # whether a run there needs the hathi question answered; with none, it says so.
     def test_others(self):
         self.setup("--hathi")
-        self.assertEqual(run("setup", "--others")[1], "no other project to set up\n")
+        self.assertEqual(run("setup", "--others")[1], "no other project to complete\n")
         other = self.set_up_elsewhere()
         folder = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "a")
         stamp = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
