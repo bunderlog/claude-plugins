@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.66.1 — 2026-11-16
+
+### louie
+
+#### Fixes
+
+- louie: tell the verifier every Guideline that fits, those a Hook gives too (3c5798a)
+
 ## 0.66.0 — 2026-11-16
 
 ### bagheera
