@@ -16,6 +16,10 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
   with none, so a later tidy-up doesn't undo it.
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
+- Once a PRD's scope or criteria change, and before building a change that serves a PRD or an
+  Issue with acceptance criteria, in a session with the Workflow tool, offer in one line to take
+  it through an Issue (`/baloo:issue` where there is none), `/louie:plan` and `/louie:deliver`;
+  edit in the session only if the user declines.
 - A task that serves an Issue or a PRD with acceptance criteria ends, before its commit or PR,
   with one line offering `/louie:verify`, or the `louie:verifier` agent where the session has no
   Workflow tool; run it only if the user agrees.
