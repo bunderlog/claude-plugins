@@ -112,17 +112,3 @@ edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after 
 Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
 index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
 
-## Why a plugin a project turns on isn't installed for it
-
-2026-11-13 · doctor
-
-ADR plugin has baloo and louie reaching a teammate from the project's committed settings once the
-folder is trusted, confirmed on a clean machine on 2026-11-10. Yet on 2026-11-13 four projects
-(checkmeup, chainofsale, sagsuget.co.il, mongo-leader) turn `louie@bunderlog` on in those settings
-and Claude Code records no install of it for any of them, so none of louie loads there; `doctor`
-now names it (PRD setup) and says to install it with `/plugin`. What isn't known is why it didn't
-come on its own: whether trusting the folder installs only what the settings held at that moment,
-so a plugin added to them later never arrives, or whether something else holds it back. Settled by
-turning a plugin on in a project whose folder is already trusted and seeing whether the next
-session installs it; if it doesn't, ADR plugin's Consequence is wrong as written and
-`/bagheera:setup` should say so when it turns louie on.

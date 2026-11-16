@@ -72,8 +72,11 @@ with 0.42.0; louie's templates and Workflows come each with a PRD of its own.
 ## Consequences
 
 - A person installs bagheera once, or once per clone at local scope; baloo and louie reach a
-  teammate from the project's committed settings once the folder is trusted, as a clean machine
-  confirmed on 2026-11-10.
+  teammate's new clone from the project's committed settings once the folder is trusted, as a
+  clean machine confirmed on 2026-11-10. A plugin the settings turn on after the folder was
+  trusted doesn't arrive that way: on 2026-11-13 four projects turned louie on, added to their
+  settings by the split of 2026-11-09, with no install of it. `/bagheera:setup` installs it, and
+  `doctor` names it until then (PRD setup); why trust doesn't bring it is left unasked.
 - bagheera's code can't assume it is on in every session: a project without it has no Checks in
   Hooks, no Session review and no session start of bagheera's, and a Status line set in
   `~/.claude/settings.json` still runs there.
