@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from louie import binlink, names, repo
 
@@ -42,20 +42,31 @@ def records() -> Optional[Dict[str, Any]]:
 def installed(root: str, plugin: str = names.PLUGIN_ID) -> str:
     """The version Claude Code records as installed of `plugin` for the repo at `root`: the install
     for this project, whatever its scope, else the user's; "" where it records none."""
+    return install(root, plugin)[0]
+
+
+def install(root: str, plugin: str = names.PLUGIN_ID) -> Tuple[str, str]:
+    """The version and the scope (`project`, `local` or `user`) of the install `installed` reads
+    for `plugin` and the repo at `root`, which `claude plugin update` is given (PRD setup);
+    ("", "") where Claude Code records none."""
     entries = (records() or {}).get(plugin)
     if not isinstance(entries, list):
-        return ""
+        return "", ""
     here = os.path.realpath(root)
-    found = {"": ""}
+    found: Dict[str, Tuple[str, str]] = {}
     for e in entries:
         if not isinstance(e, dict) or not isinstance(e.get("version"), str):
             continue
-        project = e.get("projectPath")
-        if e.get("scope") == "user":
-            found.setdefault("user", e["version"])
+        project, scope = e.get("projectPath"), e.get("scope")
+        if scope == "user":
+            found.setdefault("user", (e["version"], "user"))
         elif isinstance(project, str) and os.path.realpath(project) == here:
-            found.setdefault("project", e["version"])
-    return found.get("project") or found.get("user") or ""
+            found.setdefault("project", (e["version"], scope if isinstance(scope, str) and scope
+                                         else "project"))
+    for where in ("project", "user"):
+        if where in found and found[where][0]:
+            return found[where]
+    return "", ""
 
 
 def _numbers(v: str):

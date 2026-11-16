@@ -1,7 +1,9 @@
 """Setting a repo up for bunderlog's plugins (PRD setup): what its working tree lacks of PRD
 project-setup's list, which doctor names and session start tells of, and the run that adds it,
-which the setup skill makes. A run writes only files in the repo and its clone's .git/hooks; it
-makes no commit and changes no git config."""
+which the setup skill makes. Before it writes, a run installs hathi with mise where it needs one;
+it then writes only files in the repo and its clone's .git/hooks, installs and updates the plugins
+the repo turns on with Claude Code's `claude plugin`, and turns the clone's Git hooks on, its only
+change to git's config being core.hooksPath where it is unset. It makes no commit."""
 
 from __future__ import annotations
 
@@ -29,6 +31,11 @@ ADR = ".about/adr/repo-setup.md"
 HATHI = ".hathi.yml"
 HATHI_PIN = '"github:bunderlog/hathi"'
 HATHI_OLDEST = (1, 2, 0)
+# How hathi's README installs it, which a run does where hathi is missing or older (PRD setup).
+MISE_HATHI = ["mise", "use", "--global", "github:bunderlog/hathi@latest"]
+# How long, in seconds, a command a run makes may take before it counts as failed.
+TIMEOUT = 120
+NPM_TIMEOUT = 600
 COMMITLINT = [
     "commitlint.config.js", "commitlint.config.cjs", "commitlint.config.mjs",
     "commitlint.config.ts", ".commitlintrc", ".commitlintrc.json", ".commitlintrc.yml",
@@ -45,7 +52,7 @@ OTHER_MANAGERS = [
 
 
 class Stop(Exception):
-    """Why a run can't set the repo up; it has written nothing."""
+    """Why a run can't set the repo up; it has written nothing and run no command but mise's."""
 
 
 @dataclass
@@ -210,27 +217,31 @@ def _items(root: str) -> List[_Item]:
 
 @dataclass
 class Result:
-    """What a run wrote and removed, by path from the root, and what is left for the skill and the
-    person."""
+    """What a run wrote and removed, by path from the root, the commands it ran after the writes,
+    each that failed with its error, and what is left for the skill and the person."""
 
     changed: List[str] = field(default_factory=list)
     removed: List[str] = field(default_factory=list)
+    ran: List[str] = field(default_factory=list)
+    failed: List[str] = field(default_factory=list)
     left: List[str] = field(default_factory=list)
 
 
 def run(root: str, add_hathi: Optional[bool]) -> Result:
     """Sets the repo at `root` up: `add_hathi` says whether to add hathi where the repo has no
     .hathi.yml, and is ignored where it has one. It raises Stop before writing anything where it
-    can't."""
+    can't; after the writes, a command that fails is a line of the result's `failed`, and the rest
+    of the run is still done."""
     has_hathi = os.path.exists(os.path.join(root, HATHI))
     if not has_hathi and add_hathi is None:
         raise Stop("the repo has no .hathi.yml: ask the user whether to add hathi, then run "
                    "setup with --hathi or --no-hathi")
     hathi = has_hathi or bool(add_hathi)
     where = _layout(root)
-    version = ""
+    current = _json_strict(os.path.join(root, names.PROJECT_SETTINGS))
+    hathi_version = ""
     if hathi:
-        version = _hathi_version()
+        hathi_version = _hathi_version()
     writes: Dict[str, Optional[str]] = {}
     modes: Dict[str, int] = {}
 
@@ -249,7 +260,7 @@ def run(root: str, add_hathi: Optional[bool]) -> Result:
             if mode:
                 modes[rel] = mode
 
-    put(names.PROJECT_SETTINGS, _settings(_json_strict(os.path.join(root, names.PROJECT_SETTINGS))))
+    put(names.PROJECT_SETTINGS, _settings(current))
     fmt = HATHI if hathi else _format_file(root, False)
     if fmt:
         put("CLAUDE.md", _import(now("CLAUDE.md"), fmt))
@@ -277,7 +288,7 @@ def run(root: str, add_hathi: Optional[bool]) -> Result:
     put(".gitignore", _ignore(_read(os.path.join(root, ".gitignore"))))
     mise = os.path.join(root, "mise.toml")
     if hathi and os.path.exists(mise):
-        put("mise.toml", _pin_in(_read(mise), version))
+        put("mise.toml", _pin_in(_read(mise), hathi_version))
     put(names.OLD_CONFIG, None)
     local = _json(os.path.join(root, names.LOCAL_SETTINGS))
     kept = {k: v for k, v in local.items() if k not in baloo_local(local)}
@@ -306,9 +317,74 @@ def run(root: str, add_hathi: Optional[bool]) -> Result:
         result.left.append(
             f"write {ADR}: whether the repo runs hathi, what checks Secrets, and what an earlier "
             "baloo left that this run removed")
-    if hooks_ok and _git_config(root, "core.hooksPath") != where.hooks_path:
-        result.left.append(f"turn the Git hooks on in this clone: {where.command}")
+    for args in _plugin_commands(root):
+        _record(result, " ".join(args), _command(root, args, TIMEOUT))
+    if hooks_ok:
+        _hooks_on(root, where, result)
     return result
+
+
+def _plugin_commands(root: str) -> List[List[str]]:
+    """The `claude plugin` command for each plugin the repo at `root` turns on with no install of it
+    for the repo, or with one older than the bagheera installed, as doctor names them (PRD
+    setup): an install at project scope, run in the repo, or an update at the install's scope."""
+    release = version.installed(root)
+    out = []
+    for plugin, there in turned_on(root):
+        if not there:
+            out.append(["claude", "plugin", "install", plugin, "--scope", "project"])
+        elif version.older(there, release):
+            out.append(["claude", "plugin", "update", plugin, "--scope",
+                        version.install(root, plugin)[1]])
+    return out
+
+
+def _hooks_on(root: str, where: _Layout, result: Result) -> None:
+    """Turns the Git hooks in `where` on in the clone at `root` with the command the README gives,
+    where its core.hooksPath is unset; one set to something else is the person's, and stays."""
+    now = _git_config(root, "core.hooksPath")
+    if now == where.hooks_path:
+        return
+    if now:
+        result.failed.append(
+            f"{where.command}: core.hooksPath is {now} in this clone, not {where.hooks_path}, so "
+            f"git doesn't run the hooks in {where.folder}/; setup leaves it as it is")
+        return
+    args = where.command.split()
+    error = _command(root, args, NPM_TIMEOUT if where is HUSKY else TIMEOUT)
+    if not error and _git_config(root, "core.hooksPath") != where.hooks_path:
+        error = f"core.hooksPath isn't {where.hooks_path} after it, so husky didn't turn the hooks on"
+    _record(result, where.command, error)
+
+
+def _record(result: Result, command: str, error: str) -> None:
+    if error:
+        result.failed.append(f"{command}: {error}")
+    else:
+        result.ran.append(command)
+
+
+def _command(root: str, args: List[str], timeout: int) -> str:
+    """Runs `args` in the repo at `root`; what went wrong, in a line, or "" where it exited 0."""
+    try:
+        p = subprocess.run(args, cwd=root, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, text=True, timeout=timeout)
+    except FileNotFoundError:
+        return f"{args[0]} isn't on the PATH"
+    except subprocess.TimeoutExpired:
+        return f"no end after {timeout} s"
+    except (OSError, subprocess.SubprocessError) as e:
+        return str(e)
+    if p.returncode == 0:
+        return ""
+    return _error(p.stderr, p.stdout, p.returncode)
+
+
+def _error(stderr: str, stdout: str, code: int) -> str:
+    """A command's error in one line: its stderr's lines, else its stdout's, else its exit code."""
+    lines = [line.strip() for line in (stderr.strip() or stdout).splitlines() if line.strip()]
+    text = "; ".join(lines) or f"exit {code}"
+    return text if len(text) <= 300 else text[:297] + "..."
 
 
 def baloo_local(local: Dict[str, Any]) -> List[str]:
@@ -509,14 +585,46 @@ def _pin_in(text: str, version: str) -> str:
 
 
 def _hathi_version() -> str:
-    """The installed hathi's version; Stop where there is none, or it is older than 1.2.0."""
+    """The installed hathi's version, 1.2.0 or later: where hathi is missing or older, the latest
+    installed with mise first (PRD setup); Stop where mise is missing or fails, or where its hathi
+    still isn't on the PATH."""
+    found, what = _usable_hathi()
+    if found:
+        return found
+    command = " ".join(MISE_HATHI[:3]) + f' "{MISE_HATHI[3]}"'
+    try:
+        p = subprocess.run(MISE_HATHI, cwd=os.path.expanduser("~"), stdin=subprocess.DEVNULL,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                           timeout=TIMEOUT)
+    except FileNotFoundError:
+        raise Stop(f"{what}, and mise isn't on the PATH to install it: install hathi with mise "
+                   f"({command}), then run setup again") from None
+    except (OSError, subprocess.SubprocessError) as e:
+        raise Stop(f"{what}, and {command} failed: {e}: install hathi with mise, then run setup "
+                   "again") from None
+    if p.returncode != 0:
+        raise Stop(f"{what}, and {command} failed: {_error(p.stderr, p.stdout, p.returncode)}: "
+                   "install hathi with mise, then run setup again")
+    found, what = _usable_hathi()
+    if not found:
+        raise Stop(f"{command} ran, but {what}: activate mise so its shims are on the PATH "
+                   "(mise activate --shims), then run setup again")
+    return found
+
+
+def _usable_hathi() -> Tuple[str, str]:
+    """The version of the hathi on the PATH where it is 1.2.0 or later, and "" with why not
+    otherwise."""
     if not shutil.which("hathi"):
-        raise Stop("hathi isn't on the PATH: install it with mise or brew, then run setup again")
-    version = _hathi(["version"]).strip()
-    m = re.fullmatch(r"v?(\d+\.\d+\.\d+)", version)
+        return "", "hathi isn't on the PATH"
+    try:
+        out = _hathi(["version"]).strip()
+    except Stop as e:
+        return "", str(e)
+    m = re.fullmatch(r"v?(\d+\.\d+\.\d+)", out)
     if not m or not _exact(m.group(1)):
-        raise Stop(f"hathi {version} is older than 1.2.0: update it, then run setup again")
-    return m.group(1)
+        return "", f"hathi {out} is older than 1.2.0"
+    return m.group(1), ""
 
 
 def _hathi(args: List[str]) -> str:

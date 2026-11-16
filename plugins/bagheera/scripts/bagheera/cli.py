@@ -413,8 +413,9 @@ def proposals(stdout: TextIO, stderr: TextIO) -> int:
 def setup_repo(add_hathi: Optional[bool], where: str, stdout: TextIO,
                stderr: TextIO) -> int:
     """The setup skill's run (PRD setup): it sets a repo up, the session's own or the project at
-    `where`, printing what it changed and what is left for the skill and the user; where it can't,
-    it writes nothing and says why."""
+    `where`, printing what it changed, the commands it ran, each that failed, and what is left for
+    the skill and the user; where it can't, it writes nothing, prints nothing on stdout and says why
+    on stderr. It exits 1 then, and where a command failed after the writes (PRD setup)."""
     prefix = f"{names.PLUGIN} setup: "
     if where:
         root = repo.root(where)
@@ -447,17 +448,22 @@ def setup_repo(add_hathi: Optional[bool], where: str, stdout: TextIO,
         stdout.write("changed:\n" + "".join(f"  {p}\n" for p in result.changed))
     if result.removed:
         stdout.write("removed:\n" + "".join(f"  {p}\n" for p in result.removed))
-    if not result.changed and not result.removed:
+    if result.ran:
+        stdout.write("ran:\n" + "".join(f"  {c}\n" for c in result.ran))
+    if not result.changed and not result.removed and not result.ran:
         stdout.write("nothing to change\n")
+    if result.failed:
+        stdout.write("failed:\n" + "".join(f"  {line}\n" for line in result.failed))
     if result.left:
         stdout.write("left:\n" + "".join(f"  {line}\n" for line in result.left))
-    return 0
+    return 1 if result.failed else 0
 
 
 def setup_others(stdout: TextIO, stderr: TextIO) -> int:
     """The machine's other projects the setup skill can complete from this session: each that
-    turns baloo on and still lacks an item, with what it lacks and whether a run there needs the
-    hathi question answered (PRD setup)."""
+    turns baloo on and still needs what a run there does, an item it lacks, a plugin to install or
+    update or its Git hooks on, with those needs and whether a run there needs the hathi question
+    answered (PRD setup)."""
     try:
         dir = hook.project()
     except OSError as e:
@@ -469,11 +475,12 @@ def setup_others(stdout: TextIO, stderr: TextIO) -> int:
     if not roots:
         stdout.write("no other project to complete\n")
         return 0
+    needs = {p.root: [n.what for n in p.needs if n.fix == attention.SETUP_FIX]
+             for p in found.projects}
     for root in roots:
-        missing = setup.missing(root)
         hathi = "has .hathi.yml" if os.path.exists(os.path.join(root, setup.HATHI)) else (
             "no .hathi.yml: ask whether to add hathi")
-        stdout.write(f"{root}\n  lacks\t{', '.join(missing)}\n  hathi\t{hathi}\n")
+        stdout.write(f"{root}\n  needs\t{'; '.join(needs[root])}\n  hathi\t{hathi}\n")
     return 0
 
 

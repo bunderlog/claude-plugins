@@ -4,8 +4,9 @@ import subprocess
 import time
 import unittest
 
-from bagheera import names, setup
+from bagheera import names, setup, version
 from tests import testkit
+from tests.bagheera import commands
 from tests.bagheera.commands import in_repo, read, run, start, write
 
 # A stand-in for hathi on the PATH: its version, its hook scripts and its default types.
@@ -17,6 +18,13 @@ case "$1 $2" in
 esac
 """
 HOOKS = ["commit-msg", "pre-commit", "pre-push"]
+# A stand-in that appends its folder and arguments to the file it names, then runs `then`.
+STAND_IN = """#!/bin/sh
+printf '%s %s\\n' "$(pwd -P)" "$*" >> '{log}'
+{then}
+"""
+# What the stand-in npm does after recording, as husky's prepare script does.
+NPM_OK = "git config core.hooksPath .husky/_"
 
 
 def tree(dir):
@@ -33,9 +41,23 @@ def tree(dir):
 class Setup(unittest.TestCase):
     def setUp(self):
         self.dir = in_repo(self)
-        bin = testkit.tempdir(self)
-        write(os.path.join(bin, "hathi"), FAKE_HATHI, 0o755)
-        os.environ["PATH"] = bin + os.pathsep + "/usr/bin:/bin"
+        self.bin = testkit.tempdir(self)
+        self.logs = testkit.tempdir(self)
+        write(os.path.join(self.bin, "hathi"), FAKE_HATHI, 0o755)
+        self.stand_in("claude")
+        self.stand_in("mise", "exit 1")
+        self.stand_in("npm", NPM_OK)
+        os.environ["PATH"] = self.bin + os.pathsep + "/usr/bin:/bin"
+
+    def stand_in(self, name, then="exit 0"):
+        """Puts a stand-in `name` on the PATH, which records each run for `calls`; `then` is the
+        sh it runs after."""
+        log = os.path.join(self.logs, name)
+        write(os.path.join(self.bin, name), STAND_IN.format(log=log, then=then), 0o755)
+
+    def calls(self, name):
+        """Each run of the stand-in `name` so far: the folder it ran in and its arguments."""
+        return read(os.path.join(self.logs, name)).splitlines()
 
     def path(self, rel):
         return os.path.join(self.dir, rel)
@@ -89,7 +111,9 @@ class Setup(unittest.TestCase):
         self.assertIn("/.about/proposals/", gitignore)
         self.assertIn("/.claude/worktrees/", gitignore)
         self.assertIn(".about/adr/repo-setup.md", out)
-        self.assertIn("git config core.hooksPath .githooks", out)
+        self.assertIn("ran:\n  git config core.hooksPath .githooks\n", out)
+        self.assertNotIn("core.hooksPath", out.split("left:")[1])
+        self.assertEqual(testkit.git(self.dir, "config", "core.hooksPath").strip(), ".githooks")
         self.assertEqual(self.doctor_missing(), [
             "- the ADR .about/adr/repo-setup.md on how this repo is set up is missing: "
             "/bagheera:setup fixes it"])
@@ -104,16 +128,28 @@ class Setup(unittest.TestCase):
                          '[tools]\n"github:bunderlog/hathi" = "1.2.0"\nnode = "24"\n')
 
     # In a repo with husky whose pre-commit runs npm test, hathi goes first in each of the three
-    # Git hooks there, and no .githooks/ is written.
+    # Git hooks there, no .githooks/ is written, and npm install turns them on; an npm install
+    # that fails is named with its error, every item still written, and the run exits 1.
     def test_husky(self):
         write(self.path(".husky/pre-commit"), "npm test\n", 0o755)
-        self.setup("--hathi")
+        out = self.setup("--hathi")
         self.assertEqual(read(self.path(".husky/pre-commit")),
                          'hathi check pre-commit "$@" || exit $?\nnpm test\n')
         for hook in ("commit-msg", "pre-push"):
             self.assertIn(f"hathi check {hook}", read(self.path(".husky/" + hook)))
         self.assertFalse(os.path.exists(self.path(".githooks")))
         self.assertIn("npm install", read(self.path("CLAUDE.md")))
+        self.assertEqual(self.calls("npm"), [os.path.realpath(self.dir) + " install"])
+        self.assertIn("ran:\n  npm install\n", out)
+
+        self.dir = in_repo(self)
+        write(self.path(".husky/pre-commit"), "npm test\n", 0o755)
+        self.stand_in("npm", "echo 'npm ERR! no package.json' >&2; exit 2")
+        code, out, err = run("setup", "--hathi")
+        self.assertEqual((code, err), (1, ""), out)
+        self.assertIn("failed:\n  npm install: npm ERR! no package.json\n", out)
+        self.assertEqual(setup.missing(self.dir), [
+            f"the ADR {setup.ADR} on how this repo is set up"])
 
     # The project's own settings stay as they were.
     def test_keeps_settings(self):
@@ -167,7 +203,8 @@ class Setup(unittest.TestCase):
         self.assertTrue(text.startswith("# CLAUDE.md\n\nRun make test.\n"))
         self.assertEqual(text.count("@.hathi.yml"), 1)
 
-    # A second run changes no file, makes no commit and leaves git's config as it was.
+    # A second run changes no file, makes no commit, and git's config differs only in the
+    # core.hooksPath that turns the Git hooks on.
     def test_second_run(self):
         write(self.path("README.md"), "# App\n\n## Development\n\nRun it.\n\n## License\n\nMIT\n")
         write(self.path("mise.toml"), '[tools]\n')
@@ -178,19 +215,21 @@ class Setup(unittest.TestCase):
         self.assertTrue(first["README.md"].endswith("## License\n\nMIT\n"))
         self.assertIn("nothing to change", self.setup())
         self.assertEqual(tree(self.dir), first)
-        self.assertEqual(testkit.git(self.dir, "config", "--local", "--list"), config)
+        self.assertEqual(testkit.git(self.dir, "config", "--local", "--list"),
+                         config + "core.hookspath=.githooks\n")
         p = subprocess.run(["git", "-C", self.dir, "rev-parse", "--verify", "-q", "HEAD"],
                            stdout=subprocess.PIPE)
         self.assertNotEqual(p.returncode, 0, "setup made a commit")
 
-    # Setup stops and writes nothing: hathi asked for and not on the PATH, husky's setup in
-    # package.json, lefthook, and a repo without .hathi.yml that didn't say whether to add it.
+    # Setup stops and writes nothing: hathi asked for and neither it nor mise on the PATH, husky's
+    # setup in package.json, lefthook, and a repo without .hathi.yml that didn't say whether to add
+    # it.
     def test_stops(self):
         write(self.path("README.md"), "# App\n")
         before = tree(self.dir)
         os.environ["PATH"] = "/usr/bin:/bin"
         for files, args, why in [
-            ({}, ["--hathi"], "install it with mise or brew"),
+            ({}, ["--hathi"], "mise isn't on the PATH to install it: install hathi with mise"),
             ({"package.json": '{"husky": {"hooks": {"pre-commit": "npm test"}}}'}, ["--hathi"],
              "husky's hooks in package.json"),
             ({"lefthook.yml": "pre-commit:\n"}, ["--no-hathi"], "lefthook.yml"),
@@ -200,7 +239,7 @@ class Setup(unittest.TestCase):
                 for rel, text in files.items():
                     write(self.path(rel), text)
                 code, out, err = run("setup", *args)
-                self.assertEqual(code, 1, out)
+                self.assertEqual((code, out), (1, ""))
                 self.assertIn(why, err)
                 self.assertEqual(tree(self.dir), {**before, **files})
                 for rel in files:
@@ -257,22 +296,139 @@ class Setup(unittest.TestCase):
         self.setup("--hathi")
         self.assertEqual([tree(o) for o in others], before)
 
-    # setup --others names each project that is set up and lacks an item, what it lacks and
-    # whether a run there needs the hathi question answered; with none, it says so.
+    # setup --others names each project that is set up and lacks an item, has a plugin to install
+    # or update, or its Git hooks off, what it needs and whether a run there needs the hathi
+    # question answered; with none, it says so.
     def test_others(self):
         self.setup("--hathi")
         self.assertEqual(run("setup", "--others")[1], "no other project to complete\n")
         other = self.set_up_elsewhere()
         folder = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "projects", "a")
         stamp = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
-        write(os.path.join(folder, "1.jsonl"),
-              json.dumps({"type": "user", "timestamp": stamp, "cwd": other}) + "\n")
+        done = self.set_up_elsewhere()
+        self.assertEqual(run("setup", "--in", done, "--hathi")[0], 0)
+        write(os.path.join(done, setup.ADR), "# x\n")
+        for n, d in enumerate((other, done)):
+            write(os.path.join(folder, f"{n}.jsonl"),
+                  json.dumps({"type": "user", "timestamp": stamp, "cwd": d}) + "\n")
         code, out, err = run("setup", "--others")
         self.assertEqual((code, err), (0, ""), out)
         self.assertIn(other + "\n", out)
         self.assertIn("  hathi\tno .hathi.yml: ask whether to add hathi\n", out)
         self.assertIn("attribution off in .claude/settings.json", out)
         self.assertNotIn(self.dir + "\n", out, "it offered the session's own repo")
+        self.assertNotIn(done + "\n", out, "it offered a project that needs nothing")
+
+        # Lacking no item, it is still offered for its Git hooks off, or for an old install.
+        testkit.git(done, "add", ".githooks")
+        testkit.git(done, "config", "--unset", "core.hooksPath")
+        out = run("setup", "--others")[1]
+        self.assertIn(f"{done}\n  needs\tits Git hooks are off in this clone\n"
+                      "  hathi\thas .hathi.yml\n", out)
+        testkit.git(done, "config", "core.hooksPath", ".githooks")
+        commands.installed(done, **{names.KNOWLEDGE_ID: [
+            {"scope": "project", "version": "0.0.1", "projectPath": done}]})
+        out = run("setup", "--others")[1]
+        self.assertIn(f"{done}\n  needs\t{names.KNOWLEDGE_ID} 0.0.1 is installed, older than the "
+                      f"{version.read()} this machine has\n", out)
+
+    # With hathi added and none on the PATH, or one older than 1.2.0, it installs the latest with
+    # mise and pins that version in mise.toml; where mise's hathi still isn't on the PATH, it stops
+    # naming mise's activation and writes nothing (PRD setup).
+    def test_installs_hathi(self):
+        newer = os.path.join(testkit.tempdir(self), "hathi")
+        write(newer, FAKE_HATHI.replace("echo 1.2.0", "echo 1.4.0"), 0o755)
+        hathi = os.path.join(self.bin, "hathi")
+        for old in ["", FAKE_HATHI.replace("echo 1.2.0", "echo 1.1.0")]:
+            with self.subTest(old=old):
+                self.dir = in_repo(self)
+                write(self.path("mise.toml"), "[tools]\n")
+                if old:
+                    write(hathi, old, 0o755)
+                elif os.path.exists(hathi):
+                    os.remove(hathi)
+                ran = len(self.calls("mise"))
+                self.stand_in("mise", f"cp '{newer}' '{hathi}'")
+                self.setup("--hathi")
+                self.assertEqual(len(self.calls("mise")), ran + 1)
+                self.assertTrue(self.calls("mise")[-1].endswith(
+                    " use --global github:bunderlog/hathi@latest"), self.calls("mise"))
+                self.assertIn('"github:bunderlog/hathi" = "1.4.0"', read(self.path("mise.toml")))
+
+        self.dir = in_repo(self)
+        write(self.path("README.md"), "# App\n")
+        before = tree(self.dir)
+        os.remove(hathi)
+        self.stand_in("mise")
+        code, out, err = run("setup", "--hathi")
+        self.assertEqual((code, out), (1, ""))
+        self.assertIn("activate mise so its shims are on the PATH", err)
+        self.assertEqual(tree(self.dir), before)
+
+    # It sets core.hooksPath where it is unset; a clone with a core.hooksPath of its own keeps
+    # it, and gets the command named under failed:, with exit 1 (PRD setup).
+    def test_hooks_on(self):
+        out = self.setup("--hathi")
+        self.assertIn("  git config core.hooksPath .githooks\n", out)
+        self.assertEqual(testkit.git(self.dir, "config", "core.hooksPath").strip(), ".githooks")
+
+        self.dir = in_repo(self)
+        testkit.git(self.dir, "config", "core.hooksPath", "hooks")
+        code, out, err = run("setup", "--hathi")
+        self.assertEqual((code, err), (1, ""), out)
+        self.assertIn("failed:\n  git config core.hooksPath .githooks: core.hooksPath is hooks",
+                      out)
+        self.assertEqual(testkit.git(self.dir, "config", "core.hooksPath").strip(), "hooks")
+        self.assertTrue(os.path.exists(self.path(".githooks/pre-commit")))
+
+    def record(self, **plugins):
+        """Records bagheera and the plugins as installed for the repo at the version running,
+        `plugins` overriding one by its id."""
+        commands.installed(self.dir, **plugins)
+
+    # A plugin the repo turns on with no install of it is installed at project scope, and one
+    # older than the bagheera installed is updated at its install's scope, each in the repo, with
+    # no committed file changed (PRD setup).
+    def test_plugins(self):
+        self.setup("--hathi")
+        first = tree(self.dir)
+        self.record(**{names.BUILD_ID: [], names.KNOWLEDGE_ID: [
+            {"scope": "project", "version": "0.0.1", "projectPath": self.dir}]})
+        out = self.setup()
+        here = os.path.realpath(self.dir)
+        self.assertEqual(self.calls("claude"), [
+            f"{here} plugin update {names.KNOWLEDGE_ID} --scope project",
+            f"{here} plugin install {names.BUILD_ID} --scope project",
+        ])
+        self.assertIn(f"ran:\n  claude plugin update {names.KNOWLEDGE_ID} --scope project\n"
+                      f"  claude plugin install {names.BUILD_ID} --scope project\n", out)
+        self.assertEqual(tree(self.dir), first)
+
+        # A user install is updated at the user's scope.
+        self.record(**{names.KNOWLEDGE_ID: [{"scope": "user", "version": "0.0.1"}]})
+        self.assertIn(f"claude plugin update {names.KNOWLEDGE_ID} --scope user\n", self.setup())
+
+    # With no claude on the PATH, or one that exits non-zero, each plugin is named with its
+    # command and the error, every other item is written, and the run exits 1 (PRD setup).
+    def test_plugins_failed(self):
+        for then, error in [(None, "claude isn't on the PATH"),
+                            ("echo 'Plugin not found' >&2; exit 1", "Plugin not found")]:
+            with self.subTest(error=error):
+                self.dir = in_repo(self)
+                if then is None:
+                    os.remove(os.path.join(self.bin, "claude"))
+                else:
+                    self.stand_in("claude", then)
+                self.record(**{names.KNOWLEDGE_ID: [], names.BUILD_ID: []})
+                code, out, err = run("setup", "--hathi")
+                self.assertEqual((code, err), (1, ""), out)
+                self.assertIn(
+                    f"failed:\n  claude plugin install {names.KNOWLEDGE_ID} --scope project: "
+                    f"{error}\n  claude plugin install {names.BUILD_ID} --scope project: "
+                    f"{error}\n", out)
+                self.assertEqual(setup.missing(self.dir), [
+                    f"the ADR {setup.ADR} on how this repo is set up"])
+                self.assertIn("ran:\n  git config core.hooksPath .githooks\n", out)
 
     # Without hathi, setup writes no Git hook, and doctor names the Secrets check missing.
     def test_no_hathi(self):
