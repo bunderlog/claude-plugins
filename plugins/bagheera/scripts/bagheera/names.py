@@ -15,6 +15,9 @@ BUILD = "louie"
 # project needs installed to get what it turned on (PRD setup).
 KNOWLEDGE_ID = KNOWLEDGE + "@" + MARKETPLACE
 BUILD_ID = BUILD + "@" + MARKETPLACE
+# The CLI a project's own Git hooks run, whose Checks' failures the Assessment counts (ADR
+# git-hooks).
+HATHI = "hathi"
 PROJECT_PLUGINS = (KNOWLEDGE_ID, BUILD_ID)
 # The repo of the marketplace, on GitHub.
 MARKETPLACE_REPO = MARKETPLACE + "/claude-plugins"

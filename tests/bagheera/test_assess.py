@@ -33,6 +33,33 @@ def denied(id, check, target, plugin="bagheera"):
                   error=True)
 
 
+def given(text, at="2026-11-10T09:00:00.000Z", event="PostToolUse"):
+    """The attachment a Hook of the event `event` added the context `text` in, at `at`."""
+    return json.dumps({"type": "attachment", "cwd": "/repo", "entrypoint": "cli", "timestamp": at,
+                       "attachment": {"type": "hook_additional_context", "hookEvent": event,
+                                      "content": [text]}})
+
+
+def guideline(name, file):
+    return (f"louie:\nThe {name} Guideline applies to {file}, which you just read or changed; "
+            f"follow it for the rest of this session:\n\n# {name}\n")
+
+
+def hathi(check):
+    """What a Git hook running `hathi` prints for the Check `check` it failed."""
+    return f"{check}: \"Add x\" is not `type(scope): description`; run: hathi explain {check}"
+
+
+def notification(id, status):
+    return line("user", f"<task-notification>\n<task-id>w1</task-id>\n<tool-use-id>{id}"
+                        f"</tool-use-id>\n<status>{status}</status>\n<summary>done</summary>\n"
+                        "</task-notification>")
+
+
+# The report's groups: the plugins', then `hathi`'s Checks', which is no plugin.
+SECTIONS = ("baloo", "louie", "bagheera", "hathi")
+
+
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
@@ -243,10 +270,176 @@ class Assess(unittest.TestCase):
 
     def test_each_figure_names_what_it_decides_for(self):
         self.session("s1", line("user", "hi"))
-        blocks = self.report().split("\n\n")
+        blocks = [b for b in self.report().split("\n\n") if b not in SECTIONS]
         firsts = [blocks[0].split("\n")[1]] + [b.split("\n")[0] for b in blocks[1:]]
         for first in firsts:
             self.assertRegex(first, r"^(PRD|ADR) |\((PRD|ADR) ", first)
+
+    def test_a_git_hooks_failure_fixed_nothing_and_hathi_check_by_hand(self):
+        self.session(
+            "s1",
+            call("c1", "Bash", {"command": "git add x && git commit -m 'Add x'"}),
+            result("c1", hathi("conventional-commits"), error=True),
+            call("c2", "Bash", {"command": "git commit -m 'feat: add x'"}),
+            result("c2", "[main 1a2b3c4] feat: add x"),
+        )
+        self.session(
+            "s2",
+            call("c1", "Bash", {"command": "git -C /repo commit -m 'Add y'"}),
+            result("c1", hathi("conventional-commits"), error=True),
+            call("p1", "Bash", {"command": "git push origin main"}),
+            result("p1", "To origin\n   1a2b3c4..5d6e7f8  main -> main"),
+            call("h1", "Bash", {"command": "hathi check commit-msg msg.txt"}),
+            result("h1", hathi("no-ai-coauthor"), error=True),
+        )
+        report = self.report()
+        self.assertIn("Git hooks' failures (ADR git-hooks, ADR measurement), over 2 sessions (0):",
+                      report)
+        self.assertIn("  conventional-commits: 2 (0): fixed 1, nothing 1", report)
+        self.assertNotIn("no-ai-coauthor", report)
+
+    def test_a_failed_push_is_fixed_by_a_later_push_only(self):
+        self.session(
+            "s1",
+            call("p1", "Bash", {"command": "git push origin main"}),
+            result("p1", hathi("no-secrets-in-commits"), error=True),
+            call("c1", "Bash", {"command": "git commit -m 'fix: drop the key'"}),
+            result("c1", "[main 1a2b3c4] fix: drop the key"),
+        )
+        self.session(
+            "s2",
+            call("p1", "Bash", {"command": "git push origin main"}),
+            result("p1", hathi("no-secrets-in-commits"), error=True),
+            call("p2", "Bash", {"command": "git push origin main"}),
+            result("p2", "To origin\n   1a2b3c4..5d6e7f8  main -> main"),
+        )
+        self.assertIn("  no-secrets-in-commits: 2 (0): fixed 1, nothing 1", self.report())
+
+    def test_a_workflow_agents_failures_count_in_its_own_order(self):
+        agent = os.path.join(self.dir, "s1", "subagents", "workflows", "wf_1", "agent-a.jsonl")
+        write(agent, "\n".join([
+            call("c1", "Bash", {"command": "git commit -m 'Add x'"}),
+            result("c1", hathi("no-ai-coauthor"), error=True),
+        ]) + "\n")
+        self.session(
+            "s1",
+            call("c1", "Bash", {"command": "git commit -m 'feat: add x'"}),
+            result("c1", "[main 1a2b3c4] feat: add x"),
+        )
+        self.assertIn("  no-ai-coauthor: 1 (0): fixed 0, nothing 1", self.report())
+
+    def test_guidelines_before_the_first_edit_and_the_index_alone(self):
+        ts = os.path.join(self.root, "src/a.ts")
+        self.session(
+            "s1",
+            call("r1", "Read", {"file_path": ts}, "2026-11-10T09:00:00.000Z"),
+            result("r1", at="2026-11-10T09:00:00.000Z"),
+            given(guideline("typescript", "src/a.ts"), "2026-11-10T09:00:01.000Z"),
+            call("e1", "Edit", {"file_path": ts}, "2026-11-10T09:01:00.000Z"),
+            result("e1", at="2026-11-10T09:01:00.000Z"),
+        )
+        self.session(
+            "s2",
+            call("e1", "Edit", {"file_path": ts}, "2026-11-10T09:00:00.000Z"),
+            result("e1", at="2026-11-10T09:00:00.000Z"),
+            given(guideline("typescript", "src/a.ts"), "2026-11-10T09:00:01.000Z"),
+            call("b1", "Bash", {"command": "make test"}, "2026-11-10T09:02:00.000Z"),
+            result("b1", "FAIL", error=True, at="2026-11-10T09:02:00.000Z"),
+            given(guideline("debugging", "`make test`"), "2026-11-10T09:02:01.000Z",
+                  "PostToolUseFailure"),
+        )
+        self.session(
+            "s3",
+            given("Guidelines, the rules for typescript and testing\n"
+                  + guideline("testing", "a test"), event="SessionStart"),
+            call("r1", "Read", {"file_path": "/plugins/louie/0.1.0/guidelines/go.md"}),
+            result("r1"),
+        )
+        report = self.report()
+        self.assertIn("Guidelines in the context, sessions (ADR guidelines), over 3 sessions (0):",
+                      report)
+        self.assertIn("  typescript: 2 (0), before the first edit of its files 1 of 2 (0 of 0)",
+                      report)
+        self.assertIn("  debugging: 1 (0)\n", report)
+        self.assertIn("  go: 1 (0), before the first edit of its files 0 of 0 (0 of 0)", report)
+        self.assertNotIn("  testing:", report)
+
+    def test_workflows_run_and_how_they_ended(self):
+        self.session(
+            "s1",
+            call("w1", "Workflow", {"name": "louie:verify", "args": "HEAD"}),
+            result("w1", "Workflow launched in background. Task ID: w1"),
+            notification("w1", "completed"),
+            call("w2", "Workflow", {"name": "louie:plan"}),
+            result("w2", "Workflow launched in background. Task ID: w2"),
+            call("w3", "Workflow", {"name": "someone:else"}),
+            result("w3", "Workflow launched in background. Task ID: w3"),
+        )
+        report = self.report()
+        self.assertIn("Workflows run (PRD delivery, ADR verify), over 1 session (0):", report)
+        self.assertIn("  verify: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
+        self.assertIn("  plan: 1 (0): completed 0, failed 0, stopped 0, no end 1", report)
+        self.assertNotIn("someone", report)
+
+    def test_the_figures_stand_under_each_plugin(self):
+        self.session(
+            "s1",
+            call("k1", "Skill", {"skill": "baloo:prd"}),
+            call("k2", "Skill", {"skill": "louie:plan"}),
+            call("k3", "Skill", {"skill": "bagheera:assess"}),
+            call("d1", "Bash", {"command": "cat .env"}),
+            denied("d1", "no-secrets-in-context", ".env"),
+        )
+        lines = self.report().split("\n")
+        self.assertTrue(lines[0].startswith("bunderlog assessment: "), lines[0])
+        at = [lines.index(p) for p in SECTIONS]
+        self.assertEqual(at, sorted(at))
+
+        def under(text):
+            i = next(i for i, x in enumerate(lines) if x.startswith(text))
+            return [p for p in SECTIONS if lines.index(p) < i][-1]
+
+        self.assertEqual(under("  baloo:prd: "), "baloo")
+        self.assertEqual(under("PRD index: "), "baloo")
+        self.assertEqual(under("  louie:plan: "), "louie")
+        self.assertEqual(under("Guidelines in the context"), "louie")
+        self.assertEqual(under("  bagheera:assess: "), "bagheera")
+        self.assertEqual(under("  no-secrets-in-context: "), "bagheera")
+        self.assertEqual(under("Denials to label"), "bagheera")
+        self.assertEqual(under("Git hooks' failures"), "hathi")
+
+    def test_a_record_of_the_release_before_is_recounted_once(self):
+        os.environ["CLAUDE_CONFIG_DIR"] = testkit.tempdir(self)
+        os.environ["CLAUDE_PLUGIN_DATA"] = self.data
+        os.environ["CLAUDE_PROJECT_DIR"] = self.root
+        kept = os.path.join(self.dir, "kept.jsonl")
+        write(kept, "\n".join([
+            call("c1", "Bash", {"command": "git commit -m 'Add x'"}),
+            result("c1", hathi("conventional-commits"), error=True),
+        ]) + "\n")
+        sessions = os.path.join(self.data, "assessment", "sessions.jsonl")
+        old = {"start": "2026-11-10 09:00", "repo": review.repo(self.root), "root": self.root,
+               "version": "0.64.1", "denials": [], "skills": [], "index": {"edits": 0,
+               "read_before": 0}, "session_start": {}}
+        write(sessions, "".join(json.dumps(dict(old, session=id, transcript=t)) + "\n" for id, t in (
+            ("kept", kept), ("gone", os.path.join(self.dir, "gone.jsonl")))))
+
+        def report():
+            out = io.StringIO()
+            self.assertEqual(cli.run(["assess", "--days", "3650"], io.StringIO(), out,
+                                     io.StringIO()), 0)
+            return out.getvalue()
+
+        out = report()
+        self.assertIn("Sessions counted (PRD assessment): 2 (0)", out)
+        self.assertIn("Git hooks' failures (ADR git-hooks, ADR measurement), over 1 session (0):",
+                      out)
+        self.assertIn("  conventional-commits: 1 (0): fixed 0, nothing 1", out)
+        self.assertIn("Guidelines in the context, sessions (ADR guidelines), over 1 session (0):",
+                      out)
+        report()
+        with open(sessions) as f:
+            self.assertEqual(f.read().count("\n"), 3)
 
 
 class SessionEnd(unittest.TestCase):
