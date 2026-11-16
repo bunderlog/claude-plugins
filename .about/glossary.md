@@ -2,7 +2,8 @@
 
 The plugins of the `bunderlog` marketplace: `baloo`, skills that keep a project's language,
 decisions and requirements explicit, write its Issues and go through its Inbox; `louie`,
-Guidelines of working rules and a Verification; and `bagheera`, Checks that Hooks trigger, a
+Guidelines of working rules, the ADRs and PRDs named at the file they concern, and a
+Verification; and `bagheera`, Checks that Hooks trigger, a
 Session review, a Retro, an Assessment, an Output style for Claude's replies, a Status line and
 `doctor`.
 
@@ -29,7 +30,7 @@ _Avoid_: "baloo" for these parts
 
 **louie**:
 The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
-where it fits, the Verification, and the Workflows from an Issue to a pull request; to come,
+where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from an Issue to a pull request; to come,
 templates for a new product (PRD louie, PRD delivery, PRD templates).
 _Avoid_: "baloo" for these parts
 
