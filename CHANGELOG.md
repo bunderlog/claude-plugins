@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.66.0 — 2026-11-16
+
+### bagheera
+
+#### Fixes
+
+- bagheera: let through masked env files, short prefixes and names code only compares (1c129b7)
+
+### louie
+
+#### Features
+
+- louie: give the go Guideline when Claude first reads or edits a .go file (2ee1cd2)
+
 ## 0.65.0 — 2026-11-16
 
 ### bagheera
