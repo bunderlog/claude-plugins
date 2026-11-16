@@ -39,8 +39,10 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
     reads the format from it; every other Check at `hathi`'s defaults, on.
   - Git hooks in a folder the project commits: `.githooks/` by default, or the husky or lefthook
     setup the project already has, which then runs them. With `hathi`, `commit-msg`,
-    `pre-commit` and `pre-push` each run `hathi check <hook>` first, as `hathi hooks print <hook>`
-    prints it, then whatever the project's hook ran before. Without `hathi`, `pre-commit` checks
+    `pre-commit` and `pre-push` each run `hathi check <hook>`: a new Git hook as `hathi hooks
+    print <hook>` prints it, one of the project's that doesn't run it yet with it first, and one
+    that does in the order the project chose, its lines before `hathi` in `pre-push` leaving
+    stdin, where Git gives the pushed refs, to `hathi`. Without `hathi`, `pre-commit` checks
     for Secrets with the project's own tool. Any other hook manager stays, with `hathi` added the
     same way; one with no folder the project commits moves to `.githooks/`.
   - The one command that turns the Git hooks on in a clone, in the README's section on
@@ -89,7 +91,7 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
 - In a set-up project, reading the committed files shows each item of the list: the marketplace,
   baloo on, the deny rules, attribution off, no `statusLine` or `outputStyle`; the import in
   `CLAUDE.md`; `.hathi.yml` with its types, where it has `hathi`; the hook folder with `hathi check
-  <hook>` first in each hook; the command in the README; `.about/proposals/` and
+  <hook>` in each hook; the command in the README; `.about/proposals/` and
   `.claude/worktrees/` in `.gitignore`; the exact `hathi` pin; the ADR; and no `.claude/baloo.yml`.
   Checked by hand.
 - In a fresh clone of a set-up project with `hathi`, after the README's command, a commit with the

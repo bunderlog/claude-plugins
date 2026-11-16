@@ -58,7 +58,8 @@ person has, has it installed or updated by that same run, with no `/plugin` type
     unless the project already checks Secrets in a hook of its own.
   - The Git hooks: `.githooks/` with `commit-msg`, `pre-commit` and `pre-push`, each as `hathi
     hooks print <hook>` prints it; in a repo with husky (`.husky/`), the same three hooks there,
-    `hathi check <hook>` first and the project's own lines after; lefthook, `pre-commit`'s
+    `hathi check <hook>` first and the project's own lines after, where the Git hook doesn't run
+    it yet, and as it is where it does; lefthook, `pre-commit`'s
     framework, husky's older setup in `package.json`, or another manager stops it with what it
     found, since none of the machine's repos uses one and its YAML needs more than the standard
     library to edit.
@@ -67,7 +68,7 @@ person has, has it installed or updated by that same run, with no `/plugin` type
   - The ADR `.about/adr/repo-setup.md`, in ADR adr-format's form: whether the project runs
     `hathi`, what checks Secrets, and what an earlier baloo left that the run removed.
 - It keeps what the project already has: its other settings, the rest of `CLAUDE.md`, the README
-  and `.gitignore`, its hook lines after `hathi`. It removes only what an earlier baloo wrote: its
+  and `.gitignore`, its hook lines and their order. It removes only what an earlier baloo wrote: its
   Git hooks in `.git/hooks`, a committed `outputStyle`, `.claude/baloo.yml`, and in the clone's
   `settings.local.json` the `statusLine` and `outputStyle` `doctor` already names as baloo's.
 - It installs each plugin `doctor` names not installed for the repo, `claude plugin install
@@ -133,8 +134,8 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 
 - The skill commits, pushes, or changes git's config beyond `core.hooksPath`, set only to turn
   the project's committed Git hooks on.
-- A project's own setting, hook line or `CLAUDE.md` text is lost or reordered beyond putting
-  `hathi` first.
+- A project's own setting, hook line or `CLAUDE.md` text is lost or reordered, beyond putting
+  `hathi` first in a Git hook that doesn't run it yet.
 - A set-up repo is told at each session start that it isn't set up.
 - A run in another project leaves a change the person is never told about, or sets up a project
   whose owner chose not to.
@@ -147,6 +148,9 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 - In a repo with husky whose `pre-commit` runs `npm test`, it leaves `.husky/pre-commit` running
   `hathi check pre-commit` and then `npm test`, adds `.husky/commit-msg` and `.husky/pre-push`, and
   writes no `.githooks/`.
+- In a repo whose `.githooks/pre-push` runs its own check and then `exec hathi check pre-push
+  "$@"`, it leaves that Git hook as it was, and `doctor` doesn't name the Git hooks missing.
+  → test: tests/bagheera/test_setup.py "Setup.test_keeps_hathi_last"
 - In a repo whose `.claude/settings.json` has its own `permissions.allow` and `env`, both stay as
   they were.
 - In a repo with Git hooks an earlier baloo wrote (`# managed by baloo`), a committed
