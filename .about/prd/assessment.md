@@ -152,13 +152,18 @@ figures in it, so that decision can be about a part of any of them.
   conventional-commits`, then a commit that passed, counts one failure of `conventional-commits`,
   fixed; one with no commit after it counts one failure, nothing; a failed commit followed only by
   a push that passed counts nothing; a `hathi check commit-msg` run in Bash counts no failure.
+  → test: tests/bagheera/test_assess.py
+  "test_a_git_hooks_failure_fixed_nothing_and_hathi_check_by_hand",
+  "test_a_workflow_agents_failures_count_in_its_own_order"
 - Of two sessions each editing a `.ts` file, one where louie's Hook gave `typescript` after a Read
   before that edit and one with no Read before it, the report counts `typescript` "1 of 2"; a
   session where the Hook gave `debugging` counts it in one session; session start's index alone
   counts no Guideline.
+  → test: tests/bagheera/test_assess.py "test_guidelines_before_the_first_edit_and_the_index_alone"
 - A session that ran louie's `verify` Workflow, whose task-notification says it completed, and one
   that ran `plan` with no task-notification, count `verify` 1 run, completed 1, and `plan` 1 run,
   no end 1.
+  → test: tests/bagheera/test_assess.py "test_workflows_run_and_how_they_ended"
 - A run of louie's `plan` Workflow whose one agent, a `louie:planner` in the phase Plan, used
   1,000,000 tokens of input and 100,000 of output on one model counts as its cost those tokens at
   that model's prices, under `plan`, with Plan its costliest phase; a model with no price known
@@ -166,6 +171,8 @@ figures in it, so that decision can be about a part of any of them.
 - The report's figures stand under baloo, louie, bagheera and `hathi`, in that order, each figure
   under the plugin whose part it counts, the Checks' denials under bagheera and the skills each
   under its own plugin; its first line names bunderlog.
+  → test: tests/bagheera/test_assess.py "test_the_figures_stand_under_each_plugin"
 - Of two records of the Release before, without the new figures, one whose Transcript is still on
   disk counts in the new figures of the next report, and one whose Transcript is gone counts in
   the old figures only: the new figures say they cover 1 session.
+  → test: tests/bagheera/test_assess.py "test_a_record_of_the_release_before_is_recounted_once"
