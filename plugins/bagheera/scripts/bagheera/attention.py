@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, List, Optional
 
-from bagheera import names, repo, review, setup
+from bagheera import names, repo, review, setup, version
 
 # How recent a Transcript's change makes its folder one of the machine's projects.
 DAYS = 30
@@ -295,6 +295,13 @@ def needs(root: str, data: str) -> List[Need]:
     if setup.started(root):
         for item in setup.missing(root):
             out.append(Need(f"{item} is missing", SETUP_FIX))
+    # As doctor names it in the repo it runs in (PRD setup): the bagheera installed stands for the
+    # Release the machine has.
+    release = version.installed(root)
+    for plugin, there in setup.turned_on(root):
+        if version.older(there, release):
+            out.append(Need(f"{plugin} {there} is installed, older than the {release} this "
+                            "machine has", f"claude plugin update {plugin} there"))
     command = setup.hooks_off(root)
     if command:
         out.append(Need("its Git hooks are off in this clone", command))

@@ -4,7 +4,7 @@ import time
 import unittest
 from unittest import mock
 
-from bagheera import attention, names
+from bagheera import attention, names, version
 from tests import testkit
 from tests.bagheera import commands
 
@@ -104,6 +104,20 @@ class Needs(unittest.TestCase):
         got = attention.needs(dir, data)
         self.assertEqual([n.what for n in got], ["attribution off in .claude/settings.json is missing"])
         self.assertEqual(got[0].fix, names.SETUP_SKILL + " there")
+
+    # An install of louie older than the bagheera installed needs an update, until it is updated.
+    def test_old_install(self):
+        dir, data = self.repo()
+        commands.set_up(dir)
+        commands.installed(dir, **{names.BUILD_ID: [
+            {"scope": "project", "version": "0.0.1", "projectPath": dir}]})
+        got = attention.needs(dir, data)
+        self.assertEqual(
+            [(n.what, n.fix) for n in got],
+            [(f"{names.BUILD_ID} 0.0.1 is installed, older than the {version.read()} this machine "
+              "has", f"claude plugin update {names.BUILD_ID} there")])
+        commands.installed(dir)
+        self.assertEqual(attention.needs(dir, data), [])
 
     # A clone whose tracked Git hooks aren't turned on needs them on, until they are.
     def test_hooks_off(self):
