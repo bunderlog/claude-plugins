@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.63.1 — 2026-11-16
+
+### bagheera
+
+#### Fixes
+
+- bagheera: name a committed statusLine or outputStyle in doctor as what it is (0e961ef)
+
 ## 0.63.0 — 2026-11-16
 
 ### bagheera
