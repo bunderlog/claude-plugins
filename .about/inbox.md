@@ -112,3 +112,11 @@ edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after 
 Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
 index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
 
+## `test_slow` in the Status line's tests fails under load
+
+2026-11-16 · mise run check
+
+`tests/bagheera/test_statusline.py`'s `Work.test_slow` failed once in a full `mise run check` that
+took 56 s instead of the usual 15 s, and passed alone three times and in the next full run. It
+asserts `statusline.work` returns within `WAIT + 0.1` s, a margin a loaded machine overruns.
+Settled by a margin that holds under load, or a test that doesn't time the wall clock.
