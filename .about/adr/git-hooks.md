@@ -1,14 +1,16 @@
 # The plugin writes no Git hook; a project's own run `hathi`, and an old one of the plugin's passes
 
-Date: 2026-11-11
+Date: 2026-11-16
 
 No plugin's Hook writes a Git hook, and none checks a commit: a project set up for the plugins
 commits its own Git hooks, which run `hathi` (PRD project-setup), and its CI runs the same `hathi`.
 Only bagheera's setup skill, which the person runs, writes them into the working tree, for the
-person to commit (PRD setup). Session
-start leaves `.git/hooks` and husky's files as they are, says nothing of Git hooks, and neither
-turns off Claude Code's commit attribution nor tells Claude a commit format: the project's
-committed settings and `CLAUDE.md`, which imports `.hathi.yml`, do (PRD harness).
+person to commit, and turns them on in the clone: it sets `core.hooksPath` where it is unset, or
+runs husky's `npm install`, and leaves a `core.hooksPath` the clone already has (PRD setup). No
+plugin's Hook turns them on. Session start leaves `.git/hooks` and husky's files as they are, says
+nothing of Git hooks, and neither turns off Claude Code's commit attribution nor tells Claude a
+commit format: the project's committed settings and `CLAUDE.md`, which imports `.hathi.yml`, do
+(PRD harness).
 
 A Git hook an earlier Release wrote, marked `# managed by baloo`, still runs `python3 -E -s
 <link>/scripts/run.py git-hook <hook>` through the link in the plugin's data folder (ADR binary);
@@ -32,6 +34,9 @@ them, and only `doctor` names them for the user to delete (ADR config).
   commits.
 - Failing a commit through an old Git hook — every commit in a clone not yet set up would stop for
   a hook nobody there wrote.
+- The person runs the command that turns the hooks on, which the setup skill printed (until
+  2026-11-16) — one command, but each clone set up still ran no hook until the person typed it,
+  and the other projects the skill completed needed it typed in each.
 
 ## Consequences
 
