@@ -2,6 +2,18 @@
 
 The marketplace's Releases, newest first.
 
+## 0.63.0 — 2026-11-16
+
+### bagheera
+
+#### Features
+
+- bagheera: name the machine's projects whose baloo or louie install is older than the Release (104b3db)
+
+#### Fixes
+
+- bagheera: name the statusLine item doctor says is missing without a double negative (5ea768a)
+
 ## 0.62.0 — 2026-11-16
 
 ### bagheera
