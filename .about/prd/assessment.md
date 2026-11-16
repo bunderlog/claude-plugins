@@ -168,6 +168,7 @@ figures in it, so that decision can be about a part of any of them.
   1,000,000 tokens of input and 100,000 of output on one model counts as its cost those tokens at
   that model's prices, under `plan`, with Plan its costliest phase; a model with no price known
   counts its tokens and no dollars, and says so.
+  → test: tests/bagheera/test_assess.py "test_a_workflows_cost_at_its_models_prices"
 - The report's figures stand under baloo, louie, bagheera and `hathi`, in that order, each figure
   under the plugin whose part it counts, the Checks' denials under bagheera and the skills each
   under its own plugin; its first line names bunderlog.
