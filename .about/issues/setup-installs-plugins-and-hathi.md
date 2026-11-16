@@ -74,3 +74,12 @@ naming mise's activation where it still isn't.
 `Setup.test_second_run` asserts git's config is unchanged; it changes to allow `core.hooksPath`.
 Tests that set the repo up run with a `PATH` of the stand-in `hathi` and `/usr/bin:/bin`: the
 stand-in `claude`, `mise` and `npm` go in the same folder, so no test reaches a real one.
+
+### 2026-11-16 · decision: exit 1, and a clone's own `core.hooksPath`
+
+Settled with the person after `/louie:plan`. A failed `claude plugin install` or `update`, `git
+config` or `npm install` after the writes is a `failed:` line with its command and error, on
+stdout after `changed:`, and the run exits 1; the skill tells it from a run that wrote nothing by
+stdout, which a Stop leaves empty. A clone whose `core.hooksPath` is set to something other than
+the layout's keeps it: setup sets it only where it is unset, and names the command under
+`failed:` otherwise.
