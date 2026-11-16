@@ -4,17 +4,20 @@ Date: 2026-11-16
 
 This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
 project's method — the knowledge skills and one SessionStart Hook in `sh`, no Python; `louie`,
-building — the Guidelines, each given by its task's signal or named where it fits, the verifier and
-the Workflows `verify`, `plan` and `deliver`, and to come templates and `upgrade-all` (PRD
-louie, PRD delivery); and `bagheera`, the person's sessions and repos — Checks in Hooks beyond
-Claude Code's deny rules, the Status line and `doctor`, the Session review and Retro, the
-`short-replies` Output style, and setting a project up. A part goes where who turns it on and what
-it is made of put it: a project turns baloo and louie on for everyone in it, and each person turns
-bagheera on where they want it: once at user scope, for every session, the home folder included,
-or at local scope, `.claude/settings.local.json`, in each clone they want it in, since not every
-project needs it. Setting a project up is bagheera's, since baloo and louie are off until it is
-done. A team that wants bagheera for everyone in a project commits it at project scope; that is
-the team's choice, not one person's preference reaching the others.
+building — the Guidelines, each given by its task's signal or named where it fits, the `PostToolUse`
+Hook that names, at a file Claude reads, edits or writes, the ADRs and PRDs that concern it (PRD
+index), the verifier and the Workflows `verify`, `plan` and `deliver`, and to come templates and
+`upgrade-all` (PRD louie, PRD delivery); and `bagheera`, the person's sessions and repos — Checks in
+Hooks beyond Claude Code's deny rules, the Status line and `doctor`, the Session review and Retro,
+the `short-replies` Output style, and setting a project up. A part goes where who turns it on and
+what it is made of put it: a project turns baloo and louie on for everyone in it, and each person
+turns bagheera on where they want it: once at user scope, for every session, the home folder
+included, or at local scope, `.claude/settings.local.json`, in each clone they want it in, since not
+every project needs it. Setting a project up is bagheera's, since baloo and louie are off until it
+is done. A team that wants bagheera for everyone in a project commits it at project scope; that is
+the team's choice, not one person's preference reaching the others. The ADRs and PRDs are baloo's
+knowledge, but naming them at a file is louie's: a Hook on a file takes Python, and baloo stays its
+single `sh` SessionStart Hook.
 
 No plugin has a Config of its own: Claude Code's `enabledPlugins` is the switch, and a plugin that
 is on is on whole. The plugins share no code and call none of each other's; they work together
