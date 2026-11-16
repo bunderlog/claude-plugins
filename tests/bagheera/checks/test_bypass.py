@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 from bagheera.checks import no_git_hook_bypass
@@ -83,6 +85,55 @@ class NoGitHookBypass(unittest.TestCase):
         ]:
             with self.subTest(command=command):
                 self.assertEqual(no_git_hook_bypass(command), "")
+
+
+    def test_allows_turning_the_repos_own_hooks_on(self):
+        # ADR checks: core.hooksPath set in the clone to a hooks folder that is in the repo.
+        with tempfile.TemporaryDirectory() as dir:
+            for folder in [".git", ".githooks", os.path.join(".husky", "_"), "src"]:
+                os.makedirs(os.path.join(dir, folder))
+            src = os.path.join(dir, "src")
+            for command, cwd in [
+                ("git config core.hooksPath .githooks", dir),
+                ("git config --local core.hooksPath .githooks", dir),
+                ("git config set core.hooksPath ./.githooks/", dir),
+                ("git config core.hooksPath .githooks 2>/dev/null", dir),
+                ("git config core.hooksPath .husky/_", dir),
+                ("git config core.hooksPath .githooks", src),
+                ("git -C .. config core.hooksPath .githooks", src),
+                ("git config core.hooksPath .githooks && git commit -m x", dir),
+            ]:
+                with self.subTest(command=command, cwd=cwd):
+                    self.assertEqual(no_git_hook_bypass(command, cwd), "")
+
+    def test_denies_any_other_write_of_hooks_path(self):
+        with tempfile.TemporaryDirectory() as dir:
+            for folder in [".git", ".githooks"]:
+                os.makedirs(os.path.join(dir, folder))
+            for command in [
+                "git config core.hooksPath .husky/_",
+                "git config core.hooksPath hooks",
+                "git config core.hooksPath /dev/null",
+                "git config --global core.hooksPath .githooks",
+                "git config --system core.hooksPath .githooks",
+                "git config --worktree core.hooksPath .githooks",
+                "git config --file .git/config core.hooksPath .githooks",
+                "git config --add core.hooksPath .githooks",
+                "git config --unset core.hooksPath",
+                "git -C /tmp config core.hooksPath .githooks",
+                "git --git-dir .git config core.hooksPath .githooks",
+                "cd /tmp && git config core.hooksPath .githooks",
+                "git -c core.hooksPath=.githooks commit -m x",
+                "git -c core.hooksPath=/dev/null rev-parse --git-path hooks",
+            ]:
+                with self.subTest(command=command):
+                    self.assertNotEqual(no_git_hook_bypass(command, dir), "")
+            self.assertEqual(no_git_hook_bypass("git config core.hooksPath .githooks"), HOOKS_PATH)
+            with tempfile.TemporaryDirectory() as outside:
+                os.makedirs(os.path.join(outside, ".githooks"))
+                self.assertEqual(
+                    no_git_hook_bypass("git config core.hooksPath .githooks", outside), HOOKS_PATH
+                )
 
 
 if __name__ == "__main__":

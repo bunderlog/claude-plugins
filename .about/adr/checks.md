@@ -1,6 +1,6 @@
 # Each Check a Hook runs is always on
 
-Date: 2026-11-12
+Date: 2026-11-16
 
 The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are bagheera's (ADR
 plugin), and always on, outside a repo too: they guard against accidents where nobody set anything
@@ -25,6 +25,13 @@ that no Check runs that session (ADR binary). A Check that raises lets the call 
 in the plugin's code but no word of the call or the error's message, which may carry a Secret;
 `doctor` names it as a problem while the version that failed runs (ADR doctor), since the
 Hook's stderr is dropped and nothing else would.
+
+`no-git-hook-bypass` lets `git config core.hooksPath` through only where it turns a project's own
+Git hooks on: the clone's local config, set to `.githooks` or `.husky/_`, the folders a set-up
+project keeps them in (PRD project-setup), and only where that folder is in the repo. Every other
+value, scope (`--global`, `--system`, `--file`) or an unset is denied, since a path with no hooks
+in it turns them all off; so is `core.hooksPath` set for one command, through `-c` or
+`GIT_CONFIG_*`, whatever the subcommand.
 
 Claude Code's `Read` deny rules, in a set-up project's settings (PRD project-setup) and in each
 person's own (PRD deny), are a second layer under `no-secrets-in-context`, not its replacement:
@@ -62,6 +69,12 @@ symlink, and hold where the plugin fails.
 - A failed Check shown by session start, or for a week whatever runs — `doctor` is where state
   is asked for, and the Release that fixes the Check is what ends the failure.
 - A project's own rules for commands to deny or ask about — no project has asked for them.
+- `no-git-hook-bypass` denying every write of `core.hooksPath` (until 2026-11-16) — all 4 of its
+  denials in the 30 days from 2026-10-14 were false (`/bagheera:assess`), two of them
+  `git config core.hooksPath .githooks`, the line a set-up project's README gives.
+- `no-git-hook-bypass` letting `-c core.hooksPath=…` through on a subcommand that runs no hook,
+  such as `rev-parse` (2026-11-16) — one false denial in a month, and the list of subcommands that
+  run a hook would go stale as git grows.
 - `no-destructive-commands` (until 2026-10-07), denying a Bash command that destroys work beyond
   undo, such as `git push --force`, `rm -rf /` or `git reset --hard` with changes to lose, and
   asking before `git push --delete` of an unmerged branch — of its two denials in about three

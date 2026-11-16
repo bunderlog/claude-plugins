@@ -252,7 +252,7 @@ def pre_tool_use(text: str, stdout: TextIO) -> int:
     try:
         if tool == "Bash":
             command = (call.get("tool_input") or {}).get("command") or ""
-            why = checks.no_git_hook_bypass(command)
+            why = checks.no_git_hook_bypass(command, cwd)
             if why:
                 return _deny(stdout, f"{names.PLUGIN}:{check}: {why}{_RUN_IT_YOURSELF}")
         check = "no-secrets-in-context"
