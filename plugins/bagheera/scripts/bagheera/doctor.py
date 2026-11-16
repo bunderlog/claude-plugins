@@ -88,10 +88,6 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
         else:
             for item in setup.missing(root):
                 problems.append(f"{item} is missing: {names.SETUP_SKILL} adds it")
-        # The bagheera installed stands for the Release the machine has, the three plugins
-        # carrying one version at each (PRD bagheera); the plugin running is no use, since for
-        # these two a stale install is the version that runs.
-        release = version.installed(root)
         for plugin, there in turned_on:
             if not there:
                 problems.append(
@@ -99,11 +95,11 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
                     "project, so nothing of it loads here: install it with /plugin, project "
                     "scope"
                 )
-            elif version.older(there, release):
-                problems.append(
-                    f"{plugin} {there} is installed for this project, older than the {release} "
-                    f"this machine has: run claude plugin update {plugin}"
-                )
+        for plugin, there, release in setup.old_installs(root):
+            problems.append(
+                f"{plugin} {there} is installed for this project, older than the {release} "
+                f"this machine has: run claude plugin update {plugin}"
+            )
 
     if root:
         waiting = mismatches = 0

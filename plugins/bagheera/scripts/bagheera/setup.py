@@ -118,6 +118,16 @@ def turned_on(root: str) -> List[Tuple[str, str]]:
     return [(p, version.installed(root, p)) for p in PLUGINS if on.get(p) is True]
 
 
+def old_installs(root: str) -> List[Tuple[str, str, str]]:
+    """For each plugin the repo at `root` turns on whose recorded install is older than the
+    bagheera installed, its name, that install's version and the bagheera's (PRD setup): the
+    bagheera installed stands for the Release the machine has, the three plugins carrying one
+    version at each (PRD bagheera); the plugin running is no use, since for these two a stale
+    install is the version that runs."""
+    release = version.installed(root)
+    return [(p, v, release) for p, v in turned_on(root) if version.older(v, release)]
+
+
 def hooks_off(root: str) -> str:
     """The command that turns on the Git hooks git tracks in the repo at `root`, in a layout setup
     knows, where this clone hasn't turned them on; "" otherwise (PRD visibility)."""
