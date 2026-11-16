@@ -2,6 +2,25 @@
 
 The marketplace's Releases, newest first.
 
+## 0.62.0 — 2026-11-16
+
+### bagheera
+
+#### Features
+
+- bagheera: name a plugin a project turns on but hasn't installed, or has from an older Release (bba6095)
+- bagheera: set up the machine's other projects that lack an item, from one session (ba73f82)
+
+#### Fixes
+
+- bagheera: say in setup which projects it offers, and go on when this repo's run stops (e8740a0)
+
+### louie
+
+#### Features
+
+- bagheera: name a plugin a project turns on but hasn't installed, or has from an older Release (bba6095)
+
 ## 0.61.1 — 2026-11-13
 
 ### louie
