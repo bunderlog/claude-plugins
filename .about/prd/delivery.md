@@ -74,6 +74,11 @@ such pull request carries the Verification's verdict on each acceptance criterio
   `blocked:<why>` or `failed:<why>`, with the reason. That is at most 23 agents (1 + 1 + 1 + 4 +
   3 × 5 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
   no `workflowSizeGuideline`, which only advises Claude on a script it writes itself.
+- louie's Guidelines have Claude, in a session with the Workflow tool, offer once, in a line,
+  once a PRD's scope or criteria change and before building a change that serves a PRD or an
+  Issue with acceptance criteria, to take it through an Issue (written with baloo's `issue` skill where there is none), `/louie:plan` and
+  `/louie:deliver`, instead of editing in the session; it starts them only when the person
+  agrees, and edits in the session when they decline.
 - A permission prompt in a stage pauses the run until the person answers, as for any Workflow; the
   README names the commands to allow for a run with none.
 - Setting a project up turns Workflows on, `enableWorkflows: true` in its `.claude/settings.json`
@@ -140,6 +145,10 @@ such pull request carries the Verification's verdict on each acceptance criterio
   branch the remote lacks, `deliver` ends `blocked:` with the reason and no branch, worktree or
   commit made. The script's part: → test: tests/workflows/deliver.test.mjs "deliver stops before
   changing anything when prepare stops, or the plan isn't ready"; the prepare stage's, by hand.
+- In a session with louie on and the Workflow tool, asked to build a change a PRD agreed with no
+  Issue for it, Claude's first reply, before any edit, offers in a line the Issue, `/louie:plan`
+  and `/louie:deliver`; and so does its reply after it changes a PRD's criteria. Checked by hand
+  at its Release.
 - In a session with no Workflow tool, Claude offers the `louie:verifier` agent by name at the end
   of a task that serves an Issue or a PRD, instead of `/louie:verify` (ADR verify's offer).
 
