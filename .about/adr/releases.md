@@ -1,6 +1,6 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-11-10
+Date: 2026-11-16
 
 The marketplace installs its plugins from this repo's `main`, each from the folder
 `.claude-plugin/marketplace.json` names, and an installed copy updates only to a new version, so a
@@ -72,3 +72,7 @@ Release.
   fix the workflow and rerun it.
 - Nothing stops a push that changes `plugins/baloo/` without a Release: it reaches users with the
   next one.
+- A pull request lands on `main` by rebase (`gh pr merge --rebase`), never squashed, so each of its
+  commits keeps its own subject in the CHANGELOG. A fix to a feature its branch adds, before any
+  Release carries it, is folded into that feature's commit, so the notes get one line for the
+  feature and none for fixing it.
