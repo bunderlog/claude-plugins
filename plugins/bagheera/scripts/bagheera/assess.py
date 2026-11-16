@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from bagheera import condense, names, repo, review, version
+from bagheera import condense, names, prices, repo, review, version
 
 # The folder in the plugin's data folder that holds the records and the labels.
 FOLDER = "assessment"
@@ -130,8 +130,44 @@ def _count(session: str, transcript: str, root: str) -> Optional[Dict[str, Any]]
         "session_start": facts.session_start,
         "hathi": [{"check": h.check, "followed": h.followed} for h in hathi],
         "guidelines": _guidelines(facts.guidelines, facts.reads, facts.edits),
-        "workflows": [{"name": n, "end": end} for n, end in facts.workflows],
+        "workflows": [
+            {"name": n, "end": end, "agents": _agents(folder, run)} for n, end, run in facts.workflows
+        ],
     }
+
+
+# An agent's tokens of one model, as a record holds them, in the order condense.usage gives them.
+_TOKENS = ("input", "output", "cache_written", "cache_read")
+
+
+def _agents(folder: str, run: str) -> List[Dict[str, Any]]:
+    """Of the Workflow run `run` of the session whose Transcript's folder is `folder`, each agent's
+    tokens by model, with its type and phase from its `.meta.json`; never its label or prompt."""
+    if not run:
+        return []
+    out = []
+    for path in sorted(glob.glob(os.path.join(folder, "subagents", "workflows", run, "agent-*.jsonl"))):
+        try:
+            with open(path, "rb") as f:
+                used = condense.usage(f.read())
+        except OSError:
+            continue
+        try:
+            with open(path[: -len(".jsonl")] + ".meta.json", encoding="utf-8") as f:
+                meta = json.load(f)
+        except (OSError, ValueError):
+            meta = {}
+        if not isinstance(meta, dict):
+            meta = {}
+        kind, phase = meta.get("agentType"), meta.get("workflowPhase")
+        for model, tokens in sorted(used.items()):
+            out.append({
+                "type": kind if isinstance(kind, str) else "",
+                "phase": phase if isinstance(phase, str) else "",
+                "model": model,
+                **dict(zip(_TOKENS, tokens)),
+            })
+    return out
 
 
 def _guidelines(
@@ -323,6 +359,24 @@ class _Window:
     hathi: Dict[str, Dict[str, int]] = field(default_factory=dict)
     guidelines: Dict[str, Dict[str, int]] = field(default_factory=dict)
     workflows: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    # The Workflow runs with agents' Transcripts; each Workflow's cost; the tokens of each model
+    # with no price.
+    runs: int = 0
+    costs: Dict[str, "_Cost"] = field(default_factory=dict)
+    unpriced: Dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
+class _Cost:
+    """A Workflow's runs with agents' Transcripts, their dollars and tokens, and of each phase its
+    dollars and tokens."""
+
+    runs: int = 0
+    dollars: float = 0.0
+    tokens: int = 0
+    # Whether any of its agents ran on a model with a price, so its dollars mean something.
+    priced: bool = False
+    phases: Dict[str, List[float]] = field(default_factory=dict)
 
 
 # How a Workflow's task-notification ends it, by its status; any other status stopped it.
@@ -364,7 +418,31 @@ def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
             _add(w.guidelines, name, *keys)
         for run in r.get("workflows", []):
             _add(w.workflows, run.get("name", "?"), "all", _ENDS.get(run.get("end", ""), "stopped"))
+            if run.get("agents"):
+                _charge(w, run.get("name", "?"), run["agents"])
     return w
+
+
+def _charge(w: _Window, name: str, agents: List[Dict[str, Any]]) -> None:
+    """Adds a run of the Workflow `name` whose agents' tokens are `agents` to its cost in `w`."""
+    c = w.costs.setdefault(name, _Cost())
+    c.runs += 1
+    w.runs += 1
+    for a in agents:
+        counts = tuple(a.get(k) if isinstance(a.get(k), int) else 0 for k in _TOKENS)
+        tokens = sum(counts)
+        model = str(a.get("model", "?"))
+        dollars = prices.cost(model, counts)  # type: ignore[arg-type]
+        if dollars is None:
+            w.unpriced[model] = w.unpriced.get(model, 0) + tokens
+            dollars = 0.0
+        else:
+            c.priced = True
+        c.dollars += dollars
+        c.tokens += tokens
+        phase = c.phases.setdefault(str(a.get("phase") or "no phase"), [0.0, 0])
+        phase[0] += dollars
+        phase[1] += tokens
 
 
 def _day(r: Dict[str, Any]) -> str:
@@ -417,6 +495,7 @@ def report(data: str, days: int, only: str, now: datetime, evals: str) -> str:
         out.append("  none")
     out += ["", f"Workflows run (PRD delivery, ADR verify), {_over(cur, old, 'workflows')}:"]
     out += _counts(cur.workflows, old.workflows, ("completed", "failed", "stopped", "no end"))
+    out += ["", _costs(cur, old)]
     out += _start(cur, old, names.BUILD) + _stale_of(stale, names.BUILD)
 
     out += ["", names.PLUGIN] + _skills(cur, old, names.PLUGIN)
@@ -442,6 +521,38 @@ def _counts(cur: Dict[str, Dict[str, int]], old: Dict[str, Dict[str, int]],
         parts = ", ".join(f"{k} {c.get(k, 0)}" for k in keys)
         out.append(f"  {name}: {c.get('all', 0)} ({o.get('all', 0)}): {parts}")
     return out or ["  none"]
+
+
+def _costs(cur: _Window, old: _Window) -> str:
+    """Each Workflow's mean and total cost and its costliest phase, by dollars, or by tokens where
+    none of its models has a price; then the tokens of each model with no price."""
+    out = [f"Workflows' cost (PRD assessment, PRD delivery), at Anthropic's prices of {prices.READ}, "
+           f"over {cur.runs} run{'' if cur.runs == 1 else 's'} ({old.runs}):"]
+    for name in sorted(set(cur.costs) | set(old.costs)):
+        c, o = cur.costs.get(name, _Cost()), old.costs.get(name, _Cost())
+        if c.priced or not c.runs:
+            text = (f"  {name}: {_dollars(c.dollars / c.runs if c.runs else 0)} a run, "
+                    f"{_dollars(c.dollars)} ({_dollars(o.dollars)}), {c.tokens:,} tokens")
+        else:
+            # $0.00 would read as free: with no model priced, only its tokens are known (PRD
+            # assessment).
+            text = (f"  {name}: {c.tokens // c.runs:,} tokens a run, {c.tokens:,} tokens "
+                    f"({o.tokens:,}), no price known")
+        if c.phases:
+            phase, (dollars, tokens) = max(c.phases.items(), key=lambda p: (p[1][0], p[1][1]))
+            money = f" {_dollars(dollars)}," if c.priced else ""
+            text += f", costliest phase {phase}{money} {int(tokens):,} tokens"
+        out.append(text)
+    for model in sorted(set(cur.unpriced) | set(old.unpriced)):
+        out.append(f"  {model}: {cur.unpriced.get(model, 0):,} tokens "
+                   f"({old.unpriced.get(model, 0):,}), no price known: counted in tokens, not dollars")
+    if len(out) == 1:
+        out.append("  none")
+    return "\n".join(out)
+
+
+def _dollars(n: float) -> str:
+    return f"${n:,.2f}"
 
 
 def _over(cur: _Window, old: _Window, figure: str) -> str:

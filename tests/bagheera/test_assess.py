@@ -5,7 +5,7 @@ import time
 import unittest
 from datetime import datetime, timezone
 
-from bagheera import assess, cli, review
+from bagheera import assess, cli, prices, review
 from tests import testkit
 
 NOW = datetime(2026, 11, 12, 12, 0, tzinfo=timezone.utc)
@@ -21,11 +21,20 @@ def call(id, name, input, at="2026-11-10T09:00:00.000Z"):
     return line("assistant", [{"type": "tool_use", "id": id, "name": name, "input": input}], at)
 
 
-def result(id, text="ok", error=False, at="2026-11-10T09:00:00.000Z"):
+def result(id, text="ok", error=False, at="2026-11-10T09:00:00.000Z", **extra):
     block = {"type": "tool_result", "tool_use_id": id, "content": text}
     if error:
         block["is_error"] = True
-    return line("user", [block], at)
+    return line("user", [block], at, **extra)
+
+
+def response(id, model, input, output, cache_written=0, cache_read=0):
+    """An assistant's message `id` of the model `model` that used those tokens."""
+    usage = {"input_tokens": input, "output_tokens": output,
+             "cache_creation_input_tokens": cache_written, "cache_read_input_tokens": cache_read}
+    return json.dumps({"type": "assistant", "timestamp": "2026-11-10T09:00:00.000Z",
+                       "message": {"id": id, "model": model, "role": "assistant", "usage": usage,
+                                   "content": [{"type": "text", "text": "thinking it over"}]}})
 
 
 def denied(id, check, target, plugin="bagheera"):
@@ -380,6 +389,55 @@ class Assess(unittest.TestCase):
         self.assertIn("  verify: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
         self.assertIn("  plan: 1 (0): completed 0, failed 0, stopped 0, no end 1", report)
         self.assertNotIn("someone", report)
+
+    def test_a_workflows_cost_at_its_models_prices(self):
+        def agent(run, id, meta, *lines):
+            folder = os.path.join(self.dir, "s1", "subagents", "workflows", run)
+            write(os.path.join(folder, f"agent-{id}.jsonl"), "\n".join(lines) + "\n")
+            write(os.path.join(folder, f"agent-{id}.meta.json"), json.dumps(meta))
+
+        priced = "claude-opus-5-5"
+        # Claude Code repeats a message's usage on each of its lines; it counts once.
+        agent("wf_1", "a", {"agentType": "louie:planner", "workflowPhase": "Plan",
+                            "description": "plan the zebra-umbrella"},
+              response("m1", priced, 600_000, 60_000), response("m1", priced, 600_000, 60_000),
+              response("m2", priced, 400_000, 40_000),
+              response("m3", "<synthetic>", 0, 0))
+        agent("wf_2", "b", {"agentType": "louie:verifier", "workflowPhase": "Verify",
+                            "description": "verify the zebra-umbrella"},
+              response("m1", "claude-unknown-9", 2_000, 300))
+        self.session(
+            "s1",
+            call("w1", "Workflow", {"name": "louie:plan"}),
+            result("w1", "Workflow launched in background.", toolUseResult={"runId": "wf_1"}),
+            notification("w1", "completed"),
+            call("w2", "Workflow", {"name": "louie:verify"}),
+            result("w2", "Workflow launched in background.", toolUseResult={"runId": "wf_2"}),
+            call("w3", "Workflow", {"name": "louie:deliver"}),
+            result("w3", "Workflow launched in background.", toolUseResult={"runId": "../wf_1"}),
+        )
+        # Claude Opus 5.5 at $4 input and $20 output a million tokens (prices.READ).
+        dollars = "$6.00"
+        self.assertEqual(f"${prices.cost(priced, (1_000_000, 100_000, 0, 0)):,.2f}", dollars)
+        report = self.report()
+        self.assertIn(f"Workflows' cost (PRD assessment, PRD delivery), at Anthropic's prices of "
+                      f"{prices.READ}, over 2 runs (0):", report)
+        self.assertIn(f"  plan: {dollars} a run, {dollars} ($0.00), 1,100,000 tokens, costliest "
+                      f"phase Plan {dollars}, 1,100,000 tokens", report)
+        self.assertIn("  verify: 2,300 tokens a run, 2,300 tokens (0), no price known, costliest "
+                      "phase Verify 2,300 tokens", report)
+        self.assertNotIn("  verify: $", report)
+        self.assertIn("  claude-unknown-9: 2,300 tokens (0), no price known: counted in tokens, not "
+                      "dollars", report)
+        self.assertNotIn("  deliver: $", report)
+        self.assertNotIn("<synthetic>", report)
+        lines = report.split("\n")
+        cost = next(i for i, x in enumerate(lines) if x.startswith("Workflows' cost"))
+        self.assertEqual([p for p in SECTIONS if lines.index(p) < cost][-1], "louie")
+        with open(os.path.join(self.data, "assessment", "sessions.jsonl")) as f:
+            text = f.read()
+        self.assertNotIn("zebra-umbrella", text)
+        self.assertNotIn("description", text)
 
     def test_the_figures_stand_under_each_plugin(self):
         self.session(
