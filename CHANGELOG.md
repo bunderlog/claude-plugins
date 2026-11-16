@@ -2,6 +2,26 @@
 
 The marketplace's Releases, newest first.
 
+## 0.64.0 — 2026-11-16
+
+### bagheera
+
+#### Features
+
+- bagheera: /bagheera:setup installs hathi and the plugins, and turns the Git hooks on (b1da288)
+
+#### Fixes
+
+- bagheera: name the Git hooks in full in setup's failed: lines (c08dfa4)
+- bagheera: keep .claude/settings.json as committed when setup installs a plugin (7e86eb5)
+
+### louie
+
+#### Features
+
+- louie: offer an Issue, /louie:plan and /louie:deliver once a PRD changes or before building it (fac65fd)
+- bagheera: /bagheera:setup installs hathi and the plugins, and turns the Git hooks on (b1da288)
+
 ## 0.63.1 — 2026-11-16
 
 ### bagheera
