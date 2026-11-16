@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.67.0 — 2026-11-16
+
+### louie
+
+#### Features
+
+- name the ADRs and PRDs a file concerns when Claude first reads, edits or writes it (15810db)
+
 ## 0.66.1 — 2026-11-16
 
 ### louie
