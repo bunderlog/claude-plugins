@@ -79,6 +79,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
   Issue with acceptance criteria, to take it through an Issue (written with baloo's `issue` skill where there is none), `/louie:plan` and
   `/louie:deliver`, instead of editing in the session; it starts them only when the person
   agrees, and edits in the session when they decline.
+- louie's Guidelines have Claude, when it gives the person the result of a louie Workflow's run,
+  give with it what the run took, as its task-notification says: its tokens, its agents and its
+  minutes. What it cost in dollars is the Assessment's (PRD assessment).
 - A permission prompt in a stage pauses the run until the person answers, as for any Workflow; the
   README names the commands to allow for a run with none.
 - Setting a project up turns Workflows on, `enableWorkflows: true` in its `.claude/settings.json`
@@ -151,6 +154,8 @@ such pull request carries the Verification's verdict on each acceptance criterio
   at its Release.
 - In a session with no Workflow tool, Claude offers the `louie:verifier` agent by name at the end
   of a task that serves an Issue or a PRD, instead of `/louie:verify` (ADR verify's offer).
+- When a louie Workflow's run ends, Claude's reply giving its result names the run's tokens, agents
+  and minutes as its task-notification gives them. Checked by hand at its Release.
 
 ## Open questions
 

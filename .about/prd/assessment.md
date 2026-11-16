@@ -67,7 +67,10 @@ figures in it, so that decision can be about a part of any of them.
   - each of louie's Workflows run (`plan`, `deliver`, `verify`), a Workflow tool call running one,
     and how it ended as the task-notification of that run's task says (completed, failed,
     stopped), or no end where none reached the Transcript. Its skill loaded counts as a skill
-    besides.
+    besides. And what the run cost, from its agents' Transcripts: each agent's tokens (input,
+    output, cache written and cache read) by model, and those at the model's prices in dollars,
+    by the agent's type and its phase, never its prompt or label; the report gives each
+    Workflow's runs' mean and total cost, and the phase that cost most.
 - The first report after a Release that adds a figure counts again each record without it whose
   Transcript is still on disk, appending a new record for it; once the Transcript is gone, the
   record is left out of that figure, and the figure says how many sessions it covers.
@@ -156,6 +159,10 @@ figures in it, so that decision can be about a part of any of them.
 - A session that ran louie's `verify` Workflow, whose task-notification says it completed, and one
   that ran `plan` with no task-notification, count `verify` 1 run, completed 1, and `plan` 1 run,
   no end 1.
+- A run of louie's `plan` Workflow whose one agent, a `louie:planner` in the phase Plan, used
+  1,000,000 tokens of input and 100,000 of output on one model counts as its cost those tokens at
+  that model's prices, under `plan`, with Plan its costliest phase; a model with no price known
+  counts its tokens and no dollars, and says so.
 - The report's figures stand under baloo, louie, bagheera and `hathi`, in that order, each figure
   under the plugin whose part it counts, the Checks' denials under bagheera and the skills each
   under its own plugin; its first line names bunderlog.
