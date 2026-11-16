@@ -2,6 +2,26 @@
 
 The marketplace's Releases, newest first.
 
+## 0.65.0 — 2026-11-16
+
+### bagheera
+
+#### Features
+
+- bagheera: /bagheera:assess counts hathi's Checks in Git hooks, louie's Guidelines, Workflows (1f02286)
+- bagheera: /bagheera:assess counts what each of louie's Workflow runs cost (749906c)
+
+#### Fixes
+
+- bagheera: let git config core.hooksPath turn a project's own Git hooks on (8e3a982)
+- bagheera: deny core.hooksPath set to a hooks folder git doesn't track (ffe758a)
+
+### louie
+
+#### Features
+
+- louie: give a Workflow run's result with the tokens, agents and minutes it took (fe4cb26)
+
 ## 0.64.1 — 2026-11-16
 
 ### bagheera
