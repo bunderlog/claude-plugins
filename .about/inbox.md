@@ -111,13 +111,3 @@ a read of it, and above 0 in webui. Before the index (0.52.0, 2026-11-10) it was
 edits in 30 days, webui 0 of 23; on 2026-11-12 there were only 3 since, 1 after a read.
 Settled by counting a month after the Release, from 2026-12-10, with `/bagheera:assess`: keep the
 index if it moved past half, otherwise change how it asks or drop the rule (ADR measurement).
-
-## No eval case for the rule to name what a Workflow run took
-
-2026-11-16 · verify
-
-PR #11 adds a line to louie's `principles`, printed on every task: give a louie Workflow run's
-result with its tokens, agents and minutes (PRD delivery). ADR evals has a case written before the
-text it tests, kept only once it fails without the plugin; this line has none. Settled by a case in
-`evals/principles/` run with and without the plugin the next time the suites run: kept if Claude
-leaves the figures out without it, the line dropped if Claude gives them anyway.

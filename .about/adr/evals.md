@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-12
+Date: 2026-11-16
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -43,6 +43,11 @@ existing style" and "the least code" read as leaving it out. With a line in On e
 comment says what the code can't, both scored 1.00. A case for property-based tests, a fast
 rewrite of a slow function, was dropped the same day: without the plugin Opus and Sonnet kept the
 slow version and checked the fast one against it on random inputs in 6 of 6 runs.
+
+On 2026-11-16 `principles` got a case for its line on a louie Workflow run's figures, a `verify`
+run's task-notification in the prompt, graded on the reply naming its tokens, agents and minutes:
+1.00 with the plugin and 0.00 without, on Opus and on Sonnet, 3 runs each. The bare model gives
+what the run found and leaves out what it took.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
