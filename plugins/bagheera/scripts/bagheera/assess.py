@@ -21,6 +21,10 @@ SESSIONS = "sessions.jsonl"
 LABELS = "labels.jsonl"
 # Marks that the sessions whose Transcripts were on disk before the first record are counted.
 BACKFILLED = "backfilled"
+# The figures a Release added after the first records, each a field of a record; a mark per
+# figure, `recounted-<figure>`, says the records without it were counted again (PRD assessment).
+ADDED = ("hathi", "guidelines", "workflows")
+RECOUNTED = "recounted-"
 
 REAL, FALSE = "real", "false"
 # bunderlog's plugins, whose skills a record counts.
@@ -31,6 +35,30 @@ DAYS = 30
 _KNOWLEDGE = (names.ADRS, names.PRDS)
 # A path of two or more segments in an ADR's or a PRD's text.
 _PATH = re.compile(r"[\w.@-]+(?:/[\w.@-]+)+")
+
+# The Guidelines a file of their kind gives, each telling whether a path is one, as louie's Hook
+# tells them apart (ADR guidelines); copied, since the plugins share no code (ADR plugin).
+_AGENT_FILES = ("SKILL.md", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md")
+_AGENT_FOLDERS = ("agents", "commands", "skills")
+
+
+def _for_agents(path: str) -> bool:
+    parts = path.replace(os.sep, "/").split("/")
+    if parts[-1] in _AGENT_FILES:
+        return True
+    return parts[-1].endswith(".md") and any(
+        a == ".claude" and b in _AGENT_FOLDERS for a, b in zip(parts, parts[1:])
+    )
+
+
+_BY_KIND = {
+    "go": lambda path: os.path.splitext(path)[1] == ".go",
+    "typescript": lambda path: os.path.splitext(path)[1] in (".ts", ".tsx", ".mts", ".cts", ".vue"),
+    "vue": lambda path: os.path.splitext(path)[1] == ".vue",
+    "writing-for-agents": _for_agents,
+}
+# A Guideline's file in louie's `guidelines/`, which Claude read.
+_GUIDELINE_FILE = re.compile(r"/" + names.BUILD + r"/(?:.+/)?guidelines/([a-z0-9-]+)\.md$")
 
 
 def _folder(data: str) -> str:
@@ -71,10 +99,20 @@ def _count(session: str, transcript: str, root: str) -> Optional[Dict[str, Any]]
         return None
     # A subagent's Reads count as the session's own (PRD index).
     reads = list(facts.reads)
-    for sub in glob.glob(os.path.join(transcript[: -len(".jsonl")], "subagents", "*.jsonl")):
+    folder = transcript[: -len(".jsonl")]
+    for sub in glob.glob(os.path.join(folder, "subagents", "*.jsonl")):
         try:
             with open(sub, "rb") as f:
                 reads += condense.facts(f.read()).reads
+        except OSError:
+            pass
+    # The commits and pushes of a Workflow's agents count as the session's, each agent's failures
+    # fixed only in its own order (PRD assessment).
+    hathi = list(facts.hathi)
+    for sub in sorted(glob.glob(os.path.join(folder, "subagents", "workflows", "*", "agent-*.jsonl"))):
+        try:
+            with open(sub, "rb") as f:
+                hathi += condense.facts(f.read()).hathi
         except OSError:
             pass
     return {
@@ -90,7 +128,34 @@ def _count(session: str, transcript: str, root: str) -> Optional[Dict[str, Any]]
         "skills": sorted({s for s in facts.skills if s.split(":", 1)[0] in _PLUGINS}),
         "index": _index(root, reads, facts.edits),
         "session_start": facts.session_start,
+        "hathi": [{"check": h.check, "followed": h.followed} for h in hathi],
+        "guidelines": _guidelines(facts.guidelines, facts.reads, facts.edits),
+        "workflows": [{"name": n, "end": end} for n, end in facts.workflows],
     }
+
+
+def _guidelines(
+    given: List[Tuple[int, str]], reads: List[Tuple[int, str]], edits: List[Tuple[int, str]]
+) -> Dict[str, str]:
+    """Each Guideline in the session's context, given by louie's Hook (`given`) or its file read,
+    and each a file of whose kind the session edited: for one of those, whether it came before or
+    after the first edit of its kind, or never; for the rest, in (ADR guidelines)."""
+    came: Dict[str, int] = {}
+    files = [(t, _GUIDELINE_FILE.search(path.replace(os.sep, "/"))) for t, path in reads]
+    for t, name in given + [(t, m.group(1)) for t, m in files if m]:
+        came[name] = min(t, came.get(name, t))
+    out: Dict[str, str] = {}
+    for name, kind in _BY_KIND.items():
+        first = min((t for t, path in edits if kind(path)), default=None)
+        if first is None:
+            continue
+        if name not in came:
+            out[name] = "never"
+        else:
+            out[name] = "before" if came[name] < first else "after"
+    for name in came:
+        out.setdefault(name, "in")
+    return out
 
 
 def _index(root: str, reads: List[Tuple[int, str]], edits: List[Tuple[int, str]]) -> Dict[str, int]:
@@ -213,6 +278,29 @@ def backfill(data: str, config: str) -> int:
     return n
 
 
+def recount(data: str) -> int:
+    """Counts again, once for each figure a Release added, every record without it whose
+    Transcript is still on disk, appending a new record for it; how many it counted."""
+    folder = _folder(data)
+    todo = [f for f in ADDED if not os.path.exists(os.path.join(folder, RECOUNTED + f))]
+    if not todo:
+        return 0
+    n = 0
+    for r in records(data):
+        if all(f in r for f in todo):
+            continue
+        transcript, root = r.get("transcript"), r.get("root")
+        if not isinstance(transcript, str) or not isinstance(root, str):
+            continue
+        if os.path.isfile(transcript) and record(data, r["session"], transcript, root):
+            n += 1
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    for f in todo:
+        with open(os.path.join(folder, RECOUNTED + f), "w", encoding="utf-8") as out:
+            out.write(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") + "\n")
+    return n
+
+
 def _own(root: str, config: str) -> bool:
     """Whether `root` is the home folder or Claude Code's own, where no session is counted."""
     home = os.path.expanduser("~")
@@ -221,7 +309,8 @@ def _own(root: str, config: str) -> bool:
 
 @dataclass
 class _Window:
-    """The figures of one window of days."""
+    """The figures of one window of days; of a figure a Release added, `covered` counts the
+    sessions whose record has it."""
 
     sessions: int = 0
     repos: set = field(default_factory=set)
@@ -230,6 +319,20 @@ class _Window:
     edits: int = 0
     read_before: int = 0
     starts: Dict[str, List[int]] = field(default_factory=dict)
+    covered: Dict[str, int] = field(default_factory=dict)
+    hathi: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    guidelines: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    workflows: Dict[str, Dict[str, int]] = field(default_factory=dict)
+
+
+# How a Workflow's task-notification ends it, by its status; any other status stopped it.
+_ENDS = {"completed": "completed", "failed": "failed", "": "no end"}
+
+
+def _add(counts: Dict[str, Dict[str, int]], name: str, *keys: str) -> None:
+    c = counts.setdefault(name, {})
+    for key in keys:
+        c[key] = c.get(key, 0) + 1
 
 
 def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
@@ -238,9 +341,8 @@ def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
         w.sessions += 1
         w.repos.add(r.get("repo", ""))
         for d in r.get("denials", []):
-            c = w.denials.setdefault(d.get("check", "?"), {})
-            for key in ("all", d.get("followed", "?"), marks.get(f"{r['session']} {d.get('id')}", "unlabeled")):
-                c[key] = c.get(key, 0) + 1
+            mark = marks.get(f"{r['session']} {d.get('id')}", "unlabeled")
+            _add(w.denials, d.get("check", "?"), "all", d.get("followed", "?"), mark)
         for s in r.get("skills", []):
             w.skills[s] = w.skills.get(s, 0) + 1
         index = r.get("index", {})
@@ -248,6 +350,20 @@ def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
         w.read_before += index.get("read_before", 0)
         for p, n in r.get("session_start", {}).items():
             w.starts.setdefault(p, []).append(n)
+        for figure in ADDED:
+            if figure in r:
+                w.covered[figure] = w.covered.get(figure, 0) + 1
+        for h in r.get("hathi", []):
+            _add(w.hathi, h.get("check", "?"), "all", h.get("followed", "?"))
+        # A Guideline's sessions in the context, and of those editing a file of its kind, the
+        # sessions it came before the first such edit in.
+        for name, outcome in r.get("guidelines", {}).items():
+            keys = [] if outcome == "never" else ["in"]
+            keys += [] if outcome == "in" else ["edited"]
+            keys += ["before"] if outcome == "before" else []
+            _add(w.guidelines, name, *keys)
+        for run in r.get("workflows", []):
+            _add(w.workflows, run.get("name", "?"), "all", _ENDS.get(run.get("end", ""), "stopped"))
     return w
 
 
@@ -258,51 +374,112 @@ def _day(r: Dict[str, Any]) -> str:
 def report(data: str, days: int, only: str, now: datetime, evals: str) -> str:
     """The report over the last `days` days before `now`, the window before it beside each figure,
     of every repo or those whose name holds `only`; with the eval suites of the repo at `evals`,
-    where it has `evals/` (PRD assessment)."""
+    where it has `evals/` (PRD assessment). Its figures stand under whose part each counts: the
+    plugins baloo, louie and bagheera, then `hathi`'s Checks."""
     rs = [r for r in records(data) if only in r.get("repo", "")]
     since = (now - timedelta(days=days)).strftime("%Y-%m-%d")
     before = (now - timedelta(days=2 * days)).strftime("%Y-%m-%d")
     marks = labels(data)
     cur = _tally([r for r in rs if _day(r) >= since], marks)
     old = _tally([r for r in rs if before <= _day(r) < since], marks)
+    stale = _evals(evals)
     out = [
-        f"{names.PLUGIN} assessment: the last {days} days, from {since}; (in brackets) the {days} "
-        "before",
+        f"{names.MARKETPLACE} assessment: the last {days} days, from {since}; (in brackets) the "
+        f"{days} before",
         f"Sessions counted (PRD assessment): {cur.sessions} ({old.sessions}), in "
         f"{len(cur.repos)} repo(s)",
-        "",
-        "Checks' denials (ADR checks, ADR measurement):",
     ]
-    for check in sorted(set(cur.denials) | set(old.denials)):
-        c, o = cur.denials.get(check, {}), old.denials.get(check, {})
-        parts = [f"{k} {c.get(k, 0)}" for k in ("another-way", "went-on", "nothing")]
-        parts += [f"{k} {c.get(k, 0)}" for k in (REAL, FALSE, "unlabeled")]
-        out.append(f"  {check}: {c.get('all', 0)} ({o.get('all', 0)}): " + ", ".join(parts))
-    if not cur.denials and not old.denials:
-        out.append("  none")
-    out += ["", "Skills loaded, sessions (ADR evals):"]
-    for s in sorted(set(cur.skills) | set(old.skills), key=lambda s: (-cur.skills.get(s, 0), s)):
-        out.append(f"  {s}: {cur.skills.get(s, 0)} ({old.skills.get(s, 0)})")
-    if not cur.skills and not old.skills:
-        out.append("  none")
+    other = "other"
+    if other in cur.starts or other in old.starts:
+        out += ["", "Session start of no plugin's, characters a session (PRD index): "
+                f"{_mean(cur.starts.get(other, []))} ({_mean(old.starts.get(other, []))})"]
+    if stale:
+        out += _stale([line for p, line in stale if p not in _PLUGINS])
+
+    out += ["", names.KNOWLEDGE] + _skills(cur, old, names.KNOWLEDGE)
     out += [
         "",
         "PRD index: edits to a file an ADR or PRD names, after a read of it: "
         f"{cur.read_before} of {cur.edits} ({old.read_before} of {old.edits})",
+    ]
+    out += _start(cur, old, names.KNOWLEDGE) + _stale_of(stale, names.KNOWLEDGE)
+
+    out += ["", names.BUILD] + _skills(cur, old, names.BUILD)
+    out += ["", f"Guidelines in the context, sessions (ADR guidelines), {_over(cur, old, 'guidelines')}:"]
+    for g in sorted(set(cur.guidelines) | set(old.guidelines)):
+        c, o = cur.guidelines.get(g, {}), old.guidelines.get(g, {})
+        text = f"  {g}: {c.get('in', 0)} ({o.get('in', 0)})"
+        if g in _BY_KIND:
+            text += (f", before the first edit of its files {c.get('before', 0)} of "
+                     f"{c.get('edited', 0)} ({o.get('before', 0)} of {o.get('edited', 0)})")
+        out.append(text)
+    if not cur.guidelines and not old.guidelines:
+        out.append("  none")
+    out += ["", f"Workflows run (PRD delivery, ADR verify), {_over(cur, old, 'workflows')}:"]
+    out += _counts(cur.workflows, old.workflows, ("completed", "failed", "stopped", "no end"))
+    out += _start(cur, old, names.BUILD) + _stale_of(stale, names.BUILD)
+
+    out += ["", names.PLUGIN] + _skills(cur, old, names.PLUGIN)
+    out += ["", "Checks' denials (ADR checks, ADR measurement):"]
+    out += _counts(cur.denials, old.denials,
+                   ("another-way", "went-on", "nothing", REAL, FALSE, "unlabeled"))
+    out += [""] + _reviews(data, rs, since, before, now)
+    out += _start(cur, old, names.PLUGIN) + _stale_of(stale, names.PLUGIN)
+    out += [""] + _unlabeled(rs, marks)
+
+    out += ["", names.HATHI]
+    out += ["", f"Git hooks' failures (ADR git-hooks, ADR measurement), {_over(cur, old, 'hathi')}:"]
+    out += _counts(cur.hathi, old.hathi, ("fixed", "nothing"))
+    return condense.mask("\n".join(out))
+
+
+def _counts(cur: Dict[str, Dict[str, int]], old: Dict[str, Dict[str, int]],
+            keys: Tuple[str, ...]) -> List[str]:
+    """A line for each name in `cur` or `old`: how many in each window, and in `cur` of each key."""
+    out = []
+    for name in sorted(set(cur) | set(old)):
+        c, o = cur.get(name, {}), old.get(name, {})
+        parts = ", ".join(f"{k} {c.get(k, 0)}" for k in keys)
+        out.append(f"  {name}: {c.get('all', 0)} ({o.get('all', 0)}): {parts}")
+    return out or ["  none"]
+
+
+def _over(cur: _Window, old: _Window, figure: str) -> str:
+    """How many sessions a figure a Release added covers, in each window."""
+    n = cur.covered.get(figure, 0)
+    return f"over {n} session{'' if n == 1 else 's'} ({old.covered.get(figure, 0)})"
+
+
+def _skills(cur: _Window, old: _Window, plugin: str) -> List[str]:
+    """The skills of `plugin` loaded, sessions, the most loaded first."""
+    out = ["", "Skills loaded, sessions (ADR evals):"]
+    mine = [s for s in set(cur.skills) | set(old.skills) if s.split(":", 1)[0] == plugin]
+    for s in sorted(mine, key=lambda s: (-cur.skills.get(s, 0), s)):
+        out.append(f"  {s}: {cur.skills.get(s, 0)} ({old.skills.get(s, 0)})")
+    return out + ([] if mine else ["  none"])
+
+
+def _start(cur: _Window, old: _Window, plugin: str) -> List[str]:
+    return [
         "",
         "Session start, characters a session (PRD index, ADR guidelines):",
+        f"  {plugin}: {_mean(cur.starts.get(plugin, []))} ({_mean(old.starts.get(plugin, []))})",
     ]
-    for p in sorted(set(cur.starts) | set(old.starts)):
-        out.append(f"  {p}: {_mean(cur.starts.get(p, []))} ({_mean(old.starts.get(p, []))})")
-    if not cur.starts and not old.starts:
-        out.append("  none")
-    out += [""] + _reviews(data, rs, since, before, now)
-    stale = _evals(evals)
-    if stale is not None:
-        out += ["", "Eval suites whose skill changed after their latest result (ADR evals):"]
-        out += [f"  {line}" for line in stale] or ["  none"]
-    out += [""] + _unlabeled(rs, marks)
-    return condense.mask("\n".join(out))
+
+
+def _stale_of(stale: Optional[List[Tuple[str, str]]], plugin: str) -> List[str]:
+    """The eval suites of `plugin`'s skills that are stale; nothing where the repo has no evals."""
+    if stale is None:
+        return []
+    return _stale([line for p, line in stale if p == plugin]) or [
+        "", "Eval suites whose skill changed after their latest result (ADR evals): none"]
+
+
+def _stale(lines: List[str]) -> List[str]:
+    if not lines:
+        return []
+    return ["", "Eval suites whose skill changed after their latest result (ADR evals):"] + [
+        f"  {line}" for line in lines]
 
 
 def _mean(ns: List[int]) -> int:
@@ -350,9 +527,10 @@ def _reviews(data: str, rs: List[Dict[str, Any]], since: str, before: str, now: 
     return out
 
 
-def _evals(root: str) -> Optional[List[str]]:
+def _evals(root: str) -> Optional[List[Tuple[str, str]]]:
     """Of the repo at `root` with `evals/`, each suite whose skill's text changed in a commit after
-    the suite's latest result, with that result; None without `evals/`."""
+    the suite's latest result, with that result, beside the plugin whose skill it is; None without
+    `evals/`."""
     if not root or not os.path.isdir(os.path.join(root, "evals")):
         return None
     latest: Dict[str, Tuple[str, Any, Any]] = {}
@@ -372,18 +550,20 @@ def _evals(root: str) -> Optional[List[str]]:
             agg = case.get("aggregates") or {}
             if parts[1] not in latest or at > latest[parts[1]][0]:
                 latest[parts[1]] = (at, agg.get("score"), agg.get("delta"))
-    out = []
+    out: List[Tuple[str, str]] = []
     for suite in sorted(e for e in os.listdir(os.path.join(root, "evals")) if e != "results"):
         skills = glob.glob(os.path.join(root, "plugins", "*", "skills", suite))
         if not os.path.isdir(os.path.join(root, "evals", suite)) or not skills:
             continue
-        changed = _changed(root, os.path.relpath(skills[0], root))
+        skill = os.path.relpath(skills[0], root)
+        plugin = skill.replace(os.sep, "/").split("/")[1]
+        changed = _changed(root, skill)
         at, score, delta = latest.get(suite, ("", None, None))
         if not at:
-            out.append(f"{suite}: no result")
+            out.append((plugin, f"{suite}: no result"))
         elif changed and changed > at:
-            out.append(f"{suite}: changed {changed[:10]}, latest result {at[:10]}, score {score}, "
-                       f"delta {delta}")
+            out.append((plugin, f"{suite}: changed {changed[:10]}, latest result {at[:10]}, "
+                                f"score {score}, delta {delta}"))
     return out
 
 

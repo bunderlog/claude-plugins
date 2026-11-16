@@ -743,10 +743,23 @@ class Denial:
 
 
 @dataclass
+class HathiFailure:
+    """A Check of `hathi`'s that stopped a `git commit` or `git push` from a Git hook: the Check, the
+    kind of command (commit or push), and what followed it: fixed (a later command of that kind
+    passed) or nothing (ADR measurement)."""
+
+    check: str
+    kind: str
+    followed: str = "nothing"
+
+
+@dataclass
 class Facts:
     """What PRD assessment counts of one session: when each file was read and edited, by path, in
-    nanoseconds since the epoch; the skills loaded, by name; the Checks' denials; and how many
-    characters each plugin's session start put in the context."""
+    nanoseconds since the epoch; the skills loaded, by name; the Checks' denials; how many
+    characters each plugin's session start put in the context; when louie's Hook gave each
+    Guideline, by name; the failures of `hathi`'s Checks in Git hooks; and each of louie's
+    Workflows run, by name, with the status its task-notification ended it with, or ""."""
 
     headless: bool = False
     start: str = ""
@@ -755,6 +768,9 @@ class Facts:
     skills: List[str] = field(default_factory=list)
     denials: List[Denial] = field(default_factory=list)
     session_start: Dict[str, int] = field(default_factory=dict)
+    guidelines: List[Tuple[int, str]] = field(default_factory=list)
+    hathi: List[HathiFailure] = field(default_factory=list)
+    workflows: List[Tuple[str, str]] = field(default_factory=list)
 
 
 _EDITS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
@@ -765,6 +781,22 @@ _DENIED = re.compile(
 # index of Guidelines starts with its own words instead.
 _STARTS = (names.PLUGIN, names.KNOWLEDGE, names.BUILD)
 _GUIDELINES = "Guidelines,"
+# The Hook events whose added context louie's Hook gives a Guideline in, as it names it; and the
+# plugins whose Hook gave them, louie's and, before louie, baloo's.
+_GIVING = ("PostToolUse", "PostToolUseFailure")
+_GIVEN = re.compile(r"The ([a-z0-9-]+) Guideline applies to")
+_GIVER = re.compile(r"^(?:" + names.BUILD + "|" + names.KNOWLEDGE + r"):$", re.M)
+# A command that runs `git commit` or `git push`, `git -C <dir> commit` too; `hathi check …` run by
+# hand is neither.
+_GIT = re.compile(
+    r"(?:^|[\s;&|(`])git(?:\s+(?:-[Cc]\s+\S+|--?[\w-]+(?:=\S+)?))*\s+(commit|push)(?![\w-])"
+)
+# The line `hathi` prints for each Check that failed.
+_HATHI = re.compile(r"^([a-z0-9-]+): .*; run: hathi explain \1[ \t\r]*$", re.M)
+# The task-notification that ends a background task, naming the tool call that started it.
+_NOTIFICATION = "<task-notification>"
+_TOOL_USE_ID = re.compile(r"<tool-use-id>([^<]*)</tool-use-id>")
+_STATUS = re.compile(r"<status>([^<]*)</status>")
 
 
 def _plugin_of(text: str) -> str:
@@ -798,6 +830,12 @@ def facts(transcript: Union[str, bytes]) -> Facts:
     # The session's moves in order: a call by its id, or "" where the user typed a prompt.
     moves: List[str] = []
     failed: Dict[str, str] = {}
+    # The calls running `git commit` or `git push`, with which of the two, and what each printed.
+    git: Dict[str, set] = {}
+    printed: Dict[str, str] = {}
+    # louie's Workflows run, by call id and name, and the status each call's task ended with.
+    workflows: List[Tuple[str, str]] = []
+    ends: Dict[str, str] = {}
     first: Optional[int] = None
     cwd = ""
     for _, line in _lines(transcript):
@@ -811,6 +849,11 @@ def facts(transcript: Union[str, bytes]) -> Facts:
             first = t
         if kind == "attachment":
             a = line.get("attachment")
+            if isinstance(a, dict) and a.get("hookEvent") in _GIVING and t is not None:
+                content = a.get("content")
+                for text in content if isinstance(content, list) else [content]:
+                    if isinstance(text, str) and _GIVER.search(text):
+                        f.guidelines += [(t, name) for name in _GIVEN.findall(text)]
             if isinstance(a, dict) and a.get("hookEvent") == "SessionStart":
                 content = a.get("content")
                 texts = content if isinstance(content, list) else [content]
@@ -827,6 +870,15 @@ def facts(transcript: Union[str, bytes]) -> Facts:
                     moves.append(b.id)
                     if b.name == "Skill" and _typed(b.input.get("skill"), str):
                         f.skills.append(b.input["skill"])
+                    command = b.input.get("command")
+                    if b.name == "Bash" and isinstance(command, str):
+                        kinds = set(_GIT.findall(command))
+                        if kinds:
+                            git[b.id] = kinds
+                    workflow = b.input.get("name")
+                    if (b.name == "Workflow" and isinstance(workflow, str)
+                            and workflow.startswith(names.BUILD + ":")):
+                        workflows.append((b.id, workflow.split(":", 1)[1]))
             continue
         if kind != "user" or line.get("isMeta"):
             continue
@@ -834,9 +886,15 @@ def facts(transcript: Union[str, bytes]) -> Facts:
         for b in results:
             if b.is_error:
                 failed[b.tool_use_id] = _text_of(_content(b.content))
+            if b.tool_use_id in git:
+                printed[b.tool_use_id] = _text_of(_content(b.content))
         if results:
             continue
         text = _text_of(bs)
+        if text.startswith(_NOTIFICATION):
+            id, status = _TOOL_USE_ID.search(text), _STATUS.search(text)
+            if id and status:
+                ends[id.group(1)] = status.group(1)
         typ = _human(text)
         if typ == "command":
             name = _command_text(text).split(" ", 1)[0].lstrip("/")
@@ -870,7 +928,37 @@ def facts(transcript: Union[str, bytes]) -> Facts:
                 d.followed = "another-way"
                 break
         f.denials.append(d)
+    f.hathi = _hathi(moves, git, printed, failed)
+    # A Workflow call whose result is an error started no run, so it has no end to count.
+    f.workflows = [(name, ends.get(id, "")) for id, name in workflows if id not in failed]
     if first is not None:
         f.start = _format(first)
     return f
 
+
+def _hathi(
+    moves: List[str], git: Dict[str, set], printed: Dict[str, str], failed: Dict[str, str]
+) -> List[HathiFailure]:
+    """The failures of `hathi`'s Checks the calls `moves`, in order, show: a call running `git
+    commit` or `git push` (`git`) that printed `hathi`'s line of a failed Check fails as a push
+    where it runs only `git push`, else as a commit; one that printed none and didn't fail passes
+    each kind it runs, fixing every failure of that kind before it (ADR measurement)."""
+    out: List[HathiFailure] = []
+    waiting: Dict[str, List[HathiFailure]] = {}
+    for id in moves:
+        if id not in git or id not in printed:
+            continue
+        checks = _HATHI.findall(printed[id])
+        if checks:
+            kind = "push" if git[id] == {"push"} else "commit"
+            for check in checks:
+                h = HathiFailure(check, kind)
+                out.append(h)
+                waiting.setdefault(kind, []).append(h)
+        elif id not in failed:
+            # A pass with a flag that skips the Git hooks would fix nothing (ADR measurement), but
+            # none reaches here: no-git-hook-bypass denies it in every session bagheera counts.
+            for kind in git[id]:
+                for h in waiting.pop(kind, []):
+                    h.followed = "fixed"
+    return out

@@ -586,6 +586,7 @@ def assess_report(args: List[str], stdout: TextIO, stderr: TextIO) -> Optional[i
     own = repo.own_folder()
     if own:
         assess.backfill(data, own)
+    assess.recount(data)
     try:
         here = repo.root(hook.project())
     except OSError:

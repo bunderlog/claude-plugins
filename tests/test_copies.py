@@ -23,5 +23,24 @@ class Copies(unittest.TestCase):
                 self.assertEqual(_read("bagheera", module), _read("louie", module))
 
 
+class GuidelineKinds(unittest.TestCase):
+    def test_the_assessment_tells_a_guidelines_files_as_louie_does(self):
+        # bagheera's copy of louie's file kinds (ADR plugin), so the Assessment counts a Guideline
+        # before the first edit of the files louie's Hook gives it for.
+        from bagheera import assess
+        from louie import guidelines
+
+        paths = [
+            "a.ts", "a.tsx", "a.mts", "a.cts", "a.vue", "a.js", "a.go", "a.md", "SKILL.md",
+            "x/CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", ".claude/agents/a.md",
+            ".claude/commands/a.md", "x/.claude/skills/a/b.md", ".claude/hooks/a.md",
+            ".claude/agents/a.json", "skills/a.md",
+        ]
+        for name, louie in guidelines.BY_PATH.items():
+            for path in paths:
+                with self.subTest(guideline=name, path=path):
+                    self.assertEqual(assess._BY_KIND[name](path), louie(path))
+
+
 if __name__ == "__main__":
     unittest.main()
