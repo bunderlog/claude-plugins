@@ -1,6 +1,6 @@
 # A Retro reads Transcripts only through the plugin's condenser, which masks Secrets
 
-Date: 2026-11-12
+Date: 2026-11-16
 
 A Transcript keeps every tool call's full output, so it can hold a Secret a Check missed. The
 `retro` skill reads Transcripts only through the plugin's `condense`, never the raw file, so a Retro
@@ -11,7 +11,11 @@ before 0.41.0. bagheera's count of each session at its end (PRD assessment) read
 `condense` too, which keeps the events that count needs.
 
 A call's cost is the tokens it added to the context, read from the `usage` Claude Code records with
-the next response: what Anthropic counted, in tokens, not dollars. A session's report names its
+the next response: what Anthropic counted, in tokens, not dollars. The one figure in dollars is the
+Assessment's cost of a louie Workflow run (PRD assessment): its agents' tokens at Anthropic's list
+prices, from a table in bagheera dated when it was read, since which Workflow and phase cost most is
+what optimizing them is decided by, and runs of several models are compared only in dollars; a model
+the table lacks counts in tokens, and says so. A session's report names its
 largest calls, and a summary of several sessions the tokens per tool, so an MCP server that spends a
 lot in small calls shows too. What came back before that response, the results of calls made in
 parallel and Claude Code's own attachments, shares its growth by the length of its text, so a call
@@ -39,8 +43,9 @@ makes the change.
 - Masking by shape only — a short token, or one without digits, would still show.
 - Masking only the kinds `no-secrets-in-commits` knows — one of an unknown kind would show.
 - A call's size in characters — simple and exactly one call's, but only an estimate of tokens.
-- Dollars, from a price table in the plugin — stale with each new model or price, and nothing on
-  a subscription is paid per token.
+- Dollars for a Retro's calls, from a price table in the plugin — stale with each new model or
+  price, and nothing on a subscription is paid per token; the Assessment's Workflow cost takes that
+  cost (above), as a table read again for each new model is cheaper than comparing runs by hand.
 - `no-secrets-in-context` denying reads of `~/.claude/projects/**/*.jsonl` — no Secret would come
   back by any path, but every other look into a Transcript would be denied too.
 
