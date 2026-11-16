@@ -34,8 +34,9 @@ STALE = 120
 KEPT = 7 * 24 * 3600
 # How much of a Transcript's end is read for an entry after a mark.
 TAIL = 256 * 1024
-# What a project lacking an item of the list is told to do, which is also how `lacking` knows
-# that need from the others.
+# What a project is told to do where it lacks an item of the list, has a plugin it turns on not
+# installed or older than the Release, or its Git hooks off: what a run of /bagheera:setup there
+# does, which is also how `lacking` knows those needs from the others.
 SETUP_FIX = names.SETUP_SKILL + " there"
 
 
@@ -295,12 +296,15 @@ def needs(root: str, data: str) -> List[Need]:
     if setup.started(root):
         for problem in setup.problems(root):
             out.append(Need(problem, SETUP_FIX))
+    for plugin, there in setup.turned_on(root):
+        if not there:
+            out.append(Need(f"{plugin} is turned on with no install of it for this project",
+                            SETUP_FIX))
     for plugin, there, release in setup.old_installs(root):
         out.append(Need(f"{plugin} {there} is installed, older than the {release} this machine "
-                        "has", f"claude plugin update {plugin} there"))
-    command = setup.hooks_off(root)
-    if command:
-        out.append(Need("its Git hooks are off in this clone", command))
+                        "has", SETUP_FIX))
+    if setup.hooks_off(root):
+        out.append(Need("its Git hooks are off in this clone", SETUP_FIX))
     n = inbox_left(_read(os.path.join(root, names.INBOX)))
     if n:
         out.append(Need(f"{n} Inbox item{'s' if n > 1 else ''} not gone through",
@@ -312,9 +316,9 @@ def needs(root: str, data: str) -> List[Need]:
 
 
 def lacking(found: Found, here: str) -> List[str]:
-    """The roots of the projects `found` that turn baloo on and still lack an item of the list, but
-    the repo at `here`: the ones /bagheera:setup can complete from another project's session (PRD
-    setup). A repo that turns baloo on nowhere is left out, since its owner may have chosen not to
+    """The roots of the projects `found` that turn baloo on and still lack an item of the list, have
+    a plugin to install or update, or their Git hooks off, but the repo at `here`: the ones
+    /bagheera:setup can complete from another project's session (PRD setup). A repo that turns baloo on nowhere is left out, since its owner may have chosen not to
     set it up at all."""
     mine = main_tree(here) if here else ""
     return [p.root for p in found.projects

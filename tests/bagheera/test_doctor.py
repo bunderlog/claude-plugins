@@ -17,6 +17,17 @@ def doctor_run(test):
     return code, out
 
 
+def problem_lines(out):
+    """The `- ` lines under doctor's `Problems:`, each a problem."""
+    lines = out.split("Problems:\n", 1)[1].splitlines() if "Problems:\n" in out else []
+    got = []
+    for line in lines:
+        if not line.startswith("- "):
+            break
+        got.append(line)
+    return got
+
+
 class Doctor(unittest.TestCase):
     # After session start, doctor finds no problem and shows what is on, and why.
     def test_doctor(self):
@@ -140,10 +151,9 @@ class Doctor(unittest.TestCase):
             return {"scope": scope, "version": v, "projectPath": project}
 
         missing = (f"- {dir} turns {names.BUILD_ID} on, but Claude Code has no install of it for "
-                   "this project, so nothing of it loads here: install it with /plugin, project "
-                   "scope\n")
+                   "this project, so nothing of it loads here: /bagheera:setup installs it\n")
         stale = (f"- {names.BUILD_ID} 0.0.1 is installed for this project, older than the "
-                 f"{version.read()} this machine has: run claude plugin update {names.BUILD_ID}\n")
+                 f"{version.read()} this machine has: /bagheera:setup updates it\n")
         for louie, wanted in [
             ([], missing),
             ([entry("0.0.1", project="/elsewhere")], missing),
@@ -157,6 +167,12 @@ class Doctor(unittest.TestCase):
                 code, out = doctor_run(self)
                 self.assertEqual((code, missing in out, stale in out),
                                  (1 if wanted else 0, wanted == missing, wanted == stale), out)
+                # The fix is setup's, never one the person types: not /plugin, not claude plugin.
+                if wanted:
+                    self.assertIn(wanted.rstrip("\n"), problem_lines(out))
+                for line in problem_lines(out):
+                    self.assertNotIn("/plugin ", line)
+                    self.assertNotIn("claude plugin update", line)
         # A key set to false isn't turned on, so neither problem is its; setting a project up turns
         # both on, so the repo now lacks that item instead, which is setup's problem, not this one.
         with open(os.path.join(dir, names.PROJECT_SETTINGS), encoding="utf-8") as f:

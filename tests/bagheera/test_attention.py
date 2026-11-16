@@ -57,10 +57,21 @@ class Projects(unittest.TestCase):
 
 class Lacking(unittest.TestCase):
     # The projects /bagheera:setup can complete from another session are those set up and lacking
-    # an item: not one that isn't set up, whose owner may have chosen not to, not one whose needs
-    # are of another kind, and not the repo the session is in (PRD setup).
+    # an item, with a plugin to install or update, or with their Git hooks off: not one that isn't
+    # set up, whose owner may have chosen not to, not one whose needs are of another kind, and not
+    # the repo the session is in (PRD setup).
     def test_lacking(self):
-        commands.env(self)
+        old = commands.in_repo(self)
+        data = os.environ["CLAUDE_PLUGIN_DATA"]
+        commands.set_up(old)
+        commands.installed(old, **{names.BUILD_ID: [
+            {"scope": "project", "version": "0.0.1", "projectPath": old}]})
+        old_needs = attention.needs(old, data)
+        off = testkit.repo(self)
+        commands.set_up(off)
+        testkit.git(off, "add", ".githooks")
+        off_needs = attention.needs(off, data)
+        self.assertEqual([len(old_needs), len(off_needs)], [1, 1], (old_needs, off_needs))
         here, done, lacks, other, fresh = (testkit.repo(self) for _ in range(5))
         item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX)
         found = attention.Found(NOW, [
@@ -69,10 +80,12 @@ class Lacking(unittest.TestCase):
             attention.Project(done, False, [item]),          # not set up: its owner's call
             attention.Project(other, True, [attention.Need("2 Proposals wait", "open a session")]),
             attention.Project(fresh, True, []),
+            attention.Project(old, True, old_needs),
+            attention.Project(off, True, off_needs),
         ])
-        self.assertEqual(attention.lacking(found, here), [lacks])
+        self.assertEqual(attention.lacking(found, here), [lacks, old, off])
         # From outside any repo every one of them is another project.
-        self.assertEqual(attention.lacking(found, ""), [here, lacks])
+        self.assertEqual(attention.lacking(found, ""), [here, lacks, old, off])
 
     # A subfolder of the session's repo is the same project, so it is left out too.
     def test_lacking_subfolder(self):
@@ -105,7 +118,8 @@ class Needs(unittest.TestCase):
         self.assertEqual([n.what for n in got], ["attribution off in .claude/settings.json is missing"])
         self.assertEqual(got[0].fix, names.SETUP_SKILL + " there")
 
-    # An install of louie older than the bagheera installed needs an update, until it is updated.
+    # An install of louie older than the bagheera installed needs an update, and louie turned on
+    # with no install of it needs one, until it is installed or updated; /bagheera:setup does both.
     def test_old_install(self):
         dir, data = self.repo()
         commands.set_up(dir)
@@ -115,17 +129,23 @@ class Needs(unittest.TestCase):
         self.assertEqual(
             [(n.what, n.fix) for n in got],
             [(f"{names.BUILD_ID} 0.0.1 is installed, older than the {version.read()} this machine "
-              "has", f"claude plugin update {names.BUILD_ID} there")])
+              "has", names.SETUP_SKILL + " there")])
+        commands.installed(dir, **{names.BUILD_ID: []})
+        self.assertEqual(
+            [(n.what, n.fix) for n in attention.needs(dir, data)],
+            [(f"{names.BUILD_ID} is turned on with no install of it for this project",
+              names.SETUP_SKILL + " there")])
         commands.installed(dir)
         self.assertEqual(attention.needs(dir, data), [])
 
-    # A clone whose tracked Git hooks aren't turned on needs them on, until they are.
+    # A clone whose tracked Git hooks aren't turned on needs them on, which /bagheera:setup does,
+    # until they are.
     def test_hooks_off(self):
         dir, data = self.repo()
         write(os.path.join(dir, ".githooks", "pre-commit"), "#!/bin/sh\n")
         testkit.git(dir, "add", ".githooks")
         self.assertEqual([n.fix for n in attention.needs(dir, data)],
-                         ["git config core.hooksPath .githooks"])
+                         [names.SETUP_SKILL + " there"])
         testkit.git(dir, "config", "core.hooksPath", ".githooks")
         self.assertEqual(attention.needs(dir, data), [])
 

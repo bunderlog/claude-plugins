@@ -92,13 +92,12 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
             if not there:
                 problems.append(
                     f"{root} turns {plugin} on, but Claude Code has no install of it for this "
-                    "project, so nothing of it loads here: install it with /plugin, project "
-                    "scope"
+                    f"project, so nothing of it loads here: {names.SETUP_SKILL} installs it"
                 )
         for plugin, there, release in setup.old_installs(root):
             problems.append(
                 f"{plugin} {there} is installed for this project, older than the {release} "
-                f"this machine has: run claude plugin update {plugin}"
+                f"this machine has: {names.SETUP_SKILL} updates it"
             )
 
     if root:
