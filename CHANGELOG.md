@@ -2,6 +2,24 @@
 
 The marketplace's Releases, newest first.
 
+## 0.69.0 — 2026-11-18
+
+### bagheera
+
+No feature changes or fixes.
+
+### louie
+
+#### Features
+
+- have /louie:implement review each round for bugs and check the pushed head (080e14d)
+- have /louie:implement push in a stage of its own and open a pull request only if verified (6cd9785)
+
+#### Fixes
+
+- cite ADR tickets in the implementer's instructions, its name since 0.68.0 (ce6d454)
+- run louie:reviewer only inside implement, and keep its fields in its instructions alone (57dfad8)
+
 ## 0.68.0 — 2026-11-18
 
 ### baloo
