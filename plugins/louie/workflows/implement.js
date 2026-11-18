@@ -1,6 +1,6 @@
 export const meta = {
   name: 'implement',
-  description: 'Take agreed Tickets to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed with up to three reworks, and the pull request.',
+  description: 'Take agreed Tickets to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed and a review for bugs, with up to two reworks, and the pull request once its pushed branch ends at the commit they passed.',
   whenToUse: 'When the user asks to implement, build or deliver agreed Tickets up to pull requests, usually after /louie:plan and once their decisions are written into the Tickets. Takes one to five Tickets: each its key or URL in the tracker the project names, or its file in .about/tickets/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
   phases: [
     { title: 'Prepare' },
@@ -16,12 +16,12 @@ export const meta = {
 // The script decides the order of the stages and every way out of them; the agents do the work
 // (PRD implement, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
-// At most 23 agents a Ticket: prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4,
-// pull request 1; a Ticket that stops before it is built spends one more, to discard the worktree
-// it made. The agent's name repeats louie's names.PLUGIN, as a script can't import it.
+// At most 21 agents a Ticket: prepare 1, plan 1, implement 1, verify 4 and review 1, two reworks
+// of 1 + 4 + 1, pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 1); a Ticket that stops before it is built
+// spends one more, to discard the worktree it made. The agent's name repeats louie's names.PLUGIN, as a script can't import it.
 
 const MAX_TICKETS = 5
-const MAX_REWORK = 3
+const MAX_REWORK = 2
 const named =
   typeof args === 'string' ? args.split(/\s+/) : (args && (args.tickets || (args.ticket ? [args.ticket] : []))) || []
 const tickets = [...new Set(named.map((i) => String(i).trim()).filter(Boolean))]
@@ -53,14 +53,40 @@ const IMPLEMENT_SCHEMA = {
   required: ['outcome', 'blocker', 'commits'],
 }
 
+const REVIEW_SCHEMA = {
+  type: 'object',
+  properties: {
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          at: { type: 'string', description: 'the file and line, `file:line`' },
+          what: { type: 'string', description: 'what is wrong, in one sentence' },
+          bug: {
+            type: 'boolean',
+            description: 'true only for a defect the change shouldn\'t merge with (wrong behavior, a crash, lost data, a security hole); false for the rest',
+          },
+        },
+        required: ['at', 'what', 'bug'],
+      },
+    },
+  },
+  required: ['findings'],
+}
+
 const PR_SCHEMA = {
   type: 'object',
   properties: {
     opened: { type: 'boolean' },
     url: { type: 'string', description: 'the pull request\'s URL; empty when not opened' },
+    head: {
+      type: 'string',
+      description: 'the full sha of the commit the pushed branch ends at on the remote, after the push; empty when nothing was pushed',
+    },
     blocker: { type: 'string', description: 'when not opened: why, with the error; else empty' },
   },
-  required: ['opened', 'url', 'blocker'],
+  required: ['opened', 'url', 'head', 'blocker'],
 }
 
 // One Ticket's run: its stages fill it in, and end() makes what the run returns for it.
@@ -76,12 +102,18 @@ const end = (r, verdict, reason, extra) => ({
   ...extra,
 })
 
-// What a failed Verification failed on, so two rounds can be told the same or not.
-const failedOn = (v) =>
+// What a failed round failed on, its Verification's and its review's, so two rounds can be told
+// the same or not.
+const failedOn = (v, bugs) =>
   JSON.stringify([
     ...v.criteria.filter((c) => c.verdict === 'not-met').map((c) => `criterion: ${c.criterion}`),
     ...v.departures.filter((d) => d.blocks).map((d) => `${d.source}: ${d.at} ${d.from}`),
+    ...bugs.map((b) => `bug: ${b.at} ${b.what}`),
   ].sort())
+const listed = (findings) => findings.map((f) => `- ${f.at} — ${f.what}`)
+
+// A commit the stages name, a full sha or a short one, is another's when either begins the other.
+const sameCommit = (a, b) => !!a && !!b && (a.startsWith(b) || b.startsWith(a))
 
 // The files a ready plan changes, and whether two of them are one: the same path, or a folder
 // holding the other.
@@ -132,11 +164,16 @@ async function build(r) {
   let findings = ''
   let last = ''
   let verification = null
+  let review = null
+  // The commit the last round's implement or rework stage ended at, which its Verification and
+  // review checked.
+  let head = ''
+  const commits = `the commits ${r.prep.base}..${r.prep.branch} in ${r.prep.worktree} (run git and read files there)`
   for (let round = 0; ; round++) {
     const mode = round === 0 ? 'implement' : 'rework'
     const impl = await agent(
       `Stage: ${mode}\nTicket: ${r.ticket}\nWork in ${r.where}.\n\nThe plan:\n${r.planned.report}` +
-        (findings ? `\n\nThe Verification's findings to fix:\n${findings}` : ''),
+        (findings ? `\n\nThe Verification's and the review's findings to fix:\n${findings}` : ''),
       {
         agentType: 'louie:implementer',
         schema: IMPLEMENT_SCHEMA,
@@ -148,23 +185,41 @@ async function build(r) {
     if (impl.outcome === 'checks-failed') return end(r, 'blocked:checks', impl.blocker)
     if (impl.outcome !== 'done') return end(r, 'blocked:unimplementable', impl.blocker)
     if (!impl.commits.length && round === 0) return end(r, 'blocked:tooling', 'nothing was committed')
+    if (impl.commits.length) head = String(impl.commits[impl.commits.length - 1]).trim().split(/\s+/)[0]
 
-    try {
-      verification = await workflow('louie:verify', {
-        target: `the commits ${r.prep.base}..${r.prep.branch} in ${r.prep.worktree} (run git and read files there), serving the Ticket ${r.ticket}`,
-      })
-    } catch (e) {
-      return end(r, 'blocked:tooling', `the verify Workflow failed: ${e && e.message ? e.message : e}`)
-    }
+    // The Verification and the review, at once on the same commits; the verify Workflow's error is
+    // kept here, as parallel() would drop it.
+    const [verified, reviewed] = await parallel([
+      async () => {
+        try {
+          return { value: await workflow('louie:verify', { target: `${commits}, serving the Ticket ${r.ticket}` }) }
+        } catch (e) {
+          return { error: e && e.message ? e.message : String(e) }
+        }
+      },
+      () =>
+        agent(`Ticket: ${r.ticket}\nLook for bugs in ${commits}, as your instructions say.`, {
+          agentType: 'louie:reviewer',
+          schema: REVIEW_SCHEMA,
+          label: label(r, round ? `review ${round}` : 'review'),
+          phase: 'Implement',
+        }),
+    ])
+    if (verified && verified.error) return end(r, 'blocked:tooling', `the verify Workflow failed: ${verified.error}`)
+    verification = verified && verified.value
     if (!verification || !verification.verdict) return end(r, 'blocked:tooling', 'the verify Workflow returned nothing')
-    r.rounds.push({ mode, commits: impl.commits, verdict: verification.verdict })
-    if (verification.verdict === 'pass') break
+    review = reviewed
+    if (!review || !Array.isArray(review.findings)) return end(r, 'blocked:tooling', 'the review returned nothing')
+    const bugs = review.findings.filter((f) => f.bug)
+    r.rounds.push({ mode, commits: impl.commits, verdict: verification.verdict, bugs })
+    if (verification.verdict === 'pass' && !bugs.length) break
 
-    const now = failedOn(verification)
-    if (round >= MAX_REWORK) return end(r, 'failed:rework-budget', verification.report)
-    if (now === last) return end(r, 'failed:not-converging', verification.report)
+    const report = [verification.report, ...(bugs.length ? ['', 'Bugs the review found:', ...listed(bugs)] : [])].join('\n')
+    const now = failedOn(verification, bugs)
+    if (round >= MAX_REWORK) return end(r, 'failed:rework-budget', report)
+    if (now === last) return end(r, 'failed:not-converging', report)
     last = now
-    findings = verification.report
+    findings = report
   }
 
   // Ready to merge only when every criterion is met and tested and nothing was left unchecked.
@@ -176,6 +231,7 @@ async function build(r) {
 
   // The plan builds on its assumptions rather than stop for them: the person reviews them here.
   const assumptions = (r.planned.plan && r.planned.plan.assumptions) || []
+  const notBugs = review.findings.filter((f) => !f.bug)
   const body = [
     `Delivers ${r.ticket}.`,
     '',
@@ -185,6 +241,7 @@ async function build(r) {
       : ['- none found by the Verification']),
     '',
     ...(assumptions.length ? ['Assumptions the plan made, to review:', ...assumptions.map((a) => `- ${a}`), ''] : []),
+    ...(notBugs.length ? ['Review findings that aren\'t bugs:', ...listed(notBugs), ''] : []),
     'The app was not run; check its behavior by hand or with Claude Code\'s /verify.',
     '',
     'Verification:',
@@ -193,11 +250,19 @@ async function build(r) {
 
   const pr = await agent(
     `Stage: pull-request\nTicket: ${r.ticket}\nWork in ${r.where}, against ${r.prep.default_branch}.\n` +
-      `Open the pull request${draft ? ' as a draft' : ''}, its body this text, as it is:\n\n${body}`,
+      `The commit the last Verification passed: ${head}. Push the branch, and open the pull request only if ` +
+      `the pushed branch ends at that commit${draft ? ', as a draft' : ''}, its body this text, as it is:\n\n${body}`,
     { agentType: 'louie:implementer', schema: PR_SCHEMA, label: label(r, 'pull request'), phase: 'Pull request' },
   )
   if (!pr) return end(r, 'blocked:tooling', 'the pull-request stage returned nothing')
+  // What reaches the pull request is what was checked: the script doesn't take the stage's word
+  // for it.
+  const opened = pr.url ? `; the pull request: ${pr.url}` : ''
+  if (pr.head && !sameCommit(pr.head, head)) {
+    return end(r, 'blocked:pull-request', `the pushed branch ends at ${pr.head}, not at ${head}, the commit the last Verification passed${opened}`)
+  }
   if (!pr.opened || !pr.url) return end(r, 'blocked:pull-request', pr.blocker)
+  if (!pr.head) return end(r, 'blocked:pull-request', `the pull-request stage named no commit it pushed, to check against ${head}${opened}`)
 
   return end(r, draft ? 'done:draft-pr' : 'done:pr-opened', '', { pr_url: pr.url })
 }
