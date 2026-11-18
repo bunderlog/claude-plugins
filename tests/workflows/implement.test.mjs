@@ -11,11 +11,23 @@ const fail = (n) => ({
 })
 const ready = { verdict: 'ready', reason: '', report: 'the plan' }
 
-// Answers every stage; `verifications` are the Verification's results, round by round.
-function stages({ verifications = [pass], prepare = prep, planned = ready, pr = { opened: true, url: 'u', blocker: '' } } = {}) {
+const clean = { findings: [] }
+const bug = (n, isBug = true) => ({ at: `a.py:${n}`, what: `w${n}`, bug: isBug })
+
+// Answers every stage; `verifications` are the Verification's results and `reviews` the review's,
+// round by round.
+function stages({
+  verifications = [pass], reviews = [clean], prepare = prep, planned = ready, pr = { opened: true, url: 'u', head: 'c1', blocker: '' },
+} = {}) {
   let round = 0
+  let reviewed = 0
   return {
-    agent: (_, o) => (o.label === 'prepare' ? prepare : o.label === 'pull request' ? pr : done),
+    agent: (_, o) => {
+      if (o.label === 'prepare') return prepare
+      if (o.label === 'pull request') return pr
+      if (o.label.startsWith('review')) return reviews[Math.min(reviewed++, reviews.length - 1)]
+      return done
+    },
     workflow: (name) => {
       if (name === 'louie:plan') return planned
       // Each verify Workflow run is 4 agents of its own.
@@ -45,21 +57,50 @@ test('implement lists the plan\'s assumptions in the pull request\'s body, for t
   assert.match(calls.find((c) => c.label === 'pull request').prompt, /Assumptions[^\n]*\n- templates kept as \.tmpl files; else they move/)
 })
 
-test('implement ends failed:rework-budget after three reworks, with at most 23 agents', async () => {
-  const s = stages({ verifications: [fail(1), fail(2), fail(3), fail(4)] })
+test('implement ends failed:rework-budget after two reworks, with at most 21 agents', async () => {
+  const s = stages({ verifications: [fail(1), fail(2), fail(3)] })
   let verifies = 0
   const { result, calls } = await run('implement', 'x.md', { ...s, workflow: (n, a) => (n === 'louie:verify' && verifies++, s.workflow(n, a)) })
   assert.equal(result.verdict, 'failed:rework-budget')
-  assert.equal(result.rounds.length, 4)
+  assert.equal(result.rounds.length, 3)
   assert.ok(!calls.some((c) => c.label === 'pull request'))
-  // prepare, implement and three reworks here; plan 1 and verify 4 each run in their Workflows.
-  assert.ok(calls.length + 1 + 4 * verifies + 1 <= 23)
+  assert.equal(calls.filter((c) => c.agentType === 'louie:reviewer').length, verifies)
+  // prepare, implement, two reworks and a review a round here; plan 1 and verify 4 each run in
+  // their Workflows, and the pull request would be 1.
+  assert.ok(calls.length + 1 + 4 * verifies + 1 <= 21)
 })
 
 test('implement ends failed:not-converging when two rounds fail on the same', async () => {
   const { result } = await run('implement', 'x.md', stages({ verifications: [fail(1), fail(1)] }))
   assert.equal(result.verdict, 'failed:not-converging')
   assert.equal(result.rounds.length, 2)
+  // The same bug twice, with the Verification passing, is the same too.
+  const twice = await run('implement', 'x.md', stages({ reviews: [{ findings: [bug(1)] }] }))
+  assert.equal(twice.result.verdict, 'failed:not-converging')
+  assert.equal(twice.result.rounds.length, 2)
+  assert.ok(!twice.calls.some((c) => c.label === 'pull request'))
+})
+
+test('implement reworks a round whose review finds a bug, and puts the findings that aren\'t bugs in the pull request\'s body', async () => {
+  const reviews = [{ findings: [bug(1)] }, { findings: [bug(2, false)] }]
+  const { result, calls } = await run('implement', 'x.md', stages({ reviews }))
+  assert.equal(result.verdict, 'done:pr-opened')
+  assert.equal(result.rounds.length, 2)
+  assert.deepEqual(result.rounds.map((x) => x.bugs.length), [1, 0])
+  assert.match(calls.find((c) => c.label === 'rework 1').prompt, /findings to fix:[\s\S]*- a\.py:1 — w1/)
+  const pr = calls.find((c) => c.label === 'pull request').prompt
+  assert.match(pr, /Review findings that aren't bugs:\n- a\.py:2 — w2/)
+  assert.doesNotMatch(pr, /a\.py:1 — w1/)
+})
+
+test('implement ends blocked:pull-request when the pushed branch ends at another commit than the one the last Verification passed', async () => {
+  const { result, calls } = await run('implement', 'x.md', stages({ pr: { opened: true, url: 'u', head: 'c9', blocker: '' } }))
+  assert.equal(result.verdict, 'blocked:pull-request')
+  assert.match(result.reason, /c9[\s\S]*c1[\s\S]*u/)
+  assert.match(calls.find((c) => c.label === 'pull request').prompt, /The commit the last Verification passed: c1\./)
+  // A full sha the short one begins is the same commit.
+  const full = await run('implement', 'x.md', stages({ pr: { opened: true, url: 'u', head: 'c1f00d', blocker: '' } }))
+  assert.equal(full.result.verdict, 'done:pr-opened')
 })
 
 test('implement stops before changing anything when prepare stops, or the plan isn\'t ready', async () => {
@@ -96,7 +137,8 @@ function many({ changes = {}, planned = {}, implemented = {}, verifications = [p
         preparing--
         return { ...prep, worktree: `/r/.claude/worktrees/${ticket}`, branch: ticket }
       }
-      if (stage === 'pull request') return { opened: true, url: `pr/${ticket}`, blocker: '' }
+      if (stage === 'pull request') return { opened: true, url: `pr/${ticket}`, head: 'c1', blocker: '' }
+      if (stage.startsWith('review')) return clean
       if (stage === 'implement') return implemented[ticket] || done
       return done
     },

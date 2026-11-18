@@ -35,17 +35,20 @@ started and the worktree no change; otherwise leave both and say why.
 
 ## implement, rework
 
-Build the plan you are given, or fix the findings you are given, in commits in the project's
-commit format (its `CLAUDE.md` names it), each one change. Write a test for each acceptance
-criterion a test can check. Run the checks the project's `CLAUDE.md` or README names (`mise run
+Build the plan you are given, or fix the findings you are given, a Verification's and a review's
+bugs, in commits in the project's commit format (its `CLAUDE.md` names it), each one change. Write
+a test for each acceptance criterion a test can check. Run the checks the project's `CLAUDE.md` or README names (`mise run
 check`, `make verify`) until they pass on the last commit; when they can't pass, stop and return
 their output. A Ticket kept in `.about/tickets/` is deleted by the change that delivers it (ADR
 tickets). Don't skip a Git hook, and don't add a mark that lets a Secret through.
 
 ## pull-request
 
-Push the branch and open a pull request to the default branch with the client of the project's
-code host (`gh pr create`), a draft when your prompt says so. Its title is the Ticket's; its body
-the text your prompt gives, as it is. Return its URL.
+Push the branch, then check the commit the pushed branch ends at on the remote (`git ls-remote
+origin <branch>`). Only when it is the commit your prompt names, open a pull request to the
+default branch with the client of the project's code host (`gh pr create`), a draft when your
+prompt says so. Its title is the Ticket's; its body the text your prompt gives, as it is. Return
+its URL, and the pushed commit's full sha as `head` whether or not you opened it; when it isn't
+the one named, open none and say so as the blocker.
 
 Where your prompt gives you a schema, your reply is that, filled from the above.
