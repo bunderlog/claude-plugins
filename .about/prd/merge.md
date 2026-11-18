@@ -79,7 +79,8 @@ branch's CI passes after every merge `/louie:merge` makes.
   `needs-decision` under its pull request with its options and the one recommended; a `report` of
   both as text; and a `verdict`: `done:all`, `done:some` or `blocked:none`, or `blocked:no-pr` or
   `blocked:too-many` before any agent runs. A decision stays in the report: the person settles it
-  and runs the pull request again; it goes to no Inbox.
+  and runs the pull request again; it goes to no Inbox, since the pull request can't merge until it
+  is settled (ADR inbox).
 - At most 22 agents per pull request (prepare 1, rebase 1, Verification 4 and review 1, two
   reworks of 1 + 4 + 1, push 1, ci 1, merge 1), as PRD implement has; a run on more than one can
   pass 25, so Claude Code's `Large workflow` warning shows for it, as for PRD batch's.
@@ -124,24 +125,43 @@ branch's CI passes after every merge `/louie:merge` makes.
 
 - With its agents stubbed, a run on three pull requests starts the second's prepare only after the
   first has merged, and the third's only after the second has merged or stopped.
-- With its agents stubbed, a run on three pull requests where the second's rebase needs a decision
-  merges the first and the third, returns the second as `blocked:needs-decision` with its files,
-  options and recommended option in `decisions`, runs no push stage for it, and ends `done:some`.
+  → test: tests/workflows/merge.test.mjs "merge takes the pull requests one at a time, each starting
+  once the one before has merged or stopped"
+- With its agents stubbed, a run on three pull requests where the second's rebase needs an Open
+  decision merges the first and the third, returns the second as `blocked:needs-decision` with its
+  files, options and recommended option in `decisions`, runs no push stage for it, and ends
+  `done:some`.
+  → test: tests/workflows/merge.test.mjs "merge goes on with the others when a rebase needs an Open
+  decision, and reports it under its pull request"
 - With its agents stubbed, a pull request whose rebase reports no conflict still runs the four
   verifiers and the review before its push.
+  → test: tests/workflows/merge.test.mjs "merge verifies and reviews a pull request whose rebase had
+  no conflict before its push"
 - With its agents stubbed, a rebase that reports `blocked:checks` runs no Verification, push or
   merge for that pull request.
+  → test: tests/workflows/merge.test.mjs "merge runs no Verification, push or merge after a rebase
+  whose checks fail"
 - With its agents stubbed, a pull request whose Verification fails on new criteria every round
   ends `failed:rework-budget` after two reworks, and runs no push or merge stage.
+  → test: tests/workflows/merge.test.mjs "merge ends failed:rework-budget after two reworks when
+  every Verification fails on new criteria"
 - With its agents stubbed, a push after which the branch ends at another commit than the one the
   last Verification passed ends `blocked:push-mismatch`, and a ci stage reporting a failing check
   ends `blocked:ci` naming it, with no merge stage run in either.
+  → test: tests/workflows/merge.test.mjs "merge merges nothing when the pushed branch isn't the
+  commit the Verification passed, or a check fails"
 - With its agents stubbed, a prepare reporting a draft, a closed pull request, a missing Ticket or
   a merge method it can't tell ends `blocked:draft`, `blocked:closed`, `blocked:no-ticket` or
   `blocked:merge-method`, and runs no rebase stage.
+  → test: tests/workflows/merge.test.mjs "merge stops a pull request at prepare when it is a draft,
+  closed, not on the default branch, in another repo, or has no Ticket or no merge method it can
+  tell"
 - With its agents stubbed, six distinct pull requests end `blocked:too-many` and no pull request
   `blocked:no-pr`, each scheduling no agent; `42 #42` and the URL of pull request 42 run it once.
+  → test: tests/workflows/merge.test.mjs "merge takes one to five pull requests, each counted once
+  by its number"
 - With its agents stubbed, a run on N pull requests schedules at most 22 agents per pull request.
+  → test: tests/workflows/merge.test.mjs "merge schedules at most 22 agents a pull request"
 - In a repo with a remote, two pull requests from `/louie:implement` that both add a link to the
   same file's list merge in the order named: the second is rebased onto the first, keeps both
   links, or drops its own when it is the same link, is verified, and is merged by the project's
