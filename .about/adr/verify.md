@@ -7,31 +7,32 @@ Ticket's or PRD's acceptance criteria) without breaking a test, and the session 
 one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
 change to see it work; neither knows anything of `.about/`. So louie ships one agent,
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
-departure with `file:line`. It doesn't hunt bugs, which the code review does. Inside an
-`implement` run nobody runs that code review before the pull request, so there louie's
-`louie:reviewer` does, beside the verifiers each round, and a bug it finds is reworked as a
-blocking departure is (PRD implement). It is not a verifier: it looks for bugs, not for what the
+departure with `file:line`. It doesn't hunt bugs, which the code review does. Inside an `implement`
+or `merge` run nobody runs that code review before the pull request or the merge, so there louie's
+`louie:reviewer` does, beside the verifiers each round, and a bug it finds is reworked as a blocking
+departure is (PRD implement, PRD merge). It is not a verifier: it looks for bugs, not for what the
 project agreed, and reads no `.about/`.
 
 The `verify` Workflow runs four of it at once, one per source: the ADRs, the glossary, the
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
 schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
 departure that blocks or a criterion not met (PRD implement). So the user has `/louie:verify`, and
-`implement` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
-Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
-context. A Verification runs only when the user asks or agrees, or as a stage of a `implement` run
-they started, as it is a whole run's tokens. Claude offers one, in a line and once, at the end of a
-task that serves a Ticket or a PRD with acceptance criteria, before its commit or PR: there it has
-criteria to check against, and few tasks have one. The Workflow's description says so, and a line in
-`principles`' On every task, which session start prints in every session (ADR guidelines): on
-2026-11-02 the description alone made Claude offer it in 3 of 3 runs on Opus but 0 of 3 on Sonnet,
-the line in 3 of 3 on both, and without the plugin in none (`evals/verify/offer`, run against the
-skill's description, which the Workflow's `whenToUse` now carries). By default it looks at the
-current branch's commits since the default branch, plus the working tree; a commit range, a branch
-or a PR given overrides that. It checks the criteria of the Ticket or PRD it is given, or else of the
-one the branch's name, its commits or its files point to, and says so when it finds none rather than
-guessing. Checking a built feature's whole PRD, every criterion's test link, stays the `prd` skill's
-(ADR prd): a Verification looks at the criteria one change serves.
+`implement` and `merge` run the same Workflow as a stage. Where the session has no Workflow tool, as
+on Pro until Workflows are turned on, Claude runs the agent by its name instead, checking every
+source in one context. A Verification runs only when the user asks or agrees, or as a stage of an
+`implement` or `merge` run they started, as it is a whole run's tokens. Claude offers one, in a line
+and once, at the end of a task that serves a Ticket or a PRD with acceptance criteria, before its
+commit or PR: there it has criteria to check against, and few tasks have one. The Workflow's
+description says so, and a line in `principles`' On every task, which session start prints in every
+session (ADR guidelines): on 2026-11-02 the description alone made Claude offer it in 3 of 3 runs on
+Opus but 0 of 3 on Sonnet, the line in 3 of 3 on both, and without the plugin in none
+(`evals/verify/offer`, run against the skill's description, which the Workflow's `whenToUse` now
+carries). By default it looks at the current branch's commits since the default branch, plus the
+working tree; a commit range, a branch or a PR given overrides that. It checks the criteria of the
+Ticket or PRD it is given, or else of the one the branch's name, its commits or its files point to,
+and says so when it finds none rather than guessing. Checking a built feature's whole PRD, every
+criterion's test link, stays the `prd` skill's (ADR prd): a Verification looks at the criteria one
+change serves.
 
 Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that it writes nothing
 holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its
@@ -52,7 +53,7 @@ starts without the index and does the same.
 ## Considered options
 
 - Four agents: analyzing a Ticket, implementing, reviewing and testing (reviewing until
-  2026-11-18, now `louie:reviewer` inside `implement` only, as above) — analyzing is what the
+  2026-11-18, now `louie:reviewer` inside `implement` and `merge` only, as above) — analyzing is what the
   built-in Explore and the `debugging` Guideline do already, with the conversation the session
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
   steer it; testing is the project's checks' and building test-first's, and what remains of it,

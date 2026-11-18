@@ -107,8 +107,8 @@ such pull request carries the Verification's verdict on each acceptance criterio
   request says the app was not run.
 - Fixing a red CI run after the pull request: a session with the `ci` Guideline, or Claude Code's
   own fixing of a pull request's CI.
-- Merging the pull request, closing a Ticket in a tracker, or writing a Ticket: the person's, and
-  the `ticket` skill's.
+- Merging the pull request: `/louie:merge` (PRD merge), on the person naming it.
+- Closing a Ticket in a tracker, or writing a Ticket: the person's, and the `ticket` skill's.
 - Removing old worktrees and branches: the person's.
 - Templates and `upgrade-all`: PRD templates.
 

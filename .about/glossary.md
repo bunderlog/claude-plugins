@@ -30,7 +30,7 @@ _Avoid_: "baloo" for these parts
 
 **louie**:
 The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
-where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from a Ticket to a pull request; to come,
+where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from a Ticket to a pull request and on to the default branch; to come,
 templates for a new product (PRD louie, PRD implement, PRD templates).
 _Avoid_: "baloo" for these parts
 
@@ -41,7 +41,7 @@ _Avoid_: hathi as a plugin
 
 **Workflow**:
 A Claude Code dynamic workflow: a script a plugin ships that runs many agents, such as
-`/louie:verify`; a project turns them on in its `.claude/settings.json`.
+`/louie:verify` or `/louie:merge`; a project turns them on in its `.claude/settings.json`.
 _Avoid_: pipeline
 
 **Set up**:
@@ -192,12 +192,12 @@ _Avoid_: issue, task, todo; but "issue" stays where it names a tracker's own obj
 _In code_: the `ticket` skill writes one; `.about/issues/` where a project kept them before 0.68.0
 
 **Verification**:
-A comparison, which the user asks for or a `implement` run makes, of a change with what the project
-agreed: its ADRs, glossary, the Guidelines that fit the repo, and the acceptance criteria of its
-Ticket or PRD. louie's agent, the verifier, makes it in a context of its own, so not as the change's
-author, one for each source when the `verify` Workflow runs it, and changes nothing. Unlike a code
-review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't run the change; unlike a
-Check, it isn't a plugin's code.
+A comparison, which the user asks for or an `implement` or `merge` run makes, of a change with what
+the project agreed: its ADRs, glossary, the Guidelines that fit the repo, and the acceptance
+criteria of its Ticket or PRD. louie's agent, the verifier, makes it in a context of its own, so not
+as the change's author, one for each source when the `verify` Workflow runs it, and changes nothing.
+Unlike a code review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't run the
+change; unlike a Check, it isn't a plugin's code.
 _Avoid_: review, already a Session review's, a Retro's and a code review's word
 _In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 
@@ -213,9 +213,12 @@ _In code_: the `plan` Workflow; `agents/planner.md`
 **Open decision**:
 A choice only the person can make, which the Ticket, the ADRs and the code leave open, such as a
 behavior another decision set. A Plan with one stops `implement` until it is written into the Ticket
-or an ADR; one found elsewhere waits in the Inbox. Unlike an Assumption, a Plan doesn't take it.
+or an ADR; one a `merge` run's rebase finds, where keeping one Ticket's intent drops another's,
+stops that pull request and stays in the run's report until the person settles it and runs the pull
+request again, with no Inbox; one found elsewhere waits in the Inbox. Unlike an Assumption, a Plan
+doesn't take it.
 _Avoid_: decision for the person; "decision" alone, which an ADR's is once taken
-_In code_: a Plan's `decisions`; the verdict `needs-decision`
+_In code_: a Plan's `decisions`; a `merge` run's `decisions`; the verdict `needs-decision`
 
 **Assumption**:
 What a Plan takes as given without asking the person, with what would change if it is wrong: a
