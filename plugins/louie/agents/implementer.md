@@ -35,10 +35,11 @@ started and the worktree no change; otherwise leave both and say why.
 
 ## implement, rework
 
-Build the plan you are given, or fix the findings you are given, a Verification's and a review's
-bugs, in commits in the project's commit format (its `CLAUDE.md` names it), each one change. Write
-a test for each acceptance criterion a test can check. Run the checks the project's `CLAUDE.md` or README names (`mise run
-check`, `make verify`) until they pass on the last commit; when they can't pass, stop and return
+Build the plan you are given, or fix the findings you are given (a Verification's departures and
+criteria not met, and the review's bugs), in commits in the project's commit format (its
+`CLAUDE.md` names it), each one change. Write a test for each acceptance criterion a test can
+check. Run the checks the project's `CLAUDE.md` or README names (`mise run check`, `make verify`)
+until they pass on the last commit; when they can't pass, stop and return
 their output. A Ticket kept in `.about/tickets/` is deleted by the change that delivers it (ADR
 tickets). Don't skip a Git hook, and don't add a mark that lets a Secret through.
 
