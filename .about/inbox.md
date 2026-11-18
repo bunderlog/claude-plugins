@@ -158,3 +158,37 @@ check that the pushed head is the commit the Verification passed is in PRD imple
   the agent in PreToolUse's input, to check first; louie tells agents apart only at
   SubagentStart now.
 Settled by deciding them in PRD implement, once the Hook is known to be possible.
+
+## merge's force-push rests on the implementer's word
+
+2026-11-18 · /louie:verify of PR #14
+
+The force-push stage's rules (only with `--force-with-lease`, only to the pull request's branch,
+never the default branch; `plugins/louie/agents/implementer.md:14`, `:109`) are text the agent
+reads: `merge.js` checks the sha the stage reports for the remote branch, but not which branch it
+pushed or that it used the lease. Against writing-for-agents.md's "a rule that must hold goes into
+a hook, a check or a test … text last". Settled by a check that holds it (a Hook on the
+implementer's `git push`, or the script reading the remote's branches before and after), or by
+deciding the text is enough.
+
+## merge's base check rests on the implementer's word
+
+2026-11-18 · /louie:verify of PR #14
+
+Only the merge stage checks that the default branch's tip is still the rebase's base
+(`plugins/louie/agents/implementer.md:127`), and `merge.js` takes its `base-moved` on its word;
+`gh pr merge --match-head-commit` holds the head, not the base. PRD merge's anti-goal of a merge
+onto a moved base so rests on text. Settled by a check the script or the code host makes (a
+branch protection that requires branches to be up to date, or a stage that reports the tip it
+read, compared by the script), or by deciding the text is enough.
+
+## Nothing measures PRD merge's success
+
+2026-11-18 · /louie:verify of PR #14
+
+A `/louie:merge` run returns its results and records them nowhere, so PRD merge's success signal
+(no hand-resolved conflict reaching the default branch, CI green after every merge) can be judged
+only from the code host's history by hand, against principles.md's "ship the instrumentation in
+the same change". Settled by deciding where a run's results are counted (bagheera's Assessment
+reads Workflow runs from the Transcripts, ADR measurement), or that the code host's history is
+enough.
