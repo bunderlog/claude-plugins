@@ -1,6 +1,6 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-11-16
+Date: 2026-11-18
 
 The marketplace installs its plugins from this repo's `main`, each from the folder
 `.claude-plugin/marketplace.json` names, and an installed copy updates only to a new version, so a
@@ -12,8 +12,11 @@ notes. The commits follow Conventional Commits: below 1.0 a breaking change or a
 minor, anything else the patch; from 1.0 a breaking change raises the major. It writes that version
 to every plugin's `plugin.json`, which must all carry the same one before, and a section to
 `CHANGELOG.md`, a part per plugin a commit changed where there are several; commits them as
-`chore(release): <version>` and tags the commit `v<version>`, signed. The task then pushes `main`
-and the tag together; the tag starts the Release workflow, which publishes the CHANGELOG section as
+`chore(release): <version>` and tags the commit `v<version>`, signed. Before it writes anything,
+`main` must be the same here and on origin, and each workflow that runs on a push to `main` must
+have passed on the newest commit it ran on, every later commit being one it ignores by its
+`paths`; else the task stops and says what to wait for or fix, as a push to `main` is what users
+install. The task then pushes `main` and the tag together; the tag starts the Release workflow, which publishes the CHANGELOG section as
 the GitHub Release. With nothing to build or download (ADR binary), a copy that updates before the
 workflow has run misses only the notes page.
 
@@ -58,10 +61,19 @@ Release.
   would keep a Go toolchain for one tool.
 - A Release as a tag and `CHANGELOG.md` alone, with no workflow — one less moving part, but no
   notes page on GitHub.
+- No check before a Release (until 2026-11-18) — 0.69.0 went out with CI on macOS still running,
+  and the CI the Release's own push started could only tell afterwards.
+- The Release workflow waiting for CI on the tagged commit — but users install from `main`, which
+  the push has already changed by then.
 - CI making the Release on every push to `main` — no local step, but the release commit would be
   CI's, unsigned, and CI would push to `main`.
 
 ## Consequences
+
+- CI skips a Release's own commit, which changes only the versions and the CHANGELOG of code it
+  has just passed; a commit only to `.about/` or this repo's own Markdown runs no tests, and
+  `src/release/release.py` reads each workflow's `paths` for its check, so the two can't disagree.
+- A Release waits for CI: after a merge or a push, `mise run release` stops until the runs end.
 
 - The message of a commit that changes the plugin is release notes: its subject is what users
   read, and a breaking change's `BREAKING CHANGE:` footer is printed under it, so the footer says
