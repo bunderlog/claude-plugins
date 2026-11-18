@@ -13,7 +13,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class Error(Exception):
@@ -290,6 +290,94 @@ def release(root: str, today: str) -> str:
     return new
 
 
+WORKFLOWS = ".github/workflows"
+
+# A workflow's runs, by its name: each commit's newest, as (status, conclusion), by its full sha.
+Runs = Dict[str, Dict[str, Tuple[str, str]]]
+
+
+def _workflows(root: str) -> Dict[str, Optional[List[str]]]:
+    """The workflows in the repo at `root` that run on a push to `main`, each by its name with the
+    `paths` its push lists, or None for one with no such list, which runs on every push. A line-by-line
+    read of the few keys this repo's files use, as the tool has no YAML parser."""
+    found: Dict[str, Optional[List[str]]] = {}
+    folder = os.path.join(root, WORKFLOWS)
+    for file in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        text = _read(os.path.join(folder, file)) or ""
+        name = re.search(r"^name:\s*(.+)$", text, re.M)
+        if not name or not re.search(r"^  push:", text, re.M):
+            continue
+        push = text.split("\n  push:", 1)[1]
+        # One run on a tag alone, as the Release workflow does, checks no commit of main.
+        if not re.match(r"\n    branches: \[main\]", push):
+            continue
+        block = re.match(r"(?:\n    (?!paths:)[^\n]*)*\n    paths:\n((?:      [^\n]*\n)*)", push)
+        found[name.group(1).strip()] = (
+            re.findall(r"^      - '([^']+)'$", block.group(1), re.M) if block else None
+        )
+    return found
+
+
+def _glob(pattern: str) -> "re.Pattern[str]":
+    out = ""
+    for part in re.split(r"(\*\*|\*|\?)", pattern):
+        out += {"**": ".*", "*": "[^/]*", "?": "[^/]"}.get(part, re.escape(part))
+    return re.compile(out)
+
+
+def _checks(paths: Optional[List[str]], file: str) -> bool:
+    """Whether a workflow whose push lists `paths` runs for a change to `file`: as GitHub reads
+    the list, the last pattern the file matches decides, and a `!` one excludes it."""
+    if paths is None:
+        return True
+    hit = False
+    for p in paths:
+        if _glob(p.lstrip("!")).fullmatch(file):
+            hit = not p.startswith("!")
+    return hit
+
+
+def ci_green(root: str, runs: Runs) -> None:
+    """An Error unless, for each workflow of the repo at `root`, the newest commit on `main`'s
+    first-parent line that it ran on, going back from HEAD, passed, and every commit after it is
+    one the workflow ignores (ADR releases). A workflow that ran on none, with nothing it checks
+    since the first commit, passes too."""
+    log = _git(root, "log", "--first-parent", "--name-only", "--format=%x00%H")
+    commits = []
+    for entry in log.split("\x00")[1:]:
+        sha, _, files = entry.strip().partition("\n")
+        commits.append((sha, [f for f in files.split("\n") if f]))
+    for name, paths in _workflows(root).items():
+        for sha, files in commits:
+            run = runs.get(name, {}).get(sha)
+            if run:
+                status, conclusion = run
+                if status != "completed":
+                    raise Error(f"{name} is still running on {sha[:7]}: wait for it")
+                # A run whose every job was skipped, as on a Release's own commit, passed.
+                if conclusion not in ("success", "skipped"):
+                    raise Error(f"{name} ended {conclusion} on {sha[:7]}: fix it first")
+                break
+            if any(_checks(paths, f) for f in files):
+                raise Error(f"{name} has no run on {sha[:7]}, which it checks: push main and wait for it")
+
+
+def _runs(root: str) -> Runs:
+    """The workflows' runs on pushes to `main`, from GitHub through `gh`."""
+    p = subprocess.run(
+        ["gh", "run", "list", "--branch", "main", "--event", "push", "--limit", "100",
+         "--json", "workflowName,headSha,status,conclusion"],
+        cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    if p.returncode:
+        raise Error(f"gh run list, to check CI first: {p.stderr.strip()}")
+    runs: Runs = {}
+    for r in json.loads(p.stdout):
+        # gh lists the newest first: a commit's newest run decides.
+        runs.setdefault(r["workflowName"], {}).setdefault(r["headSha"], (r["status"], r["conclusion"]))
+    return runs
+
+
 def main(args: List[str]) -> int:
     if args:
         print("release: usage: python3 src/release/release.py", file=sys.stderr)
@@ -300,6 +388,11 @@ def main(args: List[str]) -> int:
         print(f"release: not in the repo: {e}", file=sys.stderr)
         return 1
     try:
+        # A Release goes out from what CI passed (ADR releases): main pushed as it is here.
+        _git(root, "fetch", "-q", "origin", "main")
+        if _git(root, "rev-parse", "HEAD") != _git(root, "rev-parse", "origin/main"):
+            raise Error("main here and on origin differ: push or pull it first, then wait for CI")
+        ci_green(root, _runs(root))
         new = release(root, date.today().isoformat())
     except (Error, OSError) as e:
         print(f"release: {e}", file=sys.stderr)

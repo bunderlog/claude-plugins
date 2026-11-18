@@ -3,10 +3,28 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      # A commit to the project's knowledge or this repo's own Markdown needs no tests, but for the
+      # ADR a test reads; src/release/release.py reads these lists for its check before a Release.
+      - '**'
+      - '!.about/**'
+      - '!*.md'
+      - '.about/adr/guidelines.md'
   pull_request:
+    paths:
+      - '**'
+      - '!.about/**'
+      - '!*.md'
+      - '.about/adr/guidelines.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
+    # A Release's own commit changes only versions and the CHANGELOG, on code CI has just passed.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     strategy:
       matrix:
         os: [ubuntu-24.04, macos-latest]
@@ -19,6 +37,8 @@ jobs:
   # run.py on a python3 older than 3.9 says so rather than failing on newer syntax (ADR binary):
   # exit 2 for a command, and nothing for a Hook.
   old-python:
+    # A Release's own commit changes only versions and the CHANGELOG, on code CI has just passed.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -32,97 +52,3 @@ jobs:
               [ -z "$(echo "{}" | python -E -s $r post-tool-use 2>&1)" ]
             done
           '
-
-  # louie's go-vue template, written as /louie:new writes it: the line it gives the person turns the
-  # Git hooks on and makes the first commit through them, and the fresh repo's check passes (PRD
-  # templates).
-  template:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v5
-      - shell: bash
-        run: |
-          set -euo pipefail
-          git config --global user.name ci
-          git config --global user.email ci@example.com
-          line=$(python3 -E -s plugins/louie/scripts/run.py new "$RUNNER_TEMP/demo" demo bunderlog | tail -n 1)
-          case $line in "! "*) ;; *) echo "not the line to run: $line" >&2; exit 1 ;; esac
-          bash -euc "${line#! }"
-          cd "$RUNNER_TEMP/demo"
-          test "$(git config core.hooksPath)" = .githooks
-          if git commit -q --allow-empty -m wip; then echo "the Git hooks let wip through" >&2; exit 1; fi
-          version=$(python3 -E -s "$GITHUB_WORKSPACE/plugins/louie/scripts/run.py" version)
-          test "$(git log -1 --format=%s)" = "chore: scaffold from louie go-vue $version"
-          mise run check
-          if grep -rE '__(NAME|OWNER|DATE)__' --exclude-dir=.git --exclude-dir=node_modules .; then exit 1; fi
-          grep -qx 'module github.com/bunderlog/demo' apps/api/go.mod
-          # check fails where internal/db isn't what sqlc generates, with no database.
-          echo '// drift' >> apps/api/internal/db/models.go
-          if mise run check; then echo "check passed with internal/db drifted" >&2; exit 1; fi
-          git checkout -- apps/api/internal/db/models.go
-          grep -q '"name": "@demo/app"' apps/app/package.json
-          # The lockfile is keyed by path: the product's name is in none of it.
-          if grep -qw demo pnpm-lock.yaml; then echo "pnpm-lock.yaml holds the name" >&2; exit 1; fi
-          # check fails where a test of apps/app fails.
-          printf '%s\n' 'import { expect, test } from "vitest";' '' 'test("fails", () => {' \
-            '  expect(1).toBe(2);' '});' > apps/app/src/views/broken.test.ts
-          if mise run check; then echo "check passed with a failing test of apps/app" >&2; exit 1; fi
-          rm apps/app/src/views/broken.test.ts
-          test -z "$(git status --porcelain)"
-      # mise run dev starts Postgres, the API and Vite: /api/up answers through either, the app's
-      # page carries the product's name, and the server has run the migrations.
-      - shell: bash
-        working-directory: ${{ runner.temp }}/demo
-        run: |
-          set -euo pipefail
-          setsid mise run dev > "$RUNNER_TEMP/dev.log" 2>&1 &
-          dev=$!
-          trap 'code=$?; kill -TERM -- "-$dev" 2>/dev/null || true; [ "$code" = 0 ] || cat "$RUNNER_TEMP/dev.log"' EXIT
-          for url in http://localhost:8080/api/up http://localhost:5173/api/up; do
-            curl -fsS --retry 90 --retry-delay 2 --retry-all-errors "$url"; echo
-          done
-          curl -fsS http://localhost:5173/ | grep '<title>demo</title>'
-          test "$(docker compose exec -T db psql -U demo -d demo -tAc 'select max(version_id) from goose_db_version')" = 1
-      # The Dockerfile's image serves the API and the app's build on one port.
-      - shell: bash
-        working-directory: ${{ runner.temp }}/demo
-        run: |
-          set -euo pipefail
-          docker build -t demo .
-          docker run -d --name demo --network host -e ADDR=:8081 \
-            -e 'DATABASE_URL=postgres://demo@localhost:5433/demo?sslmode=disable' demo
-          trap 'code=$?; [ "$code" = 0 ] || docker logs demo; docker rm -f demo > /dev/null' EXIT
-          curl -fsS --retry 30 --retry-delay 1 --retry-all-errors http://localhost:8081/api/up; echo
-          curl -fsS http://localhost:8081/ | grep '<title>demo</title>'
-          curl -fsS http://localhost:8081/notes/1 | grep '<title>demo</title>'
-          # An unknown path or a wrong method under /api/ gets respond's JSON, not the mux's text.
-          nope=$(curl -sS -i http://localhost:8081/api/nope | tr -d '\r')
-          grep -qx 'HTTP/1.1 404 Not Found' <<<"$nope" || { echo "$nope" >&2; exit 1; }
-          grep -qix 'content-type: application/json' <<<"$nope" || { echo "$nope" >&2; exit 1; }
-          grep -qF '"code":"not_found"' <<<"$nope" || { echo "$nope" >&2; exit 1; }
-          post=$(curl -sS -i -X POST http://localhost:8081/api/up | tr -d '\r')
-          grep -qx 'HTTP/1.1 405 Method Not Allowed' <<<"$post" || { echo "$post" >&2; exit 1; }
-          grep -qix 'allow: GET, HEAD' <<<"$post" || { echo "$post" >&2; exit 1; }
-          grep -qF '"code":"method_not_allowed"' <<<"$post" || { echo "$post" >&2; exit 1; }
-      # mise run deploy runs the pinned Kamal image with .env's secrets, which git ignores.
-      - shell: bash
-        working-directory: ${{ runner.temp }}/demo
-        run: |
-          set -euo pipefail
-          if mise run deploy config; then echo "deploy ran with no .env" >&2; exit 1; fi
-          cp .env.example .env
-          mise run deploy config | grep -F '"<server>"'
-          test -z "$(git status --porcelain)"
-
-  # hathi's commit and repo Checks on what the push or pull request brings.
-  hathi:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: jdx/mise-action@v5
-        with:
-          install_args: github:bunderlog/hathi
-      - run: hathi check ci

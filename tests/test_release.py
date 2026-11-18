@@ -258,5 +258,87 @@ class Release(unittest.TestCase):
         )
 
 
+CI_YML = """name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**'
+      - '!.about/**'
+      - '!*.md'
+"""
+
+TEMPLATE_YML = """name: Template
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tpl/**'
+"""
+
+
+class CIGreen(unittest.TestCase):
+    """The check before a Release (ADR releases): each workflow's newest run on what it checks
+    passed, a commit it ignores needing none."""
+
+    def setUp(self):
+        self.root = testkit.repo(self)
+        write(self.root, ".github/workflows/ci.yml", CI_YML)
+        write(self.root, ".github/workflows/template.yml", TEMPLATE_YML)
+        write(self.root, ".github/workflows/release.yml",
+              "name: Release\n\non:\n  push:\n    tags: [\"v*\"]\n")
+        testkit.git(self.root, "add", ".")
+        testkit.git(self.root, "commit", "-q", "-m", "ci: workflows")
+        self.code = self.commit("app.py", "feat: the app")
+
+    def commit(self, rel, message):
+        commit(self.root, rel, message, message)
+        return testkit.git(self.root, "rev-parse", "HEAD").strip()
+
+    def green(self, runs):
+        release.ci_green(self.root, runs)
+
+    def refused(self, runs):
+        with self.assertRaises(release.Error) as caught:
+            self.green(runs)
+        return str(caught.exception)
+
+    def test_a_passed_run_on_head_and_a_workflow_with_nothing_to_check(self):
+        self.green({"CI": {self.code: ("completed", "success")}})
+
+    def test_a_commit_the_workflow_ignores_needs_no_run(self):
+        self.commit(".about/inbox.md", "docs: an item")
+        self.commit("README.md", "docs: the readme")
+        self.green({"CI": {self.code: ("completed", "success")}})
+
+    def test_a_commit_with_no_run_running_or_failed_is_refused(self):
+        head = self.commit("lib.py", "fix: the lib")
+        short = head[:7]
+        self.assertEqual(
+            self.refused({"CI": {self.code: ("completed", "success")}}),
+            f"CI has no run on {short}, which it checks: push main and wait for it",
+        )
+        self.assertEqual(
+            self.refused({"CI": {head: ("in_progress", "")}}),
+            f"CI is still running on {short}: wait for it",
+        )
+        self.assertEqual(
+            self.refused({"CI": {head: ("completed", "failure")}}),
+            f"CI ended failure on {short}: fix it first",
+        )
+
+    def test_each_workflow_by_its_own_paths(self):
+        tpl = self.commit("tpl/a.go", "feat: the template")
+        self.assertEqual(
+            self.refused({"CI": {tpl: ("completed", "success")}}),
+            f"Template has no run on {tpl[:7]}, which it checks: push main and wait for it",
+        )
+        self.commit("app.py", "fix: the app again")
+        head = testkit.git(self.root, "rev-parse", "HEAD").strip()
+        self.green({"CI": {head: ("completed", "success")}, "Template": {tpl: ("completed", "success")}})
+
+
 if __name__ == "__main__":
     unittest.main()

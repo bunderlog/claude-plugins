@@ -1,0 +1,23 @@
+name: hathi
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # hathi's commit and repo Checks on what the push or pull request brings.
+  hathi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: github:bunderlog/hathi
+      - run: hathi check ci
