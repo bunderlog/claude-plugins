@@ -15,14 +15,17 @@ settle it. The Session review proposes to add what the conversation left open, o
 fix, for the user to accept (ADR session-review); `adr` and `glossary` add what stays open, `ticket`
 what is still to decide, `retro` each fix the user didn't pick, and a rule `principles` prints on
 every task sends anything else left for later there, a code review's findings among them, rather
-than to Claude's memory. An item is deleted once the code, an ADR, the glossary or the Guidelines
-settle it: by the change that settles it, or by an accepted Proposal of the Session review where the
-conversation did; the file goes with its last item, so a project with nothing open has none. Session
-start tells Claude how many items there are, one per `## ` heading outside a code block, and how
-many nobody has gone through yet, to tell the user, and that the `inbox` skill goes through them
-with the user. The `interview` skill reads the Inbox before its questions, so an item a plan touches
-becomes one of its open decisions; it writes nothing, so the change that settles the item deletes
-it.
+than to Claude's memory. An Open decision a Workflow stops on goes elsewhere: a Plan's is written
+into the Ticket or an ADR before `implement` goes on (PRD implement), and one a `merge` run's
+rebase finds stays in the run's report, as the person settles it before running the pull request
+again (PRD merge). An item is deleted once the code, an ADR, the glossary or the
+Guidelines settle it: by the change that settles it, or by an accepted Proposal of the Session
+review where the conversation did; the file goes with its last item, so a project with nothing
+open has none. Session start tells Claude how many items there are, one per `## ` heading outside
+a code block, and how many nobody has gone through yet, to tell the user, and that the `inbox`
+skill goes through them with the user. The `interview` skill reads the Inbox before its questions,
+so an item a plan touches becomes one of its open decisions; it writes nothing, so the change that
+settles the item deletes it.
 
 The `inbox` skill first asks of the Session review's Proposals for the Inbox, which session start
 only counts, whether to accept, reject or defer each (ADR session-review); an accepted one adds an
@@ -65,6 +68,8 @@ oldest mark first.
   tune, or items nobody ever looks at again.
 - The item's format in one shared file the skills cite — the Session review's prompt and the
   Guidelines would still keep copies of their own.
+- A `merge` run's Open decisions in the Inbox too — the pull request can't merge until the person
+  settles one, so it waits on the run's report, not on a list gone through later.
 
 ## Consequences
 

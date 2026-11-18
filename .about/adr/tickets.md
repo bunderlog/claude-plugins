@@ -28,13 +28,18 @@ five, all planned before any is built (PRD batch): it reads the Ticket, branches
 and opens the pull request, each repo's flow coming from what the project names, its checks command,
 commit format, tracker and code host, rather than from the plugin. It never merges and never closes
 a tracker's Ticket; a Ticket in `.about/tickets/` goes with the change that delivers it, as above.
+louie merges a pull request only through `/louie:merge` (PRD merge), on the person naming it: one
+at a time, each rebased onto the default branch and checked again first, by the merge method the
+project names. Closing a tracker's Ticket stays the person's.
 
 ## Considered options
 
 - A `ship` skill beside it (branch, commit, push, `merge --ff-only`, delete the branch) — asked
   for in every session of one project, but the flow is each repo's own, and a Retro already
   recommends a project skill for a prompt typed again and again. `implement` stops at the pull
-  request, and takes the flow from what the project names.
+  request, and takes the flow from what the project names. Merging became a Workflow of its own,
+  `merge`, once pull requests built from one default branch conflicted when merged one by one:
+  its merge method and checks too come from what the project names, not from the plugin.
 - `issue` for the name, until 0.68.0 — what GitHub and Jira call it, but read as a problem
   rather than work to do, and already a Stall's _Avoid_; `ticket` is neutral between a bug and a
   task, and known to any tracker's user. `task` is taken by Claude Code's tasks and a Workflow's
