@@ -153,8 +153,16 @@ _In code_: the `assess` skill; `bagheera/assess.py`
 **Stall**:
 A point in a session that cost the user something the Setup could have spared: a failed or
 refused tool call, an interrupt, a correction, a prompt the user types again and again. A red test
-mid-change, a denial that was right, or a call that is the user's to make each time isn't one.
+mid-change, a denial that was right, or a call that is the user's to make each time isn't one;
+but handing them such a call to run is, as the decision is theirs and the command isn't.
 _Avoid_: issue, incident
+
+**Hand-back**:
+A turn of the person's that runs with `!` a command Claude's reply since their turn before named
+and no Bash call of Claude's own since then ran or tried: a step Claude could have taken itself.
+One whose call was refused counts apart, as after a refusal; a command starting with `sudo` isn't
+one, while one theirs to decide, such as `git push`, is, as Claude should have asked and run it
+(PRD hand-back).
 
 **Session review**:
 A review bagheera starts itself when a session ends, in every repo: a separate headless session

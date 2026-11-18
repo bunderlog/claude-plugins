@@ -173,3 +173,15 @@ wrote into `.about/` unasked). A kind the user accepted every time, such as a gl
 accepted 10 times of 10, might with the user's yes apply itself and say so. Settled by the
 Session review's log showing a kind accepted unedited often enough to trust, and the user's yes;
 or by keeping every Proposal asked.
+
+## A code review as a stage of implement
+
+2026-11-18 · user
+
+`/louie:implement` checks a change against what the project agreed (ADR verify) and runs the
+project's checks, but nothing in it looks for bugs: the verifier says that is a code review's job,
+and the run stops at a pull request for a person to review. A review stage between Verify and the
+pull request, its findings reworked as the Verification's are, would catch bugs before a person
+reads the change, at the cost of more agents and minutes a run. Settled by deciding it in PRD
+delivery: a stage, with its own budget of reworks, or the review left to the person and Claude
+Code's `/code-review`.
