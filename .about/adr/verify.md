@@ -12,7 +12,7 @@ departure with `file:line`. It doesn't hunt bugs, which the code review does.
 The `verify` Workflow runs four of it at once, one per source: the ADRs, the glossary, the
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
 schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
-departure that blocks or a criterion not met (PRD delivery). So the user has `/louie:verify`, and
+departure that blocks or a criterion not met (PRD implement). So the user has `/louie:verify`, and
 `implement` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
 Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
 context. A Verification runs only when the user asks or agrees, or as a stage of a `implement` run
@@ -53,7 +53,7 @@ starts without the index and does the same.
   steer it; testing is the project's checks' and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
 - A pipeline from Ticket to tested change (until 2026-11-10) — each repo's flow is its own, as for
-  `ship` (ADR tickets); PRD delivery's `implement` takes it from what the project names, its checks
+  `ship` (ADR tickets); PRD implement's `implement` takes it from what the project names, its checks
   command, commit format and tracker.
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.

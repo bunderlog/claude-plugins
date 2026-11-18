@@ -7,7 +7,7 @@ project's method — the knowledge skills and one SessionStart Hook in `sh`, no 
 building — the Guidelines, each given by its task's signal or named where it fits, the `PostToolUse`
 Hook that names, at a file Claude reads, edits or writes, the ADRs and PRDs that concern it (PRD
 index), the verifier and the Workflows `verify`, `plan` and `implement`, and to come templates and
-`upgrade-all` (PRD louie, PRD delivery); and `bagheera`, the person's sessions and repos — Checks in
+`upgrade-all` (PRD louie, PRD implement); and `bagheera`, the person's sessions and repos — Checks in
 Hooks beyond Claude Code's deny rules, the Status line and `doctor`, the Session review and Retro,
 the `short-replies` Output style, and setting a project up. A part goes where who turns it on and
 what it is made of put it: a project turns baloo and louie on for everyone in it, and each person
@@ -30,7 +30,7 @@ file names) is a constant in one module of that plugin, so a rename is one edit 
 the manifests and the docs; a Workflow script repeats the names it needs, as it can't import.
 
 A plugin's code is Python, standard library only, but its Workflows are JavaScript, the language
-Claude Code runs them in; `node` is needed only by this repo's tests (PRD delivery).
+Claude Code runs them in; `node` is needed only by this repo's tests (PRD implement).
 
 New work that leans on what a plugin already has is part of that plugin, not a plugin of its own:
 fixing a failed CI run is louie's `ci` Guideline (ADR guidelines), which follows `debugging` and

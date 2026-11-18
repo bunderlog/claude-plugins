@@ -103,7 +103,7 @@ figures in it, so that decision can be about a part of any of them.
 - Showing anything in the Status line or at session start: the report is asked for.
 - Turning a part off from the report.
 - What a user is asked after a week of use (PRD status-line, PRD visibility): no session shows it.
-- PRD delivery's and PRD batch's own success signals: the report counts the Workflows' runs and
+- PRD implement's and PRD batch's own success signals: the report counts the Workflows' runs and
   ends, not what came of their pull requests.
 - `hathi`'s runs outside a session: a commit made in a terminal, and CI. Only what a session's
   Transcript shows is counted.

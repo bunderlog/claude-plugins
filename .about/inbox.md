@@ -183,7 +183,7 @@ project's checks, but nothing in it looks for bugs: the verifier says that is a 
 and the run stops at a pull request for a person to review. A review stage between Verify and the
 pull request, its findings reworked as the Verification's are, would catch bugs before a person
 reads the change, at the cost of more agents and minutes a run. Settled by deciding it in PRD
-delivery: a stage, with its own budget of reworks, or the review left to the person and Claude
+implement: a stage, with its own budget of reworks, or the review left to the person and Claude
 Code's `/code-review`.
 
 ## The pull request stage as an agent of its own, kept from what implement may run
@@ -203,4 +203,4 @@ would lose only Edit and Write, and could still change and commit through Bash. 
   nothing but `git push` and `gh pr` for the pull request's agent. It needs Claude Code to name
   the agent in PreToolUse's input, to check first; louie tells agents apart only at
   SubagentStart now.
-Settled by deciding them in PRD delivery: the script check alone, or with the agent and the Hook.
+Settled by deciding them in PRD implement: the script check alone, or with the agent and the Hook.

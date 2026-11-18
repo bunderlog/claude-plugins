@@ -24,10 +24,10 @@ report, before any commit; and no two pull requests of one run conflict on the d
 - `/louie:implement <Ticket> <Ticket> …`: the `implement` Workflow takes several Tickets, as one text
   split on whitespace or as `{ tickets: [...] }`, each as it takes one (a tracker's key or URL, or a
   file in `.about/tickets/`). The same text twice counts once; from one to five Tickets after that.
-  On one Ticket it runs and returns as PRD delivery has it. Claude Code runs a Workflow inside a
+  On one Ticket it runs and returns as PRD implement has it. Claude Code runs a Workflow inside a
   Workflow one level deep only, so `implement`, which runs `plan` and `verify` as stages, can't be a
   stage of another: the Tickets are its own.
-- First each Ticket is prepared, one after another, as stages 1 and 2 of PRD delivery do: a
+- First each Ticket is prepared, one after another, as stages 1 and 2 of PRD implement do: a
   worktree and branch of its own. Then all are planned at once. No Ticket is implemented until
   every plan is in.
 - A Ticket goes on only when its plan is ready. One whose plan stops (an Open decision, no
@@ -38,15 +38,15 @@ report, before any commit; and no two pull requests of one run conflict on the d
   its worktree and branch discarded; the person runs it again once that pull request is merged.
   A Ticket blocked this way blocks no later one. Two plans change the same file when the `where`
   of a change in each is the same path, or one is a folder holding the other.
-- Each Ticket left goes through stages 4 to 7 of PRD delivery from the plan this run made, without
+- Each Ticket left goes through stages 4 to 7 of PRD implement from the plan this run made, without
   planning again, all at once. One Ticket's run ending `blocked:` or `failed:` doesn't stop the
   others.
-- It returns `results`, each Ticket with how its run ended, as PRD delivery names it, its branch,
+- It returns `results`, each Ticket with how its run ended, as PRD implement names it, its branch,
   and its pull request's URL or the reason; `decisions`, every decision any plan raised for the
   person, under its Ticket, with the options and the one recommended; a `report` of both as text;
   and a `verdict`: `done:all` when every Ticket ended `done:`, `done:some` when some did,
   `blocked:none` when none did, or `blocked:no-ticket` or `blocked:too-many` before any agent runs.
-- At most 23 agents per Ticket, as PRD delivery has, and one more for each discarded worktree. A
+- At most 23 agents per Ticket, as PRD implement has, and one more for each discarded worktree. A
   run on more than one Ticket can pass 25, so Claude Code's `Large workflow` warning shows for it.
 - At its Release, ADR tickets says `implement` takes several Tickets.
 
@@ -58,7 +58,7 @@ report, before any commit; and no two pull requests of one run conflict on the d
 - Answering a plan's decisions or writing them into the Ticket: the person's, before running the
   Ticket again.
 - The person handing `/louie:implement` a plan already made: declined on 2026-11-12, as a way to
-  build the planner recommends is now an assumption the plan builds on (PRD delivery).
+  build the planner recommends is now an assumption the plan builds on (PRD implement).
 - Rerunning a Ticket that ended `failed:` or `blocked:`, Tickets in another repo, or more than five
   at once.
 
