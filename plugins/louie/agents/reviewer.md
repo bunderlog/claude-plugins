@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Look for bugs in a change's commits and report each with file:line and whether the change shouldn't merge with it. Run only through the /louie:implement Workflow, beside its Verification each round; outside it Claude Code's own code review finds bugs. Not for checking what the project agreed, which the verifier does; it changes nothing.
+description: Look for bugs in a change's commits and report each with file:line and whether the change shouldn't merge with it. Run only through the /louie:implement or /louie:merge Workflow, beside its Verification each round; outside them Claude Code's own code review finds bugs. Not for checking what the project agreed, which the verifier does; it changes nothing.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
