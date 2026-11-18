@@ -145,6 +145,38 @@ def _body(commits: List[Commit], level: str) -> str:
     return body or "No feature changes or fixes.\n"
 
 
+# The headings of a Release's notes whose lines bunderlog/web must describe: what a reader can
+# now do, or must do differently. A fix brings the code back to what the site already says.
+_SITE_HEADINGS = ("Breaking changes", "Features")
+
+
+def site_changes(notes: str) -> List[str]:
+    """A Release's notes' breaking changes and features, each once as a `- ` line, named after its
+    plugins where the notes have several."""
+    # Each change once, with the plugins it is in: a breaking feature is under both headings, and
+    # a commit to several plugins is in each one's part.
+    changes: Dict[str, List[str]] = {}
+    plugin, keep = "", False
+    for line in notes.splitlines():
+        if line.startswith("#"):
+            title = line.lstrip("#").strip()
+            if title in _SITE_HEADINGS or title == "Fixes":
+                keep = title in _SITE_HEADINGS
+            else:
+                plugin, keep = title, False
+        elif keep and line.startswith("- "):
+            names = changes.setdefault(line[2:], [])
+            if plugin and plugin not in names:
+                names.append(plugin)
+    return [f"- {', '.join(names)}: {text}" if names else f"- {text}" for text, names in changes.items()]
+
+
+def release_notes(changelog: str, version: str) -> str:
+    """`version`'s section of the CHANGELOG without its `## ` line, as release.yml publishes it."""
+    m = re.search(rf"^## {re.escape(version)} .*?\n(.*?)(?=^## |\Z)", changelog, re.M | re.S)
+    return m.group(1) if m else ""
+
+
 def _git(root: str, *args: str) -> str:
     """What git, run in `root` with `args`, prints, trimmed; an Error when it fails."""
     p = subprocess.run(
@@ -398,6 +430,11 @@ def main(args: List[str]) -> int:
         print(f"release: {e}", file=sys.stderr)
         return 1
     print(f"released {new}")
+    with open(os.path.join(root, "CHANGELOG.md"), encoding="utf-8") as f:
+        changes = site_changes(release_notes(f.read(), new))
+    if changes:
+        print(f"\nbunderlog/web may not describe these of {new} yet: update the site.")
+        print("\n".join(changes))
     return 0
 
 

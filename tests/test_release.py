@@ -171,6 +171,38 @@ def released(test, names=("baloo",)):
     return root
 
 
+class SiteChanges(unittest.TestCase):
+    def _changes(self, by_plugin):
+        changelog = release.CHANGELOG_HEADER + "\n" + release.sections("0.71.0", "2026-11-19", by_plugin)
+        return release.site_changes(release.release_notes(changelog, "0.71.0"))
+
+    def test_names_each_feature_and_breaking_change_once_after_its_plugins(self):
+        self.assertEqual(self._changes({
+            "baloo": [Commit("a1", "fix: a fix")],
+            "louie": [Commit("b2", "feat: add /louie:x"), Commit("c3", "fix: another")],
+            "bagheera": [Commit("d4", "feat!: drop a Check\n\nBREAKING CHANGE: it is gone"), Commit("e5", "feat: rename a word")],
+            "louie2": [Commit("e5", "feat: rename a word")],
+        }), [
+            "- louie: add /louie:x (b2)",
+            "- bagheera: drop a Check (d4)",
+            "- bagheera, louie2: rename a word (e5)",
+        ])
+
+    def test_one_plugins_notes_name_no_plugin(self):
+        self.assertEqual(self._changes({"baloo": [Commit("a1", "feat: a skill")]}), ["- a skill (a1)"])
+
+    def test_fixes_alone_give_none(self):
+        self.assertEqual(self._changes({
+            "baloo": [Commit("a1", "fix: a fix")], "louie": [], "bagheera": [Commit("b2", "docs: words")],
+        }), [])
+
+    def test_release_notes_are_the_versions_section_alone(self):
+        changelog = release.CHANGELOG_HEADER + "\n## 0.2.0 — d\n\n- b\n\n## 0.1.0 — d\n\n- a\n"
+        self.assertEqual(release.release_notes(changelog, "0.2.0"), "\n- b\n\n")
+        self.assertEqual(release.release_notes(changelog, "0.1.0"), "\n- a\n")
+        self.assertEqual(release.release_notes(changelog, "0.3.0"), "")
+
+
 class Release(unittest.TestCase):
     # Only the plugin's commits count: not the tests or the release tool; the commit
     # and the files are made, and the tag, which must be signed, fails without a key.
