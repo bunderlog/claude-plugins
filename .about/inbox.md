@@ -101,3 +101,75 @@ needs the agent to commit, with Bash, which the sandbox doesn't run yet (see the
 cases).
 Settled by an eval case where Claude writes a body that only restates the diff, failing without
 the rule and passing with it (ADR evals): then lines in `principles`; or by dropping the idea.
+
+## A Guideline that names the discipline it rests on
+
+2026-11-18 · user, from a post on nine personal agents
+
+The post's agents work well once each is given a recognised method to follow (a textbook, a
+standard, a book such as Nygard's *Release It!*), not rules written from scratch. louie's
+Guidelines cite no source. A model knows such books, so naming one may stand in for paragraphs of
+rules and shorten what every session reads: `debugging` on Agans' *Debugging: The 9
+Indispensable Rules*, `design` and the `architecture` skill on Ousterhout's *A Philosophy of
+Software Design*, whose deep modules they already follow, `ci` on *Release It!*. Settled by an
+eval of one Guideline, rewritten to name its source and cut what that source already says,
+scoring as well as the current text (ADR evals): then the same for the others; or by dropping the
+idea.
+
+## A verifier of another vendor's model
+
+2026-11-18 · user, from a post on translating a book with agents
+
+The post's translation was Claude's and its checkers two OpenAI models: one model errs the same
+way each time, and their lists of findings hardly overlapped. louie's `verify` runs only Claude's
+verifiers, Claude checking Claude (ADR verify). A second verifier through the Codex CLI, where it
+is installed, may find what Claude's misses. Settled by running both on the same few changes and
+counting the findings only one found that the user agrees are real: then a verifier of its own
+in `verify`; or by dropping the idea.
+
+## Calibrating a Verification's findings
+
+2026-11-18 · user, from a post on translating a book with agents
+
+The post neither obeys nor ignores a checker that over-reports: it calibrates it. A finding both
+checkers made independently ranks a step higher, and one of the wordier checker's a step lower;
+132 findings became 11. `verify` reports each verifier's findings as found, and `implement` reworks
+up to three times on them. Settled together with the item on a verifier of another vendor's
+model, which gives two independent lists to rank: by a rule of ranking in `verify`'s report once
+both run; or by dropping it with that item.
+
+## What an implementer leaves alone whatever a finding says
+
+2026-11-18 · user, from a post on translating a book with agents
+
+In the post a checker called the book's working title an inaccuracy, and the editor agent,
+obedient, changed it; the fix was a list of what the editor must never touch on a finding alone
+(glossary terms, the title, running metaphors). In `implement`, `louie:implementer` reworks on the
+verifier's findings, and nothing says it keeps the glossary's terms and the ADRs' decisions when a
+finding asks otherwise. Settled by a line in the implementer's rework stage, that such a finding
+goes to the report as an Open decision, not into the code; or by finding that the verifier, which
+checks against the ADRs and the glossary, never asks it.
+
+## The Assessment asks about a figure that crosses a line
+
+2026-11-18 · user, from a post on a smart home that grows its own controls
+
+The post's system watches how a device is used and comes with one apt question. The Assessment
+watches, but says nothing until asked, by its Non-goal "Showing anything in the Status line or at
+session start" (PRD assessment). Its report of 2026-11-18 had such figures: `no-git-hook-bypass`
+4 of 4 denials false, `baloo:architecture` loaded once in 30 days, `go`, `typescript` and `vue`
+before the first edit of their files 0 of 13, 0 of 9 and 0 of 5. Settled by deciding the lines
+(a Check's denials mostly false, a part unused for 30 days) and where the question goes, such as
+a Proposal to this repo's Inbox; or by keeping the report asked for.
+
+## A Proposal kind that has earned it applies itself
+
+2026-11-18 · user, from a post on a smart home that grows its own controls
+
+The post's devices climb a ladder of trust: watch, suggest, act on a command, act alone on agreed
+scenarios, each step up only by the person's leave, and a dangerous one only switched off. The
+Session review stands at suggest: every Proposal waits for the user (ADR measurement, after it
+wrote into `.about/` unasked). A kind the user accepted every time, such as a glossary edit
+accepted 10 times of 10, might with the user's yes apply itself and say so. Settled by the
+Session review's log showing a kind accepted unedited often enough to trust, and the user's yes;
+or by keeping every Proposal asked.
