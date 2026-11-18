@@ -17,14 +17,14 @@ use it and it has already drifted from the rest (PRD harness).
 
 ## Success signal
 
-Within a month of the Release of `deliver`, an Issue goes from `/louie:plan` through
-`/louie:deliver` to an opened pull request in at least two projects besides `webui`, and every
+Within a month of the Release of `implement`, an Issue goes from `/louie:plan` through
+`/louie:implement` to an opened pull request in at least two projects besides `webui`, and every
 such pull request carries the Verification's verdict on each acceptance criterion.
 
 ## Scope
 
 - Three Workflows in `plugins/louie/workflows/`, built in this order, a Release each: `verify`,
-  `plan`, `deliver`. Their stages run as louie's agents in `agents/` (`louie:verifier`,
+  `plan`, `implement`. Their stages run as louie's agents in `agents/` (`louie:verifier`,
   `louie:planner`, `louie:implementer`), each given the Guidelines' index by the `SubagentStart`
   Hook. Each stage takes what the person agreed from the Issue and `.about/`, not from the
   session's conversation.
@@ -44,8 +44,8 @@ such pull request carries the Verification's verdict on each acceptance criterio
   plan: what changes where and which criterion each change serves, its confidence, the decisions
   only the person can make, and "nothing to build" with the commit that already meets the criteria.
   It changes nothing. The person settles the Open decisions, and the session writes them into the
-  Issue or an ADR, committed and pushed before `deliver`.
-- `/louie:deliver <Issue>`, one agent per stage unless said, stages 1 and 2 one agent:
+  Issue or an ADR, committed and pushed before `implement`.
+- `/louie:implement <Issue>`, one agent per stage unless said, stages 1 and 2 one agent:
   1. stops `blocked:` before changing anything when the repo has no remote, the tracker's client
      is missing, or the local default branch or `.about/` holds what the remote's lacks;
   2. fetches and adds a worktree under `.claude/worktrees/<slug>` on a new branch from the
@@ -77,7 +77,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - louie's Guidelines have Claude, in a session with the Workflow tool, offer once, in a line,
   once a PRD's scope or criteria change and before building a change that serves a PRD or an
   Issue with acceptance criteria, to take it through an Issue (written with baloo's `issue` skill where there is none), `/louie:plan` and
-  `/louie:deliver`, instead of editing in the session; it starts them only when the person
+  `/louie:implement`, instead of editing in the session; it starts them only when the person
   agrees, and edits in the session when they decline.
 - louie's Guidelines have Claude, when it gives the person the result of a louie Workflow's run,
   give with it what the run took, as its task-notification says: its tokens, its agents and its
@@ -110,7 +110,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 
 - A pull request opened ready to merge whose Verification failed, or a run that ends without
   saying why.
-- `deliver` changing the person's checkout, their current branch or the default branch.
+- `implement` changing the person's checkout, their current branch or the default branch.
 - `plan` or `verify` changing a file, a branch or the tracker.
 
 ## Acceptance criteria
@@ -118,7 +118,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - Each Workflow's `meta` is a plain literal with `name`, `description` and the `phases` its
   `phase()` calls use, and no script calls `Date.now()`, `Math.random()` or `import()`.
   → test: tests/louie/test_workflows.py "test_meta_and_body"
-- In a project with louie and Workflows on, `/louie:plan`, `/louie:deliver` and `/louie:verify`
+- In a project with louie and Workflows on, `/louie:plan`, `/louie:implement` and `/louie:verify`
   are offered as commands; with louie off, none is. Checked by hand at each of their Releases.
 - `/louie:verify` on a branch that breaks an ADR's rule and leaves one PRD criterion unmet reports
   both, each with `file:line` and its source, and `git status` and the branches are the same before
@@ -126,31 +126,31 @@ such pull request carries the Verification's verdict on each acceptance criterio
   and an unmet criterion"; the run, checked by hand at its Release.
 - `/louie:plan` on an Issue whose criteria a commit on the default branch already meets returns
   "nothing to build" naming that commit, and leaves the repo's branches and files as they were.
-- `/louie:deliver` on an Issue with acceptance criteria, in a repo with a remote, ends
+- `/louie:implement` on an Issue with acceptance criteria, in a repo with a remote, ends
   `done:pr-opened`: the pull request targets the default branch from a new branch, its commits pass
   the project's Git hooks, its body lists each criterion with a verdict, and the person's checkout
   has the branch and files it had before.
-- With an earlier run's branch `<slug>` present, `/louie:deliver` works on `<slug>-2` and leaves
+- With an earlier run's branch `<slug>` present, `/louie:implement` works on `<slug>-2` and leaves
   `<slug>` as it was.
-- With its agents stubbed, `deliver` ends `failed:rework-budget` when every Verification fails on
+- With its agents stubbed, `implement` ends `failed:rework-budget` when every Verification fails on
   new criteria, after three reworks, and `failed:not-converging` when two in a row fail on the same
   ones, and opens no pull request in either; it schedules at most 23 agents in any case.
-  → test: tests/workflows/deliver.test.mjs "deliver ends failed:rework-budget after three reworks,
-  with at most 23 agents", "deliver ends failed:not-converging when two rounds fail on the same"
+  → test: tests/workflows/implement.test.mjs "implement ends failed:rework-budget after three reworks,
+  with at most 23 agents", "implement ends failed:not-converging when two rounds fail on the same"
 - With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
   pull request as a draft, the criterion's verdict in its body.
-  → test: tests/workflows/deliver.test.mjs "deliver opens a draft when a criterion is met with no
+  → test: tests/workflows/implement.test.mjs "implement opens a draft when a criterion is met with no
   test"
 - With its agents stubbed, the pull request's body lists the plan's assumptions.
-  → test: tests/workflows/deliver.test.mjs "deliver lists the plan's assumptions in the pull
+  → test: tests/workflows/implement.test.mjs "implement lists the plan's assumptions in the pull
   request's body, for the person to review"
 - In a repo with no remote, with the tracker's client missing, or with a local commit on the default
-  branch the remote lacks, `deliver` ends `blocked:` with the reason and no branch, worktree or
-  commit made. The script's part: → test: tests/workflows/deliver.test.mjs "deliver stops before
+  branch the remote lacks, `implement` ends `blocked:` with the reason and no branch, worktree or
+  commit made. The script's part: → test: tests/workflows/implement.test.mjs "implement stops before
   changing anything when prepare stops, or the plan isn't ready"; the prepare stage's, by hand.
 - In a session with louie on and the Workflow tool, asked to build a change a PRD agreed with no
   Issue for it, Claude's first reply, before any edit, offers in a line the Issue, `/louie:plan`
-  and `/louie:deliver`; and so does its reply after it changes a PRD's criteria. Checked by hand
+  and `/louie:implement`; and so does its reply after it changes a PRD's criteria. Checked by hand
   at its Release.
 - In a session with no Workflow tool, Claude offers the `louie:verifier` agent by name at the end
   of a task that serves an Issue or a PRD, instead of `/louie:verify` (ADR verify's offer).

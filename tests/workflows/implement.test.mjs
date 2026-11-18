@@ -24,8 +24,8 @@ function stages({ verifications = [pass], prepare = prep, planned = ready, pr = 
   }
 }
 
-test('deliver opens the pull request when the Verification passes', async () => {
-  const { result, calls } = await run('deliver', 'x.md', stages())
+test('implement opens the pull request when the Verification passes', async () => {
+  const { result, calls } = await run('implement', 'x.md', stages())
   assert.equal(result.verdict, 'done:pr-opened')
   assert.equal(result.pr_url, 'u')
   const pr = calls.find((c) => c.label === 'pull request')
@@ -33,22 +33,22 @@ test('deliver opens the pull request when the Verification passes', async () => 
   assert.match(pr.prompt, /met-tested: c1 — test t/)
 })
 
-test('deliver opens a draft when a criterion is met with no test', async () => {
-  const { result, calls } = await run('deliver', 'x.md', stages({ verifications: [{ ...pass, criteria: [met('met-untested')] }] }))
+test('implement opens a draft when a criterion is met with no test', async () => {
+  const { result, calls } = await run('implement', 'x.md', stages({ verifications: [{ ...pass, criteria: [met('met-untested')] }] }))
   assert.equal(result.verdict, 'done:draft-pr')
   assert.match(calls.find((c) => c.label === 'pull request').prompt, /as a draft[\s\S]*met-untested: c1/)
 })
 
-test('deliver lists the plan\'s assumptions in the pull request\'s body, for the person to review', async () => {
+test('implement lists the plan\'s assumptions in the pull request\'s body, for the person to review', async () => {
   const planned = { ...ready, plan: { changes: [], decisions: [], assumptions: ['templates kept as .tmpl files; else they move'] } }
-  const { calls } = await run('deliver', 'x.md', stages({ planned }))
+  const { calls } = await run('implement', 'x.md', stages({ planned }))
   assert.match(calls.find((c) => c.label === 'pull request').prompt, /Assumptions[^\n]*\n- templates kept as \.tmpl files; else they move/)
 })
 
-test('deliver ends failed:rework-budget after three reworks, with at most 23 agents', async () => {
+test('implement ends failed:rework-budget after three reworks, with at most 23 agents', async () => {
   const s = stages({ verifications: [fail(1), fail(2), fail(3), fail(4)] })
   let verifies = 0
-  const { result, calls } = await run('deliver', 'x.md', { ...s, workflow: (n, a) => (n === 'louie:verify' && verifies++, s.workflow(n, a)) })
+  const { result, calls } = await run('implement', 'x.md', { ...s, workflow: (n, a) => (n === 'louie:verify' && verifies++, s.workflow(n, a)) })
   assert.equal(result.verdict, 'failed:rework-budget')
   assert.equal(result.rounds.length, 4)
   assert.ok(!calls.some((c) => c.label === 'pull request'))
@@ -56,25 +56,25 @@ test('deliver ends failed:rework-budget after three reworks, with at most 23 age
   assert.ok(calls.length + 1 + 4 * verifies + 1 <= 23)
 })
 
-test('deliver ends failed:not-converging when two rounds fail on the same', async () => {
-  const { result } = await run('deliver', 'x.md', stages({ verifications: [fail(1), fail(1)] }))
+test('implement ends failed:not-converging when two rounds fail on the same', async () => {
+  const { result } = await run('implement', 'x.md', stages({ verifications: [fail(1), fail(1)] }))
   assert.equal(result.verdict, 'failed:not-converging')
   assert.equal(result.rounds.length, 2)
 })
 
-test('deliver stops before changing anything when prepare stops, or the plan isn\'t ready', async () => {
-  const blocked = await run('deliver', 'x.md', stages({ prepare: { ...prep, ok: false, reason: 'no remote' } }))
+test('implement stops before changing anything when prepare stops, or the plan isn\'t ready', async () => {
+  const blocked = await run('implement', 'x.md', stages({ prepare: { ...prep, ok: false, reason: 'no remote' } }))
   assert.equal(blocked.result.verdict, 'blocked:prepare')
   assert.equal(blocked.result.reason, 'no remote')
   assert.deepEqual(blocked.calls.map((c) => c.label), ['prepare'])
   for (const [verdict, want] of [['needs-decision', 'blocked:needs-decision'], ['done:nothing-to-build', 'done:nothing-to-build']]) {
-    const { result, calls } = await run('deliver', 'x.md', stages({ planned: { verdict, reason: 'r', report: 'p' } }))
+    const { result, calls } = await run('implement', 'x.md', stages({ planned: { verdict, reason: 'r', report: 'p' } }))
     assert.equal(result.verdict, want)
     // The worktree it made, holding nothing yet, is discarded.
     assert.deepEqual(calls.map((c) => c.label), ['prepare', 'discard'])
     assert.equal(result.worktree, '')
   }
-  assert.equal((await run('deliver', undefined)).result.verdict, 'blocked:no-issue')
+  assert.equal((await run('implement', undefined)).result.verdict, 'blocked:no-issue')
 })
 
 // Several Issues (PRD batch): each stage's Issue comes from its prompt or its args, and a plan
@@ -115,9 +115,9 @@ function many({ changes = {}, planned = {}, implemented = {}, verifications = [p
   }
 }
 
-test('deliver on several Issues prepares them one at a time and plans them all before building any', async () => {
+test('implement on several Issues prepares them one at a time and plans them all before building any', async () => {
   const s = many({ tick: true })
-  const { result } = await run('deliver', 'a b c', s)
+  const { result } = await run('implement', 'a b c', s)
   assert.equal(result.verdict, 'done:all')
   assert.ok(!s.events.includes('prepares at once'))
   const firstBuild = s.events.findIndex((e) => e.startsWith('implement'))
@@ -125,11 +125,11 @@ test('deliver on several Issues prepares them one at a time and plans them all b
   assert.deepEqual(result.results.map((x) => x.pr_url), ['pr/a', 'pr/b', 'pr/c'])
 })
 
-test('deliver on several Issues delivers the ready ones and lists the decisions of the rest', async () => {
+test('implement on several Issues implements the ready ones and lists the decisions of the rest', async () => {
   const decision = { question: 'Which store?', options: ['files', 'sqlite'], recommended: 'files, as nothing needs a query' }
   const planned = { b: { verdict: 'needs-decision', reason: '1 Open decision(s)', report: 'p', plan: { changes: [], decisions: [decision] } } }
   const s = many({ planned })
-  const { result } = await run('deliver', { issues: ['a', 'b', 'c'] }, s)
+  const { result } = await run('implement', { issues: ['a', 'b', 'c'] }, s)
   assert.equal(result.verdict, 'done:some')
   assert.deepEqual(result.results.map((x) => x.verdict), ['done:pr-opened', 'blocked:needs-decision', 'done:pr-opened'])
   assert.equal(result.results[1].worktree, '')
@@ -138,10 +138,10 @@ test('deliver on several Issues delivers the ready ones and lists the decisions 
   assert.match(result.report, /Open decisions:\n[\s\S]*b: Which store\?\n {3}- files\n {3}- sqlite\n {3}Recommended: files/)
 })
 
-test('deliver on several Issues holds back one whose plan changes a file an earlier one does', async () => {
+test('implement on several Issues holds back one whose plan changes a file an earlier one does', async () => {
   const changes = { a: ['src/a.go'], b: ['./src/a.go', 'src/b/'], c: ['src/b/c.go'] }
   const s = many({ changes })
-  const { result } = await run('deliver', 'a b c', s)
+  const { result } = await run('implement', 'a b c', s)
   assert.deepEqual(result.results.map((x) => x.verdict), ['done:pr-opened', 'blocked:overlaps', 'done:pr-opened'])
   assert.equal(result.results[1].reason, 'changes src/a.go, as a does')
   assert.equal(result.results[1].worktree, '')
@@ -149,23 +149,23 @@ test('deliver on several Issues holds back one whose plan changes a file an earl
   assert.ok(!s.events.includes('implement b'))
 })
 
-test('deliver on several Issues takes a folder and a file in it as one, and two files as two', async () => {
-  const folder = await run('deliver', 'a b', many({ changes: { a: ['web/'], b: ['web/app.ts'] } }))
+test('implement on several Issues takes a folder and a file in it as one, and two files as two', async () => {
+  const folder = await run('implement', 'a b', many({ changes: { a: ['web/'], b: ['web/app.ts'] } }))
   assert.equal(folder.result.results[1].verdict, 'blocked:overlaps')
-  const two = await run('deliver', 'a b', many({ changes: { a: ['web/app.ts'], b: ['web/app.tsx'] } }))
+  const two = await run('implement', 'a b', many({ changes: { a: ['web/app.ts'], b: ['web/app.tsx'] } }))
   assert.equal(two.result.verdict, 'done:all')
 })
 
-test('deliver on several Issues goes on with the others when one fails the checks', async () => {
+test('implement on several Issues goes on with the others when one fails the checks', async () => {
   const implemented = { a: { outcome: 'checks-failed', blocker: 'FAIL t', commits: [] } }
-  const { result } = await run('deliver', 'a b', many({ implemented }))
+  const { result } = await run('implement', 'a b', many({ implemented }))
   assert.equal(result.verdict, 'done:some')
   assert.deepEqual(result.results.map((x) => [x.verdict, x.pr_url || x.reason]), [['blocked:checks', 'FAIL t'], ['done:pr-opened', 'pr/b']])
 })
 
-test('deliver on several Issues plans each once, with at most 23 agents an Issue', async () => {
+test('implement on several Issues plans each once, with at most 23 agents an Issue', async () => {
   const s = many({ verifications: [fail(1), fail(2), fail(3), fail(4)] })
-  const { result, calls } = await run('deliver', 'a b c', s)
+  const { result, calls } = await run('implement', 'a b c', s)
   assert.deepEqual(result.results.map((x) => x.verdict), ['failed:rework-budget', 'failed:rework-budget', 'failed:rework-budget'])
   assert.equal(s.events.filter((e) => e.startsWith('plan')).length, 3)
   const plans = 3
@@ -173,15 +173,15 @@ test('deliver on several Issues plans each once, with at most 23 agents an Issue
   assert.ok(calls.length + plans + verifiers <= 23 * 3)
 })
 
-test('deliver takes at most five Issues, and an Issue named twice once', async () => {
-  const six = await run('deliver', 'a b c d e f', many())
+test('implement takes at most five Issues, and an Issue named twice once', async () => {
+  const six = await run('implement', 'a b c d e f', many())
   assert.equal(six.result.verdict, 'blocked:too-many')
   assert.deepEqual(six.calls, [])
-  const none = await run('deliver', '  ', many())
+  const none = await run('implement', '  ', many())
   assert.equal(none.result.verdict, 'blocked:no-issue')
   assert.deepEqual(none.calls, [])
   const s = many()
-  const twice = await run('deliver', 'a b c d e a', s)
+  const twice = await run('implement', 'a b c d e a', s)
   assert.equal(twice.result.results.length, 5)
   assert.equal(s.events.filter((e) => e === 'prepare a').length, 1)
 })

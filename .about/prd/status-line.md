@@ -3,7 +3,7 @@
 ## Problem
 
 What a session leaves undone in its own clone, and what it runs, shows only when someone asks: a
-file changed and not committed, or a commit not pushed, in a `deliver` worktree or on the branch in
+file changed and not committed, or a commit not pushed, in a `implement` worktree or on the branch in
 front of the person, waits for `git status`; and a session that runs an older bagheera than is
 installed tells only Claude, through a Hook's text, which Claude may or may not pass on (on
 2026-11-11 a session here ran 0.51.1 with 0.52.0 installed).

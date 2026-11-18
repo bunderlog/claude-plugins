@@ -381,6 +381,8 @@ class _Cost:
 
 # How a Workflow's task-notification ends it, by its status; any other status stopped it.
 _ENDS = {"completed": "completed", "failed": "failed", "": "no end"}
+# A Workflow's earlier name, so the records written under it still count under its current one.
+_RENAMED = {"deliver": "implement"}
 
 
 def _add(counts: Dict[str, Dict[str, int]], name: str, *keys: str) -> None:
@@ -417,9 +419,10 @@ def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
             keys += ["before"] if outcome == "before" else []
             _add(w.guidelines, name, *keys)
         for run in r.get("workflows", []):
-            _add(w.workflows, run.get("name", "?"), "all", _ENDS.get(run.get("end", ""), "stopped"))
+            name = _RENAMED.get(run.get("name", "?"), run.get("name", "?"))
+            _add(w.workflows, name, "all", _ENDS.get(run.get("end", ""), "stopped"))
             if run.get("agents"):
-                _charge(w, run.get("name", "?"), run["agents"])
+                _charge(w, name, run["agents"])
     return w
 
 

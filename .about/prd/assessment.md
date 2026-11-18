@@ -64,7 +64,7 @@ figures in it, so that decision can be about a part of any of them.
     `typescript`, `vue`, `writing-for-agents`), whether it was in the context before the session's
     first edit of such a file; `testing` and `dependencies` come after their first edit by design,
     so for them and the rest only the sessions they came in;
-  - each of louie's Workflows run (`plan`, `deliver`, `verify`), a Workflow tool call running one,
+  - each of louie's Workflows run (`plan`, `implement`, `verify`), a Workflow tool call running one,
     and how it ended as the task-notification of that run's task says (completed, failed,
     stopped), or no end where none reached the Transcript. Its skill loaded counts as a skill
     besides. And what the run cost, from its agents' Transcripts: each agent's tokens (input,

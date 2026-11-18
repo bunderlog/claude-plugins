@@ -27,7 +27,7 @@ waiting without the line.
 - The machine's projects: for each Transcript file in Claude Code's config folder
   (`CLAUDE_CONFIG_DIR`, else `~/.claude/`), a subagent's included, modified in the last 30 days,
   the main working tree of the git repo holding the `cwd` its entries name. A subfolder counts as
-  its repo, and a linked worktree as its main working tree, so a `deliver` worktree's sessions
+  its repo, and a linked worktree as its main working tree, so a `implement` worktree's sessions
   count for the project; a `cwd` that is gone, or in no repo, is left out.
 - A project needs attention when any of these holds, each with what to do about it:
 

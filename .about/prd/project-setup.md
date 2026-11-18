@@ -48,7 +48,7 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
   - The one command that turns the Git hooks on in a clone, in the README's section on
     development, or in `CLAUDE.md` where the project has no README: `git config core.hooksPath
     .githooks` for `.githooks/`; for husky or lefthook, the install step the project already has.
-  - `.about/proposals/` and `.claude/worktrees/`, where `deliver` and Claude Code's own worktrees
+  - `.about/proposals/` and `.claude/worktrees/`, where `implement` and Claude Code's own worktrees
     go, in `.gitignore`.
   - Where it has `hathi` and a `mise.toml`, `"github:bunderlog/hathi"` pinned there to an exact
     version, 1.2.0 or later.

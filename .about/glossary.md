@@ -184,7 +184,7 @@ _Avoid_: ticket, todo
 _In code_: the `issue` skill writes one
 
 **Verification**:
-A comparison, which the user asks for or a `deliver` run makes, of a change with what the project
+A comparison, which the user asks for or a `implement` run makes, of a change with what the project
 agreed: its ADRs, glossary, the Guidelines that fit the repo, and the acceptance criteria of its
 Issue or PRD. louie's agent, the verifier, makes it in a context of its own, so not as the change's
 author, one for each source when the `verify` Workflow runs it, and changes nothing. Unlike a code
@@ -204,7 +204,7 @@ _In code_: the `plan` Workflow; `agents/planner.md`
 
 **Open decision**:
 A choice only the person can make, which the Issue, the ADRs and the code leave open, such as a
-behavior another decision set. A Plan with one stops `deliver` until it is written into the Issue
+behavior another decision set. A Plan with one stops `implement` until it is written into the Issue
 or an ADR; one found elsewhere waits in the Inbox. Unlike an Assumption, a Plan doesn't take it.
 _Avoid_: decision for the person; "decision" alone, which an ADR's is once taken
 _In code_: a Plan's `decisions`; the verdict `needs-decision`

@@ -383,11 +383,17 @@ class Assess(unittest.TestCase):
             result("w2", "Workflow launched in background. Task ID: w2"),
             call("w3", "Workflow", {"name": "someone:else"}),
             result("w3", "Workflow launched in background. Task ID: w3"),
+            # `implement`'s name before 0.68.0.
+            call("w4", "Workflow", {"name": "louie:implement"}),
+            result("w4", "Workflow launched in background. Task ID: w4"),
+            notification("w4", "completed"),
         )
         report = self.report()
         self.assertIn("Workflows run (PRD delivery, ADR verify), over 1 session (0):", report)
         self.assertIn("  verify: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
         self.assertIn("  plan: 1 (0): completed 0, failed 0, stopped 0, no end 1", report)
+        self.assertIn("  implement: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
+        self.assertNotIn("deliver", report.replace("PRD delivery", ""))
         self.assertNotIn("someone", report)
 
     def test_a_workflows_cost_at_its_models_prices(self):
@@ -413,7 +419,7 @@ class Assess(unittest.TestCase):
             notification("w1", "completed"),
             call("w2", "Workflow", {"name": "louie:verify"}),
             result("w2", "Workflow launched in background.", toolUseResult={"runId": "wf_2"}),
-            call("w3", "Workflow", {"name": "louie:deliver"}),
+            call("w3", "Workflow", {"name": "louie:implement"}),
             result("w3", "Workflow launched in background.", toolUseResult={"runId": "../wf_1"}),
         )
         # Claude Opus 5.5 at $4 input and $20 output a million tokens (prices.READ).
@@ -429,7 +435,7 @@ class Assess(unittest.TestCase):
         self.assertNotIn("  verify: $", report)
         self.assertIn("  claude-unknown-9: 2,300 tokens (0), no price known: counted in tokens, not "
                       "dollars", report)
-        self.assertNotIn("  deliver: $", report)
+        self.assertNotIn("  implement: $", report)
         self.assertNotIn("<synthetic>", report)
         lines = report.split("\n")
         cost = next(i for i, x in enumerate(lines) if x.startswith("Workflows' cost"))

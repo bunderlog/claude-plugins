@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const WORKFLOWS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'plugins', 'louie', 'workflows')
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
-// run('deliver', args, { agent(prompt, opts), workflow(name, args) }) → the script's return value
+// run('implement', args, { agent(prompt, opts), workflow(name, args) }) → the script's return value
 // and every agent() call it made, as { label, agentType, prompt }.
 export async function run(name, args, { agent = () => null, workflow = () => null } = {}) {
   const source = readFileSync(join(WORKFLOWS, `${name}.js`), 'utf8').replace('export const meta', 'const meta')

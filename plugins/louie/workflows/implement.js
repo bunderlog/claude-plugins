@@ -1,7 +1,7 @@
 export const meta = {
-  name: 'deliver',
+  name: 'implement',
   description: 'Take agreed Issues to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed with up to three reworks, and the pull request.',
-  whenToUse: 'When the user asks to deliver, build or implement agreed Issues up to pull requests, usually after /louie:plan and once their decisions are written into the Issues. Takes one to five Issues: each its key or URL in the tracker the project names, or its file in .about/issues/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
+  whenToUse: 'When the user asks to implement, build or deliver agreed Issues up to pull requests, usually after /louie:plan and once their decisions are written into the Issues. Takes one to five Issues: each its key or URL in the tracker the project names, or its file in .about/issues/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
   phases: [
     { title: 'Prepare' },
     { title: 'Plan' },
@@ -243,8 +243,8 @@ const each = runs.map((r) => results.get(r))
 const decisions = runs.flatMap((r) =>
   ((r.planned && r.planned.plan && r.planned.plan.decisions) || []).map((d) => ({ issue: r.issue, ...d })),
 )
-const delivered = each.filter((x) => x.verdict.startsWith('done:')).length
-const verdict = delivered === each.length ? 'done:all' : delivered ? 'done:some' : 'blocked:none'
+const done = each.filter((x) => x.verdict.startsWith('done:')).length
+const verdict = done === each.length ? 'done:all' : done ? 'done:some' : 'blocked:none'
 
 const lines = ['Issues:']
 each.forEach((x) => lines.push(`- ${x.issue}: ${x.verdict}${x.pr_url ? ` ${x.pr_url}` : x.reason ? ` — ${x.reason}` : ''}`))

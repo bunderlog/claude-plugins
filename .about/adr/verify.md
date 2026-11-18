@@ -1,6 +1,6 @@
 # A Verification is louie's verifier, one per source, run by the `verify` Workflow when asked
 
-Date: 2026-11-16
+Date: 2026-11-18
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -13,9 +13,9 @@ The `verify` Workflow runs four of it at once, one per source: the ADRs, the glo
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
 schema; the script, not a model, joins them into one report and decides the verdict: it fails on a
 departure that blocks or a criterion not met (PRD delivery). So the user has `/louie:verify`, and
-`deliver` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
+`implement` runs the same Workflow as a stage. Where the session has no Workflow tool, as on Pro until
 Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
-context. A Verification runs only when the user asks or agrees, or as a stage of a `deliver` run
+context. A Verification runs only when the user asks or agrees, or as a stage of a `implement` run
 they started, as it is a whole run's tokens. Claude offers one, in a line and once, at the end of a
 task that serves an Issue or a PRD with acceptance criteria, before its commit or PR: there it has
 criteria to check against, and few tasks have one. The Workflow's description says so, and a line in
@@ -53,7 +53,7 @@ starts without the index and does the same.
   steer it; testing is the project's checks' and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
 - A pipeline from Issue to tested change (until 2026-11-10) — each repo's flow is its own, as for
-  `ship` (ADR issues); PRD delivery's `deliver` takes it from what the project names, its checks
+  `ship` (ADR issues); PRD delivery's `implement` takes it from what the project names, its checks
   command, commit format and tracker.
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
@@ -66,7 +66,7 @@ starts without the index and does the same.
   `@agent-louie:verifier`. Where Workflows are off, that is how it is, and Claude offers the agent
   by name.
 - The `verify` skill running the one agent with `context: fork` (until 2026-11-10) — one context
-  read every source, the agent judged its own verdict, and `deliver` would have needed its own
+  read every source, the agent judged its own verdict, and `implement` would have needed its own
   copy of the Verification.
 - Only a skill forked onto `general-purpose` — no agent file, but its tools can't be limited.
 - The diff put into the prompt by the skill, with no Bash — truly unable to write, but a large

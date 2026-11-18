@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Build an agreed Issue's plan in a worktree of its own, in commits the project's checks and Git hooks pass, and open its pull request — the stages of the /louie:deliver Workflow, each named in the prompt. Run only through /louie:deliver.
+description: Build an agreed Issue's plan in a worktree of its own, in commits the project's checks and Git hooks pass, and open its pull request — the stages of the /louie:implement Workflow, each named in the prompt. Run only through /louie:implement.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---

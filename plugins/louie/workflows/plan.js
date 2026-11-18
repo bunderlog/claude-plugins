@@ -1,12 +1,12 @@
 export const meta = {
   name: 'plan',
   description: 'Plan an agreed Issue before it is built: what changes where, which acceptance criterion each change serves, how sure the plan is, and the decisions only the person can make; or nothing to build. Changes nothing.',
-  whenToUse: 'When the user asks to plan an Issue, or before /louie:deliver. Takes the Issue: its key or URL in the tracker the project names, or its file in .about/issues/. Not for work with no agreed acceptance criteria, which goes to the interview or prd skill first.',
+  whenToUse: 'When the user asks to plan an Issue, or before /louie:implement. Takes the Issue: its key or URL in the tracker the project names, or its file in .about/issues/. Not for work with no agreed acceptance criteria, which goes to the interview or prd skill first.',
   phases: [{ title: 'Plan' }],
 }
 
 // args: the Issue, as text (a tracker's key or URL, or a file in .about/issues/), or { issue, dir },
-// dir the worktree to plan in when /louie:deliver runs it.
+// dir the worktree to plan in when /louie:implement runs it.
 //
 // The planner reads and plans; the script decides how the run ends, from the plan's fields, never
 // from its prose (PRD delivery). The agent's name repeats louie's names.PLUGIN, as a script can't
