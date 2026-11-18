@@ -29,9 +29,23 @@ class Workflows(unittest.TestCase):
                 self.assertNotRegex(re.sub(r"'(?:[^'\\]|\\.)*'", "''", body), r"\.\.\.|\w\(|\$\{")
                 listed = re.findall(r"\{ title: '([^']+)' \}", body)
                 called = set(re.findall(r"\bphase(?:\(|: )'([^']+)'", text[meta.end():]))
-                self.assertEqual(set(listed), called)
+                # A nested Workflow's agents show in a group of its own, `▸ <name>`, which a
+                # title of that name in meta places among the phases.
+                nested = {f"▸ {n}" for n in re.findall(r"\bworkflow\('([^']+)'", text[meta.end():])}
+                self.assertEqual(set(listed) - nested, called)
                 for banned in ("Date.now(", "Math.random(", "import(", "new Date()"):
                     self.assertNotIn(banned, text)
+
+
+    # implement's progress lists its stages in the order they run, the plan's and the
+    # Verification's own groups among them, and no phase that holds no agent.
+    def test_implement_lists_its_stages_in_order(self):
+        with open(os.path.join(WORKFLOWS, "implement.js"), encoding="utf-8") as f:
+            text = f.read()
+        self.assertEqual(
+            re.findall(r"\{ title: '([^']+)' \}", text),
+            ["Prepare", "▸ louie:plan", "Implement", "▸ louie:verify", "Pull request"],
+        )
 
 
 if __name__ == "__main__":

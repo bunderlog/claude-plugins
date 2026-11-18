@@ -4,8 +4,9 @@ export const meta = {
   whenToUse: 'When the user asks to implement, build or deliver agreed Tickets up to pull requests, usually after /louie:plan and once their decisions are written into the Tickets. Takes one to five Tickets: each its key or URL in the tracker the project names, or its file in .about/tickets/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
   phases: [
     { title: 'Prepare' },
-    { title: 'Plan' },
+    { title: '▸ louie:plan' },
     { title: 'Implement' },
+    { title: '▸ louie:verify' },
     { title: 'Pull request' },
   ],
 }
@@ -147,7 +148,7 @@ async function prepare(r) {
 async function discard(r, verdict, reason, extra) {
   await agent(
     `Stage: discard\nTicket: ${r.ticket}\nDiscard ${r.where}, as your instructions say.`,
-    { agentType: 'louie:implementer', label: label(r, 'discard'), phase: 'Plan' },
+    { agentType: 'louie:implementer', label: label(r, 'discard'), phase: 'Prepare' },
   )
   const result = end(r, verdict, reason, extra)
   r.prep = null
@@ -294,7 +295,8 @@ for (const r of runs) {
   if (stopped) results.set(r, stopped)
 }
 
-phase('Plan')
+// The plan runs as a Workflow of its own, its agents in its own group, `▸ louie:plan`, which
+// meta's title of that name places here; a phase of the script's own would stay empty.
 const prepared = runs.filter((r) => !results.has(r))
 const plans = await parallel(prepared.map((r) => () => plan(r)))
 prepared.forEach((r, i) => plans[i] && results.set(r, plans[i]))
