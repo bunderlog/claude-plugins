@@ -16,8 +16,8 @@ export const meta = {
 // The script decides the order of the stages and every way out of them; the agents do the work
 // (PRD implement, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
-// At most 21 agents a Ticket: prepare 1, plan 1, implement 1, verify 4 and review 1, two reworks
-// of 1 + 4 + 1, pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 1); a Ticket that stops before it is built
+// At most 22 agents a Ticket: prepare 1, plan 1, implement 1, verify 4 and review 1, two reworks
+// of 1 + 4 + 1, push 1 and pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 2); a Ticket that stops before it is built
 // spends one more, to discard the worktree it made. The agent's name repeats louie's names.PLUGIN,
 // as a script can't import it.
 
@@ -76,18 +76,27 @@ const REVIEW_SCHEMA = {
   required: ['findings'],
 }
 
+const PUSH_SCHEMA = {
+  type: 'object',
+  properties: {
+    pushed: { type: 'boolean' },
+    head: {
+      type: 'string',
+      description: 'the full sha of the commit the pushed branch ends at on the remote, after the push; empty when nothing was pushed',
+    },
+    blocker: { type: 'string', description: 'when not pushed: why, with the error; else empty' },
+  },
+  required: ['pushed', 'head', 'blocker'],
+}
+
 const PR_SCHEMA = {
   type: 'object',
   properties: {
     opened: { type: 'boolean' },
     url: { type: 'string', description: 'the pull request\'s URL; empty when not opened' },
-    head: {
-      type: 'string',
-      description: 'the full sha of the commit the pushed branch ends at on the remote, after the push; empty when nothing was pushed',
-    },
     blocker: { type: 'string', description: 'when not opened: why, with the error; else empty' },
   },
-  required: ['opened', 'url', 'head', 'blocker'],
+  required: ['opened', 'url', 'blocker'],
 }
 
 // One Ticket's run: its stages fill it in, and end() makes what the run returns for it.
@@ -249,21 +258,27 @@ async function build(r) {
     verification.report,
   ].join('\n')
 
+  const pushed = await agent(
+    `Stage: push\nTicket: ${r.ticket}\nWork in ${r.where}.\nThe commit the last Verification passed: ${head}. ` +
+      'Push the branch, as your instructions say.',
+    { agentType: 'louie:implementer', schema: PUSH_SCHEMA, label: label(r, 'push'), phase: 'Pull request' },
+  )
+  if (!pushed) return end(r, 'blocked:tooling', 'the push stage returned nothing')
+  if (!pushed.pushed) return end(r, 'blocked:push', pushed.blocker)
+  // What reaches the pull request is what was checked: the script doesn't take the stage's word
+  // for it, and opens none otherwise. A stage of its own pushes, so the check comes before anyone
+  // sees a pull request (PRD implement).
+  if (!sameCommit(pushed.head, head)) {
+    return end(r, 'blocked:pull-request', `the pushed branch ends at ${pushed.head || 'a commit the push stage didn\'t name'}, not at ${head}, the commit the last Verification passed; no pull request opened`)
+  }
+
   const pr = await agent(
     `Stage: pull-request\nTicket: ${r.ticket}\nWork in ${r.where}, against ${r.prep.default_branch}.\n` +
-      `The commit the last Verification passed: ${head}. Push the branch, and open the pull request only if ` +
-      `the pushed branch ends at that commit${draft ? ', as a draft' : ''}, its body this text, as it is:\n\n${body}`,
+      `Open the pull request${draft ? ' as a draft' : ''}, its body this text, as it is:\n\n${body}`,
     { agentType: 'louie:implementer', schema: PR_SCHEMA, label: label(r, 'pull request'), phase: 'Pull request' },
   )
   if (!pr) return end(r, 'blocked:tooling', 'the pull-request stage returned nothing')
-  // What reaches the pull request is what was checked: the script doesn't take the stage's word
-  // for it.
-  const opened = pr.url ? `; the pull request: ${pr.url}` : ''
-  if (pr.head && !sameCommit(pr.head, head)) {
-    return end(r, 'blocked:pull-request', `the pushed branch ends at ${pr.head}, not at ${head}, the commit the last Verification passed${opened}`)
-  }
   if (!pr.opened || !pr.url) return end(r, 'blocked:pull-request', pr.blocker)
-  if (!pr.head) return end(r, 'blocked:pull-request', `the pull-request stage named no commit it pushed, to check against ${head}${opened}`)
 
   return end(r, draft ? 'done:draft-pr' : 'done:pr-opened', '', { pr_url: pr.url })
 }
