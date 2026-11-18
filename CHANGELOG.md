@@ -2,6 +2,32 @@
 
 The marketplace's Releases, newest first.
 
+## 0.68.0 — 2026-11-18
+
+### baloo
+
+#### Breaking changes
+
+- rename Issues to Tickets: the baloo:ticket skill and .about/tickets/ (c0a7347)
+
+#### Fixes
+
+- say "file a ticket" in the inbox skill's description, as its steps do (c31561c)
+
+### bagheera
+
+#### Breaking changes
+
+- rename /louie:deliver to /louie:implement (62be3ba)
+- rename Issues to Tickets: the baloo:ticket skill and .about/tickets/ (c0a7347)
+
+### louie
+
+#### Breaking changes
+
+- rename /louie:deliver to /louie:implement (62be3ba)
+- rename Issues to Tickets: the baloo:ticket skill and .about/tickets/ (c0a7347)
+
 ## 0.67.0 — 2026-11-16
 
 ### louie
