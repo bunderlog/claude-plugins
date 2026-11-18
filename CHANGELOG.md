@@ -2,6 +2,18 @@
 
 The marketplace's Releases, newest first.
 
+## 0.70.0 — 2026-11-18
+
+### louie
+
+#### Features
+
+- add /louie:merge, which merges louie's pull requests one at a time, each checked again (c834fd2)
+
+#### Fixes
+
+- list implement's stages in /workflows in the order they run, with no empty Plan phase (ff46864)
+
 ## 0.69.0 — 2026-11-18
 
 ### bagheera
