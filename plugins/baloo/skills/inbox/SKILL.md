@@ -1,6 +1,6 @@
 ---
 name: inbox
-description: Go through the project's Inbox, .about/inbox.md, with the user — when they ask to go through, triage or clear the inbox, or what is still open. Ranks the items, then a few at a time drops those the code, the ADRs, the glossary or the Guidelines already settle and asks what to do with the rest (decide now, fix now, file an issue, keep, drop) with a recommended answer, applying each round's answers so the user can stop and pick up later where they left off. Not for adding a single item.
+description: Go through the project's Inbox, .about/inbox.md, with the user — when they ask to go through, triage or clear the inbox, or what is still open. Ranks the items, then a few at a time drops those the code, the ADRs, the glossary or the Guidelines already settle and asks what to do with the rest (decide now, fix now, file a ticket, keep, drop) with a recommended answer, applying each round's answers so the user can stop and pick up later where they left off. Not for adding a single item.
 ---
 
 # Inbox
