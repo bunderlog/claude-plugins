@@ -7,7 +7,9 @@ Ticket's or PRD's acceptance criteria) without breaking a test, and the session 
 one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
 change to see it work; neither knows anything of `.about/`. So louie ships one agent,
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
-departure with `file:line`. It doesn't hunt bugs, which the code review does.
+departure with `file:line`. It doesn't hunt bugs, which the code review does. `louie:reviewer`,
+which `implement` runs beside the verifiers each round, is not a verifier: it looks for bugs, not
+for what the project agreed (PRD implement).
 
 The `verify` Workflow runs four of it at once, one per source: the ADRs, the glossary, the
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
