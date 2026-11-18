@@ -60,14 +60,21 @@ branch's CI passes after every merge `/louie:merge` makes.
      the default branch, on every pull request, whether the rebase had a conflict or not. A
      failure goes to a **rework**, given the Ticket and the findings, with at most two reworks and
      the endings of stages 5 and 6 of PRD implement (`failed:rework-budget`,
-     `failed:not-converging`).
+     `failed:not-converging`). A Verification that passes with a verifier that returned nothing,
+     a criterion it couldn't tell (`not-checked`) or no criterion found ends `blocked:unverified`,
+     with no rework: where `implement` opens a draft, nothing merges on a Verification that
+     checked less than all of it. A criterion met but untested, or one only the person checks by
+     hand, doesn't stop it: the person accepted those in marking the pull request ready.
   4. **push** pushes to the pull request's branch with `--force-with-lease=<branch>:<sha>`, the
      head commit prepare recorded, ending `blocked:push` when the remote branch moved since; the
      script then checks the pushed branch ends at the commit the last Verification passed, ending
      `blocked:push-mismatch` when it doesn't.
   5. **ci** waits, for an hour at most, for the pull request's checks on the code host: every
      check it reports, a skipped or neutral one counting as passed, none at all as nothing to wait
-     for. A failing check ends `blocked:ci` with its name and link; still running after the hour,
+     for only five minutes after the push and with no run for its head queued or in progress: a
+     check can show up minutes after a push, and a path filter can leave a pull request with none
+     (this repo's `ci.yml`). A failing check ends `blocked:ci` with its name and link; still
+     running after the hour,
      `blocked:ci-timeout`.
   6. **merge** merges by the method from prepare, only when the pull request's head is still the
      commit the last Verification passed and its base is still the default branch's tip, ending
@@ -145,6 +152,12 @@ branch's CI passes after every merge `/louie:merge` makes.
   ends `failed:rework-budget` after two reworks, and runs no push or merge stage.
   → test: tests/workflows/merge.test.mjs "merge ends failed:rework-budget after two reworks when
   every Verification fails on new criteria"
+- With its agents stubbed, a Verification that passes with a verifier that returned nothing, a
+  criterion `not-checked` or no criterion ends `blocked:unverified` and runs no rework, push, ci or
+  merge stage; one that passes with a criterion `met-untested`, or a verifier's line left for the
+  person, ends `done:merged`.
+  → test: tests/workflows/merge.test.mjs "merge merges nothing on a Verification that passed with
+  a verifier returning nothing, a criterion not checked or none found"
 - With its agents stubbed, a push after which the branch ends at another commit than the one the
   last Verification passed ends `blocked:push-mismatch`, and a ci stage reporting a failing check
   ends `blocked:ci` naming it, with no merge stage run in either.
