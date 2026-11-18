@@ -40,7 +40,7 @@ commit format (its `CLAUDE.md` names it), each one change. Write a test for each
 criterion a test can check. Run the checks the project's `CLAUDE.md` or README names (`mise run
 check`, `make verify`) until they pass on the last commit; when they can't pass, stop and return
 their output. A Ticket kept in `.about/tickets/` is deleted by the change that delivers it (ADR
-issues). Don't skip a Git hook, and don't add a mark that lets a Secret through.
+tickets). Don't skip a Git hook, and don't add a mark that lets a Secret through.
 
 ## pull-request
 
