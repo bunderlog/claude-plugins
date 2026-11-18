@@ -498,7 +498,7 @@ def report(data: str, days: int, only: str, now: datetime, evals: str) -> str:
         out.append(text)
     if not cur.guidelines and not old.guidelines:
         out.append("  none")
-    out += ["", f"Workflows run (PRD delivery, ADR verify), {_over(cur, old, 'workflows')}:"]
+    out += ["", f"Workflows run (PRD implement, ADR verify), {_over(cur, old, 'workflows')}:"]
     out += _counts(cur.workflows, old.workflows, ("completed", "failed", "stopped", "no end"))
     out += ["", _costs(cur, old)]
     out += _start(cur, old, names.BUILD) + _stale_of(stale, names.BUILD)
@@ -531,7 +531,7 @@ def _counts(cur: Dict[str, Dict[str, int]], old: Dict[str, Dict[str, int]],
 def _costs(cur: _Window, old: _Window) -> str:
     """Each Workflow's mean and total cost and its costliest phase, by dollars, or by tokens where
     none of its models has a price; then the tokens of each model with no price."""
-    out = [f"Workflows' cost (PRD assessment, PRD delivery), at Anthropic's prices of {prices.READ}, "
+    out = [f"Workflows' cost (PRD assessment, PRD implement), at Anthropic's prices of {prices.READ}, "
            f"over {cur.runs} run{'' if cur.runs == 1 else 's'} ({old.runs}):"]
     for name in sorted(set(cur.costs) | set(old.costs)):
         c, o = cur.costs.get(name, _Cost()), old.costs.get(name, _Cost())

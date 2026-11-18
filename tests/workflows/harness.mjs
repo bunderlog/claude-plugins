@@ -1,5 +1,5 @@
 // Runs one of louie's Workflow scripts as Claude Code does, with its agent() and workflow() calls
-// answered by the test (PRD delivery): the script's body in an async function, its meta a plain
+// answered by the test (PRD implement): the script's body in an async function, its meta a plain
 // constant.
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'

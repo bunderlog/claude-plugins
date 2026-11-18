@@ -2,7 +2,7 @@ import os
 import re
 import unittest
 
-# louie's Workflows, the scripts Claude Code runs (PRD delivery).
+# louie's Workflows, the scripts Claude Code runs (PRD implement).
 WORKFLOWS = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
     "plugins", "louie", "workflows",
@@ -12,7 +12,7 @@ WORKFLOWS = os.path.join(
 class Workflows(unittest.TestCase):
     # Each Workflow's meta is the script's first statement, a plain literal with its name,
     # description and the phases its phase() calls and its agents' phase use, and no script calls what Claude Code makes
-    # throw or refuses (PRD delivery).
+    # throw or refuses (PRD implement).
     def test_meta_and_body(self):
         names = sorted(f for f in os.listdir(WORKFLOWS) if f.endswith(".js"))
         self.assertIn("verify.js", names)

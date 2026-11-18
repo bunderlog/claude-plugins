@@ -8,7 +8,7 @@ const plan = {
   assumptions: [], tool_failed: false, tool_error: '',
 }
 
-// The plan's fields, not its prose, decide how the run ends (PRD delivery).
+// The plan's fields, not its prose, decide how the run ends (PRD implement).
 test('plan ends by the plan\'s fields', async () => {
   for (const [given, want] of [
     [plan, 'ready'],

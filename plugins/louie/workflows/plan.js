@@ -9,7 +9,7 @@ export const meta = {
 // dir the worktree to plan in when /louie:implement runs it.
 //
 // The planner reads and plans; the script decides how the run ends, from the plan's fields, never
-// from its prose (PRD delivery). The agent's name repeats louie's names.PLUGIN, as a script can't
+// from its prose (PRD implement). The agent's name repeats louie's names.PLUGIN, as a script can't
 // import it.
 
 const ticket = typeof args === 'string' ? args : (args && args.ticket) || ''

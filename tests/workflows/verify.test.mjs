@@ -5,7 +5,7 @@ import { run } from './harness.mjs'
 const empty = { departures: [], criteria: [], not_checked: [], change: 'main..HEAD: a.py' }
 
 // One verifier per source; a blocking departure or an unmet criterion fails the change, and the
-// report names each finding's source and file:line (PRD delivery).
+// report names each finding's source and file:line (PRD implement).
 test('verify fails on an ADR departure and an unmet criterion', async () => {
   const { result, calls } = await run('verify', 'main..HEAD', {
     agent: (_, o) =>

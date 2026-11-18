@@ -14,7 +14,7 @@ export const meta = {
 // .about/tickets/), or { tickets } or { ticket }.
 //
 // The script decides the order of the stages and every way out of them; the agents do the work
-// (PRD delivery, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
+// (PRD implement, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
 // At most 23 agents a Ticket: prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4,
 // pull request 1; a Ticket that stops before it is built spends one more, to discard the worktree

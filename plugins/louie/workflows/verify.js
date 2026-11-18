@@ -8,7 +8,7 @@ export const meta = {
 // args: what the user named, as text (a commit range, a branch, a PR, a Ticket or a PRD), or
 // { target }; nothing for the current branch and the working tree.
 //
-// One verifier for each source of what was agreed (PRD delivery), so each reads its source whole
+// One verifier for each source of what was agreed (PRD implement), so each reads its source whole
 // rather than a quarter of four; the script, not a model, joins their findings and decides. The
 // agent's name repeats names.VERIFIER, as a script can't import it.
 

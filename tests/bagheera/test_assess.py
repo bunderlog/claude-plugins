@@ -393,11 +393,11 @@ class Assess(unittest.TestCase):
             notification("w4", "completed"),
         )
         report = self.report()
-        self.assertIn("Workflows run (PRD delivery, ADR verify), over 1 session (0):", report)
+        self.assertIn("Workflows run (PRD implement, ADR verify), over 1 session (0):", report)
         self.assertIn("  verify: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
         self.assertIn("  plan: 1 (0): completed 0, failed 0, stopped 0, no end 1", report)
         self.assertIn("  implement: 1 (0): completed 1, failed 0, stopped 0, no end 0", report)
-        self.assertNotIn("deliver", report.replace("PRD delivery", ""))
+        self.assertNotIn("deliver", report.replace("PRD implement", ""))
         self.assertNotIn("someone", report)
 
     def test_a_workflows_cost_at_its_models_prices(self):
@@ -430,7 +430,7 @@ class Assess(unittest.TestCase):
         dollars = "$6.00"
         self.assertEqual(f"${prices.cost(priced, (1_000_000, 100_000, 0, 0)):,.2f}", dollars)
         report = self.report()
-        self.assertIn(f"Workflows' cost (PRD assessment, PRD delivery), at Anthropic's prices of "
+        self.assertIn(f"Workflows' cost (PRD assessment, PRD implement), at Anthropic's prices of "
                       f"{prices.READ}, over 2 runs (0):", report)
         self.assertIn(f"  plan: {dollars} a run, {dollars} ($0.00), 1,100,000 tokens, costliest "
                       f"phase Plan {dollars}, 1,100,000 tokens", report)
