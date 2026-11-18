@@ -18,7 +18,7 @@ their own first session, and nothing said when a project counts as set up (PRD h
 ## Success signal
 
 Each git repository worked on from the maintainer's machine since 2026-10-01, as Claude Code's
-Transcripts list them, is set up by the list below, or named with why it isn't in Issue
+Transcripts list them, is set up by the list below, or named with why it isn't in Ticket
 commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `hathi`.
 
 ## Scope
@@ -75,7 +75,7 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
 
 - Installing mise on a machine: the person does; bagheera's setup skill installs `hathi` with it
   (PRD setup).
-- The setup skill itself: it ships with bagheera (Issue split-bagheera-louie).
+- The setup skill itself: it ships with bagheera (Ticket split-bagheera-louie).
 - Choosing a project's other hooks (lint, tests): they stay as the project has them.
 - What a hook does when `hathi` isn't installed: it fails, so the person installs it; `hathi`'s own
   repo decides whether that changes.

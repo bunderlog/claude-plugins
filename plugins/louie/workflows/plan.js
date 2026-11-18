@@ -1,28 +1,28 @@
 export const meta = {
   name: 'plan',
-  description: 'Plan an agreed Issue before it is built: what changes where, which acceptance criterion each change serves, how sure the plan is, and the decisions only the person can make; or nothing to build. Changes nothing.',
-  whenToUse: 'When the user asks to plan an Issue, or before /louie:implement. Takes the Issue: its key or URL in the tracker the project names, or its file in .about/issues/. Not for work with no agreed acceptance criteria, which goes to the interview or prd skill first.',
+  description: 'Plan an agreed Ticket before it is built: what changes where, which acceptance criterion each change serves, how sure the plan is, and the decisions only the person can make; or nothing to build. Changes nothing.',
+  whenToUse: 'When the user asks to plan a Ticket, or before /louie:implement. Takes the Ticket: its key or URL in the tracker the project names, or its file in .about/tickets/. Not for work with no agreed acceptance criteria, which goes to the interview or prd skill first.',
   phases: [{ title: 'Plan' }],
 }
 
-// args: the Issue, as text (a tracker's key or URL, or a file in .about/issues/), or { issue, dir },
+// args: the Ticket, as text (a tracker's key or URL, or a file in .about/tickets/), or { ticket, dir },
 // dir the worktree to plan in when /louie:implement runs it.
 //
 // The planner reads and plans; the script decides how the run ends, from the plan's fields, never
 // from its prose (PRD delivery). The agent's name repeats louie's names.PLUGIN, as a script can't
 // import it.
 
-const issue = typeof args === 'string' ? args : (args && args.issue) || ''
+const ticket = typeof args === 'string' ? args : (args && args.ticket) || ''
 const dir = (args && args.dir) || ''
 
 const SCHEMA = {
   type: 'object',
   properties: {
-    issue: { type: 'string', description: 'the Issue as you read it: its key or path, and its title' },
+    ticket: { type: 'string', description: 'the Ticket as you read it: its key or path, and its title' },
     criteria: {
       type: 'array',
       items: { type: 'string' },
-      description: 'the Issue\'s acceptance criteria as written, one each; empty when it has none',
+      description: 'the Ticket\'s acceptance criteria as written, one each; empty when it has none',
     },
     build: {
       type: 'string',
@@ -46,7 +46,7 @@ const SCHEMA = {
     },
     decisions: {
       type: 'array',
-      description: 'the choices only the person can make; empty when the Issue, the ADRs and the code settle every one. A way to build you recommend that none of them rules out is an assumption, not a decision',
+      description: 'the choices only the person can make; empty when the Ticket, the ADRs and the code settle every one. A way to build you recommend that none of them rules out is an assumption, not a decision',
       items: {
         type: 'object',
         properties: {
@@ -68,14 +68,14 @@ const SCHEMA = {
     },
     tool_error: { type: 'string', description: 'tool_failed: the tool and its last error, verbatim; else empty' },
   },
-  required: ['issue', 'criteria', 'build', 'evidence', 'confidence', 'confidence_reason', 'changes', 'decisions', 'assumptions', 'tool_failed', 'tool_error'],
+  required: ['ticket', 'criteria', 'build', 'evidence', 'confidence', 'confidence_reason', 'changes', 'decisions', 'assumptions', 'tool_failed', 'tool_error'],
 }
 
-if (!issue) return { verdict: 'blocked:no-issue', reason: 'no Issue named', report: 'Name the Issue to plan.' }
+if (!ticket) return { verdict: 'blocked:no-ticket', reason: 'no Ticket named', report: 'Name the Ticket to plan.' }
 
 phase('Plan')
 const plan = await agent(
-  `Issue: ${issue}\n` +
+  `Ticket: ${ticket}\n` +
     (dir ? `Plan it in the worktree ${dir}: run every command there, and read the code under it.\n` : '') +
     'Plan it, as your instructions say.',
   { agentType: 'louie:planner', schema: SCHEMA, label: 'plan' },
@@ -87,11 +87,11 @@ let verdict = 'ready'
 let reason = ''
 if (plan.tool_failed) [verdict, reason] = ['blocked:tooling', plan.tool_error || 'a tool failed']
 else if (plan.build === 'nothing-to-build') [verdict, reason] = ['done:nothing-to-build', plan.evidence]
-else if (!plan.criteria.length) [verdict, reason] = ['blocked:no-criteria', 'the Issue has no acceptance criteria']
+else if (!plan.criteria.length) [verdict, reason] = ['blocked:no-criteria', 'the Ticket has no acceptance criteria']
 else if (plan.confidence === 'low') [verdict, reason] = ['blocked:low-confidence', plan.confidence_reason]
 else if (plan.decisions.length) [verdict, reason] = ['needs-decision', `${plan.decisions.length} Open decision(s)`]
 
-const lines = [`Issue: ${plan.issue}`, `Verdict: ${verdict}${reason ? ` — ${reason}` : ''}`]
+const lines = [`Ticket: ${plan.ticket}`, `Verdict: ${verdict}${reason ? ` — ${reason}` : ''}`]
 lines.push(`Confidence: ${plan.confidence} — ${plan.confidence_reason}`)
 if (plan.decisions.length) {
   lines.push('', 'Open decisions:')

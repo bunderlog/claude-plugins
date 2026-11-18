@@ -81,7 +81,7 @@ does everything, behind a Config of its own.
   | how something is built, and why that way | `.about/adr/` | in the project |
   | what a project term means | `.about/glossary.md` | in the project |
   | what is still to decide | `.about/inbox.md` | through `/baloo:inbox` |
-  | work agreed to do | the project's tracker, else `.about/issues/` | by the team |
+  | work agreed to do | the project's tracker, else `.about/tickets/` | by the team |
   | an instruction for Claude in the project, naming the ADR or PRD it comes from | `CLAUDE.md`, `.claude/rules/` | at session start, or when a matching file is touched |
   | a decision about one project's own Setup, such as how it runs `hathi` | that project's `.about/adr/` | in the project |
   | a decision about bunderlog's plugins, `hathi` or how they work together | `claude-plugins/.about/`; `hathi`'s own in its repo | when the Harness changes |
@@ -98,10 +98,10 @@ does everything, behind a Config of its own.
   | --- | --- | --- | --- |
   | Commits | message format, no Secrets, no AI co-author, linear history, an ADR's Date set when it changes (a `hathi` Check the project turns on in `.hathi.yml`) | `hathi`, run by the project's Git hooks and CI where it installed it; else the project's own Git hooks, which check for Secrets at least; no plugin installs a Git hook | each commit, CI |
   | Claude's commits | the message format Claude writes, no co-author trailer | a line in the project's `CLAUDE.md` that imports the file setting the format (`@.hathi.yml`, which then states the format in full rather than leaning on `hathi`'s defaults, or the project's own); Claude Code's attribution off in `.claude/settings.json` | each commit Claude makes |
-  | Knowledge | ADR, PRD, glossary, Inbox, Issues, and an index of them in the context | baloo | each session |
+  | Knowledge | ADR, PRD, glossary, Inbox, Tickets, and an index of them in the context | baloo | each session |
   | Working rules | Guidelines | baloo: its always-on Guideline in the context of every session, another when a task calls for it | each session |
   | Stack Guidelines | a Guideline per stack | louie, when a file of its stack is first touched in a session | when the stack comes up |
-  | Delivery | from an agreed Issue to a pull request, checked against what the project agreed | louie's workflows | when someone runs one |
+  | Delivery | from an agreed Ticket to a pull request, checked against what the project agreed | louie's workflows | when someone runs one |
   | Session guards | Secrets kept out of Claude's context, and no mark that lets a Secret through a commit Check (`baloo:allow-secret`, `hathi:allow-secret`, `gitleaks:allow`) added by Claude; Git hooks not skipped by Claude's commands (pointing git at the project's own committed hooks is setting up, not skipping) | Claude Code's own deny rules in the project's `.claude/settings.json` where they can say it; bagheera's Checks in Hooks for the rest | each tool call |
   | Past sessions | what was decided but not written down; where sessions stalled | bagheera's Session review and Retro | at a session's end; when the person asks |
   | Project rules | `CLAUDE.md`, `.claude/rules/` with `paths:`, `settings.json` | Claude Code itself, files in the repo | session start; a rule when its file is touched |
@@ -168,7 +168,7 @@ does everything, behind a Config of its own.
 ## Non-goals
 
 - Each of these is a PRD of its own: visibility in the Status line and `doctor`; setting a project
-  up, the skill that does it included; delivery from an Issue to a pull request, `verify` included;
+  up, the skill that does it included; delivery from a Ticket to a pull request, `verify` included;
   stack Guidelines given on a file's first touch; the index of decisions and terms at session start;
   a new project's rails; what a PRD and an ADR each hold, a criterion checked by hand included (the
   knowledge skills `prd`, `adr` and `glossary`); and a simpler Session review.
@@ -227,14 +227,14 @@ does everything, behind a Config of its own.
   entries carry none.
 - A skill writes each fact only to its kind's place in the table: a term to `.about/glossary.md`, a
   decision about how to `.about/adr/`, a feature's why and what to `.about/prd/` or the named
-  tracker, agreed work to the named tracker or `.about/issues/`, a question still open to
+  tracker, agreed work to the named tracker or `.about/tickets/`, a question still open to
   `.about/inbox.md`, with what and how told apart as the knowledge skills' PRD says; none writes a
   fact of these kinds into Claude's memory. Checked by an eval case for each kind of fact each skill
   writes.
 - An instruction a skill writes into `CLAUDE.md` or `.claude/rules/` ends with the ADR or PRD it
   comes from, as `(ADR <subject>)` or `(PRD <feature>)`.
 - Every `feat` commit under `plugins/` committed from 2026-11-10 names a PRD in its body (`PRD
-  <feature>`), and every `fix` the PRD, ADR or Issue it brings the code back to.
+  <feature>`), and every `fix` the PRD, ADR or Ticket it brings the code back to.
 - In an eval project with `hathi`, set up for the plugins, the commit message Claude writes passes
   `hathi check commit-msg` (its `conventional-commits` and `no-ai-coauthor` Checks), run on it
   after the case, with one `git commit` call, in two cases: `.hathi.yml` as set up, and with the
@@ -263,7 +263,7 @@ does everything, behind a Config of its own.
   that line for the person to remove.
 - The Release that takes the commit Checks out of baloo ships only once `hathi` has the ADR Date
   Check and each project worked on from the maintainer's machine since 2026-10-01, as Claude Code's
-  Transcripts list them, is set up for the plugins or named, with why not, in Issue
+  Transcripts list them, is set up for the plugins or named, with why not, in Ticket
   commit-checks-to-hathi; from it on, a Git hook baloo wrote lets each commit through, saying that
   baloo no longer checks it and how to remove the hook, and still lets it through once baloo has no
   Python.

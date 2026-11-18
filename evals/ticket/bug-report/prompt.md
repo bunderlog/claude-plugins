@@ -1,5 +1,5 @@
 ---
-description: A bug becomes an Issue in .about/issues/ with its symptom, evidence and acceptance criteria in the description, and the guessed cause in a comment of its own.
+description: A bug becomes a Ticket in .about/tickets/ with its symptom, evidence and acceptance criteria in the description, and the guessed cause in a comment of its own.
 plugins: ["../../../plugins/baloo"]
 max_turns: 30
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]

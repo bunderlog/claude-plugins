@@ -28,7 +28,7 @@ A Session review adds no item to any project's Inbox; the share of its Proposals
 
 ## Non-goals
 
-- Moving the Session review to bagheera: Issue split-bagheera-louie.
+- Moving the Session review to bagheera: Ticket split-bagheera-louie.
 - Asking the user whether to write an open question down: the session itself can.
 
 ## Anti-goals

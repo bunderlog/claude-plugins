@@ -5,4 +5,4 @@ max_turns: 30
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
 ---
 
-Fix the Issue in .about/issues/invoice-tax.md, with a test. I'll commit it myself.
+Fix the Ticket in .about/tickets/invoice-tax.md, with a test. I'll commit it myself.

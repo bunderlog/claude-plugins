@@ -1,8 +1,8 @@
-# Issue format
+# Ticket format
 
-`.about/issues/<slug>.md`: what is wrong or what to do, in a few words (`export-drops-last-row.md`,
-`retry-on-timeout.md`), kept stable, since commits and other files cite it ("Issue
-export-drops-last-row"). An Issue in a tracker has the same title and parts, in the tracker's
+`.about/tickets/<slug>.md`: what is wrong or what to do, in a few words (`export-drops-last-row.md`,
+`retry-on-timeout.md`), kept stable, since commits and other files cite it ("Ticket
+export-drops-last-row"). A Ticket in a tracker has the same title and parts, in the tracker's
 markup, its comments as the tracker's own.
 
 ```md

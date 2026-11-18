@@ -68,7 +68,7 @@ class SessionStart(unittest.TestCase):
         write(os.path.join(self.dir, ".about/adr/new.md"), "# New\n")
         write(os.path.join(self.dir, ".about/proposals/r.md"), "# Session review r\n")
         index = ("ADRs, each .about/adr/<name>.md:\n- new: New\n"
-                 "Before a task's first edit, read the ADR, PRD or Issue above that it touches, "
+                 "Before a task's first edit, read the ADR, PRD or Ticket above that it touches, "
                  "and say where the code already breaks it\n")
         self.assertEqual(
             self.start(),
@@ -118,7 +118,7 @@ class SessionStart(unittest.TestCase):
     def test_index_edge_cases(self):
         write(os.path.join(self.dir, ".about/adr/bare.md"), "```\n# not a title\n```\ntext\n")
         write(os.path.join(self.dir, ".about/adr/old/gone.md"), "# Gone\n")
-        write(os.path.join(self.dir, ".about/issues/fix.md"), "# Fix the thing\n")
+        write(os.path.join(self.dir, ".about/tickets/fix.md"), "# Fix the thing\n")
         write(os.path.join(self.dir, ".about/glossary.md"),
               "# G\n\n**One**:\nA term.\n\n```md\n**Two**:\n```\n_Avoid_: **three**\n")
         testkit.git(self.dir, "add", ".about")
@@ -126,11 +126,23 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(
             self.start(),
             "baloo:\nADRs, each .about/adr/<name>.md:\n- bare\n"
-            "Issues, each .about/issues/<name>.md:\n- fix: Fix the thing\n"
+            "Tickets, each .about/tickets/<name>.md:\n- fix: Fix the thing\n"
             "Terms in .about/glossary.md: One\n"
-            "Before a task's first edit, read the ADR, PRD or Issue above that it touches, "
+            "Before a task's first edit, read the ADR, PRD or Ticket above that it touches, "
             "and say where the code already breaks it; "
             "write the glossary's terms as it uses them\n",
+        )
+
+    # Tickets kept in .about/issues/, their folder before 0.68.0, are listed too.
+    def test_index_tickets_in_the_old_folder(self):
+        write(os.path.join(self.dir, ".about/issues/old.md"), "# An old one\n")
+        testkit.git(self.dir, "add", ".about")
+        testkit.git(self.dir, "commit", "-q", "-m", "docs: about")
+        self.assertEqual(
+            self.start(),
+            "baloo:\nTickets, each .about/issues/<name>.md:\n- old: An old one\n"
+            "Before a task's first edit, read the ADR, PRD or Ticket above that it touches, "
+            "and say where the code already breaks it\n",
         )
 
     # A glossary alone gives its terms and the line about them; an empty .about/ gives nothing.

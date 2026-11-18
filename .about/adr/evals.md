@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-16
+Date: 2026-11-18
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -23,7 +23,7 @@ Opus, which checks `.about/adr/` on its own; it stays, as the regression the sui
 second, a decision that changes an earlier one, failed without the plugin on both: the bare model
 wrote a new ADR beside the old one.
 
-On 2026-11-01 `prd`, `issue`, `interview` and `tidy` got cases, each failing without the plugin on
+On 2026-11-01 `prd`, `ticket`, `interview` and `tidy` got cases, each failing without the plugin on
 Opus and Sonnet. `architecture`'s, a pass-through an ADR keeps on purpose, scored 1.00 both ways on
 both and was dropped: Claude reads `.about/adr/` before proposing a refactor anyway. `prd`'s
 fresh read found the gap on Sonnet in 1 of 3 runs, where Opus found it in 3 of 3.
@@ -32,7 +32,7 @@ On 2026-11-02 `glossary` got a case where the code names a term differently, fai
 plugin on Opus and Sonnet: the bare model records the term but not the code's name in `_In code_`.
 Two were dropped, scoring 1.00 both ways on both: `tidy` asking which of two clashing ADRs holds,
 and `glossary` calling out a word the glossary lists under another term's `_Avoid_`; Claude does
-both unasked. `verify` got a case where a task that serves an Issue ends with an offer of a
+both unasked. `verify` got a case where a task that serves a Ticket ends with an offer of a
 Verification, never made without the plugin; the cases for `verify` itself, `doctor` and `retro`
 can't run in the sandbox as it is (Inbox).
 

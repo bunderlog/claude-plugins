@@ -381,8 +381,9 @@ class _Cost:
 
 # How a Workflow's task-notification ends it, by its status; any other status stopped it.
 _ENDS = {"completed": "completed", "failed": "failed", "": "no end"}
-# A Workflow's earlier name, so the records written under it still count under its current one.
-_RENAMED = {"deliver": "implement"}
+# A Workflow's or a skill's earlier name, so the records written under it still count under its
+# current one.
+_RENAMED = {"deliver": "implement", "baloo:issue": "baloo:ticket"}
 
 
 def _add(counts: Dict[str, Dict[str, int]], name: str, *keys: str) -> None:
@@ -400,6 +401,7 @@ def _tally(rs: List[Dict[str, Any]], marks: Dict[str, str]) -> _Window:
             mark = marks.get(f"{r['session']} {d.get('id')}", "unlabeled")
             _add(w.denials, d.get("check", "?"), "all", d.get("followed", "?"), mark)
         for s in r.get("skills", []):
+            s = _RENAMED.get(s, s)
             w.skills[s] = w.skills.get(s, 0) + 1
         index = r.get("index", {})
         w.edits += index.get("edits", 0)

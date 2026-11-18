@@ -17,10 +17,10 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
 - Once a PRD's scope or criteria change, and before building a change that serves a PRD or an
-  Issue with acceptance criteria, in a session with the Workflow tool, offer in one line to take
-  it through an Issue (`/baloo:issue` where there is none), `/louie:plan` and `/louie:implement`;
+  Ticket with acceptance criteria, in a session with the Workflow tool, offer in one line to take
+  it through a Ticket (`/baloo:ticket` where there is none), `/louie:plan` and `/louie:implement`;
   edit in the session only if the user declines.
-- A task that serves an Issue or a PRD with acceptance criteria ends, before its commit or PR,
+- A task that serves a Ticket or a PRD with acceptance criteria ends, before its commit or PR,
   with one line offering `/louie:verify`, or the `louie:verifier` agent where the session has no
   Workflow tool; run it only if the user agrees.
 - Give a `/louie:plan`, `/louie:implement` or `/louie:verify` run's result with the tokens, agents

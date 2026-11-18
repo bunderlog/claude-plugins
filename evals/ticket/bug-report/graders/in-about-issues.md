@@ -1,5 +1,5 @@
 ---
 type: file_exists
-path: '.about/issues/*.md'
+path: '.about/tickets/*.md'
 exists: true
 ---

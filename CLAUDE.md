@@ -19,7 +19,7 @@ run release` cuts and pushes a Release, but only counts commits under a plugin's
 plain push. Commit subjects become the CHANGELOG: split unrelated changes into a commit per type,
 and write each subject for users; the format is `.hathi.yml`'s, which the Git hooks check:
 @.hathi.yml. A `feat` commit under `plugins/` names the feature's PRD in `.about/prd/` in its body,
-`PRD <feature>`, and a `fix` the PRD, ADR or Issue it brings the code back to, so a Verification
+`PRD <feature>`, and a `fix` the PRD, ADR or Ticket it brings the code back to, so a Verification
 finds it; a feature without a PRD gets one first (PRD harness).
 
 See README.md for the settings, the doctor and development in full.

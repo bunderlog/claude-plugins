@@ -56,7 +56,7 @@ pasting a log or naming the failed step.
   earlier run's log as HEAD's.
 - HEAD's run is green, or still running: Claude says so and changes nothing.
 - The failed step passes locally: Claude says the failure looks flaky and asks whether to rerun
-  the failed jobs, look for the cause, or write an Issue; it reruns nothing until told.
+  the failed jobs, look for the cause, or write a Ticket; it reruns nothing until told.
 - The failure needs another OS or runner than this machine (Linux from a Mac): Claude
   stops, shows what it ran and the hypotheses the log supports, and proposes the next step
   (a container, a draft PR) without pushing anything.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { run } from './harness.mjs'
 
 const plan = {
-  issue: 'x.md: X', criteria: ['c1'], build: 'changes-needed', evidence: '', confidence: 'high',
+  ticket: 'x.md: X', criteria: ['c1'], build: 'changes-needed', evidence: '', confidence: 'high',
   confidence_reason: 'found', changes: [{ where: 'a.py', what: 'do', serves: ['c1'] }], decisions: [],
   assumptions: [], tool_failed: false, tool_error: '',
 }
@@ -21,11 +21,11 @@ test('plan ends by the plan\'s fields', async () => {
     const { result } = await run('plan', 'x.md', { agent: () => given })
     assert.equal(result.verdict, want)
   }
-  assert.equal((await run('plan', undefined)).result.verdict, 'blocked:no-issue')
+  assert.equal((await run('plan', undefined)).result.verdict, 'blocked:no-ticket')
 })
 
 test('plan works in the worktree it is given', async () => {
-  const { calls } = await run('plan', { issue: 'x.md', dir: '/w' }, { agent: () => plan })
+  const { calls } = await run('plan', { ticket: 'x.md', dir: '/w' }, { agent: () => plan })
   assert.match(calls[0].prompt, /in the worktree \/w/)
   assert.equal(calls[0].agentType, 'louie:planner')
 })

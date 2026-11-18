@@ -3,7 +3,7 @@
 Date: 2026-11-18
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
-Issue's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
+Ticket's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
 one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
 change to see it work; neither knows anything of `.about/`. So louie ships one agent,
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
@@ -17,14 +17,14 @@ departure that blocks or a criterion not met (PRD delivery). So the user has `/l
 Workflows are turned on, Claude runs the agent by its name instead, checking every source in one
 context. A Verification runs only when the user asks or agrees, or as a stage of a `implement` run
 they started, as it is a whole run's tokens. Claude offers one, in a line and once, at the end of a
-task that serves an Issue or a PRD with acceptance criteria, before its commit or PR: there it has
+task that serves a Ticket or a PRD with acceptance criteria, before its commit or PR: there it has
 criteria to check against, and few tasks have one. The Workflow's description says so, and a line in
 `principles`' On every task, which session start prints in every session (ADR guidelines): on
 2026-11-02 the description alone made Claude offer it in 3 of 3 runs on Opus but 0 of 3 on Sonnet,
 the line in 3 of 3 on both, and without the plugin in none (`evals/verify/offer`, run against the
 skill's description, which the Workflow's `whenToUse` now carries). By default it looks at the
 current branch's commits since the default branch, plus the working tree; a commit range, a branch
-or a PR given overrides that. It checks the criteria of the Issue or PRD it is given, or else of the
+or a PR given overrides that. It checks the criteria of the Ticket or PRD it is given, or else of the
 one the branch's name, its commits or its files point to, and says so when it finds none rather than
 guessing. Checking a built feature's whole PRD, every criterion's test link, stays the `prd` skill's
 (ADR prd): a Verification looks at the criteria one change serves.
@@ -47,13 +47,13 @@ starts without the index and does the same.
 
 ## Considered options
 
-- Four agents: analyzing an Issue, implementing, reviewing and testing — analyzing is what the
+- Four agents: analyzing a Ticket, implementing, reviewing and testing — analyzing is what the
   built-in Explore and the `debugging` Guideline do already, with the conversation the session
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
   steer it; testing is the project's checks' and building test-first's, and what remains of it,
   checking the criteria, is this agent's.
-- A pipeline from Issue to tested change (until 2026-11-10) — each repo's flow is its own, as for
-  `ship` (ADR issues); PRD delivery's `implement` takes it from what the project names, its checks
+- A pipeline from Ticket to tested change (until 2026-11-10) — each repo's flow is its own, as for
+  `ship` (ADR tickets); PRD delivery's `implement` takes it from what the project names, its checks
   command, commit format and tracker.
 - Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
@@ -85,7 +85,7 @@ starts without the index and does the same.
   not.
 - A Verification can still write through Bash if its prompt is ignored; the user's permission
   rules are what stop it.
-- A task that serves an Issue or PRD ends with one more line, the offer, though the user may
+- A task that serves a Ticket or PRD ends with one more line, the offer, though the user may
   decline it every time.
 - Revisit when Claude Code lets a plugin's agent set its permissions, users ask to verify every
   change without asking, or a measurement finds the offer declined nearly every time or never

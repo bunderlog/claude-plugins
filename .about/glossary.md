@@ -1,7 +1,7 @@
 # baloo glossary
 
 The plugins of the `bunderlog` marketplace: `baloo`, skills that keep a project's language,
-decisions and requirements explicit, write its Issues and go through its Inbox; `louie`,
+decisions and requirements explicit, write its Tickets and go through its Inbox; `louie`,
 Guidelines of working rules, the ADRs and PRDs named at the file they concern, and a
 Verification; and `bagheera`, Checks that Hooks trigger, a
 Session review, a Retro, an Assessment, an Output style for Claude's replies, a Status line and
@@ -30,7 +30,7 @@ _Avoid_: "baloo" for these parts
 
 **louie**:
 The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
-where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from an Issue to a pull request; to come,
+where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from a Ticket to a pull request; to come,
 templates for a new product (PRD louie, PRD delivery, PRD templates).
 _Avoid_: "baloo" for these parts
 
@@ -176,17 +176,17 @@ finding left for later. An item stays until something settles it, and is then de
 _Avoid_: todo, backlog, proposed ADR
 _In code_: baloo's `scripts/session-start` counts it; the `inbox` skill goes through it
 
-**Issue**:
+**Ticket**:
 Work agreed to do, a bug to fix or a task: a page in the tracker the project names, or else
-`.about/issues/<slug>.md`, deleted by the change that does it. Unlike an Inbox item, nothing about
+`.about/tickets/<slug>.md`, deleted by the change that does it. Unlike an Inbox item, nothing about
 it is still to decide.
-_Avoid_: ticket, todo
-_In code_: the `issue` skill writes one
+_Avoid_: issue, task, todo; but "issue" stays where it names a tracker's own object (`gh issue`)
+_In code_: the `ticket` skill writes one; `.about/issues/` where a project kept them before 0.68.0
 
 **Verification**:
 A comparison, which the user asks for or a `implement` run makes, of a change with what the project
 agreed: its ADRs, glossary, the Guidelines that fit the repo, and the acceptance criteria of its
-Issue or PRD. louie's agent, the verifier, makes it in a context of its own, so not as the change's
+Ticket or PRD. louie's agent, the verifier, makes it in a context of its own, so not as the change's
 author, one for each source when the `verify` Workflow runs it, and changes nothing. Unlike a code
 review, it doesn't hunt bugs; unlike Claude Code's `/verify`, it doesn't run the change; unlike a
 Check, it isn't a plugin's code.
@@ -196,23 +196,23 @@ _In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 ## Building
 
 **Plan**:
-louie's answer for an Issue before it is built: each change, where it goes and the acceptance
+louie's answer for a Ticket before it is built: each change, where it goes and the acceptance
 criterion it serves, how sure it is, its Open decisions and Assumptions; or nothing to build,
 naming the commit that already meets the criteria. Making one changes nothing.
-_Avoid_: "plan" for Claude Code's plan mode's, which follows no Issue
+_Avoid_: "plan" for Claude Code's plan mode's, which follows no Ticket
 _In code_: the `plan` Workflow; `agents/planner.md`
 
 **Open decision**:
-A choice only the person can make, which the Issue, the ADRs and the code leave open, such as a
-behavior another decision set. A Plan with one stops `implement` until it is written into the Issue
+A choice only the person can make, which the Ticket, the ADRs and the code leave open, such as a
+behavior another decision set. A Plan with one stops `implement` until it is written into the Ticket
 or an ADR; one found elsewhere waits in the Inbox. Unlike an Assumption, a Plan doesn't take it.
 _Avoid_: decision for the person; "decision" alone, which an ADR's is once taken
 _In code_: a Plan's `decisions`; the verdict `needs-decision`
 
 **Assumption**:
 What a Plan takes as given without asking the person, with what would change if it is wrong: a
-way to build it recommends that no criterion, ADR or the Issue rules out, or a question outside
-the Issue's criteria that it leaves out. The pull request lists them for review, and one the
+way to build it recommends that no criterion, ADR or the Ticket rules out, or a question outside
+the Ticket's criteria that it leaves out. The pull request lists them for review, and one the
 review rejects is changed in that pull request: it isn't an Open decision, which stops only a run
 not yet building.
 _In code_: a Plan's `assumptions`

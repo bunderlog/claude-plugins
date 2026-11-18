@@ -1,7 +1,7 @@
 export const meta = {
   name: 'implement',
-  description: 'Take agreed Issues to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed with up to three reworks, and the pull request.',
-  whenToUse: 'When the user asks to implement, build or deliver agreed Issues up to pull requests, usually after /louie:plan and once their decisions are written into the Issues. Takes one to five Issues: each its key or URL in the tracker the project names, or its file in .about/issues/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
+  description: 'Take agreed Tickets to pull requests: for each a new branch and worktree and the plan, then, for those whose plans are ready and change different files, commits the project\'s checks pass, a Verification against what the project agreed with up to three reworks, and the pull request.',
+  whenToUse: 'When the user asks to implement, build or deliver agreed Tickets up to pull requests, usually after /louie:plan and once their decisions are written into the Tickets. Takes one to five Tickets: each its key or URL in the tracker the project names, or its file in .about/tickets/. Several are all planned before any is built, and every Open decision comes in one report. Leaves the person\'s checkout as it is.',
   phases: [
     { title: 'Prepare' },
     { title: 'Plan' },
@@ -10,21 +10,21 @@ export const meta = {
   ],
 }
 
-// args: the Issues, as text split on whitespace (a tracker's key or URL, or a file in
-// .about/issues/), or { issues } or { issue }.
+// args: the Tickets, as text split on whitespace (a tracker's key or URL, or a file in
+// .about/tickets/), or { tickets } or { ticket }.
 //
 // The script decides the order of the stages and every way out of them; the agents do the work
-// (PRD delivery, PRD batch). Each Issue is prepared in turn, as git locks a repo's worktrees, then
+// (PRD delivery, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
-// At most 23 agents an Issue: prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4,
-// pull request 1; an Issue that stops before it is built spends one more, to discard the worktree
+// At most 23 agents a Ticket: prepare 1, plan 1, implement 1, verify 4, three reworks of 1 + 4,
+// pull request 1; a Ticket that stops before it is built spends one more, to discard the worktree
 // it made. The agent's name repeats louie's names.PLUGIN, as a script can't import it.
 
-const MAX_ISSUES = 5
+const MAX_TICKETS = 5
 const MAX_REWORK = 3
 const named =
-  typeof args === 'string' ? args.split(/\s+/) : (args && (args.issues || (args.issue ? [args.issue] : []))) || []
-const issues = [...new Set(named.map((i) => String(i).trim()).filter(Boolean))]
+  typeof args === 'string' ? args.split(/\s+/) : (args && (args.tickets || (args.ticket ? [args.ticket] : []))) || []
+const tickets = [...new Set(named.map((i) => String(i).trim()).filter(Boolean))]
 
 const PREPARE_SCHEMA = {
   type: 'object',
@@ -63,13 +63,13 @@ const PR_SCHEMA = {
   required: ['opened', 'url', 'blocker'],
 }
 
-// One Issue's run: its stages fill it in, and end() makes what the run returns for it.
-const runs = issues.map((issue) => ({ issue, prep: null, planned: null, where: '', rounds: [] }))
-const label = (r, stage) => (issues.length > 1 ? `${stage} ${r.issue}` : stage)
+// One Ticket's run: its stages fill it in, and end() makes what the run returns for it.
+const runs = tickets.map((ticket) => ({ ticket, prep: null, planned: null, where: '', rounds: [] }))
+const label = (r, stage) => (tickets.length > 1 ? `${stage} ${r.ticket}` : stage)
 const end = (r, verdict, reason, extra) => ({
   verdict,
   reason: reason || '',
-  issue: r.issue,
+  ticket: r.ticket,
   branch: r.prep ? r.prep.branch : '',
   worktree: r.prep ? r.prep.worktree : '',
   rounds: r.rounds,
@@ -90,7 +90,7 @@ const same = (a, b) => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)
 
 async function prepare(r) {
   r.prep = await agent(
-    `Stage: prepare\nIssue: ${r.issue}\nPrepare the run, as your instructions say.`,
+    `Stage: prepare\nTicket: ${r.ticket}\nPrepare the run, as your instructions say.`,
     { agentType: 'louie:implementer', schema: PREPARE_SCHEMA, label: label(r, 'prepare'), phase: 'Prepare' },
   )
   if (!r.prep) return end(r, 'blocked:tooling', 'the prepare stage returned nothing')
@@ -106,7 +106,7 @@ async function prepare(r) {
 // The worktree holds nothing yet: a rerun once the decisions are in starts a new one.
 async function discard(r, verdict, reason, extra) {
   await agent(
-    `Stage: discard\nIssue: ${r.issue}\nDiscard ${r.where}, as your instructions say.`,
+    `Stage: discard\nTicket: ${r.ticket}\nDiscard ${r.where}, as your instructions say.`,
     { agentType: 'louie:implementer', label: label(r, 'discard'), phase: 'Plan' },
   )
   const result = end(r, verdict, reason, extra)
@@ -116,7 +116,7 @@ async function discard(r, verdict, reason, extra) {
 
 async function plan(r) {
   try {
-    r.planned = await workflow('louie:plan', { issue: r.issue, dir: r.prep.worktree })
+    r.planned = await workflow('louie:plan', { ticket: r.ticket, dir: r.prep.worktree })
   } catch (e) {
     return end(r, 'blocked:tooling', `the plan Workflow failed: ${e && e.message ? e.message : e}`)
   }
@@ -135,7 +135,7 @@ async function build(r) {
   for (let round = 0; ; round++) {
     const mode = round === 0 ? 'implement' : 'rework'
     const impl = await agent(
-      `Stage: ${mode}\nIssue: ${r.issue}\nWork in ${r.where}.\n\nThe plan:\n${r.planned.report}` +
+      `Stage: ${mode}\nTicket: ${r.ticket}\nWork in ${r.where}.\n\nThe plan:\n${r.planned.report}` +
         (findings ? `\n\nThe Verification's findings to fix:\n${findings}` : ''),
       {
         agentType: 'louie:implementer',
@@ -151,7 +151,7 @@ async function build(r) {
 
     try {
       verification = await workflow('louie:verify', {
-        target: `the commits ${r.prep.base}..${r.prep.branch} in ${r.prep.worktree} (run git and read files there), serving the Issue ${r.issue}`,
+        target: `the commits ${r.prep.base}..${r.prep.branch} in ${r.prep.worktree} (run git and read files there), serving the Ticket ${r.ticket}`,
       })
     } catch (e) {
       return end(r, 'blocked:tooling', `the verify Workflow failed: ${e && e.message ? e.message : e}`)
@@ -177,7 +177,7 @@ async function build(r) {
   // The plan builds on its assumptions rather than stop for them: the person reviews them here.
   const assumptions = (r.planned.plan && r.planned.plan.assumptions) || []
   const body = [
-    `Delivers ${r.issue}.`,
+    `Delivers ${r.ticket}.`,
     '',
     'Acceptance criteria:',
     ...(verification.criteria.length
@@ -192,7 +192,7 @@ async function build(r) {
   ].join('\n')
 
   const pr = await agent(
-    `Stage: pull-request\nIssue: ${r.issue}\nWork in ${r.where}, against ${r.prep.default_branch}.\n` +
+    `Stage: pull-request\nTicket: ${r.ticket}\nWork in ${r.where}, against ${r.prep.default_branch}.\n` +
       `Open the pull request${draft ? ' as a draft' : ''}, its body this text, as it is:\n\n${body}`,
     { agentType: 'louie:implementer', schema: PR_SCHEMA, label: label(r, 'pull request'), phase: 'Pull request' },
   )
@@ -202,9 +202,9 @@ async function build(r) {
   return end(r, draft ? 'done:draft-pr' : 'done:pr-opened', '', { pr_url: pr.url })
 }
 
-if (!issues.length) return { verdict: 'blocked:no-issue', reason: 'no Issue named', results: [], decisions: [], report: '' }
-if (issues.length > MAX_ISSUES) {
-  const reason = `${issues.length} Issues named; at most ${MAX_ISSUES} at once`
+if (!tickets.length) return { verdict: 'blocked:no-ticket', reason: 'no Ticket named', results: [], decisions: [], report: '' }
+if (tickets.length > MAX_TICKETS) {
+  const reason = `${tickets.length} Tickets named; at most ${MAX_TICKETS} at once`
   return { verdict: 'blocked:too-many', reason, results: [], decisions: [], report: '' }
 }
 
@@ -231,27 +231,27 @@ for (const r of runs.filter((x) => !results.has(x))) {
     continue
   }
   const shared = mine.filter((m) => files(other).some((f) => same(f, m)))
-  results.set(r, await discard(r, 'blocked:overlaps', `changes ${shared.join(', ')}, as ${other.issue} does`, { plan: r.planned.report }))
+  results.set(r, await discard(r, 'blocked:overlaps', `changes ${shared.join(', ')}, as ${other.ticket} does`, { plan: r.planned.report }))
 }
 
 const built = await parallel(going.map((r) => () => build(r)))
 going.forEach((r, i) => results.set(r, built[i] || end(r, 'blocked:tooling', 'the run stopped')))
 
-if (issues.length === 1) return results.get(runs[0])
+if (tickets.length === 1) return results.get(runs[0])
 
 const each = runs.map((r) => results.get(r))
 const decisions = runs.flatMap((r) =>
-  ((r.planned && r.planned.plan && r.planned.plan.decisions) || []).map((d) => ({ issue: r.issue, ...d })),
+  ((r.planned && r.planned.plan && r.planned.plan.decisions) || []).map((d) => ({ ticket: r.ticket, ...d })),
 )
 const done = each.filter((x) => x.verdict.startsWith('done:')).length
 const verdict = done === each.length ? 'done:all' : done ? 'done:some' : 'blocked:none'
 
-const lines = ['Issues:']
-each.forEach((x) => lines.push(`- ${x.issue}: ${x.verdict}${x.pr_url ? ` ${x.pr_url}` : x.reason ? ` — ${x.reason}` : ''}`))
+const lines = ['Tickets:']
+each.forEach((x) => lines.push(`- ${x.ticket}: ${x.verdict}${x.pr_url ? ` ${x.pr_url}` : x.reason ? ` — ${x.reason}` : ''}`))
 if (decisions.length) {
   lines.push('', 'Open decisions:')
   decisions.forEach((d, i) => {
-    lines.push(`${i + 1}. ${d.issue}: ${d.question}`)
+    lines.push(`${i + 1}. ${d.ticket}: ${d.question}`)
     d.options.forEach((o) => lines.push(`   - ${o}`))
     lines.push(`   Recommended: ${d.recommended}`)
   })

@@ -1,4 +1,4 @@
-# Session start names every decision, requirement, Issue and term the project keeps
+# Session start names every decision, requirement, Ticket and term the project keeps
 
 ## Problem
 
@@ -20,8 +20,8 @@ PRDs a file concerns when Claude first works on it.
 
 - Claude, in every session of a project that turns baloo on, and the person, who reads it to
   answer "what did we decide about X" without opening files.
-- Not for: a project that keeps its PRDs or Issues in a tracker, whose pages session start doesn't
-  list (ADR issues, ADR prd).
+- Not for: a project that keeps its PRDs or Tickets in a tracker, whose pages session start doesn't
+  list (ADR tickets, ADR prd).
 
 ## Success signal
 
@@ -36,10 +36,10 @@ edits to a file an ADR or PRD names, the share where it was read earlier in the 
   - each ADR, the `*.md` files directly in `.about/adr/`, a line each: its file name without
     `.md` and its title, the first line outside a fenced code block that starts with `# `, as
     written; the folder named once, above them;
-  - each PRD in `.about/prd/` and each Issue in `.about/issues/`, the same way;
+  - each PRD in `.about/prd/` and each Ticket in `.about/tickets/`, the same way;
   - the terms of `.about/glossary.md`, each line outside a fenced code block that starts with
     `**<name>**:`, by its name alone, on one line;
-  - one line telling Claude to read the ADR, PRD or Issue a task touches before its first edit,
+  - one line telling Claude to read the ADR, PRD or Ticket a task touches before its first edit,
     and to say where the code already breaks it, where any is listed, and to use the glossary's
     words, where it has terms. With the titles alone Claude read only the ADRs that fit and less
     code, and missed code that breaks one (eval case `adr/code-contradicts-adr`, 2026-11-12: 0 of
@@ -71,11 +71,11 @@ edits to a file an ADR or PRD names, the share where it was read earlier in the 
   themselves (ADR verify).
 - Giving an ADR's or a PRD's text at the file, or anything finer than its name and title: which
   acceptance criterion a file serves, or which decision in an ADR.
-- Naming the Issues at the file: they name files less steadily, and the index lists them.
+- Naming the Tickets at the file: they name files less steadily, and the index lists them.
 - The Inbox's titles: session start counts its items, and `/baloo:inbox` goes through them.
 - Rewriting a project's ADR titles that name a subject rather than a decision ("Annual billing"):
   the `adr` skill's work, when the ADR is next changed.
-- PRDs and Issues kept in a tracker.
+- PRDs and Tickets kept in a tracker.
 
 ## Anti-goals
 
@@ -95,7 +95,7 @@ edits to a file an ADR or PRD names, the share where it was read earlier in the 
   alone; a `**Term**:` line inside a fenced code block of the glossary isn't a term; a file in a
   subfolder of `.about/adr/` isn't listed.
 - A repo with only `.about/glossary.md` gets its terms and the line about the glossary's words,
-  and no ADR, PRD or Issue line; a repo with `.about/` empty, or none, gets no index.
+  and no ADR, PRD or Ticket line; a repo with `.about/` empty, or none, gets no index.
 - In a repo with 300 ADRs of 80-character titles, the index ends by 8,000 characters with a line
   naming how many ADRs it left out and `.about/adr/`, a line for the PRDs and the terms it didn't
   reach, and the Inbox's count and the uncommitted files after it in full.

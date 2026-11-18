@@ -1,6 +1,6 @@
 #!/bin/sh
 # baloo's one Hook (PRD louie): at session start, in a repo, the index of the project's ADRs,
-# PRDs, Issues and terms (PRD index), how many items the Inbox holds (ADR inbox) and the files in
+# PRDs, Tickets and terms (PRD index), how many items the Inbox holds (ADR inbox) and the files in
 # .about/ git hasn't committed (ADR about-folder), for Claude to tell the user. What it prints
 # Claude Code adds to Claude's context. It prints nothing outside a repo, in the home folder or
 # Claude Code's own, and in a Session review's session; nothing of .about/'s changes in a headless
@@ -17,10 +17,12 @@ esac
 
 out=""
 
-# The index of the project's knowledge (PRD index): each ADR, PRD and Issue by its file name and
+# The index of the project's knowledge (PRD index): each ADR, PRD and Ticket by its file name and
 # title, and the glossary's terms, read from the working tree each time, cut at 8,000 characters.
 set --
-for f in "$root"/.about/adr/*.md "$root"/.about/prd/*.md "$root"/.about/issues/*.md \
+# .about/issues/ is where Tickets were kept before 0.68.0.
+for f in "$root"/.about/adr/*.md "$root"/.about/prd/*.md "$root"/.about/tickets/*.md \
+  "$root"/.about/issues/*.md \
   "$root"/.about/glossary.md; do
   [ -f "$f" ] && set -- "$@" "$f"
 done
@@ -28,7 +30,7 @@ if [ $# -gt 0 ]; then
   index=$(awk -v limit=8000 '
     function emit(s) { print s; used += length(s) + 1 }
     BEGIN {
-      label["adr"] = "ADRs"; label["prd"] = "PRDs"; label["issues"] = "Issues"
+      label["adr"] = "ADRs"; label["prd"] = "PRDs"; label["tickets"] = "Tickets"; label["issues"] = "Tickets"
       for (i = 1; i < ARGC; i++) {
         rel = ARGV[i]; sub(/.*\/\.about\//, "", rel)
         fenced = 0
@@ -50,8 +52,8 @@ if [ $# -gt 0 ]; then
         }
         close(ARGV[i])
       }
-      if (n["adr"] + n["prd"] + n["issues"] > 0) {
-        say = "Before a task'"'"'s first edit, read the ADR, PRD or Issue above that it touches, and say where the code already breaks it"
+      if (n["adr"] + n["prd"] + n["tickets"] + n["issues"] > 0) {
+        say = "Before a task'"'"'s first edit, read the ADR, PRD or Ticket above that it touches, and say where the code already breaks it"
       }
       if (nterms > 0) {
         say = say (say == "" ? "Write" : "; write") " the glossary'"'"'s terms as it uses them"
@@ -59,8 +61,8 @@ if [ $# -gt 0 ]; then
       if (say == "") exit
       # Room kept for the lines saying what was cut and for the instruction.
       room = limit - length(say) - 400
-      split("adr prd issues", kinds, " ")
-      for (j = 1; j <= 3; j++) {
+      split("adr prd tickets issues", kinds, " ")
+      for (j = 1; j <= 4; j++) {
         k = kinds[j]
         if (!n[k]) continue
         if (cut) { emit(label[k] ": " n[k] " more in .about/" k "/"); continue }

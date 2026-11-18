@@ -49,8 +49,8 @@ what made it fail, not the color. A rerun that passes fixes nothing.
   log supports and the next step you'd take, a container of the runner's image or a draft PR to
   try it on; push nothing.
 - Still passing: say the failure looks flaky, with what you tried, and ask: rerun the failed
-  jobs, look for the cause as `debugging.md` says for a flaky bug, or write an Issue (the
-  `issue` skill). Rerun nothing until told.
+  jobs, look for the cause as `debugging.md` says for a flaky bug, or write a Ticket (the
+  `ticket` skill). Rerun nothing until told.
 
 **Test:** the step's command fails here with the log's error, or the user has said what to do.
 

@@ -34,7 +34,7 @@ Claude Code runs them in; `node` is needed only by this repo's tests (PRD delive
 
 New work that leans on what a plugin already has is part of that plugin, not a plugin of its own:
 fixing a failed CI run is louie's `ci` Guideline (ADR guidelines), which follows `debugging` and
-hands a flaky failure to the `issue` skill.
+hands a flaky failure to the `ticket` skill.
 
 The move was made a step at a time, a Release per step: bagheera shipped with 0.41.0 and louie
 with 0.42.0; louie's templates and Workflows come each with a PRD of its own.

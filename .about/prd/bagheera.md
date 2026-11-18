@@ -37,7 +37,7 @@ person set from bagheera's command draws.
 ## Non-goals
 
 - Setting a project up, and bagheera's `doctor` over the machine's projects: PRDs of their own.
-- louie: Issue split-bagheera-louie.
+- louie: Ticket split-bagheera-louie.
 
 ## Anti-goals
 

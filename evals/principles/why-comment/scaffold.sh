@@ -1,6 +1,6 @@
 #!/bin/bash
 # The shop, whose invoice taxes its net total once while each printed line shows its own rounded
-# tax, and an Issue where the two differ by a cent. The fix rounds each line's tax and sums them:
+# tax, and a Ticket where the two differ by a cent. The fix rounds each line's tax and sums them:
 # the one-line tax on the total it replaces looks tidier, so only a comment keeps it from coming
 # back.
 set -euo pipefail
@@ -59,8 +59,8 @@ def test_totals_of_one_line():
     totals = invoice_totals([Line("Mug", 1000, 2)], 1900)
     assert (totals.net_cents, totals.tax_cents, totals.gross_cents) == (2000, 380, 2380)
 EOF
-mkdir -p .about/issues
-cat > .about/issues/invoice-tax.md <<'EOF'
+mkdir -p .about/tickets
+cat > .about/tickets/invoice-tax.md <<'EOF'
 # An invoice's tax total differs from its lines' tax by a cent
 
 2026-11-10

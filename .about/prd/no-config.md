@@ -58,7 +58,7 @@ in a project.
 
 ## Non-goals
 
-- Moving these parts to bagheera or louie: Issue split-bagheera-louie.
+- Moving these parts to bagheera or louie: Ticket split-bagheera-louie.
 - A simpler Session review: a PRD of its own before it moves.
 - Writing the person's `~/.claude/settings.json`: this binds baloo until bagheera ships, and the
   visibility PRD may replace it, with the person's yes.

@@ -74,7 +74,7 @@ waiting without the line.
 ## Non-goals
 
 - Fixing anything from the Status line or `doctor`: the person runs the fix named (ADR doctor).
-- A CI run that failed, an open pull request, or an Issue assigned: each needs `gh` or a tracker,
+- A CI run that failed, an open pull request, or a Ticket assigned: each needs `gh` or a tracker,
   which PRD harness doesn't require.
 - Uncommitted or unpushed work: the session's own clone's is PRD status-line's, and baloo's
   session start tells the `.about/` files not committed.

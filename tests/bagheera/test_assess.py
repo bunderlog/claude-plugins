@@ -204,6 +204,8 @@ class Assess(unittest.TestCase):
                 "hookEvent": "SessionStart", "type": "hook_success", "content": "baloo:\nADRs"}}),
             call("k1", "Skill", {"skill": "baloo:prd"}),
             call("k2", "Skill", {"skill": "someone:else"}),
+            # `ticket`'s name before 0.68.0.
+            call("k3", "Skill", {"skill": "baloo:issue"}),
             line("user", "<command-name>/bagheera:assess</command-name>"),
             call("e1", "Edit", {"file_path": os.path.join(self.root, "src/export/csv.go")},
                  "2026-11-10T09:05:00.000Z"),
@@ -212,6 +214,8 @@ class Assess(unittest.TestCase):
         report = self.report()
         self.assertIn("  baloo:prd: 1 (0)", report)
         self.assertIn("  bagheera:assess: 1 (0)", report)
+        self.assertIn("  baloo:ticket: 1 (0)", report)
+        self.assertNotIn("baloo:issue", report)
         self.assertNotIn("someone:else", report)
         self.assertIn("  louie: 26 (0)", report)
         self.assertIn("  bagheera: 11 (0)", report)
@@ -384,7 +388,7 @@ class Assess(unittest.TestCase):
             call("w3", "Workflow", {"name": "someone:else"}),
             result("w3", "Workflow launched in background. Task ID: w3"),
             # `implement`'s name before 0.68.0.
-            call("w4", "Workflow", {"name": "louie:implement"}),
+            call("w4", "Workflow", {"name": "louie:deliver"}),
             result("w4", "Workflow launched in background. Task ID: w4"),
             notification("w4", "completed"),
         )

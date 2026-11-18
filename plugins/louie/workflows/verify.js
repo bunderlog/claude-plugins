@@ -1,11 +1,11 @@
 export const meta = {
   name: 'verify',
-  description: 'Verify a change against what the project agreed: its ADRs, glossary, Guidelines, and the acceptance criteria of its Issue or PRD, one verifier for each, and report each departure with file:line. Changes nothing.',
-  whenToUse: 'When the user asks to verify or check a change against the project\'s decisions or criteria. Offer it, in a line and once, at the end of a task that serves an Issue or a PRD with acceptance criteria, before its commit or PR, and run it only if the user agrees. Takes a commit range, a branch, a PR, an Issue or a PRD; by default the current branch and the working tree. Not for hunting bugs, which a code review does, or for whether the change works when run, which Claude Code\'s /verify checks.',
+  description: 'Verify a change against what the project agreed: its ADRs, glossary, Guidelines, and the acceptance criteria of its Ticket or PRD, one verifier for each, and report each departure with file:line. Changes nothing.',
+  whenToUse: 'When the user asks to verify or check a change against the project\'s decisions or criteria. Offer it, in a line and once, at the end of a task that serves a Ticket or a PRD with acceptance criteria, before its commit or PR, and run it only if the user agrees. Takes a commit range, a branch, a PR, a Ticket or a PRD; by default the current branch and the working tree. Not for hunting bugs, which a code review does, or for whether the change works when run, which Claude Code\'s /verify checks.',
   phases: [{ title: 'Verify' }],
 }
 
-// args: what the user named, as text (a commit range, a branch, a PR, an Issue or a PRD), or
+// args: what the user named, as text (a commit range, a branch, a PR, a Ticket or a PRD), or
 // { target }; nothing for the current branch and the working tree.
 //
 // One verifier for each source of what was agreed (PRD delivery), so each reads its source whole

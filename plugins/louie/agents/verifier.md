@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Issue or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through the /louie:verify Workflow, which runs one for each source. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
+description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Ticket or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through the /louie:verify Workflow, which runs one for each source. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
@@ -37,8 +37,8 @@ only: the others are other verifiers'.
   `louie@bunderlog` whose `projectPath` is the repo's root, else its user-scope one. Read the
   `guidelines/` there whose subject the repo and the change are, and name the folder you used. No
   such folder: skip them and say so.
-- **Acceptance criteria**: of the Issue or PRD your prompt names; otherwise of the one in
-  `.about/issues/`, `.about/prd/` or the tracker the project's CLAUDE.md or AGENTS.md names that
+- **Acceptance criteria**: of the Ticket or PRD your prompt names; otherwise of the one in
+  `.about/tickets/`, `.about/prd/` or the tracker the project's CLAUDE.md or AGENTS.md names that
   the branch's name, its commit messages or the changed files point to. None found: say so, and
   don't guess one. For each criterion the change serves: does it do it, and does a test check it.
   A PRD's criterion names its test (`→ test: <file> "<name>"`): check that the test exists and

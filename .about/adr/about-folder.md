@@ -1,15 +1,15 @@
 # Project knowledge lives in `.about/` at the repo root
 
-Date: 2026-11-10
+Date: 2026-11-18
 
-The skills keep a project's glossary, ADRs, PRDs, Inbox and Issues in `.about/glossary.md`,
-`.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/issues/` (ADR issues), at
+The skills keep a project's glossary, ADRs, PRDs, Inbox and Tickets in `.about/glossary.md`,
+`.about/adr/`, `.about/prd/`, `.about/inbox.md` (ADR inbox) and `.about/tickets/` (ADR tickets), at
 the root of the git repo the session is in, whatever folder it was opened in. It is project
 knowledge for people and for any agent, so it belongs neither in one vendor's config folder nor in a
 folder other tools already claim; `.about` is short, unclaimed, and sorts first. A monorepo has one
 glossary, with a context per project, and one ADR log. The Session review runs at the same root and
 proposes changes only to what is there, in `.about/proposals/` (ADR session-review). A project with
-its own place for PRDs or Issues keeps it: the skills follow the project.
+its own place for PRDs or Tickets keeps it: the skills follow the project.
 
 The ADRs and the glossary are the exception: they live only in `.about/adr/<subject>.md` (ADR
 adr-format) and `.about/glossary.md`, never in a project's numbered ADRs (`docs/adr/0001-….md`) or
@@ -34,7 +34,7 @@ ADR, are left uncommitted and unread as often as a Session review's would be (5 
 them stays the user's call. `.about/proposals/` is out of git (ADR session-review), so it never
 shows, and a headless session is shown none of them, as with the Proposals.
 
-Before that, session start names every ADR, PRD and Issue by its title and every term of the
+Before that, session start names every ADR, PRD and Ticket by its title and every term of the
 glossary, headless sessions included, read from the files each time and kept in none of their own
 (PRD index).
 

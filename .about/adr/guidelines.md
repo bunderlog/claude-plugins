@@ -1,6 +1,6 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-16
+Date: 2026-11-18
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -96,7 +96,7 @@ A plugin's skill can't be hidden from one project: Claude Code's `skillOverrides
 a plugin's skills, and a SessionStart Hook runs after the skill listing is built. So a Guideline
 as a skill would put every stack's description into every session, whatever the project.
 
-So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `issue`,
+So the plugin's skills are the ones that keep a document with the user (`adr`, `glossary`, `ticket`,
 `prd`), are a conversation with them (`architecture`, `inbox`, `interview`, `retro`, `tidy`), or
 run as a Workflow (`verify`, ADR verify); rules for how to do a kind of task are a
 Guideline, `debugging`, `ci` and `dependencies` among them: they keep no document, and one with no
