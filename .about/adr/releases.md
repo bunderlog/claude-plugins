@@ -20,6 +20,11 @@ install. The task then pushes `main` and the tag together; the tag starts the Re
 the GitHub Release. With nothing to build or download (ADR binary), a copy that updates before the
 workflow has run misses only the notes page.
 
+The site, bunderlog/web, describes what ships, and on 2026-11-18 it fell three Releases behind
+until the user noticed. So once a Release has a breaking change or a feature, the task prints
+them with a reminder to update the site, for the session that made the Release to take up. A
+Release of fixes alone prints nothing: a fix brings the code back to what the site already says.
+
 The release tool, `src/release/release.py`, is Python like the plugins, outside them, and shares
 no code with them: it reads the plugins from the marketplace's manifest, so a change to it needs no
 Release.
@@ -39,6 +44,9 @@ Release.
   a list of folders to leave out.
 - Counting every commit since the last tag (until 2026-09-30) — a `fix` to the release tool
   showed in the users' notes, and a `feat` to it raised the plugin's minor.
+- The Release workflow pushing an item to bunderlog/web's Inbox, or opening an issue there — the
+  workflow's token writes to this repo alone, so it needs a key to another repo kept as a
+  secret, for what the session making the Release can do itself.
 - A pre-push check that a push changing the plugin carries a Release — a Release is made when
   someone decides to make one, not with every push.
 - A commit after each Release pinning the README's recipe for running the commit Checks in CI to
