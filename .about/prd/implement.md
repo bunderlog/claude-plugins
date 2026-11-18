@@ -67,15 +67,16 @@ such pull request carries the Verification's verdict on each acceptance criterio
   6. on a failure, implements again with the findings of both and verifies and reviews again, at
      most two reworks, ending `failed:rework-budget` after the second, and `failed:not-converging`
      sooner when a round fails on the same criteria, departures and bugs as the one before;
-  7. pushes the branch and opens a pull request to the default branch, its body each criterion with
-     its verdict, the plan's assumptions for the person to review, the Verification's report and
-     the review's findings that aren't bugs; before it, the script checks that the branch it
-     pushed ends at the commit the last Verification passed, and ends `blocked:pull-request`
-     when it doesn't; a draft when a criterion is met with no test or couldn't be checked, or a departure doesn't
-     block.
+  7. pushes the branch, in a stage of its own, and the script checks that the pushed branch ends
+     at the commit the last Verification passed, ending `blocked:push` when the push fails and
+     `blocked:pull-request` when the branch ends elsewhere, with no pull request opened in either;
+  8. then opens a pull request to the default branch, its body each criterion with its verdict,
+     the plan's assumptions for the person to review, the Verification's report and the review's
+     findings that aren't bugs; a draft when a criterion is met with no test or couldn't be
+     checked, or a departure doesn't block.
   It returns how the run ended: `done:pr-opened`, `done:draft-pr`, `done:nothing-to-build`,
-  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 21 agents (1 + 1 + 1 + 5 +
-  2 × 6 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
+  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 22 agents (1 + 1 + 1 + 5 +
+  2 × 6 + 2), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
   no `workflowSizeGuideline`, which only advises Claude on a script it writes itself.
 - louie's Guidelines have Claude, in a session with the Workflow tool, offer once, in a line,
   once a PRD's scope or criteria change and before building a change that serves a PRD or an
@@ -139,9 +140,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
   `<slug>` as it was.
 - With its agents stubbed, `implement` ends `failed:rework-budget` when every Verification fails on
   new criteria, after two reworks, and `failed:not-converging` when two in a row fail on the same
-  ones, and opens no pull request in either; it schedules at most 21 agents in any case.
+  ones, and opens no pull request in either; it schedules at most 22 agents in any case.
   → test: tests/workflows/implement.test.mjs "implement ends failed:rework-budget after two reworks,
-  with at most 21 agents"
+  with at most 22 agents"
   → test: tests/workflows/implement.test.mjs "implement ends failed:not-converging when two rounds
   fail on the same"
 - With its agents stubbed, a round whose Verification passes but whose review finds a bug reworks
@@ -149,9 +150,10 @@ such pull request carries the Verification's verdict on each acceptance criterio
   with those findings in its body.
   → test: tests/workflows/implement.test.mjs "implement reworks a round whose review finds a bug, and
   puts the findings that aren't bugs in the pull request's body"
-- With its agents stubbed, a pull request stage after which the pushed branch ends at another
-  commit than the one the last Verification passed ends `blocked:pull-request`.
-  → test: tests/workflows/implement.test.mjs "implement ends blocked:pull-request when the pushed
+- With its agents stubbed, a push after which the pushed branch ends at another commit than the
+  one the last Verification passed ends `blocked:pull-request`, and a push that fails
+  `blocked:push`, with no pull request stage run in either.
+  → test: tests/workflows/implement.test.mjs "implement opens no pull request when the pushed
   branch ends at another commit than the one the last Verification passed"
 - With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
   pull request as a draft, the criterion's verdict in its body.
