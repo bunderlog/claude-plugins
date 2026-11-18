@@ -104,7 +104,7 @@ the rule and passing with it (ADR evals): then lines in `principles`; or by drop
 
 ## A Guideline that names the discipline it rests on
 
-2026-11-18 · user, from a post on nine personal agents
+2026-11-18 · user, from a post on nine personal agents · kept 2026-11-18
 
 The post's agents work well once each is given a recognised method to follow (a textbook, a
 standard, a book such as Nygard's *Release It!*), not rules written from scratch. louie's
@@ -116,43 +116,9 @@ eval of one Guideline, rewritten to name its source and cut what that source alr
 scoring as well as the current text (ADR evals): then the same for the others; or by dropping the
 idea.
 
-## A verifier of another vendor's model
-
-2026-11-18 · user, from a post on translating a book with agents
-
-The post's translation was Claude's and its checkers two OpenAI models: one model errs the same
-way each time, and their lists of findings hardly overlapped. louie's `verify` runs only Claude's
-verifiers, Claude checking Claude (ADR verify). A second verifier through the Codex CLI, where it
-is installed, may find what Claude's misses. Settled by running both on the same few changes and
-counting the findings only one found that the user agrees are real: then a verifier of its own
-in `verify`; or by dropping the idea.
-
-## Calibrating a Verification's findings
-
-2026-11-18 · user, from a post on translating a book with agents
-
-The post neither obeys nor ignores a checker that over-reports: it calibrates it. A finding both
-checkers made independently ranks a step higher, and one of the wordier checker's a step lower;
-132 findings became 11. `verify` reports each verifier's findings as found, and `implement` reworks
-up to three times on them. Settled together with the item on a verifier of another vendor's
-model, which gives two independent lists to rank: by a rule of ranking in `verify`'s report once
-both run; or by dropping it with that item.
-
-## What an implementer leaves alone whatever a finding says
-
-2026-11-18 · user, from a post on translating a book with agents
-
-In the post a checker called the book's working title an inaccuracy, and the editor agent,
-obedient, changed it; the fix was a list of what the editor must never touch on a finding alone
-(glossary terms, the title, running metaphors). In `implement`, `louie:implementer` reworks on the
-verifier's findings, and nothing says it keeps the glossary's terms and the ADRs' decisions when a
-finding asks otherwise. Settled by a line in the implementer's rework stage, that such a finding
-goes to the report as an Open decision, not into the code; or by finding that the verifier, which
-checks against the ADRs and the glossary, never asks it.
-
 ## The Assessment asks about a figure that crosses a line
 
-2026-11-18 · user, from a post on a smart home that grows its own controls
+2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-18
 
 The post's system watches how a device is used and comes with one apt question. The Assessment
 watches, but says nothing until asked, by its Non-goal "Showing anything in the Status line or at
@@ -164,43 +130,31 @@ a Proposal to this repo's Inbox; or by keeping the report asked for.
 
 ## A Proposal kind that has earned it applies itself
 
-2026-11-18 · user, from a post on a smart home that grows its own controls
+2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-18
 
 The post's devices climb a ladder of trust: watch, suggest, act on a command, act alone on agreed
 scenarios, each step up only by the person's leave, and a dangerous one only switched off. The
 Session review stands at suggest: every Proposal waits for the user (ADR measurement, after it
 wrote into `.about/` unasked). A kind the user accepted every time, such as a glossary edit
-accepted 10 times of 10, might with the user's yes apply itself and say so. Settled by the
-Session review's log showing a kind accepted unedited often enough to trust, and the user's yes;
-or by keeping every Proposal asked.
-
-## A code review as a stage of implement
-
-2026-11-18 · user
-
-`/louie:implement` checks a change against what the project agreed (ADR verify) and runs the
-project's checks, but nothing in it looks for bugs: the verifier says that is a code review's job,
-and the run stops at a pull request for a person to review. A review stage between Verify and the
-pull request, its findings reworked as the Verification's are, would catch bugs before a person
-reads the change, at the cost of more agents and minutes a run. Settled by deciding it in PRD
-implement: a stage, with its own budget of reworks, or the review left to the person and Claude
-Code's `/code-review`.
+accepted 10 times of 10, might with the user's yes apply itself and say so. On 2026-11-18 the
+log held 11 accepted and 3 rejected in 30 days, across every kind. Settled by the Session
+review's log showing a kind accepted unedited often enough to trust, and the user's yes; or by
+keeping every Proposal asked.
 
 ## The pull request stage as an agent of its own, kept from what implement may run
 
-2026-11-18 · user
+2026-11-18 · user · kept 2026-11-18
 
 `louie:implementer` runs every writing stage of `implement` (prepare, implement, rework, pull
 request, discard), though they need different commands: implement runs the checks, `git add`,
 `git commit` and `git diff`; the pull request stage only `git push` and `gh pr create`. An agent's
 `tools` can't tell one Bash command from another, so a separate agent for the pull request alone
-would lose only Edit and Write, and could still change and commit through Bash. Three parts:
-- a script check after the pull request stage that the pushed branch's head is the last commit
-  the Verification passed, else `blocked:pull-request`: what reaches the pull request is what was
-  verified, with no new agent;
+would lose only Edit and Write, and could still change and commit through Bash. The script's
+check that the pushed head is the commit the Verification passed is in PRD implement since
+2026-11-18. Left:
 - a pull request agent of its own;
 - a PreToolUse Hook that allows each agent only its commands: no `git push` for the implementer,
   nothing but `git push` and `gh pr` for the pull request's agent. It needs Claude Code to name
   the agent in PreToolUse's input, to check first; louie tells agents apart only at
   SubagentStart now.
-Settled by deciding them in PRD implement: the script check alone, or with the agent and the Hook.
+Settled by deciding them in PRD implement, once the Hook is known to be possible.

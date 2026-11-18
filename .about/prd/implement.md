@@ -26,7 +26,7 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - Three Workflows in `plugins/louie/workflows/`, built in this order, a Release each: `verify`,
   `plan`, `implement`. Their stages run as louie's agents in `agents/` (`louie:verifier`,
   `louie:planner`, `louie:implementer`), each given the Guidelines' index by the `SubagentStart`
-  Hook. Each stage takes what the person agreed from the Ticket and `.about/`, not from the
+  Hook, and `louie:reviewer`, which only reads. Each stage takes what the person agreed from the Ticket and `.about/`, not from the
   session's conversation.
 - A Ticket is a page in the tracker the project's `CLAUDE.md` or `AGENTS.md` names, read through
   its command-line client or connector, or `.about/tickets/<slug>.md` (ADR tickets). Its slug is the
@@ -61,18 +61,21 @@ such pull request carries the Verification's verdict on each acceptance criterio
      README names (`mise run check`, `make verify`) passing on the last one, or stops
      `blocked:checks` with their output; a change that delivers a Ticket kept in
      `.about/tickets/` deletes its file, as ADR tickets has it;
-  5. verifies with `verify`'s four verifiers, against where the branch started: it fails on a
-     criterion not met or a blocking departure;
-  6. on a failure, implements again with the findings and verifies again, at most three rounds,
-     ending `failed:rework-budget` after the third, and `failed:not-converging` sooner when a
-     round fails on the same criteria and departures as the one before;
+  5. verifies with `verify`'s four verifiers, against where the branch started, and at the same
+     time has `louie:reviewer` look for bugs in the same commits, each with `file:line` and
+     whether it is a bug; it fails on a criterion not met, a blocking departure or a bug;
+  6. on a failure, implements again with the findings of both and verifies and reviews again, at
+     most two reworks, ending `failed:rework-budget` after the second, and `failed:not-converging`
+     sooner when a round fails on the same criteria, departures and bugs as the one before;
   7. pushes the branch and opens a pull request to the default branch, its body each criterion with
-     its verdict, the plan's assumptions for the person to review, and the Verification's report;
-     a draft when a criterion is met with no test or couldn't be checked, or a departure doesn't
+     its verdict, the plan's assumptions for the person to review, the Verification's report and
+     the review's findings that aren't bugs; before it, the script checks that the branch it
+     pushed ends at the commit the last Verification passed, and ends `blocked:pull-request`
+     when it doesn't; a draft when a criterion is met with no test or couldn't be checked, or a departure doesn't
      block.
   It returns how the run ended: `done:pr-opened`, `done:draft-pr`, `done:nothing-to-build`,
-  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 23 agents (1 + 1 + 1 + 4 +
-  3 × 5 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
+  `blocked:<why>` or `failed:<why>`, with the reason. That is at most 21 agents (1 + 1 + 1 + 5 +
+  2 × 6 + 1), so Claude Code's `Large workflow` warning, past 25, never shows, and a project sets
   no `workflowSizeGuideline`, which only advises Claude on a script it writes itself.
 - louie's Guidelines have Claude, in a session with the Workflow tool, offer once, in a line,
   once a PRD's scope or criteria change and before building a change that serves a PRD or an
@@ -97,6 +100,8 @@ such pull request carries the Verification's verdict on each acceptance criterio
 ## Non-goals
 
 - Several Tickets in one run: PRD batch.
+- A review of the Verification's own: `louie:reviewer` looks for bugs, not for what the project
+  agreed, and the verifiers the other way round.
 - Running the app to test the change: the project's own test or Claude Code's `/verify`; the pull
   request says the app was not run.
 - Fixing a red CI run after the pull request: a session with the `ci` Guideline, or Claude Code's
@@ -133,10 +138,13 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - With an earlier run's branch `<slug>` present, `/louie:implement` works on `<slug>-2` and leaves
   `<slug>` as it was.
 - With its agents stubbed, `implement` ends `failed:rework-budget` when every Verification fails on
-  new criteria, after three reworks, and `failed:not-converging` when two in a row fail on the same
-  ones, and opens no pull request in either; it schedules at most 23 agents in any case.
-  → test: tests/workflows/implement.test.mjs "implement ends failed:rework-budget after three reworks,
-  with at most 23 agents", "implement ends failed:not-converging when two rounds fail on the same"
+  new criteria, after two reworks, and `failed:not-converging` when two in a row fail on the same
+  ones, and opens no pull request in either; it schedules at most 21 agents in any case.
+- With its agents stubbed, a round whose Verification passes but whose review finds a bug reworks
+  with that finding, and a round whose review finds only what isn't a bug opens the pull request
+  with those findings in its body.
+- With its agents stubbed, a pull request stage after which the pushed branch ends at another
+  commit than the one the last Verification passed ends `blocked:pull-request`.
 - With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
   pull request as a draft, the criterion's verdict in its body.
   → test: tests/workflows/implement.test.mjs "implement opens a draft when a criterion is met with no
