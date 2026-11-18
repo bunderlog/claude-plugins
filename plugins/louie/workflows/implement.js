@@ -18,7 +18,8 @@ export const meta = {
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
 // At most 21 agents a Ticket: prepare 1, plan 1, implement 1, verify 4 and review 1, two reworks
 // of 1 + 4 + 1, pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 1); a Ticket that stops before it is built
-// spends one more, to discard the worktree it made. The agent's name repeats louie's names.PLUGIN, as a script can't import it.
+// spends one more, to discard the worktree it made. The agent's name repeats louie's names.PLUGIN,
+// as a script can't import it.
 
 const MAX_TICKETS = 5
 const MAX_REWORK = 2
@@ -65,7 +66,7 @@ const REVIEW_SCHEMA = {
           what: { type: 'string', description: 'what is wrong, in one sentence' },
           bug: {
             type: 'boolean',
-            description: 'true only for a defect the change shouldn\'t merge with (wrong behavior, a crash, lost data, a security hole); false for the rest',
+            description: 'true for a bug as your instructions define one; false for the rest',
           },
         },
         required: ['at', 'what', 'bug'],

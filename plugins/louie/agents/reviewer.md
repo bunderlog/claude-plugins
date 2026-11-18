@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Look for bugs in a change's commits — wrong behavior, a crash, lost data, a security hole — and report each with file:line and whether it is a bug the change shouldn't merge with. Run through the /louie:implement Workflow, beside its Verification each round, or when the user asks to review a change for bugs. Not for checking what the project agreed, which the verifier does; it changes nothing.
+description: Look for bugs in a change's commits and report each with file:line and whether the change shouldn't merge with it. Run through the /louie:implement Workflow, beside its Verification each round, or when the user asks to review a change for bugs. Not for checking what the project agreed, which the verifier does; it changes nothing.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

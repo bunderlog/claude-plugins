@@ -205,14 +205,14 @@ test('implement on several Tickets goes on with the others when one fails the ch
   assert.deepEqual(result.results.map((x) => [x.verdict, x.pr_url || x.reason]), [['blocked:checks', 'FAIL t'], ['done:pr-opened', 'pr/b']])
 })
 
-test('implement on several Tickets plans each once, with at most 23 agents a Ticket', async () => {
-  const s = many({ verifications: [fail(1), fail(2), fail(3), fail(4)] })
+test('implement on several Tickets plans each once, with at most 21 agents a Ticket', async () => {
+  const s = many({ verifications: [fail(1), fail(2), fail(3)] })
   const { result, calls } = await run('implement', 'a b c', s)
   assert.deepEqual(result.results.map((x) => x.verdict), ['failed:rework-budget', 'failed:rework-budget', 'failed:rework-budget'])
   assert.equal(s.events.filter((e) => e.startsWith('plan')).length, 3)
   const plans = 3
   const verifiers = 4 * s.events.filter((e) => e.startsWith('verify')).length
-  assert.ok(calls.length + plans + verifiers <= 23 * 3)
+  assert.ok(calls.length + plans + verifiers <= 21 * 3)
 })
 
 test('implement takes at most five Tickets, and a Ticket named twice once', async () => {
