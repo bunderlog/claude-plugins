@@ -185,3 +185,22 @@ pull request, its findings reworked as the Verification's are, would catch bugs 
 reads the change, at the cost of more agents and minutes a run. Settled by deciding it in PRD
 delivery: a stage, with its own budget of reworks, or the review left to the person and Claude
 Code's `/code-review`.
+
+## The pull request stage as an agent of its own, kept from what implement may run
+
+2026-11-18 · user
+
+`louie:implementer` runs every writing stage of `implement` (prepare, implement, rework, pull
+request, discard), though they need different commands: implement runs the checks, `git add`,
+`git commit` and `git diff`; the pull request stage only `git push` and `gh pr create`. An agent's
+`tools` can't tell one Bash command from another, so a separate agent for the pull request alone
+would lose only Edit and Write, and could still change and commit through Bash. Three parts:
+- a script check after the pull request stage that the pushed branch's head is the last commit
+  the Verification passed, else `blocked:pull-request`: what reaches the pull request is what was
+  verified, with no new agent;
+- a pull request agent of its own;
+- a PreToolUse Hook that allows each agent only its commands: no `git push` for the implementer,
+  nothing but `git push` and `gh pr` for the pull request's agent. It needs Claude Code to name
+  the agent in PreToolUse's input, to check first; louie tells agents apart only at
+  SubagentStart now.
+Settled by deciding them in PRD delivery: the script check alone, or with the agent and the Hook.
