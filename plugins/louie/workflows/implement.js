@@ -17,9 +17,9 @@ export const meta = {
 // (PRD implement, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
 // all are planned before any is built. Plan and Verify are louie's own Workflows, run as stages.
 // At most 22 agents a Ticket: prepare 1, plan 1, implement 1, verify 4 and review 1, two reworks
-// of 1 + 4 + 1, push 1 and pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 2); a Ticket that stops before it is built
-// spends one more, to discard the worktree it made. The agent's name repeats louie's names.PLUGIN,
-// as a script can't import it.
+// of 1 + 4 + 1, push 1 and pull request 1 (1 + 1 + 1 + 5 + 2 × 6 + 2); a Ticket that stops
+// before it is built spends one more, to discard the worktree it made. The agent's name repeats
+// louie's names.PLUGIN, as a script can't import it.
 
 const MAX_TICKETS = 5
 const MAX_REWORK = 2
@@ -62,12 +62,10 @@ const REVIEW_SCHEMA = {
       items: {
         type: 'object',
         properties: {
-          at: { type: 'string', description: 'the file and line, `file:line`' },
-          what: { type: 'string', description: 'what is wrong, in one sentence' },
-          bug: {
-            type: 'boolean',
-            description: 'true for a bug as your instructions define one; false for the rest',
-          },
+          at: { type: 'string' },
+          what: { type: 'string' },
+          // What each field holds is the reviewer's instructions' alone, so the two don't drift.
+          bug: { type: 'boolean' },
         },
         required: ['at', 'what', 'bug'],
       },
