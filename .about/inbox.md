@@ -158,3 +158,14 @@ check that the pushed head is the commit the Verification passed is in PRD imple
   the agent in PreToolUse's input, to check first; louie tells agents apart only at
   SubagentStart now.
 Settled by deciding them in PRD implement, once the Hook is known to be possible.
+
+## implement's progress shows the plan twice and out of order
+
+2026-11-18 · user
+
+In `/workflows`, `implement`'s phase Plan stays empty with no agents, while the plan runs in a
+group of its own, `▸ louie:plan`, listed after Pull request; `▸ louie:verify` comes last the same
+way. `workflow()` takes no phase, so a nested Workflow's agents always go to its own group, and
+only `discard` uses the phase Plan. Settled by trying `meta.phases` as Prepare, `▸ louie:plan`,
+Implement, `▸ louie:verify`, Pull request, in case Claude Code places a group by its title as it
+does a phase; where it doesn't, by dropping Plan and moving `discard` to Prepare.
