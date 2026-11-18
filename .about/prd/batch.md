@@ -46,7 +46,7 @@ report, before any commit; and no two pull requests of one run conflict on the d
   person, under its Ticket, with the options and the one recommended; a `report` of both as text;
   and a `verdict`: `done:all` when every Ticket ended `done:`, `done:some` when some did,
   `blocked:none` when none did, or `blocked:no-ticket` or `blocked:too-many` before any agent runs.
-- At most 21 agents per Ticket, as PRD implement has, and one more for each discarded worktree. A
+- At most 22 agents per Ticket, as PRD implement has, and one more for each discarded worktree. A
   run on more than one Ticket can pass 25, so Claude Code's `Large workflow` warning shows for it.
 - At its Release, ADR tickets says `implement` takes several Tickets.
 
@@ -95,10 +95,10 @@ report, before any commit; and no two pull requests of one run conflict on the d
   → test: tests/workflows/implement.test.mjs "implement on several Tickets goes on with the others when
   one fails the checks"
 - With its agents stubbed, no planner runs after the plan stages, whatever the Verifications
-  find; and a run on N Tickets schedules at most 21 agents per Ticket, plus one per discarded
+  find; and a run on N Tickets schedules at most 22 agents per Ticket, plus one per discarded
   worktree.
   → test: tests/workflows/implement.test.mjs "implement on several Tickets plans each once, with at
-  most 21 agents a Ticket"
+  most 22 agents a Ticket"
 - With its agents stubbed, a run on six distinct Tickets ends `blocked:too-many`, and one on none
   `blocked:no-ticket`, each scheduling no agent; six names of which two are the same text run five
   Tickets.
