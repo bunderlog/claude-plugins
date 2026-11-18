@@ -140,11 +140,19 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - With its agents stubbed, `implement` ends `failed:rework-budget` when every Verification fails on
   new criteria, after two reworks, and `failed:not-converging` when two in a row fail on the same
   ones, and opens no pull request in either; it schedules at most 21 agents in any case.
+  → test: tests/workflows/implement.test.mjs "implement ends failed:rework-budget after two reworks,
+  with at most 21 agents"
+  → test: tests/workflows/implement.test.mjs "implement ends failed:not-converging when two rounds
+  fail on the same"
 - With its agents stubbed, a round whose Verification passes but whose review finds a bug reworks
   with that finding, and a round whose review finds only what isn't a bug opens the pull request
   with those findings in its body.
+  → test: tests/workflows/implement.test.mjs "implement reworks a round whose review finds a bug, and
+  puts the findings that aren't bugs in the pull request's body"
 - With its agents stubbed, a pull request stage after which the pushed branch ends at another
   commit than the one the last Verification passed ends `blocked:pull-request`.
+  → test: tests/workflows/implement.test.mjs "implement ends blocked:pull-request when the pushed
+  branch ends at another commit than the one the last Verification passed"
 - With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
   pull request as a draft, the criterion's verdict in its body.
   → test: tests/workflows/implement.test.mjs "implement opens a draft when a criterion is met with no
