@@ -7,9 +7,11 @@ Ticket's or PRD's acceptance criteria) without breaking a test, and the session 
 one least likely to see it. Claude Code's own code review hunts bugs, and its `/verify` runs the
 change to see it work; neither knows anything of `.about/`. So louie ships one agent,
 `agents/verifier.md`, which checks a change against these in a context of its own and reports each
-departure with `file:line`. It doesn't hunt bugs, which the code review does. `louie:reviewer`,
-which `implement` runs beside the verifiers each round, is not a verifier: it looks for bugs, not
-for what the project agreed (PRD implement).
+departure with `file:line`. It doesn't hunt bugs, which the code review does. Inside an
+`implement` run nobody runs that code review before the pull request, so there louie's
+`louie:reviewer` does, beside the verifiers each round, and a bug it finds is reworked as a
+blocking departure is (PRD implement). It is not a verifier: it looks for bugs, not for what the
+project agreed, and reads no `.about/`.
 
 The `verify` Workflow runs four of it at once, one per source: the ADRs, the glossary, the
 Guidelines and the acceptance criteria, each told its one source and returning its findings in a
@@ -49,7 +51,8 @@ starts without the index and does the same.
 
 ## Considered options
 
-- Four agents: analyzing a Ticket, implementing, reviewing and testing — analyzing is what the
+- Four agents: analyzing a Ticket, implementing, reviewing and testing (reviewing until
+  2026-11-18, now `louie:reviewer` inside `implement` only, as above) — analyzing is what the
   built-in Explore and the `debugging` Guideline do already, with the conversation the session
   has and an agent lacks; implementing in an agent hides the work from the user, who can no longer
   steer it; testing is the project's checks' and building test-first's, and what remains of it,
@@ -57,7 +60,10 @@ starts without the index and does the same.
 - A pipeline from Ticket to tested change (until 2026-11-10) — each repo's flow is its own, as for
   `ship` (ADR tickets); PRD implement's `implement` takes it from what the project names, its checks
   command, commit format and tracker.
-- Bugs too — one run instead of two, but a copy of the code review in a longer prompt.
+- Bugs too — one run instead of two, but a copy of the code review in a longer prompt; inside
+  `implement` the reviewer is an agent of its own for that reason.
+- Claude Code's own code review as `implement`'s review — no setup, but its answer is prose the
+  script can't decide on, where the reviewer's is a schema of findings, each a bug or not.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
 - Run only when the user asks, never offered (until 2026-11-02) — in about 200 sessions in five
   projects up to 2026-10-30 neither the skill nor the agent ever ran, by the user or by Claude.
