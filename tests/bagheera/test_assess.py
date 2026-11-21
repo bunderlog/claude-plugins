@@ -377,6 +377,26 @@ class Assess(unittest.TestCase):
         self.assertIn("  go: 1 (0), before the first edit of its files 0 of 0 (0 of 0)", report)
         self.assertNotIn("  testing:", report)
 
+    # python is counted before the first edit of a .py file, as go of a .go file's.
+    def test_python_before_the_first_edit_of_a_py_file(self):
+        py = os.path.join(self.root, "src/a.py")
+        self.session(
+            "s1",
+            call("r1", "Read", {"file_path": py}, "2026-11-10T09:00:00.000Z"),
+            result("r1", at="2026-11-10T09:00:00.000Z"),
+            given(guideline("python", "src/a.py"), "2026-11-10T09:00:01.000Z"),
+            call("e1", "Edit", {"file_path": py}, "2026-11-10T09:01:00.000Z"),
+            result("e1", at="2026-11-10T09:01:00.000Z"),
+        )
+        self.session(
+            "s2",
+            call("e1", "Edit", {"file_path": os.path.join(self.root, "src/b.py")},
+                 "2026-11-10T09:00:00.000Z"),
+            result("e1", at="2026-11-10T09:00:00.000Z"),
+        )
+        self.assertIn("  python: 1 (0), before the first edit of its files 1 of 2 (0 of 0)",
+                      self.report())
+
     def test_workflows_run_and_how_they_ended(self):
         self.session(
             "s1",

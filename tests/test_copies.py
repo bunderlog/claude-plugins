@@ -34,7 +34,8 @@ class GuidelineKinds(unittest.TestCase):
             "a.ts", "a.tsx", "a.mts", "a.cts", "a.vue", "a.js", "a.go", "a.md", "SKILL.md",
             "x/CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", ".claude/agents/a.md",
             ".claude/commands/a.md", "x/.claude/skills/a/b.md", ".claude/hooks/a.md",
-            ".claude/agents/a.json", "skills/a.md",
+            ".claude/agents/a.json", "skills/a.md", "a.py", "x/a.pyi", "a.pyx", "a.ipynb",
+            "pyproject.toml",
         ]
         for name, louie in guidelines.BY_PATH.items():
             for path in paths:

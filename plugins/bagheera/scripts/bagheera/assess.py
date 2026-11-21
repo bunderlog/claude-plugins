@@ -55,6 +55,7 @@ _BY_KIND = {
     "go": lambda path: os.path.splitext(path)[1] == ".go",
     "typescript": lambda path: os.path.splitext(path)[1] in (".ts", ".tsx", ".mts", ".cts", ".vue"),
     "vue": lambda path: os.path.splitext(path)[1] == ".vue",
+    "python": lambda path: os.path.splitext(path)[1] in (".py", ".pyi"),
     "writing-for-agents": _for_agents,
 }
 # A Guideline's file in louie's `guidelines/`, which Claude read.
