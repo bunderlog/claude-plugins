@@ -1,13 +1,13 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-18
+Date: 2026-11-21
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
-`dependencies` for one with a package manager's manifest, `go`, `typescript`, `vue` and `tailwind`
-for their stacks. Each is on wherever louie is, with no switch of its own (PRD no-config). At
-session start the plugin prints, for each Guideline that fits the repo, one line: when to read it
-and its path.
+`dependencies` for one with a package manager's manifest, `go`, `python`, `typescript`, `vue` and
+`tailwind` for their stacks. Each is on wherever louie is, with no switch of its own (PRD
+no-config). At session start the plugin prints, for each Guideline that fits the repo, one line:
+when to read it and its path.
 Claude reads the file itself when a task calls for it. `principles` also carries the few rules
 that must hold on every task, and those are printed whole, with the rules zsh needs where the Bash
 tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a word starting with
@@ -21,10 +21,11 @@ Hook gives came before the first edit of their subject in 15 of 22 cases, after 
 Hook gives Claude the whole file, as its added context, the first time in a session that a signal
 of its subject or task comes:
 - `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
-  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, `.go` for `go`, and a text an agent reads
-  for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, a `.md`
-  under `.claude/agents/`, `commands/` or `skills/`). Claude reads a file before it edits it, so
-  the Guideline is in context before the first edit of it.
+  `.cts` and `.vue` for `typescript`, `.vue` for `vue`, `.go` for `go`, `.py` and `.pyi` for
+  `python`, and a text an agent reads for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`,
+  `CLAUDE.local.md`, `AGENTS.md`, a `.md` under `.claude/agents/`, `commands/` or `skills/`).
+  Claude reads a file before it edits it, so the Guideline is in context before the first edit of
+  it.
 - The same, but on an edit only: a package manager's manifest for `dependencies`, which a Read
   alone doesn't give, as a `package.json` is read for its scripts too; and a test for `testing`
   (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under `__tests__/`), as a
@@ -79,12 +80,15 @@ always, `ci` only where the repo's root holds a CI's config (`.github/workflows/
 `bitbucket-pipelines.yml`, `bamboo-specs/`, `Jenkinsfile`, `azure-pipelines.yml`, `.circleci/`,
 `.buildkite/`), `dependencies` only where the repo holds a package manager's manifest (`go.mod`,
 `package.json`, `Cargo.toml`, `pyproject.toml`), and a stack's only where the repo's files name
-that stack: `go.mod` for `go`, a `package.json` depending on `typescript` for `typescript`, one
-depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`. Session start walks
-the repo for them once each time, at any depth outside hidden folders, other projects' code
-(`node_modules`, `vendor`), test fixtures (`testdata`) and build output (`build`, `dist`, `out`,
-`target`), so a stack the repo takes up is named from the next session on. A Hook gives a
-Guideline by its signal whatever the repo's manifests: a `.ts` file read is the signal.
+that stack: `go.mod` for `go`, a `.py` file for `python`, a `package.json` depending on `typescript`
+for `typescript`, one depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`.
+`python` is told by a file, not a manifest, as a repo of scripts, this one too, has no
+`pyproject.toml`. The index leaves out `go`, `python`, `typescript` and `vue`, as it does every
+Guideline a Hook gives, but the verifier, whom no such Hook reaches, is named each one that fits.
+Session start walks the repo for them once each time, at any depth outside hidden folders, other
+projects' code (`node_modules`, `vendor`), test fixtures (`testdata`) and build output (`build`,
+`dist`, `out`, `target`), so a stack the repo takes up is named from the next session on. A Hook
+gives a Guideline by its signal whatever the repo's manifests: a `.ts` file read is the signal.
 
 The files are in the plugin's folder, outside the project, where the Read tool asks the user
 first, and a plugin can't ship permission rules. So the plugin adds a Hook of its own, at
