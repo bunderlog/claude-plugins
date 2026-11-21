@@ -1,6 +1,6 @@
 # A template's files keep their real names, but for those that would act in this repo
 
-Date: 2026-11-10
+Date: 2026-11-21
 
 louie's templates live in `plugins/louie/templates/<template>/`, `go-vue` the first (PRD
 templates). A template's file keeps its real name, so louie's Guidelines, gofmt and eslint reach
@@ -22,3 +22,6 @@ Where the product's name, its owner or today's date goes, a file holds the mark 
 - A file added to a template gets `.tmpl` if its kind acts in this repo by its real name.
 - What a template's code is checked against runs on a repo written from it, not in this repo: this
   repo's CI writes one and runs its Git hooks, `mise run check` and `mise run dev` (PRD templates).
+- That run, the longest in CI, is a workflow of its own, `template.yml`, run only when
+  `plugins/louie/templates/`, `plugins/louie/scripts/`, `mise.toml` or the workflow itself
+  changes; a change elsewhere that breaks the template slips past it, and then joins the list.

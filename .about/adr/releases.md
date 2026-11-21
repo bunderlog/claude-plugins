@@ -1,6 +1,6 @@
 # A Release is made by `mise run release` and published by CI from its tag
 
-Date: 2026-11-18
+Date: 2026-11-21
 
 The marketplace installs its plugins from this repo's `main`, each from the folder
 `.claude-plugin/marketplace.json` names, and an installed copy updates only to a new version, so a
@@ -82,6 +82,8 @@ Release.
   has just passed; a commit only to `.about/` or this repo's own Markdown runs no tests, and
   `src/release/release.py` reads each workflow's `paths` for its check, so the two can't disagree.
 - A Release waits for CI: after a merge or a push, `mise run release` stops until the runs end.
+- Every workflow but the Release's cancels its unfinished run on a branch once a newer push to it
+  starts one, so pushes in a row are checked once, at the last.
 
 - The message of a commit that changes the plugin is release notes: its subject is what users
   read, and a breaking change's `BREAKING CHANGE:` footer is printed under it, so the footer says

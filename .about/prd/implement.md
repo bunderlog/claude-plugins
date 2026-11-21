@@ -122,7 +122,9 @@ such pull request carries the Verification's verdict on each acceptance criterio
 ## Acceptance criteria
 
 - Each Workflow's `meta` is a plain literal with `name`, `description` and the `phases` its
-  `phase()` calls use, and no script calls `Date.now()`, `Math.random()` or `import()`.
+  `phase()` calls use, with `▸ <name>` in the place of each Workflow it runs nested, so
+  `/workflows` lists that Workflow's agents where it runs, not after the last phase; and no script
+  calls `Date.now()`, `Math.random()` or `import()`.
   → test: tests/louie/test_workflows.py "test_meta_and_body"
 - In a project with louie and Workflows on, `/louie:plan`, `/louie:implement` and `/louie:verify`
   are offered as commands; with louie off, none is. Checked by hand at each of their Releases.
