@@ -40,3 +40,10 @@ Write that creates a file gives the Guideline only after it (ADR guidelines). Gr
 the changed file, as ADR evals asks: `| None` outside an annotation under `from __future__ import
 annotations`, or `match `, for `version`; an `open(` in text mode, `read_text`, `write_text` or
 `text=True` with no `encoding=` for `encoding`.
+
+### 2026-11-21 · decision
+
+If neither case in `evals/python/` fails without louie on either model, no rule is left for
+`python.md`: stop before the pull request merges, report the scores, revise PRD python, and ship
+no python Guideline, Hook, verifier or Assessment wiring. A Guideline with no rules is context paid
+for nothing, and ADR evals keeps a rule only on a failing case.
