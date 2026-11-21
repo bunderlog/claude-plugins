@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-18
+Date: 2026-11-21
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -99,6 +99,10 @@ need an API key.
 
 - The Session review's prompt measured against a short prompt in a second arm ("propose changes
   to .about/") — it would show what the prompt adds, for twice the runs and a baseline nobody uses.
+- The methods of A/B series that measure savings (Code Memory's, github.com/kobubu/Rag-Coding,
+  weighed 2026-11-21): paired bootstrap intervals, hashes frozen before a series, price apart from
+  tokens — they fit a noisy effect of a few tens of percent; a case here passes or fails, and is
+  kept only on a large one, failing without the plugin and passing with it.
 
 ## Consequences
 
