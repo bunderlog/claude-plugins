@@ -106,6 +106,7 @@ class SessionStart(unittest.TestCase):
         dir = in_repo(self)
         os.environ["SHELL"] = "/bin/bash"
         write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
+        write(os.path.join(dir, "src", "a.py"), "x = 1\n")
         write(
             os.path.join(dir, ".claude/baloo.yml"), "guidelines:\n  tailwind: false\n  principles: false\n"
         )
@@ -121,7 +122,7 @@ class SessionStart(unittest.TestCase):
             "tested from: " + os.path.join(folder, "design.md") + "\n",
         ]:
             self.assertIn(want, out)
-        for unwanted in ["vue.md", "go.md", "\n## "]:
+        for unwanted in ["vue.md", "go.md", "python.md", "\n## "]:
             self.assertNotIn(unwanted, out)
         # Where the Bash tool runs zsh, the rules zsh needs follow them.
         os.environ["CLAUDE_CODE_SHELL"] = "/usr/bin/zsh"
