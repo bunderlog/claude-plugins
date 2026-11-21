@@ -100,6 +100,7 @@ class SubagentStart(unittest.TestCase):
         verifier = '{"agent_type": "louie:verifier"}'
         write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
         write(os.path.join(dir, "go.mod"), "module x\n")
+        write(os.path.join(dir, "src", "a.py"), "x = 1\n")
         for name, stdin, want in [
             ("the verifier", verifier,
              "dark mode: " + os.path.join(PLUGIN, "guidelines", "tailwind.md")),
@@ -116,8 +117,20 @@ class SubagentStart(unittest.TestCase):
                 self.assertEqual(hook["hookEventName"], "SubagentStart")
                 self.assertTrue(hook["additionalContext"].endswith(want))
                 # The Guidelines a Hook gives, which no Hook gives the verifier, are named too.
-                for given in ("go.md", "testing.md", "debugging.md", "dependencies.md"):
+                for given in ("go.md", "python.md", "testing.md", "debugging.md", "dependencies.md"):
                     self.assertIn(os.path.join(PLUGIN, "guidelines", given), hook["additionalContext"])
+
+    # A repo whose only .py files are another project's code or a build's output gives the
+    # verifier no python.
+    def test_subagent_start_skips_python_elsewhere(self):
+        dir = in_repo(self)
+        write(os.path.join(dir, "node_modules", "x", "a.py"), "x = 1\n")
+        write(os.path.join(dir, "dist", "a.py"), "x = 1\n")
+        code, out, _ = run("subagent-start", stdin='{"agent_type": "louie:verifier"}')
+        self.assertEqual(code, 0)
+        context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn(os.path.join(PLUGIN, "guidelines", "testing.md"), context)
+        self.assertNotIn("python.md", context)
 
 
 def condense_project(test):
@@ -169,6 +182,19 @@ class SessionEnd(unittest.TestCase):
         self.assertIn("The typescript Guideline applies to src/a.test.ts", got)
         self.assertNotIn("testing Guideline", got)
         self.assertEqual(call("Edit", "src/b.ts"), "")
+        got = call("Read", "src/a.py")
+        self.assertIn("The python Guideline applies to src/a.py", got)
+        self.assertIn(json.dumps(read(os.path.join(PLUGIN, "guidelines", "python.md")).strip())[1:-1], got)
+
+    # A .py file outside the repo gives no python.
+    def test_no_guideline_outside_the_repo(self):
+        in_repo(self)
+        file = os.path.join(commands.outside_repo(self), "a.py")
+        write(file, "x = 1\n")
+        stdin = json.dumps(
+            {"session_id": "s1", "tool_name": "Read", "tool_input": {"file_path": file}}
+        )
+        self.assertEqual(run("post-tool-use", stdin=stdin), (0, "", ""))
 
     # A session running an older version than the one installed for the project is told, once,
     # to have the user restart, at its next prompt: no session start runs for it again.

@@ -58,6 +58,8 @@ class Fitting(unittest.TestCase):
             ("not JSON", {"package.json": '{"dependencies": {"vue": '}, always + ["dependencies"]),
             ("a Cargo.toml", {"crates/x/Cargo.toml": "[package]\n"}, always + ["dependencies"]),
             ("a pyproject.toml", {"pyproject.toml": "[project]\n"}, always + ["dependencies"]),
+            ("a .py file at any depth", {"src/pkg/a.py": "x = 1\n"}, always + ["python"]),
+            ("a .pyi or .pyx file", {"a.pyi": "x: int\n", "b.pyx": "x = 1\n"}, always),
             (
                 "a GitHub Actions workflow",
                 {".github/workflows/ci.yml": "on: push\n"},
@@ -75,6 +77,9 @@ class Fitting(unittest.TestCase):
                     "tools/testdata/go.mod": "module x\n",
                     "target/web/package.json": '{"dependencies": {"vue": "^3"}}',
                     "dist/Cargo.toml": "[package]\n",
+                    "node_modules/x/a.py": "x = 1\n",
+                    "dist/a.py": "x = 1\n",
+                    ".venv/lib/a.py": "x = 1\n",
                 },
                 always,
             ),
@@ -83,6 +88,11 @@ class Fitting(unittest.TestCase):
                 root = temp(self)
                 write(root, files)
                 self.assertEqual(guidelines.fitting(root), want)
+
+    # This repo is Python with no pyproject.toml: its .py files call for python.
+    def test_this_repo_fits_python(self):
+        here = os.path.join(os.path.dirname(guidelines.__file__), "..", "..", "..", "..")
+        self.assertIn("python", guidelines.fitting(os.path.realpath(here)))
 
     # The go-vue template's files, where this repo keeps them, call for no Guideline the repo
     # doesn't already fit: its files that would act by their real name carry a suffix (PRD
@@ -139,7 +149,7 @@ class Index(unittest.TestCase):
         )
         on = {
             "principles": True, "go": True, "tailwind": True, "vue": True, "typescript": True,
-            "testing": True,
+            "testing": True, "python": True,
         }
         text, why = guidelines.index(plugin, on, "")
         self.assertTrue(text.endswith(lines), text)
@@ -191,15 +201,21 @@ class ForFile(unittest.TestCase):
                 "guidelines/vue.md": "# Vue\n\nScript setup.\n",
                 "guidelines/testing.md": "# Testing\n\nRed first.\n",
                 "guidelines/go.md": "# Go\n\nWrap errors.\n",
+                "guidelines/python.md": "# Python\n\nName the encoding.\n",
             },
         )
-        on = {"typescript": True, "vue": True, "testing": True, "go": True}
+        on = {"typescript": True, "vue": True, "testing": True, "go": True, "python": True}
         for rel, want in [
             ("src/a.ts", ["typescript"]),
             ("src/App.vue", ["typescript", "vue"]),
             ("x/a_test.go", ["go"]),
             ("src/a.test.ts", ["typescript"]),
-            ("tests/test_a.py", []),
+            ("tests/test_a.py", ["python"]),
+            ("src/a.py", ["python"]),
+            ("src/a.pyi", ["python"]),
+            ("src/a.pyx", []),
+            ("notebooks/a.ipynb", []),
+            ("pyproject.toml", []),
             ("src/__tests__/a.js", []),
             ("src/a.go", ["go"]),
             ("README.md", []),
@@ -209,7 +225,7 @@ class ForFile(unittest.TestCase):
                 text = guidelines.for_file(plugin, temp(self), "", rel, on)
                 got = [
                     name
-                    for name in ("typescript", "vue", "testing", "go")
+                    for name in ("typescript", "vue", "testing", "go", "python")
                     if f"The {name} Guideline applies to {rel}" in text
                 ]
                 self.assertEqual(got, want)
@@ -224,6 +240,18 @@ class ForFile(unittest.TestCase):
         self.assertEqual(len(lines), 2, lines)
         self.assertTrue(lines[0].endswith("\ts1\ttypescript\tsrc/App.vue"), lines)
         self.assertTrue(lines[1].endswith("\ts1\tvue\tsrc/App.vue"), lines)
+
+        # python, as go, once a session: a second Read and an Edit of a .py file give it no more.
+        text = guidelines.for_file(plugin, data, "s1", "src/a.py", on)
+        self.assertIn("The python Guideline applies to src/a.py", text)
+        self.assertIn("# Python\n\nName the encoding.", text)
+        self.assertEqual(guidelines.for_file(plugin, data, "s1", "src/b.py", on), "")
+        self.assertEqual(guidelines.for_file(plugin, data, "s1", "src/a.py", on, "Edit"), "")
+        with open(os.path.join(data, "guidelines", "guidelines.log"), encoding="utf-8") as f:
+            lines = f.read().strip().split("\n")
+        python = [line for line in lines if "\tpython\t" in line]
+        self.assertEqual(len(python), 1, lines)
+        self.assertTrue(python[0].endswith("\ts1\tpython\tsrc/a.py"), lines)
 
     # A text an agent reads gives writing-for-agents when read or edited; a package manager's
     # manifest gives dependencies only when edited, as it is read for its scripts too, and a test

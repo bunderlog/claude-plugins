@@ -15,12 +15,13 @@ from louie.checks.shell import Program, programs
 
 
 class _Manifests:
-    """What a repo's files say of its stacks and its CI: whether it has a go.mod, the packages its
-    package.json files depend on, whether it has any package manager's manifest, and whether its
-    root holds a CI's config."""
+    """What a repo's files say of its stacks and its CI: whether it has a go.mod, whether it has a
+    .py file, the packages its package.json files depend on, whether it has any package manager's
+    manifest, and whether its root holds a CI's config."""
 
     def __init__(self) -> None:
         self.go_mod = False
+        self.python = False
         self.packages: set = set()
         self.package_manager = False
         self.ci = False
@@ -64,6 +65,7 @@ ALL = [
         lambda m: m.package_manager,
     ),
     Guideline("go", "Writing Go", lambda m: m.go_mod),
+    Guideline("python", "Writing Python", lambda m: m.python),
     Guideline("typescript", "Writing TypeScript", lambda m: "typescript" in m.packages),
     Guideline(
         "vue",
@@ -105,9 +107,9 @@ SKIPPED = {"node_modules", "vendor", "testdata", "build", "dist", "out", "target
 
 def fitting(root: str) -> List[str]:
     """The names of the Guidelines that fit the repo at `root`: every one for any project, a
-    stack's where a manifest at any depth names it, and dependencies where there is a package
-    manager's manifest, both outside hidden folders and the skipped ones, and ci where the root
-    holds a CI's config."""
+    stack's where a manifest at any depth names it, python's where there is a .py file, and
+    dependencies where there is a package manager's manifest, all outside hidden folders and the
+    skipped ones, and ci where the root holds a CI's config."""
     m = _Manifests()
     m.ci = any(os.path.exists(os.path.join(root, name)) for name in CI_CONFIGS)
     for folder, dirs, files in os.walk(root):
@@ -115,6 +117,10 @@ def fitting(root: str) -> List[str]:
         for name in files:
             if name in PACKAGE_MANIFESTS:
                 m.package_manager = True
+            # Not a .pyi: a stub is never run, so neither the oldest Python nor an encoding
+            # bears on a repo of stubs alone, though a Read of one still gives python.
+            if name.endswith(".py"):
+                m.python = True
             if name == "go.mod":
                 m.go_mod = True
             elif name == "package.json":
@@ -275,6 +281,7 @@ BY_PATH: Dict[str, Callable[[str], bool]] = {
     "typescript": _has_ext(".ts", ".tsx", ".mts", ".cts", ".vue"),
     "vue": _has_ext(".vue"),
     "go": _has_ext(".go"),
+    "python": _has_ext(".py", ".pyi"),
     "writing-for-agents": _for_agents,
 }
 
