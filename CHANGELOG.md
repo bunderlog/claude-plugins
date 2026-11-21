@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.71.0 — 2026-11-21
+
+### bagheera
+
+#### Features
+
+- bagheera: count the python Guideline before the first edit of a .py file (dc6d248)
+
+### louie
+
+#### Features
+
+- louie: give Claude a python Guideline when it reads or edits a .py file (6a54777)
+
 ## 0.70.0 — 2026-11-18
 
 ### louie
