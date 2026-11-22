@@ -3,11 +3,11 @@
 2026-10-03 · user · kept 2026-11-22
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `rust`, `react`, `sql`
-(migrations, a schema change that stays backward compatible) and `docker`. From 2026-11-09 they
+(migrations, a schema change that stays backward compatible). From 2026-11-09 they
 are louie's (ADR plugin): each is a file whose `paths:` say which files bring it, so no stack is
 detected for a Config. Settled by deciding which stacks get one, or none. Kept to write each when
 a project in that stack takes up the plugins; `python`, this repo's stack (ADR binary), shipped in
-0.71.0 on 2026-11-21.
+0.71.0 on 2026-11-21; `docker` became PRD docker and Ticket docker-guideline on 2026-11-22.
 
 ## Eval cases for verify, doctor and retro
 
