@@ -30,7 +30,7 @@ deploys as one binary, serves many requests at once with no framework, and is th
 operator already runs. Go is pinned to 1.26.10, a mature line over a newer one, and `go.mod`'s
 `go` directive names the same version. The module follows louie's `go` Guideline:
 `cmd/server/main.go` wires the server up and nothing else, each package of `internal/` is named
-for what it provides, `internal/respond` alone writes responses, and the tests use the standard
+for what it provides, and `internal/respond` alone writes responses; the tests use the standard
 `testing` package. Its one route, `GET /api/up`, says the server is up and touches no database, so
 it answers 200 whatever Postgres is doing; the standard library's `http.ServeMux` routes it. An
 unknown path or a wrong method under `/api/` gets `respond`'s JSON 404 or 405, the 405 with the

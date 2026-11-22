@@ -9,10 +9,14 @@ follows win.
 - `cmd/<app>/main.go` wires things up and nothing else. The rest lives in `internal/`, one
   package per concern (`handler`, `respond`, `config`, `worker`), named for what it provides,
   never `util` or `common`.
-- The standard library first, then a small library per need: a router (`chi`), a driver
-  (`pgx`), `sqlc` for queries. No ORM, no framework. Generated code is never edited by hand.
+- The standard library first, as far as the `go` line in `go.mod` ships it, then a small
+  library per need: a driver (`pgx`), `sqlc` for queries. No ORM, no framework. Generated code is
+  never edited by hand.
+- A UUID comes from the standard `uuid` package, `uuid.New()`, from Go 1.27 on, not
+  `google/uuid`.
 
-**Test:** every package name says what it's for.
+**Test:** every package name says what it's for, and `go.mod` requires nothing the standard
+library of its `go` line ships.
 
 ## 2. Errors and logs
 
@@ -39,10 +43,8 @@ follows win.
 
 ## 4. Tests
 
-- The standard `testing` package, no assertion library. Fail with what was got and what was
-  wanted: `t.Fatalf("status = %d, want %d", w.Code, http.StatusCreated)`.
 - Name a test `TestThing_Behavior`; table cases run as `t.Run` subtests; a helper takes `t`
   and calls `t.Helper()` first.
 - A service you don't own is faked with `httptest.NewServer` behind its client.
 
-**Test:** a failing test's message alone says what broke.
+**Test:** every test helper calls `t.Helper()` first, and no test reaches a service you don't own.
