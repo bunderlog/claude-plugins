@@ -476,7 +476,7 @@ def setup_others(stdout: TextIO, stderr: TextIO) -> int:
     if not roots:
         stdout.write("no other project to complete\n")
         return 0
-    needs = {p.root: [n.what for n in p.needs if n.setup]
+    needs = {p.root: [n.what for n in p.needs if n.setup_skill_fixes]
              for p in found.projects}
     for root in roots:
         hathi = "has .hathi.yml" if os.path.exists(os.path.join(root, setup.HATHI)) else (

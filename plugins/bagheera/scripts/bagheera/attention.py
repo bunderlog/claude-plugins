@@ -41,12 +41,11 @@ SETUP_FIX = names.SETUP_SKILL + " there"
 @dataclass
 class Need:
     """One thing a project needs, what to do about it, and whether it is one setup.needs gives,
-    which a run of /bagheera:setup there fixes; False by default, so a file a check wrote before
-    the field was added still reads."""
+    which a run of /bagheera:setup there fixes."""
 
     what: str
     fix: str
-    setup: bool = False
+    setup_skill_fixes: bool = False
 
 
 @dataclass
@@ -313,7 +312,7 @@ def lacking(found: Found, here: str) -> List[str]:
     baloo on nowhere is left out, since its owner may have chosen not to set it up at all."""
     mine = main_tree(here) if here else ""
     return [p.root for p in found.projects
-            if p.set_up and p.root != mine and any(n.setup for n in p.needs)]
+            if p.set_up and p.root != mine and any(n.setup_skill_fixes for n in p.needs)]
 
 
 def check(data: str, config: str, now: float) -> Found:
