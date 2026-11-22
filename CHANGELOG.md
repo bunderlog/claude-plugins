@@ -2,6 +2,24 @@
 
 The marketplace's Releases, newest first.
 
+## 0.73.1 — 2026-11-22
+
+### baloo
+
+#### Fixes
+
+- baloo: keep "the checks pass" out of a Ticket's acceptance criteria (db0512a)
+
+### bagheera
+
+No feature changes or fixes.
+
+### louie
+
+#### Fixes
+
+- louie: take the Tickets or pull requests as a list in the Workflows' args (ff5c304)
+
 ## 0.73.0 — 2026-11-22
 
 ### bagheera
