@@ -1,6 +1,6 @@
 # A Verification is louie's verifier, one per source, run by the `verify` Workflow when asked
 
-Date: 2026-11-18
+Date: 2026-11-22
 
 A change can depart from what the project agreed (an ADR, a glossary term, a Guideline's rule, an
 Ticket's or PRD's acceptance criteria) without breaking a test, and the session that wrote it is the
@@ -38,9 +38,11 @@ Its tools are Read, Grep, Glob and Bash, for git and the tracker's client; that 
 holds only by its prompt, since a plugin's agent can't set a permission mode and Bash can write. Its
 findings are its reply: the session that asked decides with the user what to fix, and sends what is
 left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox). What it
-can't check by reading, whether the change works when run, it names for `/verify`. It runs with the
-user's model, as the Session review does (ADR session-review). Nothing turns it off but louie
-itself: a plugin's agent and Workflow can't be hidden from one project anyway.
+can't check by reading, whether the change works when run, it names for `/verify`. It runs on Claude
+Sonnet, whatever the user's model: across 21 Workflow runs to 2026-11-22, all on Claude Opus 5.5,
+the verifiers cost about $28 of $57, and the `verify` eval case scored the same with the plugin on
+Sonnet as on Opus. Nothing turns it off but louie itself: a plugin's agent and Workflow can't be
+hidden from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
 the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the Guidelines index
@@ -65,6 +67,8 @@ starts without the index and does the same.
   `implement` the reviewer is an agent of its own for that reason.
 - Claude Code's own code review as `implement`'s review — no setup, but its answer is prose the
   script can't decide on, where the reviewer's is a schema of findings, each a bug or not.
+- The verifier on the user's model, as the Session review is (until 2026-11-22) — no setting to
+  learn, but the run's dearest step paid Opus prices for reading text against text.
 - Claude running it by itself after each task — catches more, at a run's cost nearly every time.
 - Run only when the user asks, never offered (until 2026-11-02) — in about 200 sessions in five
   projects up to 2026-10-30 neither the skill nor the agent ever ran, by the user or by Claude.
@@ -97,5 +101,5 @@ starts without the index and does the same.
 - A task that serves a Ticket or PRD ends with one more line, the offer, though the user may
   decline it every time.
 - Revisit when Claude Code lets a plugin's agent set its permissions, users ask to verify every
-  change without asking, or a measurement finds the offer declined nearly every time or never
-  made.
+  change without asking, a measurement finds the offer declined nearly every time or never
+  made, or a departure a Verification on Sonnet missed reaches main.
