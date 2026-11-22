@@ -476,6 +476,47 @@ class Setup(unittest.TestCase):
             "- /.claude/worktrees/ in .gitignore is missing: /bagheera:setup fixes it",
         ])
 
+    # setup.needs names, a sentence each, the items a set-up repo lacks, a plugin turned on with
+    # no install or with one older than the Release, and Git hooks the repo tracks that its clone
+    # hasn't turned on; nothing of a repo that is set up in full, and no item of one that isn't
+    # set up at all (PRD setup).
+    def test_needs(self):
+        self.assertEqual(setup.needs(self.dir), [])
+        self.setup("--hathi")
+        write(self.path(".about/adr/repo-setup.md"), "# x\n")
+        s = self.settings()
+        del s["attribution"]
+        s["outputStyle"] = "Explanatory"
+        write(self.path(names.PROJECT_SETTINGS), json.dumps(s))
+        write(self.path(".gitignore"), "/.about/proposals/\n")
+        self.assertEqual(setup.needs(self.dir), [
+            "attribution off in .claude/settings.json is missing",
+            "statusLine or outputStyle in .claude/settings.json, where each person sets their own",
+            "/.claude/worktrees/ in .gitignore is missing",
+        ])
+
+        self.dir = in_repo(self)
+        commands.set_up(self.dir)
+        testkit.git(self.dir, "add", ".githooks")
+        testkit.git(self.dir, "config", "core.hooksPath", ".githooks")
+        self.assertEqual(setup.needs(self.dir), [])
+        louie = names.BUILD_ID
+        commands.installed(self.dir, **{louie: [
+            {"scope": "project", "version": "0.0.1", "projectPath": self.dir}]})
+        self.assertEqual(setup.needs(self.dir), [
+            f"{louie} 0.0.1 is installed, older than the {version.read()} this machine has"])
+        commands.installed(self.dir, **{louie: []})
+        self.assertEqual(setup.needs(self.dir), [
+            f"{louie} is turned on with no install of it for this project"])
+        commands.installed(self.dir)
+        testkit.git(self.dir, "config", "--unset", "core.hooksPath")
+        self.assertEqual(setup.needs(self.dir), ["its Git hooks are off in this clone"])
+
+        # A repo that isn't set up lacks every item, and none of them is a need.
+        self.dir = in_repo(self)
+        self.assertNotEqual(setup.missing(self.dir), [])
+        self.assertEqual(setup.needs(self.dir), [])
+
     # Session start says once per clone that the repo isn't set up, and never in a set-up repo or
     # a headless session.
     def test_session_start(self):
