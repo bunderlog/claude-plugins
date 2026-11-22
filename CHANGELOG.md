@@ -2,6 +2,19 @@
 
 The marketplace's Releases, newest first.
 
+## 0.74.2 — 2026-11-23
+
+### louie
+
+#### Fixes
+
+- louie: take UUIDs from Go 1.27's uuid package in the go Guideline, and drop chi (0e25472)
+- louie: drop the typescript Guideline's rules Claude keeps unasked, and bun for scripts (0c4bf39)
+- louie: drop the vue Guideline's rules Claude keeps unasked (a16e6ea)
+- louie: wait 7 days for a fresh release and run the audit, in the dependencies Guideline (cb5385c)
+- louie: drop the tailwind Guideline, whose rules Claude keeps unasked or skips when read (6c0b67a)
+- louie: start new behavior with a test seen red, in the rules for every task (7c0e8b9)
+
 ## 0.74.1 — 2026-11-22
 
 ### bagheera
