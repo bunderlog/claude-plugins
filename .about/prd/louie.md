@@ -39,6 +39,11 @@ baloo ships no Python; a project with louie on gets each Guideline by its task's
 
 - With louie on, editing a test gives Claude the `testing` Guideline once in the session, and a
   failed `mise run check` gives `debugging`.
+- A Write that creates a `.vue` file, whose signal is `typescript`, `vue`, `design` and
+  `principles` at once, adds no more than 10,000 characters to Claude's context in one Hook's
+  output, above which Claude Code gives Claude a 2 KB preview and saves the rest to a file Claude
+  doesn't open: the file's own Guidelines come whole first, and each that would pass the limit is
+  named with its file's path to read, and comes whole at its next signal.
 - `plugins/baloo/` holds no Python, and its session start counts the Inbox's items and names the
   uncommitted files in `.about/`.
 - `/louie:verify` runs the verifier, which is given the Guidelines that fit the repo.

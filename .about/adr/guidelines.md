@@ -46,6 +46,13 @@ of its subject or task comes:
   non-zero on a pending check too; a change to the dependencies (`npm install <package>`, `npm
   update`, `go get`, `cargo update`…) for `dependencies`.
 
+What a Hook adds stays within 10,000 characters, past which Claude Code saves it to a file and
+gives Claude a 2 KB preview, which Claude never opened: a Write creating a `.ts` file gave
+`principles`, `design` and `typescript`, about 12,500, and Claude got the start of `principles`
+alone, 4 times from 2026-10-28 to 2026-11-13. So the file's own Guidelines come first, then
+`design` and `principles`, each whole while it fits beside the ADRs and PRDs the Hook names; each
+that doesn't is a line naming its file to read, and comes whole at its next signal.
+
 Each one given logs a line in the plugin's data folder, `guidelines/guidelines.log`, its fields
 split by tabs: when, in UTC, the session, the Guideline, and the file, from the repo's root, or `$ `
 and the command; so a measurement tells whether it came before an edit without guessing. Session
@@ -114,6 +121,9 @@ CI never gets `ci`'s line.
 
 ## Considered options
 
+- Every Guideline due given whole, whatever their size (until 2026-11-22) — a Write creating a
+  `.ts` file gave about 12,500 characters, and Claude got a 2 KB preview of `principles` alone.
+- The Guidelines past the limit cut to fit — a Guideline's rules stop halfway, unseen by Claude.
 - Each Guideline turned on by its own key under `guidelines` in the Config (until 2026-11-09) — a
   repo's stack taken up after its Config was made stayed off unnoticed (one project's `go`, `vue`,
   `typescript` and `tailwind` in 2026-10), and nobody recorded why a Guideline was off; turning
