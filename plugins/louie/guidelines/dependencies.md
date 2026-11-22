@@ -31,8 +31,13 @@ Every update lands green, in commits that can be reverted one at a time.
     (Go's `go` line rises).
   - **pinned**: a `replace` in `go.mod`, an entry in `overrides` or `resolutions`, a version
     a comment calls pinned. Leave these as they are.
-- The user named a dependency: only it, to its latest version. The repo doesn't declare it: say
-  so and add nothing. Its latest is a major: go to step 4 without asking.
+- A version published less than 7 days ago waits, as a hijacked release is mostly found and
+  pulled within days: take the newest one older than that. The project's own setting wins:
+  pnpm's `minimumReleaseAge` in `pnpm-workspace.yaml` (minutes), npm's `min-release-age` in
+  `.npmrc` (days). A version's date: `npm view <name> time --json`, or the `Time` of `go list -m
+  -json <path>@<version>`.
+- The user named a dependency: only it, to its latest version past that wait. The repo doesn't
+  declare it: say so and add nothing. Its latest is a major: go to step 4 without asking.
 - Nothing outdated: say so and stop.
 
 **Test:** every outdated direct dependency is in one group.
@@ -66,6 +71,9 @@ Every update lands green, in commits that can be reverted one at a time.
 
 ## 5. Report and push
 
+- Run the manager's audit (`npm audit`, `pnpm audit`, `go run
+  golang.org/x/vuln/cmd/govulncheck@latest ./...`) and report what it still finds, with the
+  version that fixes each.
 - Report what was updated, from and to; what was rolled back and why; the pinned ones; the majors
   left.
 - Show the commits (`git log --stat`) and push only once the user says yes. A red CI run after
