@@ -240,7 +240,8 @@ class Setup(unittest.TestCase):
         before = tree(self.dir)
         os.environ["PATH"] = "/usr/bin:/bin"
         for files, args, why in [
-            ({}, ["--hathi"], "mise isn't on the PATH to install it: install hathi with mise"),
+            ({}, ["--hathi"], "mise isn't on the PATH to install it: install mise first "
+             "(curl https://mise.run | sh)"),
             ({"package.json": '{"husky": {"hooks": {"pre-commit": "npm test"}}}'}, ["--hathi"],
              "husky's hooks in package.json"),
             ({"lefthook.yml": "pre-commit:\n"}, ["--no-hathi"], "lefthook.yml"),
@@ -345,7 +346,7 @@ class Setup(unittest.TestCase):
 
     # With hathi added and none on the PATH, or one older than 1.2.0, it installs the latest with
     # mise and pins that version in mise.toml; where mise's hathi still isn't on the PATH, it stops
-    # naming mise's activation and writes nothing (PRD setup).
+    # naming how to put mise's shims on every shell's PATH, and writes nothing (PRD setup).
     def test_installs_hathi(self):
         newer = os.path.join(testkit.tempdir(self), "hathi")
         write(newer, FAKE_HATHI.replace("echo 1.2.0", "echo 1.4.0"), 0o755)
@@ -373,7 +374,8 @@ class Setup(unittest.TestCase):
         self.stand_in("mise")
         code, out, err = run("setup", "--hathi")
         self.assertEqual((code, out), (1, ""))
-        self.assertIn("activate mise so its shims are on the PATH", err)
+        self.assertIn("put mise's shims on the PATH of every shell", err)
+        self.assertIn("bash -c 'command -v hathi'", err)
         self.assertEqual(tree(self.dir), before)
 
     # It sets core.hooksPath where it is unset; a clone with a core.hooksPath of its own keeps

@@ -21,8 +21,11 @@ picks.
    `python3 -E -s '${CLAUDE_PLUGIN_ROOT}/scripts/run.py' setup --hathi` on yes, `--no-hathi` on
    no, and no flag where `.hathi.yml` is there.
 3. Exit 1 with nothing on stdout means it wrote nothing; its `bagheera setup:` line on stderr
-   says why and what the user does, such as installing `hathi` with mise. Keep that line for the
-   report, skip the ADR, and go on: the machine's other projects don't depend on this repo's run.
+   says why and what the user does, such as installing `hathi` with mise. Where it names a
+   command for the user, such as mise's installer or the link to mise's shims, offer it to them
+   at once, to run as `! <command>` in the prompt, and run setup again once they have; installing
+   mise stays theirs. Otherwise keep that line for the report, skip the ADR, and go on: the
+   machine's other projects don't depend on this repo's run.
 4. Otherwise it prints what it `changed:` and `removed:`, the commands it `ran:` (a plugin
    installed or updated, the Git hooks turned on), each command that `failed:` with its error,
    and what is `left:`. Exit 1 with `failed:` means every other item was written: write the ADR

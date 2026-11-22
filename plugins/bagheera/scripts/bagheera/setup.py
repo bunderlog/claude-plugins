@@ -33,6 +33,8 @@ HATHI_PIN = '"github:bunderlog/hathi"'
 HATHI_OLDEST = (1, 2, 0)
 # How hathi's README installs it, which a run does where hathi is missing or older (PRD setup).
 MISE_HATHI = ["mise", "use", "--global", "github:bunderlog/hathi@latest"]
+# How mise's own docs install it, which a run names where mise is missing; the person runs it.
+MISE_INSTALL = "curl https://mise.run | sh"
 # How long, in seconds, a command a run makes may take before it counts as failed.
 TIMEOUT = 120
 # husky's `npm install` fetches every dependency of the project, not one tool, so it gets longer.
@@ -606,8 +608,8 @@ def _hathi_version() -> str:
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                            timeout=TIMEOUT)
     except FileNotFoundError:
-        raise Stop(f"{what}, and mise isn't on the PATH to install it: install hathi with mise "
-                   f"({command}), then run setup again") from None
+        raise Stop(f"{what}, and mise isn't on the PATH to install it: install mise first "
+                   f"({MISE_INSTALL}), then run setup again") from None
     except (OSError, subprocess.SubprocessError) as e:
         raise Stop(f"{what}, and {command} failed: {e}: install hathi with mise, then run setup "
                    "again") from None
@@ -616,8 +618,12 @@ def _hathi_version() -> str:
                    "install hathi with mise, then run setup again")
     found, what = _usable_hathi()
     if not found:
-        raise Stop(f"{command} ran, but {what}: activate mise so its shims are on the PATH "
-                   "(mise activate --shims), then run setup again")
+        # A shell profile's activation reaches only login or interactive shells, not the ones Git
+        # hooks and editors run, so the link in ~/.local/bin is what reaches every shell.
+        raise Stop(f"{command} ran, but {what}: put mise's shims on the PATH of every shell, the "
+                   "non-login ones Git hooks run in too, such as with "
+                   "`ln -s ~/.local/share/mise/shims/hathi ~/.local/bin/hathi`; check it with "
+                   "`bash -c 'command -v hathi'`, then run setup again")
     return found
 
 
