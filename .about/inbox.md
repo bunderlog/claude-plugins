@@ -95,3 +95,13 @@ repo on the machine over 30 days: `adr edit` accepted unedited 12 of 13, `glossa
 `inbox add` 39 of 46 (5 rejected); the user kept every Proposal asked, the samples being small.
 Settled by the Session review's log showing a kind accepted unedited often enough to trust, and
 the user's yes; or by keeping every Proposal asked.
+
+## The implementer's rebase cites a Guideline its context doesn't name
+
+2026-11-22 · session on tests in `/louie:implement`
+
+`agents/implementer.md`'s `rebase` stage resolves conflicts "as the `principles.md` Guideline your
+context names says", but a Workflow's agent starts with no `SubagentStart` and so no Guidelines
+index (ADR verify), and the Hook gives the index to the verifier alone; PRD implement's Scope says
+each stage is given it. Settled by the stage reading `principles.md` from louie's folder as the
+implement stage now reads `testing.md`, or the PRD dropping the index for the other agents.

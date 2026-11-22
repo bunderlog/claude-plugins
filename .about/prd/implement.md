@@ -56,17 +56,23 @@ such pull request carries the Verification's verdict on each acceptance criterio
      has nothing to build, and then discarding the worktree and branch it made, which hold
      nothing; a question outside the Ticket's criteria is not an Open decision, nor is a way to
      build the planner recommends that no criterion, ADR or the Ticket rules out: each is an
-     Assumption the plan builds on;
-  4. implements in commits in the project's format, with the checks the project's `CLAUDE.md` or
+     Assumption the plan builds on; the plan names each change's tests, one for each criterion a
+     test can check and for the tricky logic the change adds, and how a criterion no test can
+     check is checked instead;
+  4. implements test-first, having read louie's `testing` Guideline, each test the plan names seen
+     failing before the code that passes it, in commits in the project's format, with the checks the project's `CLAUDE.md` or
      README names (`mise run check`, `make verify`) passing on the last one, or stops
      `blocked:checks` with their output; a change that delivers a Ticket kept in
      `.about/tickets/` deletes its file, as ADR tickets has it;
   5. verifies with `verify`'s four verifiers, against where the branch started, and at the same
      time has `louie:reviewer` look for bugs in the same commits, each with `file:line` and
-     whether it is a bug; it fails on a criterion not met, a blocking departure or a bug;
+     whether it is a bug; it fails on a criterion not met, a blocking departure or a bug, and on a
+     criterion met with no test;
   6. on a failure, implements again with the findings of both and verifies and reviews again, at
      most two reworks, ending `failed:rework-budget` after the second, and `failed:not-converging`
-     sooner when a round fails on the same criteria, departures and bugs as the one before;
+     sooner when a round fails on the same criteria, departures and bugs as the one before; a
+     round whose only failures are criteria met with no test goes on to the pull request instead
+     of ending so, as a criterion only the person checks by hand stays untested in every round;
   7. pushes the branch, in a stage of its own, and the script checks that the pushed branch ends
      at the commit the last Verification passed, ending `blocked:push` when the push fails and
      `blocked:pull-request` when the branch ends elsewhere, with no pull request opened in either;
@@ -172,10 +178,14 @@ such pull request carries the Verification's verdict on each acceptance criterio
   `blocked:push`, with no pull request stage run in either.
   → test: tests/workflows/implement.test.mjs "implement opens no pull request when the pushed
   branch ends at another commit than the one the last Verification passed"
-- With its agents stubbed, a Verification that passes with a criterion met but not tested opens the
-  pull request as a draft, the criterion's verdict in its body.
-  → test: tests/workflows/implement.test.mjs "implement opens a draft when a criterion is met with no
-  test"
+- With its agents stubbed, a Verification that passes with a criterion met but not tested reworks
+  for its test, and when the rework leaves it untested opens the pull request as a draft, the
+  criterion's verdict in its body.
+  → test: tests/workflows/implement.test.mjs "implement reworks for a criterion met with no test"
+  → test: tests/workflows/implement.test.mjs "implement opens a draft when a criterion stays
+  untested after a rework"
+- With its agent stubbed, `plan`'s report lists each change's tests.
+  → test: tests/workflows/plan.test.mjs "plan lists each change's tests"
 - With its agents stubbed, the pull request's body lists the plan's assumptions.
   → test: tests/workflows/implement.test.mjs "implement lists the plan's assumptions in the pull
   request's body, for the person to review"
