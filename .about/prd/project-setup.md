@@ -31,7 +31,8 @@ commit-checks-to-hathi; and `hathi doctor` reports no problem in each that has `
       `enableWorkflows` too;
     - `permissions.deny` on reading Env files and private keys, the list below;
     - `attribution` with an empty `commit` and `pr`;
-    - no `statusLine` and no `outputStyle`.
+    - no `statusLine` and no `outputStyle`, and no `autoUpdate` for the marketplace: each user
+      turns that on once for the whole marketplace, in `/plugin`.
   - `CLAUDE.md`, made if missing, with a line that imports the file setting the commit format:
     `@.hathi.yml` where the project has `hathi`, else the project's own (a commitlint config);
     with neither, no line.
