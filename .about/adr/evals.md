@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-21
+Date: 2026-11-22
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -48,6 +48,12 @@ On 2026-11-16 `principles` got a case for its line on a louie Workflow run's fig
 run's task-notification in the prompt, graded on the reply naming its tokens, agents and minutes:
 1.00 with the plugin and 0.00 without, on Opus and on Sonnet, 3 runs each. The bare model gives
 what the run found and leaves out what it took.
+
+On 2026-11-22 bagheera's `assess` got a case where Claude is asked whether bunderlog's Checks pay
+off, graded on the plugin's report being run: 1.00 with the plugin and 0.00 without, on Opus and on
+Sonnet, 3 runs each. The bare model answers without it. A judge of the reply was dropped the same
+day: it failed replies that gave the report's count and left the decision to the person. `new`'s
+and `setup`'s cases can't pass in the sandbox as it is (Inbox).
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

@@ -11,7 +11,7 @@ a project in that stack takes up the plugins; `python`, this repo's stack (ADR b
 and `.git` kept out of the build context, Compose without `version:`, a Secret as a build mount)
 scored 1.00 without louie on the default model and Claude Sonnet, 3 runs an arm (ADR evals).
 
-## Eval cases for verify, doctor and retro
+## Eval cases for verify, doctor, retro, new and setup
 
 2026-11-01 · evals · kept 2026-11-22
 
@@ -31,14 +31,23 @@ isn't enough) and back after it, with `--allow-tools 'Bash(git *)' 'Bash(python3
   denied.
 - `retro` reads Transcripts from Claude Code's config, which the sandbox hides; a case for it can't
   run under `claude plugin eval` as it is.
-Settled by a sandbox that runs Git hooks and lets a skill read the session's Transcript, or by
-dropping these cases; each is kept only once it fails without the plugin (ADR evals). From
+Settled by a sandbox that runs Git hooks, lets a skill read the session's Transcript, and lets a
+script write `.claude/settings.json` and a folder outside any git repo, or by dropping these cases; each is kept only once it fails without the plugin (ADR evals). From
 2026-11-09 `verify` becomes a louie Workflow and `doctor` and `retro` bagheera's (ADR plugin), so
 each case moves with its part, in the PRD of that move. On 2026-11-12 none of the three is in
 `evals/`, having only been run by hand (`evals/verify/offer` is another case, the offer of a
 Verification), and on Claude Code 2.1.322 a run granted `Bash(git *)` still refuses to start while
 `~/.docker/contexts` holds a link, even with `DOCKER_CONFIG` set to an empty folder.
-On 2026-11-22, on 2.1.330, the link is still there; no run was tried.
+On 2026-11-22, on 2.1.330, moving `~/.docker/contexts` alone out of `~/.docker` for the run was
+enough to grant `Bash`. `new`'s and `setup`'s cases were written and run with the plugin, and
+neither can pass in the sandbox, so neither was kept:
+- `new` (a Go and Vue product in `./acme-shop`): the sandbox's home folder, which holds the run's
+  folder, is a git repo, so louie's `new` refuses to write inside it, even with the workspace's own
+  `.git` removed.
+- `setup` (the shop set up without hathi): the sandbox denies the plugin's script a write to
+  `.claude/settings.json` (`Read-only file system`), so setup stops having written nothing.
+`assess` was kept (case `evals/assess/checks`) though it reads no Transcript there either, as
+`retro`: it pins the report being run instead of a guess.
 
 ## A commit's body says why
 
