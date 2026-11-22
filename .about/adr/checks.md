@@ -1,12 +1,12 @@
 # Each Check a Hook runs is always on
 
-Date: 2026-11-16
+Date: 2026-11-22
 
-The Checks a Hook runs, `no-git-hook-bypass` and `no-secrets-in-context`, are bagheera's (ADR
-plugin), and always on, outside a repo too: they guard against accidents where nobody set anything
-up, and turning bagheera off is the only way to turn them off (PRD no-config). A `claude-hooks` key
-left in an earlier baloo's Config does nothing, and `doctor` names the Config for the user to
-delete.
+The Checks a Hook runs, `no-git-hook-bypass`, `no-secrets-in-context` and `no-hidden-characters`,
+are bagheera's (ADR plugin), and always on, outside a repo too: they guard against accidents where
+nobody set anything up, and turning bagheera off is the only way to turn them off (PRD no-config). A
+`claude-hooks` key left in an earlier baloo's Config does nothing, and `doctor` names the Config for
+the user to delete.
 
 The plugin has no commit Check: those are `hathi`'s, run by a project's own Git hooks and CI (ADR
 git-hooks).
@@ -15,16 +15,16 @@ A Check only denies; none asks the user first, and nothing asks before a change 
 settings that may turn the Checks off (ADR measurement).
 
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the plugin's
-`pre-tool-use`, which runs both Checks. Each reads the command's words, not a full shell: it
-looks past wrappers such as `sudo`, `timeout` and `env`, into `sh -c`, `eval` and command
-substitutions, and a pattern such as `.e*` stands for the files it matches; what it can't follow,
-such as a file copied first and shown after, goes through. Where `python3` is
-missing or the plugin fails, it says nothing, and the call runs: session start has already said
-that no Check runs that session (ADR binary). A Check that raises lets the call run too, and
-`pre-tool-use` keeps the last such failure in `${CLAUDE_PLUGIN_DATA}`, its Check, tool and place
-in the plugin's code but no word of the call or the error's message, which may carry a Secret;
-`doctor` names it as a problem while the version that failed runs (ADR doctor), since the
-Hook's stderr is dropped and nothing else would.
+`pre-tool-use`, which runs every Check, `no-hidden-characters` last, so that one failing leaves the
+others run. Each reads the command's words, not a full shell: it looks past wrappers such as `sudo`,
+`timeout` and `env`, into `sh -c`, `eval` and command substitutions, and a pattern such as `.e*`
+stands for the files it matches; what it can't follow, such as a file copied first and shown after,
+goes through. Where `python3` is missing or the plugin fails, it says nothing, and the call runs:
+session start has already said that no Check runs that session (ADR binary). A Check that raises
+lets the call run too, and `pre-tool-use` keeps the last such failure in `${CLAUDE_PLUGIN_DATA}`,
+its Check, tool and place in the plugin's code but no word of the call or the error's message, which
+may carry a Secret; `doctor` names it as a problem while the version that failed runs (ADR doctor),
+since the Hook's stderr is dropped and nothing else would.
 
 `no-git-hook-bypass` lets `git config core.hooksPath` through only where it turns a project's own
 Git hooks on: the clone's local config, set to `.githooks` or `.husky/_`, the folders a set-up
@@ -33,6 +33,10 @@ merely there, made empty a moment before, would turn them all off. Every other v
 (`--global`, `--system`, `--file`) or an unset is denied, since a path with no hooks in it turns
 them all off; so is `core.hooksPath` set for one command, through `-c` or `GIT_CONFIG_*`, whatever
 the subcommand.
+
+`no-hidden-characters` reads only what a call writes, a Bash command's text as it stands, and
+denies a character a person can't see that real text doesn't need (PRD hidden-characters); its
+denial names the escape to write instead, so a character that is meant has a way through.
 
 Claude Code's `Read` deny rules, in a set-up project's settings (PRD project-setup) and in each
 person's own (PRD deny), are a second layer under `no-secrets-in-context`, not its replacement:
