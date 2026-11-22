@@ -124,7 +124,8 @@ host.
 
 **Setup**:
 Everything that shapes how Claude works in a project: its CLAUDE.md, Claude Code's settings, its
-Git hooks, and the skills, Hooks and plugins it uses.
+Git hooks, and the skills, Hooks and plugins it uses. What `/bagheera:setup` fixes is only part of
+it, and is named for the skill (`setup_skill_fixes`), not as "setup's".
 _Avoid_: harness, which is all the projects' Setups and the person's own rules together
 
 **Harness**:
