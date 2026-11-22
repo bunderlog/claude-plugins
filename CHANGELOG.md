@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.74.1 — 2026-11-22
+
+### bagheera
+
+#### Fixes
+
+- bagheera: count no Guideline in the context from a Hook context cut to a preview (00eca22)
+
+### louie
+
+#### Fixes
+
+- louie: give a new file's Guidelines whole within Claude Code's limit, and name the rest (2606198)
+
 ## 0.74.0 — 2026-11-22
 
 ### louie
