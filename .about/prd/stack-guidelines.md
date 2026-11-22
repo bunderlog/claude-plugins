@@ -49,6 +49,10 @@ Claude and a redundant one costs context for nothing.
   - `typescript.md`: no `any`, `unknown` at the edge, no `enum`, no class, the `node:` prefix and
     `import type` removed, as both models kept all six unasked; the script on `bun` removed too,
     as both ran a script on Node unasked, its `.ts` imports and all. Neither case stays.
+- `testing.md`: its red first moves to the rules for every task in `principles.md`, as the
+  Guideline came after the first edit of a test, once the code was written; the store run for
+  real, no assertion on calls, results read back through the interface and tests named for
+  behavior removed, as both models kept them unasked (`evals/testing/publish`).
 - `tailwind.md` is removed, with its index line and its signal, a `package.json` depending on
   `tailwindcss`: in `evals/tailwind/`, on both models, each of its rules was either kept without
   louie or not followed with the file read, as `cn()`, `cva` and no `dark:` beside the theme's

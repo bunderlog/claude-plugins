@@ -78,6 +78,12 @@ pairs of colors, whole class names, `focus-visible`, a new color in `@theme`, no
 `tailwind.config.js` and no `@apply` in a component passed without louie on both models, while
 `cn()` for a caller's class, `cva` for variants and no `dark:` failed with louie too, though every
 run read the file: Claude adds no package the task didn't ask for.
+`testing/publish`, run with `Bash` allowed for `/usr/bin/python3`, as the sandbox can't load
+mise's Python, failed without louie on both models: no run saw a test red before the code. It
+failed with louie too while `testing` came only at the first edit of a test, once the code was
+written; with a line in On every task, every run saw its test red first. Its judge of the trace agreed with a hand count in 12 of 12 runs.
+Its graders for the project's store run for real, no assertion on calls, no query of the store's
+table and tests named for behavior passed without louie on both, and left with their rules.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

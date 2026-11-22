@@ -71,12 +71,8 @@ reads `testing` itself before its first edit, from louie's folder, the `installP
 `louie@bunderlog` in `plugins/installed_plugins.json`, as the verifier finds the Guidelines it is
 named.
 
-What the next measurement checks of `testing` is a rule whose breach shows, with no judgment, in
-the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
-- `testing`, no fake of a module of the project: `vi.mock(` or `jest.mock(` of a path starting with
-  `.`, `@/` or `~/`, counted in JavaScript and TypeScript tests only.
-
-Before 0.24, this machine's Transcripts held 24, 4 and 2 edits on these subjects, with no breach
+No Guideline is measured by a rule whose breach shows in a diff; the measurement counts whether a
+Guideline was in context before an edit of its subject. Before 0.24, this machine's Transcripts held 24, 4 and 2 edits on these subjects, with no breach
 of any of the three rules, and none of the other rules that show in a diff (an `enum`, a class, a
 built-in module imported without `node:`, `defineProps` without a type, `router.push` by path, a
 `<style>` block, fake timers) reached 3 breaches either. On that data none of the three Guidelines
@@ -87,7 +83,9 @@ other machine's Transcripts, where these stacks are worked on, show 3 or more br
 `typescript`'s rule, no `any`, left the file on 2026-11-22 with the `enum`, the class and the
 `node:` prefix, and `vue`'s, no Options API, on 2026-11-23 with typed props and emits, no `<style>`
 block and navigating by route name: an eval found the default model and Claude Sonnet keeping all
-of them without louie (PRD stack-guidelines).
+of them without louie (PRD stack-guidelines). `testing`'s, no fake of a module of the project,
+left on 2026-11-23 for the same reason, and its red first moved to the rules for every task, as
+`testing` comes only after the first edit of a test, once the code is written.
 
 Session start's index names a Guideline only where it fits the repo: those for any project
 always, `ci` only where the repo's root holds a CI's config (`.github/workflows/`, `.gitlab-ci.yml`,
