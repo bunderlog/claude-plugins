@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-22
+Date: 2026-11-23
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -54,6 +54,17 @@ off, graded on the plugin's report being run: 1.00 with the plugin and 0.00 with
 Sonnet, 3 runs each. The bare model answers without it. A judge of the reply was dropped the same
 day: it failed replies that gave the report's count and left the decision to the person. `new`'s
 and `setup`'s cases can't pass in the sandbox as it is (Inbox).
+
+The same day louie's stack Guidelines got a case each, a grader per rule (PRD stack-guidelines).
+`go/api` failed without louie on both models: no run took Go 1.27's `uuid` package, without louie
+or with the old `go.md`, and every run did with the new one; Claude Sonnet without louie wired no
+route in `cmd/api/main.go` and logged with a `…Context` variant of `slog` in 1 of 3 runs. Its
+graders for the standard `testing` package, got/want messages and no router library passed without
+louie on both and were dropped, the first two with their rules. `typescript/checker`, for no
+`any`, `unknown` at the edge, no `enum`, no class, the `node:` prefix and `import type`, and
+`typescript/script`, for a script run on Node with its `.ts` imports, scored 1.00 without louie on
+both and were dropped with their rules; the script's `tsconfig.json` flags, which no run wrote with
+louie either, went too, as a repo with no TypeScript installed has no `tsc` to check them.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
