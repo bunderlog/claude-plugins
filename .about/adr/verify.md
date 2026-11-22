@@ -40,9 +40,10 @@ findings are its reply: the session that asked decides with the user what to fix
 left for later to the Inbox, as `principles` says for a code review's findings (ADR inbox). What it
 can't check by reading, whether the change works when run, it names for `/verify`. It runs on Claude
 Sonnet, whatever the user's model: across 21 Workflow runs to 2026-11-22, all on Claude Opus 5.5,
-the verifiers cost about $28 of $57, and the `verify` eval case scored the same with the plugin on
-Sonnet as on Opus. Nothing turns it off but louie itself: a plugin's agent and Workflow can't be
-hidden from one project anyway.
+the verifiers cost about $28 of $57, and the one case of the verifier finding a departure, run by
+hand on 2026-11-02 (`cancel_purchase` where the glossary avoids "purchase"), scored 0.67 with the
+plugin on both. Nothing turns it off but louie itself: a plugin's agent and Workflow can't be hidden
+from one project anyway.
 
 Session start's context doesn't reach a subagent, so the plugin adds a `SubagentStart` Hook for
 the agent alone (`^louie:verifier$`): the plugin's `subagent-start` gives it the Guidelines index

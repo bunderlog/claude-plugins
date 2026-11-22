@@ -114,3 +114,12 @@ local checks were green; #18 was merged by hand. `implement` turned the same ver
 The implement stage already runs the project's checks, and CI runs them again. Settled by the
 `ticket` skill keeping such a criterion out (the checks are every change's, not a Ticket's), or by
 the verifier taking a green CI run on the head as met; or by both.
+
+## "setup's" still names what `/bagheera:setup` fixes in a few comments
+
+2026-11-22 · louie:verify
+
+The glossary's Setup entry now says what `/bagheera:setup` fixes is named for the skill, not as
+"setup's" (Proposal accepted 2026-11-22), but `plugins/bagheera/scripts/bagheera/setup.py:2` and
+`:168` and `tests/bagheera/test_doctor.py:171` and `:178` still say "setup's". Settled by rewording
+each, or by deciding that "setup's" there means the module, which the glossary allows.

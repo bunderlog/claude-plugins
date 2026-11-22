@@ -16,15 +16,16 @@ settings that may turn the Checks off (ADR measurement).
 
 One `PreToolUse` Hook, on Bash, Read, Grep, Edit, Write and MultiEdit, runs the plugin's
 `pre-tool-use`, which runs every Check, `no-hidden-characters` last, so that one failing leaves the
-others run. Each reads the command's words, not a full shell: it looks past wrappers such as `sudo`,
-`timeout` and `env`, into `sh -c`, `eval` and command substitutions, and a pattern such as `.e*`
-stands for the files it matches; what it can't follow, such as a file copied first and shown after,
-goes through. Where `python3` is missing or the plugin fails, it says nothing, and the call runs:
-session start has already said that no Check runs that session (ADR binary). A Check that raises
-lets the call run too, and `pre-tool-use` keeps the last such failure in `${CLAUDE_PLUGIN_DATA}`,
-its Check, tool and place in the plugin's code but no word of the call or the error's message, which
-may carry a Secret; `doctor` names it as a problem while the version that failed runs (ADR doctor),
-since the Hook's stderr is dropped and nothing else would.
+others run. `no-git-hook-bypass` and `no-secrets-in-context` each read the command's words, not a
+full shell: it looks past wrappers such as `sudo`, `timeout` and `env`, into `sh -c`, `eval` and
+command substitutions, and a pattern such as `.e*` stands for the files it matches; what it can't
+follow, such as a file copied first and shown after, goes through. Where `python3` is missing or the
+plugin fails, it says nothing, and the call runs: session start has already said that no Check runs
+that session (ADR binary). A Check that raises lets the call run too, and `pre-tool-use` keeps the
+last such failure in `${CLAUDE_PLUGIN_DATA}`, its Check, tool and place in the plugin's code but no
+word of the call or the error's message, which may carry a Secret; `doctor` names it as a problem
+while the version that failed runs (ADR doctor), since the Hook's stderr is dropped and nothing else
+would.
 
 `no-git-hook-bypass` lets `git config core.hooksPath` through only where it turns a project's own
 Git hooks on: the clone's local config, set to `.githooks` or `.husky/_`, the folders a set-up
