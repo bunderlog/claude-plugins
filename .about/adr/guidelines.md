@@ -71,11 +71,8 @@ reads `testing` itself before its first edit, from louie's folder, the `installP
 `louie@bunderlog` in `plugins/installed_plugins.json`, as the verifier finds the Guidelines it is
 named.
 
-What the next measurement checks of `vue` and `testing` is a rule each whose breach shows, with no
-judgment, in the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in
-`old_string`):
-- `vue`, no Options API: `export default {` or `defineComponent(`, or a `.vue` written whole with
-  no `<script setup>`, since a second plain `<script>` beside one is allowed;
+What the next measurement checks of `testing` is a rule whose breach shows, with no judgment, in
+the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
 - `testing`, no fake of a module of the project: `vi.mock(` or `jest.mock(` of a path starting with
   `.`, `@/` or `~/`, counted in JavaScript and TypeScript tests only.
 
@@ -88,8 +85,9 @@ edit of its subject. A rule's share of breaches, before 0.24 and after, is repor
 other machine's Transcripts, where these stacks are worked on, show 3 or more breaches of it before
 0.24.
 `typescript`'s rule, no `any`, left the file on 2026-11-22 with the `enum`, the class and the
-`node:` prefix: an eval found the default model and Claude Sonnet keeping all of them without louie
-(PRD stack-guidelines).
+`node:` prefix, and `vue`'s, no Options API, on 2026-11-23 with typed props and emits, no `<style>`
+block and navigating by route name: an eval found the default model and Claude Sonnet keeping all
+of them without louie (PRD stack-guidelines).
 
 Session start's index names a Guideline only where it fits the repo: those for any project
 always, `ci` only where the repo's root holds a CI's config (`.github/workflows/`, `.gitlab-ci.yml`,

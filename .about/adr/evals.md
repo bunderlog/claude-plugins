@@ -65,6 +65,10 @@ louie on both and were dropped, the first two with their rules. `typescript/chec
 `typescript/script`, for a script run on Node with its `.ts` imports, scored 1.00 without louie on
 both and were dropped with their rules; the script's `tsconfig.json` flags, which no run wrote with
 louie either, went too, as a repo with no TypeScript installed has no `tsc` to check them.
+On 2026-11-23 `vue/details` failed without louie on both models: no run kept the requests out of a
+page's component, and every run did with louie. Its graders for `<script setup>`, typed props and
+emits, no `<style>` block, navigating by route name and `flushPromises` passed without louie on
+both, and were dropped with their rules.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
