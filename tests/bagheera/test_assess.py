@@ -377,6 +377,25 @@ class Assess(unittest.TestCase):
         self.assertIn("  go: 1 (0), before the first edit of its files 0 of 0 (0 of 0)", report)
         self.assertNotIn("  testing:", report)
 
+    # A Hook's context Claude Code cut to a preview, as it does past 10,000 characters, gives
+    # Claude none of the Guidelines it names in full, and counts none in the context.
+    def test_a_guideline_in_a_cut_context_is_not_in_it(self):
+        ts = os.path.join(self.root, "src/a.ts")
+        cut = ("<persisted-output>\nOutput too large (12.2KB). Full output saved to: "
+               "/home/u/.claude/projects/p/s1/tool-results/hook-x-additionalContext.txt\n\n"
+               "Preview (first 2KB):\n" + guideline("principles", "src/a.ts")[:200]
+               + "\n...\n</persisted-output>")
+        self.session(
+            "s1",
+            call("w1", "Write", {"file_path": ts}, "2026-11-10T09:00:00.000Z"),
+            result("w1", at="2026-11-10T09:00:00.000Z"),
+            given(cut, "2026-11-10T09:00:01.000Z"),
+        )
+        report = self.report()
+        self.assertIn("  typescript: 0 (0), before the first edit of its files 0 of 1 (0 of 0)",
+                      report)
+        self.assertNotIn("  principles:", report)
+
     # python is counted before the first edit of a .py file, as go of a .go file's.
     def test_python_before_the_first_edit_of_a_py_file(self):
         py = os.path.join(self.root, "src/a.py")

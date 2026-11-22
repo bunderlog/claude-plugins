@@ -787,6 +787,9 @@ _GUIDELINES = "Guidelines,"
 _GIVING = ("PostToolUse", "PostToolUseFailure")
 _GIVEN = re.compile(r"The ([a-z0-9-]+) Guideline applies to")
 _GIVER = re.compile(r"^(?:" + names.BUILD + "|" + names.KNOWLEDGE + r"):$", re.M)
+# How Claude Code starts a Hook's context it cut to a 2 KB preview, past 10,000 characters: the
+# Guidelines it names never reached Claude whole, and Claude didn't open the file the rest is in.
+_CUT = "<persisted-output>"
 # A command that runs `git commit` or `git push`, `git -C <dir> commit` too; `hathi check …` run by
 # hand is neither.
 _GIT = re.compile(
@@ -856,7 +859,7 @@ def facts(transcript: Union[str, bytes]) -> Facts:
             if isinstance(a, dict) and a.get("hookEvent") in _GIVING and t is not None:
                 content = a.get("content")
                 for text in content if isinstance(content, list) else [content]:
-                    if isinstance(text, str) and _GIVER.search(text):
+                    if isinstance(text, str) and _GIVER.search(text) and not text.startswith(_CUT):
                         f.guidelines += [(t, name) for name in _GIVEN.findall(text)]
             if isinstance(a, dict) and a.get("hookEvent") == "SessionStart":
                 content = a.get("content")
