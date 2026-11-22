@@ -1,6 +1,6 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-21
+Date: 2026-11-22
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -57,6 +57,12 @@ Guidelines as any other does: session start's index and the Hooks that give them
 part is at most about 2,000 characters, under 1% of a Session review's cost, and a Hook gives a
 whole Guideline only once its subject or task comes up, which is where a headless agent edits code
 with nobody to correct it.
+
+A Workflow's agent gets no session start index, and the Hook gives `testing` only after its first
+edit of a test, too late to write one first, or never where it writes none. So louie's implementer
+reads `testing` itself before its first edit, from louie's folder, the `installPath` of
+`louie@bunderlog` in `plugins/installed_plugins.json`, as the verifier finds the Guidelines it is
+named.
 
 What the next measurement checks of the three is a rule each whose breach shows, with no judgment,
 in the text an Edit or a Write adds (for an Edit, the lines of `new_string` not in `old_string`):
