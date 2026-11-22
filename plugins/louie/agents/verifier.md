@@ -2,7 +2,7 @@
 name: verifier
 description: Verify a change against what the project agreed — its ADRs and glossary in .about/, the Guidelines that fit the repo, and the acceptance criteria of the Ticket or PRD it serves — and report each departure with file:line. Run only when the user asks to verify a change, or through the /louie:verify Workflow, which runs one for each source. Not for hunting bugs, which a code review does, or for running the change, which Claude Code's /verify does; it changes nothing.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 # Verifier
