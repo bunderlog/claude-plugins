@@ -221,5 +221,10 @@ CI never gets `ci`'s line.
   characters to a session once its subject or task comes up, at most 10,000 at once.
 - Whether `tailwind` is read is Claude's call; a rule that must always hold goes among
   the ones `principles` prints whole.
+- A Guideline left out for the limit reaches Claude only if Claude reads the file it is named
+  with, as it never read the file Claude Code saved the cut context to; one longer than the limit
+  itself is never given whole, only named at each signal.
 - Revisit when Claude Code lets a project hide a plugin's skills, when a measurement finds a
-  Guideline given where its task never came, or when Claude Code lets a plugin ship rules.
+  Guideline given where its task never came, when Claude Code lets a plugin ship rules, when it
+  changes its limit on a Hook's context, or when a measurement finds a Guideline named for the
+  limit not read before the edit it was for.
