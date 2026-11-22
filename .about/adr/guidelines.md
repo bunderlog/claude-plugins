@@ -18,8 +18,8 @@ Only `tailwind`, which no file's type signals, waits for Claude to read it: a Gu
 before an edit on its subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement);
 in a week of 2026-10 it was 0 of 30 for `debugging` and the others tied to a task, while those a
 Hook gives came before the first edit of their subject in 15 of 22 cases, after it in the rest. A
-Hook gives Claude the whole file, as its added context, the first time in a session that a signal
-of its subject or task comes:
+Hook gives Claude the whole file, as its added context within Claude Code's limit (below), the
+first time in a session that a signal of its subject or task comes:
 - `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
   `.cts` and `.vue` for `typescript`, `.vue` for `vue`, `.go` for `go`, `.py` and `.pyi` for
   `python`, and a text an agent reads for `writing-for-agents` (`SKILL.md`, `CLAUDE.md`,
@@ -61,7 +61,7 @@ files already there creates none, so their line stays for Claude to read.
 
 A headless session, `claude -p`'s or the Agent SDK's, a Session review's own too, gets the
 Guidelines as any other does: session start's index and the Hooks that give them. Session start's
-part is at most about 2,000 characters, under 1% of a Session review's cost, and a Hook gives a
+part is about 2,500 characters, under 1% of a Session review's cost, and a Hook gives a
 whole Guideline only once its subject or task comes up, which is where a headless agent edits code
 with nobody to correct it.
 
@@ -170,7 +170,7 @@ CI never gets `ci`'s line.
   user before a push, but its description was in every session, a project with no CI too, and
   it leans on `debugging`, which a project may have turned off.
 - No Guidelines in a headless session, as no Proposals are shown there, or only session start's
-  index there — it saves about 2,000 characters a session, and leaves an agent that edits code
+  index there — it saves about 2,500 characters a session, and leaves an agent that edits code
   unattended without the rules it needs most.
 - Printing each Guideline turned on whole — simpler, but every session pays for the rules of
   tasks it never gets to.
@@ -217,8 +217,8 @@ CI never gets `ci`'s line.
   and `dependencies` come after the command that signals them, before what follows it.
 - A refactor of files already there gets `principles` and `design` only where Claude reads them.
 - Every Bash command runs the Hook's Python once more after it.
-- Every Read runs the Hook's `sh` once more, and a Guideline a Hook gives adds 2,000 to 6,000
-  characters to a session once its subject or task comes up.
+- Every Read runs the Hook's `sh` once more, and a Guideline a Hook gives adds 1,700 to 7,000
+  characters to a session once its subject or task comes up, at most 10,000 at once.
 - Whether `tailwind` is read is Claude's call; a rule that must always hold goes among
   the ones `principles` prints whole.
 - Revisit when Claude Code lets a project hide a plugin's skills, when a measurement finds a
