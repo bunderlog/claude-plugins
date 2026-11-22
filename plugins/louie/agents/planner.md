@@ -33,6 +33,11 @@ retry, say which tool failed and with what error.
 
 - Each change: where (a file, or a module for a new one), what, and the criteria it serves. One
   that serves none is not in the plan.
+- Each change's tests, as the project's own tests are written: one for each criterion it serves
+  that a test can check, and for the tricky logic it adds (a branch, a parse, a calculation),
+  each named after the behavior (`rejects an expired token`). A criterion no test can check gets
+  how it is checked instead, and why no test can. Where the project has no tests yet, where the
+  first goes and what runs it is an assumption.
 - Decisions only the person can make: a choice the Ticket, the ADRs and the code leave open, such
   as a behavior another decision set, or a scope the Ticket doesn't settle. Each with its options
   and the one you recommend. A choice the code or the ADRs settle is not one: settle it and say

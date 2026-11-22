@@ -40,8 +40,13 @@ const SCHEMA = {
           where: { type: 'string', description: 'the file, or the module for a new one' },
           what: { type: 'string', description: 'what changes there, one or two sentences' },
           serves: { type: 'array', items: { type: 'string' }, description: 'the criteria it serves, each quoted in a line' },
+          tests: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'the tests that check it, `<file>: <the behavior it names>` each; for a criterion no test can check, `by hand: <how>, as <why no test can>`; empty only for a change no test checks, such as a doc',
+          },
         },
-        required: ['where', 'what', 'serves'],
+        required: ['where', 'what', 'serves', 'tests'],
       },
     },
     decisions: {
@@ -103,7 +108,10 @@ if (plan.decisions.length) {
 }
 if (plan.changes.length) {
   lines.push('', 'Changes:')
-  plan.changes.forEach((c) => lines.push(`- ${c.where}: ${c.what} (serves: ${c.serves.join('; ') || 'none'})`))
+  plan.changes.forEach((c) => {
+    lines.push(`- ${c.where}: ${c.what} (serves: ${c.serves.join('; ') || 'none'})`)
+    if (c.tests.length) lines.push(`  tests: ${c.tests.join('; ')}`)
+  })
 }
 lines.push('', 'Acceptance criteria:')
 if (!plan.criteria.length) lines.push('- none')

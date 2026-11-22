@@ -40,8 +40,13 @@ started and the worktree no change; otherwise leave both and say why.
 
 Build the plan you are given, or fix the findings you are given (a Verification's departures and
 criteria not met, and the review's bugs), in commits in the project's commit format (its
-`CLAUDE.md` names it), each one change. Write a test for each acceptance criterion a test can
-check. Run the checks the project's `CLAUDE.md` or README names (`mise run check`, `make verify`)
+`CLAUDE.md` names it), each one change. Build test-first, as louie's `testing` Guideline says,
+read before your first edit: `guidelines/testing.md` in louie's folder, the `installPath` of
+`louie@bunderlog` in `plugins/installed_plugins.json` under `$CLAUDE_CONFIG_DIR` or `~/.claude`
+whose `projectPath` is the repo's root, else its user-scope one, as a Workflow's agent starts with
+no Guidelines index (ADR verify). Write each test the plan names, run it and see it fail, then
+the code that passes it. In a rework, write the test for each criterion met with no test, or
+leave one no test can check. Run the checks the project's `CLAUDE.md` or README names (`mise run check`, `make verify`)
 until they pass on the last commit; when they can't pass, stop and return their output. A Ticket
 kept in `.about/tickets/` is deleted by the change that delivers it (ADR tickets). Don't skip a Git hook, and don't add a mark that lets a Secret through.
 

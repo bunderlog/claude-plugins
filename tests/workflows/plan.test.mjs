@@ -4,7 +4,7 @@ import { run } from './harness.mjs'
 
 const plan = {
   ticket: 'x.md: X', criteria: ['c1'], build: 'changes-needed', evidence: '', confidence: 'high',
-  confidence_reason: 'found', changes: [{ where: 'a.py', what: 'do', serves: ['c1'] }], decisions: [],
+  confidence_reason: 'found', changes: [{ where: 'a.py', what: 'do', serves: ['c1'], tests: [] }], decisions: [],
   assumptions: [], tool_failed: false, tool_error: '',
 }
 
@@ -30,4 +30,10 @@ test('plan works in the worktree it is given', async () => {
   const { calls } = await run('plan', { ticket: 'x.md', dir: '/w' }, { agent: () => plan })
   assert.match(calls[0].prompt, /in the worktree \/w/)
   assert.equal(calls[0].agentType, 'louie:planner')
+})
+
+test('plan lists each change\'s tests', async () => {
+  const tests = ['tests/test_a.py: rejects an expired token', 'by hand: the command is offered, as no test runs Claude Code']
+  const { result } = await run('plan', 'x.md', { agent: () => ({ ...plan, changes: [{ ...plan.changes[0], tests }] }) })
+  assert.match(result.report, /- a\.py: do \(serves: c1\)\n  tests: tests\/test_a\.py: rejects an expired token; by hand: the command is offered/)
 })
