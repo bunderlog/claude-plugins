@@ -2,6 +2,15 @@
 
 The marketplace's Releases, newest first.
 
+## 0.74.0 — 2026-11-22
+
+### louie
+
+#### Features
+
+- louie: have /louie:plan name each change's tests, and the implementer build test-first (f2215c3)
+- louie: have /louie:implement rework for a criterion met with no test, before a draft (194f74c)
+
 ## 0.73.1 — 2026-11-22
 
 ### baloo
