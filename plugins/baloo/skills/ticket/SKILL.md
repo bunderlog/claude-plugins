@@ -36,7 +36,9 @@ conventions win.
   - **Evidence**: the steps to reproduce, the log line or error, the file and line, the version.
     Mask anything that may be a secret.
   - **Acceptance criteria**: each one a test can pass or fail: the situation, the action, the
-    expected outcome. A PRD's criterion it serves is linked, not copied.
+    expected outcome. A PRD's criterion it serves is linked, not copied. Leave out what every
+    change must meet, such as the project's checks passing: the verifier only reads, so it can't
+    mark one met, and `/louie:merge` then stops.
 - **Comments**: the cause as far as it is known, and the options for a fix with their
   trade-offs, each its own comment, so a wrong guess is answered, not edited away.
 
