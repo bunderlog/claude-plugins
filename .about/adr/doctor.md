@@ -1,6 +1,6 @@
 # The plugin's `doctor` shows its state, run by the `doctor` skill, and changes nothing
 
-Date: 2026-11-16
+Date: 2026-11-22
 
 Session start says what it changed and what went wrong, but not what is on: which Checks run and
 why, which Git hook runs which version, which version runs. A Git hook running a link to an older
@@ -10,9 +10,11 @@ and version running and the link the Status line runs (ADR status-line), the Con
 whether a Session review runs and how many Proposals wait or disagree with their files (ADR
 session-review), each Check on or off and whether by its key or by default, and the last one that
 failed in the running version (ADR checks), and the Guidelines on and off, and each item of PRD
-project-setup's list the repo lacks, which `/bagheera:setup` adds, and each plugin the repo turns
-on that Claude Code has no install of for it, or an install of from an older Release, since the
-project then doesn't get what it turned on (PRD setup); a setting an earlier Release had and this
+project-setup's list the repo lacks, which `/bagheera:setup` adds, each plugin the repo turns on
+that Claude Code has no install of for it, or an install of from an older Release, since the
+project then doesn't get what it turned on, and Git hooks the repo tracks that its clone hasn't
+turned on, which `/bagheera:setup` turns on, a sentence each as the projects needing attention word
+it (PRD setup); a setting an earlier Release had and this
 one removed is one of its problems, for the user to delete, which session start leaves out (ADR
 measurement). Last, in any folder, it lists the machine's projects that need attention, each thing
 with its folder and what to do, the sessions waiting for their person and since when, and how many

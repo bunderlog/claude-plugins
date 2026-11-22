@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest import mock
 
-from bagheera import doctor, failure, names, review, version
+from bagheera import doctor, failure, names, review, setup, version
 from tests import testkit
 from tests.bagheera import commands, test_cli, test_review
 from tests.bagheera.commands import PLUGIN, in_repo, run, set_up, start, write
@@ -150,10 +150,10 @@ class Doctor(unittest.TestCase):
         def entry(v, project=dir, scope="project"):
             return {"scope": scope, "version": v, "projectPath": project}
 
-        missing = (f"- {dir} turns {names.BUILD_ID} on, but Claude Code has no install of it for "
-                   "this project, so nothing of it loads here: /bagheera:setup installs it\n")
-        stale = (f"- {names.BUILD_ID} 0.0.1 is installed for this project, older than the "
-                 f"{version.read()} this machine has: /bagheera:setup updates it\n")
+        missing = (f"- {names.BUILD_ID} is turned on with no install of it for this project: "
+                   "/bagheera:setup fixes it\n")
+        stale = (f"- {names.BUILD_ID} 0.0.1 is installed, older than the {version.read()} this "
+                 "machine has: /bagheera:setup fixes it\n")
         for louie, wanted in [
             ([], missing),
             ([entry("0.0.1", project="/elsewhere")], missing),
@@ -183,6 +183,44 @@ class Doctor(unittest.TestCase):
         out = doctor_run(self)[1]
         self.assertNotIn(missing, out)
         self.assertNotIn(names.BUILD_ID + " 0.0.1", out)
+
+    # Git hooks the repo tracks that its clone hasn't turned on are a problem, with /bagheera:setup
+    # as the fix; with core.hooksPath set to their folder, they aren't (PRD setup).
+    def test_hooks_off(self):
+        dir = in_repo(self)
+        set_up(dir)
+        self.assertEqual(start(self)[0], 0)
+        testkit.git(dir, "add", ".githooks")
+        off = "- its Git hooks are off in this clone: /bagheera:setup fixes it"
+        code, out = doctor_run(self)
+        self.assertEqual((code, problem_lines(out)), (1, [off]), out)
+        testkit.git(dir, "config", "core.hooksPath", ".githooks")
+        code, out = doctor_run(self)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn(off, out)
+
+    # doctor names each of setup.needs a problem, with /bagheera:setup, and nothing else of what
+    # setup fixes; a repo that isn't set up gets one line for its items (PRD setup).
+    def test_setup_needs(self):
+        dir = in_repo(self)
+        self.assertEqual(start(self)[0], 0)
+        out = doctor_run(self)[1]
+        self.assertEqual([line for line in problem_lines(out) if "/bagheera:setup" in line],
+                         [f"- {dir} isn't set up for bunderlog's plugins: /bagheera:setup sets it "
+                          "up"])
+        set_up(dir)
+        testkit.git(dir, "add", ".githooks")
+        with open(os.path.join(dir, names.PROJECT_SETTINGS), encoding="utf-8") as f:
+            fields = json.load(f)
+        del fields["attribution"]
+        write(os.path.join(dir, names.PROJECT_SETTINGS), json.dumps(fields))
+        commands.installed(dir, **{names.BUILD_ID: []})
+        needs = setup.needs(dir)
+        self.assertEqual(len(needs), 3, needs)
+        code, out = doctor_run(self)
+        self.assertEqual(code, 1, out)
+        self.assertEqual([line for line in problem_lines(out) if "/bagheera:setup" in line],
+                         [f"- {need}: /bagheera:setup fixes it" for need in needs])
 
     # With no record of what is installed, doctor says nothing of any plugin's version: the file is
     # Claude Code's and undocumented, so an unreadable one is no evidence of anything (ADR doctor).

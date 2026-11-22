@@ -1,11 +1,12 @@
 """doctor: the plugin's state in the repo it runs in, its problems first, each with what fixes it
-(ADR doctor): the plugin running and the link its Status line runs, the Session review's
-Proposals, and the Checks, with the last one that failed; what an earlier baloo left in the
-clone, for the person to remove; and what the repo lacks of being set up, which /bagheera:setup
-adds, and the plugins it turns on without having them installed, or installed from an older
-Release (PRD setup); the deny rules the person's own settings lack (PRD deny); and the machine's
-projects that need attention and the sessions waiting, which aren't its problems (PRD
-visibility). It changes nothing but what the plugin's data folder keeps of them."""
+(ADR doctor): the plugin running and the link its Status line runs, the Session review's Proposals,
+and the Checks, with the last one that failed; what an earlier baloo left in the clone, for the
+person to remove; and what /bagheera:setup would fix in the repo, the items it lacks of being set
+up, the plugins it turns on without having them installed, or installed from an older Release, and
+the Git hooks it tracks that the clone hasn't turned on (PRD setup); the deny rules the person's
+own settings lack (PRD deny); and the machine's projects that need attention and the sessions
+waiting, which aren't its problems (PRD visibility). It changes nothing but what the plugin's data
+folder keeps of them."""
 
 from __future__ import annotations
 
@@ -85,20 +86,8 @@ def run(stdout: TextIO, stderr: TextIO) -> int:
         if not setup.started(root):
             problems.append(f"{root} isn't set up for bunderlog's plugins: {names.SETUP_SKILL} "
                             "sets it up")
-        else:
-            for problem in setup.problems(root):
-                problems.append(f"{problem}: {names.SETUP_SKILL} fixes it")
-        for plugin, there in turned_on:
-            if not there:
-                problems.append(
-                    f"{root} turns {plugin} on, but Claude Code has no install of it for this "
-                    f"project, so nothing of it loads here: {names.SETUP_SKILL} installs it"
-                )
-        for plugin, there, release in setup.old_installs(root):
-            problems.append(
-                f"{plugin} {there} is installed for this project, older than the {release} "
-                f"this machine has: {names.SETUP_SKILL} updates it"
-            )
+        for need in setup.needs(root):
+            problems.append(f"{need}: {names.SETUP_SKILL} fixes it")
 
     if root:
         waiting = mismatches = 0

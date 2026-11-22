@@ -77,14 +77,8 @@ class Setup(unittest.TestCase):
     def settings(self):
         return json.loads(read(self.path(names.PROJECT_SETTINGS)))
 
-    def doctor_missing(self):
-        """The lines doctor names missing items with."""
-        start(self)
-        out = run("doctor")[1]
-        return [line for line in out.splitlines() if "/bagheera:setup" in line]
-
     # In a new repo with only a README, setup with hathi added leaves every item of PRD
-    # project-setup's list but the ADR, and doctor, the ADR written, names none missing.
+    # project-setup's list but the ADR, and setup.needs, the ADR written, names none missing.
     def test_new_repo(self):
         write(self.path("README.md"), "# App\n")
         out = self.setup("--hathi")
@@ -114,11 +108,10 @@ class Setup(unittest.TestCase):
         self.assertIn("ran:\n  git config core.hooksPath .githooks\n", out)
         self.assertNotIn("core.hooksPath", out.split("left:")[1])
         self.assertEqual(testkit.git(self.dir, "config", "core.hooksPath").strip(), ".githooks")
-        self.assertEqual(self.doctor_missing(), [
-            "- the ADR .about/adr/repo-setup.md on how this repo is set up is missing: "
-            "/bagheera:setup fixes it"])
+        self.assertEqual(setup.needs(self.dir), [
+            "the ADR .about/adr/repo-setup.md on how this repo is set up is missing"])
         write(self.path(".about/adr/repo-setup.md"), "# This repo runs hathi\n")
-        self.assertEqual(self.doctor_missing(), [])
+        self.assertEqual(setup.needs(self.dir), [])
 
     # With a mise.toml, hathi is pinned there to the installed version, and a second run keeps it.
     def test_mise_pin(self):
@@ -151,16 +144,15 @@ class Setup(unittest.TestCase):
         self.assertEqual(setup.missing(self.dir), [
             f"the ADR {setup.ADR} on how this repo is set up"])
 
-    # A pre-push that runs the project's own check and then hathi stays as it is, and doctor
+    # A pre-push that runs the project's own check and then hathi stays as it is, and setup.needs
     # names only the ADR missing.
     def test_keeps_hathi_last(self):
         hook = '#!/bin/sh\nmise run check </dev/null || exit 1\nexec hathi check pre-push "$@"\n'
         write(self.path(".githooks/pre-push"), hook, 0o755)
         self.setup("--hathi")
         self.assertEqual(read(self.path(".githooks/pre-push")), hook)
-        self.assertEqual(self.doctor_missing(), [
-            "- the ADR .about/adr/repo-setup.md on how this repo is set up is missing: "
-            "/bagheera:setup fixes it"])
+        self.assertEqual(setup.needs(self.dir), [
+            "the ADR .about/adr/repo-setup.md on how this repo is set up is missing"])
 
     # The project's own settings stay as they were.
     def test_keeps_settings(self):
@@ -447,34 +439,15 @@ class Setup(unittest.TestCase):
                     f"the ADR {setup.ADR} on how this repo is set up"])
                 self.assertIn("ran:\n  git config core.hooksPath .githooks\n", out)
 
-    # Without hathi, setup writes no Git hook, and doctor names the Secrets check missing.
+    # Without hathi, setup writes no Git hook, and setup.needs names the Secrets check missing.
     def test_no_hathi(self):
         self.setup("--no-hathi")
         self.assertFalse(os.path.exists(self.path(".githooks")))
         self.assertFalse(os.path.exists(self.path(".hathi.yml")))
         self.assertNotIn("@", read(self.path("CLAUDE.md")) if os.path.exists(self.path("CLAUDE.md"))
                          else "")
-        missing = self.doctor_missing()
+        missing = setup.needs(self.dir)
         self.assertTrue(any("checks for Secrets" in line for line in missing), missing)
-
-    # doctor in a set-up repo names each missing item, and only those; a repo where baloo isn't
-    # on gets one line.
-    def test_doctor(self):
-        self.assertEqual(self.doctor_missing(), [
-            f"- {self.dir} isn't set up for bunderlog's plugins: /bagheera:setup sets it up"])
-        self.setup("--hathi")
-        write(self.path(".about/adr/repo-setup.md"), "# x\n")
-        s = self.settings()
-        del s["attribution"]
-        s["outputStyle"] = "Explanatory"
-        write(self.path(names.PROJECT_SETTINGS), json.dumps(s))
-        write(self.path(".gitignore"), "/.about/proposals/\n")
-        self.assertEqual(self.doctor_missing(), [
-            "- attribution off in .claude/settings.json is missing: /bagheera:setup fixes it",
-            "- statusLine or outputStyle in .claude/settings.json, where each person sets their "
-            "own: /bagheera:setup fixes it",
-            "- /.claude/worktrees/ in .gitignore is missing: /bagheera:setup fixes it",
-        ])
 
     # setup.needs names, a sentence each, the items a set-up repo lacks, a plugin turned on with
     # no install or with one older than the Release, and Git hooks the repo tracks that its clone
@@ -533,7 +506,7 @@ class Setup(unittest.TestCase):
         write(self.path(".githooks/pre-commit"), "#!/bin/sh\ngitleaks protect --staged\n", 0o755)
         write(self.path(".about/adr/repo-setup.md"), "# x\n")
         self.setup("--no-hathi")
-        self.assertEqual(self.doctor_missing(), [])
+        self.assertEqual(setup.needs(self.dir), [])
         self.assertNotIn(told, start(self)[1])
 
 
