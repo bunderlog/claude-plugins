@@ -131,7 +131,7 @@ def turned_on(root: str) -> List[Tuple[str, str]]:
     return [(p, version.installed(root, p)) for p in PLUGINS if on.get(p) is True]
 
 
-def old_installs(root: str) -> List[Tuple[str, str, str]]:
+def _old_installs(root: str) -> List[Tuple[str, str, str]]:
     """For each plugin the repo at `root` turns on whose recorded install is older than the
     bagheera installed, its name, that install's version and the bagheera's (PRD setup): the
     bagheera installed stands for the Release the machine has, the three plugins carrying one
@@ -141,7 +141,7 @@ def old_installs(root: str) -> List[Tuple[str, str, str]]:
     return [(p, v, release) for p, v in turned_on(root) if version.older(v, release)]
 
 
-def hooks_off(root: str) -> str:
+def _hooks_off(root: str) -> str:
     """The command that turns on the Git hooks git tracks in the repo at `root`, in a layout setup
     knows, where this clone hasn't turned them on; "" otherwise (PRD visibility)."""
     for where in (GITHOOKS, HUSKY):
@@ -158,8 +158,8 @@ def missing(root: str) -> List[str]:
     return [i.name for i in _items(root) if not i.present]
 
 
-def problems(root: str) -> List[str]:
-    """What doctor says of each item of the list the repo at `root` lacks."""
+def _problems(root: str) -> List[str]:
+    """What `needs` says of each item of the list the repo at `root` lacks."""
     return [i.lack or f"{i.name} is missing" for i in _items(root) if not i.present]
 
 
@@ -169,13 +169,13 @@ def needs(root: str) -> List[str]:
     of the list it lacks, only once it is set up, since its owner may have chosen not to; each
     plugin it turns on with no install, or an install older than the Release; and its Git hooks,
     where its clone hasn't turned them on."""
-    out = problems(root) if started(root) else []
+    out = _problems(root) if started(root) else []
     for plugin, there in turned_on(root):
         if not there:
             out.append(f"{plugin} is turned on with no install of it for this project")
-    for plugin, there, release in old_installs(root):
+    for plugin, there, release in _old_installs(root):
         out.append(f"{plugin} {there} is installed, older than the {release} this machine has")
-    if hooks_off(root):
+    if _hooks_off(root):
         out.append("its Git hooks are off in this clone")
     return out
 
