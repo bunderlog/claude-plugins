@@ -93,3 +93,24 @@ repo on the machine over 30 days: `adr edit` accepted unedited 12 of 13, `glossa
 `inbox add` 39 of 46 (5 rejected); the user kept every Proposal asked, the samples being small.
 Settled by the Session review's log showing a kind accepted unedited often enough to trust, and
 the user's yes; or by keeping every Proposal asked.
+
+## louie's Workflows take no list of Tickets as an array
+
+2026-11-22 · session
+
+`implement` given `args` as a JSON array (`[".about/tickets/one-setup-needs-list.md"]`), the shape
+the Workflow tool's own description recommends for a list, ended `blocked:no-ticket` at once: the
+script reads a string split on whitespace or `{tickets}` / `{ticket}` only
+(`plugins/louie/workflows/implement.js:28`). The same string passed as text ran. Settled by the
+scripts taking an array too (`plan`, `merge` and `verify` to check for the same), with a test.
+
+## A Ticket's criterion that the checks pass blocks `/louie:merge`
+
+2026-11-22 · session
+
+Ticket one-setup-needs-list had the criterion "`mise run check` passes". The verifier only reads,
+so it marked it not checked, and `/louie:merge 18` ended `blocked:unverified` though CI and the
+local checks were green; #18 was merged by hand. `implement` turned the same verdict into a draft.
+The implement stage already runs the project's checks, and CI runs them again. Settled by the
+`ticket` skill keeping such a criterion out (the checks are every change's, not a Ticket's), or by
+the verifier taking a green CI run on the head as met; or by both.
