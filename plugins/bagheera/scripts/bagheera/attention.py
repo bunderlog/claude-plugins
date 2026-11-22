@@ -34,18 +34,19 @@ STALE = 120
 KEPT = 7 * 24 * 3600
 # How much of a Transcript's end is read for an entry after a mark.
 TAIL = 256 * 1024
-# What a project is told to do where it lacks an item of the list, has a plugin it turns on not
-# installed or older than the Release, or its Git hooks off: what a run of /bagheera:setup there
-# does, which is also how `lacking` knows those needs from the others.
+# The fix of each need setup.needs gives: a run of /bagheera:setup in the project.
 SETUP_FIX = names.SETUP_SKILL + " there"
 
 
 @dataclass
 class Need:
-    """One thing a project needs, and what to do about it."""
+    """One thing a project needs, what to do about it, and whether it is one setup.needs gives,
+    which a run of /bagheera:setup there fixes; False by default, so a file a check wrote before
+    the field was added still reads."""
 
     what: str
     fix: str
+    setup: bool = False
 
 
 @dataclass
@@ -293,18 +294,8 @@ def needs(root: str, data: str) -> List[Need]:
     if n:
         out.append(Need(f"{n} Proposal{'s' if n > 1 else ''} wait",
                         "open a session there, which asks about each"))
-    if setup.started(root):
-        for problem in setup.problems(root):
-            out.append(Need(problem, SETUP_FIX))
-    for plugin, there in setup.turned_on(root):
-        if not there:
-            out.append(Need(f"{plugin} is turned on with no install of it for this project",
-                            SETUP_FIX))
-    for plugin, there, release in setup.old_installs(root):
-        out.append(Need(f"{plugin} {there} is installed, older than the {release} this machine "
-                        "has", SETUP_FIX))
-    if setup.hooks_off(root):
-        out.append(Need("its Git hooks are off in this clone", SETUP_FIX))
+    for what in setup.needs(root):
+        out.append(Need(what, SETUP_FIX, True))
     n = inbox_left(_read(os.path.join(root, names.INBOX)))
     if n:
         out.append(Need(f"{n} Inbox item{'s' if n > 1 else ''} not gone through",
@@ -322,7 +313,7 @@ def lacking(found: Found, here: str) -> List[str]:
     baloo on nowhere is left out, since its owner may have chosen not to set it up at all."""
     mine = main_tree(here) if here else ""
     return [p.root for p in found.projects
-            if p.set_up and p.root != mine and any(n.fix == SETUP_FIX for n in p.needs)]
+            if p.set_up and p.root != mine and any(n.setup for n in p.needs)]
 
 
 def check(data: str, config: str, now: float) -> Found:

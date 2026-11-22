@@ -72,14 +72,17 @@ class Lacking(unittest.TestCase):
         testkit.git(off, "add", ".githooks")
         off_needs = attention.needs(off, data)
         self.assertEqual([len(old_needs), len(off_needs)], [1, 1], (old_needs, off_needs))
-        here, done, lacks, other, fresh = (testkit.repo(self) for _ in range(5))
-        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX)
+        here, done, lacks, other, fresh, like = (testkit.repo(self) for _ in range(6))
+        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX,
+                              True)
         found = attention.Found(NOW, [
             attention.Project(here, True, [item]),
             attention.Project(lacks, True, [item]),
             attention.Project(done, False, [item]),          # not set up: its owner's call
             attention.Project(other, True, [attention.Need("2 Proposals wait", "open a session")]),
             attention.Project(fresh, True, []),
+            # A need is setup's by its field, not by the words of its fix.
+            attention.Project(like, True, [attention.Need("x", attention.SETUP_FIX)]),
             attention.Project(old, True, old_needs),
             attention.Project(off, True, off_needs),
         ])
@@ -93,7 +96,8 @@ class Lacking(unittest.TestCase):
         here = testkit.repo(self)
         sub = os.path.join(here, "apps", "web")
         os.makedirs(sub)
-        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX)
+        item = attention.Need("attribution in .claude/settings.json is missing", attention.SETUP_FIX,
+                              True)
         found = attention.Found(NOW, [attention.Project(here, True, [item])])
         self.assertEqual(attention.lacking(found, sub), [])
 
@@ -116,7 +120,7 @@ class Needs(unittest.TestCase):
         write(settings, json.dumps(s))
         got = attention.needs(dir, data)
         self.assertEqual([n.what for n in got], ["attribution off in .claude/settings.json is missing"])
-        self.assertEqual(got[0].fix, names.SETUP_SKILL + " there")
+        self.assertEqual((got[0].fix, got[0].setup), (names.SETUP_SKILL + " there", True))
 
     # An install of louie older than the bagheera installed needs an update, and louie turned on
     # with no install of it needs one, until it is installed or updated; /bagheera:setup does both.
@@ -127,14 +131,14 @@ class Needs(unittest.TestCase):
             {"scope": "project", "version": "0.0.1", "projectPath": dir}]})
         got = attention.needs(dir, data)
         self.assertEqual(
-            [(n.what, n.fix) for n in got],
+            [(n.what, n.fix, n.setup) for n in got],
             [(f"{names.BUILD_ID} 0.0.1 is installed, older than the {version.read()} this machine "
-              "has", names.SETUP_SKILL + " there")])
+              "has", names.SETUP_SKILL + " there", True)])
         commands.installed(dir, **{names.BUILD_ID: []})
         self.assertEqual(
-            [(n.what, n.fix) for n in attention.needs(dir, data)],
+            [(n.what, n.fix, n.setup) for n in attention.needs(dir, data)],
             [(f"{names.BUILD_ID} is turned on with no install of it for this project",
-              names.SETUP_SKILL + " there")])
+              names.SETUP_SKILL + " there", True)])
         commands.installed(dir)
         self.assertEqual(attention.needs(dir, data), [])
 
@@ -144,8 +148,9 @@ class Needs(unittest.TestCase):
         dir, data = self.repo()
         write(os.path.join(dir, ".githooks", "pre-commit"), "#!/bin/sh\n")
         testkit.git(dir, "add", ".githooks")
-        self.assertEqual([n.fix for n in attention.needs(dir, data)],
-                         [names.SETUP_SKILL + " there"])
+        self.assertEqual([(n.what, n.fix, n.setup) for n in attention.needs(dir, data)],
+                         [("its Git hooks are off in this clone", names.SETUP_SKILL + " there",
+                           True)])
         testkit.git(dir, "config", "core.hooksPath", ".githooks")
         self.assertEqual(attention.needs(dir, data), [])
 
@@ -259,6 +264,22 @@ class Check(unittest.TestCase):
             self.assertEqual(commands.run("doctor")[2], "")
         self.assertTrue(found.projects[0].needs)
         self.assertEqual(state(), before)
+
+    # A need keeps whether it is setup's through the file, and a file written before needs had
+    # that field reads with none of them setup's.
+    def test_read_setup(self):
+        data = testkit.tempdir(self)
+        need = {"what": "attribution off in .claude/settings.json is missing",
+                "fix": attention.SETUP_FIX}
+        for fields, want in [({**need, "setup": True}, True), (need, False)]:
+            with self.subTest(fields=fields):
+                write(os.path.join(data, attention.FOUND), json.dumps(
+                    {"at": NOW, "projects": [{"root": "/p", "set_up": True, "needs": [fields]}],
+                     "waits": []}))
+                got = attention.read(data)
+                self.assertEqual(got.at, NOW)
+                self.assertEqual(got.projects[0].needs,
+                                 [attention.Need(need["what"], need["fix"], want)])
 
     def test_read_nothing(self):
         self.assertEqual(attention.read(testkit.tempdir(self)), attention.Found())
