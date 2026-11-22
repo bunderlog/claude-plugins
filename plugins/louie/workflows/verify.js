@@ -5,14 +5,14 @@ export const meta = {
   phases: [{ title: 'Verify' }],
 }
 
-// args: what the user named, as text (a commit range, a branch, a PR, a Ticket or a PRD), or
-// { target }; nothing for the current branch and the working tree.
+// args: what the user named, as text (a commit range, a branch, a PR, a Ticket or a PRD), an array
+// of it, or { target }; nothing for the current branch and the working tree.
 //
 // One verifier for each source of what was agreed (PRD implement), so each reads its source whole
 // rather than a quarter of four; the script, not a model, joins their findings and decides. The
 // agent's name repeats names.VERIFIER, as a script can't import it.
 
-const target = typeof args === 'string' ? args : (args && args.target) || ''
+const target = typeof args === 'string' ? args : Array.isArray(args) ? args.join(' ') : (args && args.target) || ''
 
 const SOURCES = [
   { key: 'adr', title: 'ADRs' },

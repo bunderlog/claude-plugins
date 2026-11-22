@@ -10,8 +10,8 @@ export const meta = {
   ],
 }
 
-// args: the pull requests, as text split on whitespace (a number, #number or URL each), or
-// { prs }.
+// args: the pull requests, as text split on whitespace (a number, #number or URL each), an
+// array of them, or { prs }.
 //
 // The script decides the order of the stages and every way out of them; the agents do the work
 // (PRD merge). The pull requests run strictly one after another, each from the default branch the
@@ -24,7 +24,8 @@ const MAX_PRS = 5
 const MAX_REWORK = 2
 // How long the ci stage waits for the code host's checks; its instructions take it from the prompt.
 const CI_MINUTES = 60
-const named = typeof args === 'string' ? args.split(/\s+/) : args && Array.isArray(args.prs) ? args.prs : []
+const named =
+  typeof args === 'string' ? args.split(/\s+/) : Array.isArray(args) ? args : args && Array.isArray(args.prs) ? args.prs : []
 const tokens = named.map((i) => String(i).trim()).filter(Boolean)
 
 // 42, #42 or …/pull/42; anything else is no pull request.

@@ -12,7 +12,7 @@ export const meta = {
 }
 
 // args: the Tickets, as text split on whitespace (a tracker's key or URL, or a file in
-// .about/tickets/), or { tickets } or { ticket }.
+// .about/tickets/), an array of them, or { tickets } or { ticket }.
 //
 // The script decides the order of the stages and every way out of them; the agents do the work
 // (PRD implement, PRD batch). Each Ticket is prepared in turn, as git locks a repo's worktrees, then
@@ -25,7 +25,7 @@ export const meta = {
 const MAX_TICKETS = 5
 const MAX_REWORK = 2
 const named =
-  typeof args === 'string' ? args.split(/\s+/) : (args && (args.tickets || (args.ticket ? [args.ticket] : []))) || []
+  typeof args === 'string' ? args.split(/\s+/) : Array.isArray(args) ? args : (args && (args.tickets || (args.ticket ? [args.ticket] : []))) || []
 const tickets = [...new Set(named.map((i) => String(i).trim()).filter(Boolean))]
 
 const PREPARE_SCHEMA = {

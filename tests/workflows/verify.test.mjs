@@ -22,6 +22,11 @@ test('verify fails on an ADR departure and an unmet criterion', async () => {
   assert.match(result.report, /not-met: c1 — a\.py:1 — no code/)
 })
 
+test('verify takes its target as an array of one', async () => {
+  const { calls } = await run('verify', ['main..HEAD'], { agent: () => empty })
+  assert.match(calls[0].prompt, /main\.\.HEAD/)
+})
+
 test('verify passes with nothing found, and names a verifier that returned nothing', async () => {
   const { result } = await run('verify', undefined, { agent: (_, o) => (o.label === 'glossary' ? null : empty) })
   assert.equal(result.verdict, 'pass')
