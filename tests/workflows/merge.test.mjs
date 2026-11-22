@@ -214,6 +214,8 @@ test('merge takes one to five pull requests, each counted once by its number', a
     assert.equal(r.result.verdict, 'blocked:no-pr')
     assert.deepEqual(r.calls, [])
   }
+  const array = await run('merge', ['1', '#2'], stages())
+  assert.equal(array.result.results.length, 2)
   const odd = await run('merge', '1 main', stages())
   assert.deepEqual([odd.result.verdict, odd.calls], ['blocked:no-pr', []])
   assert.match(odd.result.reason, /main/)

@@ -22,6 +22,8 @@ test('plan ends by the plan\'s fields', async () => {
     assert.equal(result.verdict, want)
   }
   assert.equal((await run('plan', undefined)).result.verdict, 'blocked:no-ticket')
+  const { calls } = await run('plan', ['x.md'], { agent: () => plan })
+  assert.match(calls[0].prompt, /x\.md/)
 })
 
 test('plan works in the worktree it is given', async () => {

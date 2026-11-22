@@ -5,14 +5,14 @@ export const meta = {
   phases: [{ title: 'Plan' }],
 }
 
-// args: the Ticket, as text (a tracker's key or URL, or a file in .about/tickets/), or { ticket, dir },
-// dir the worktree to plan in when /louie:implement runs it.
+// args: the Ticket, as text (a tracker's key or URL, or a file in .about/tickets/), an array of it,
+// or { ticket, dir }, dir the worktree to plan in when /louie:implement runs it.
 //
 // The planner reads and plans; the script decides how the run ends, from the plan's fields, never
 // from its prose (PRD implement). The agent's name repeats louie's names.PLUGIN, as a script can't
 // import it.
 
-const ticket = typeof args === 'string' ? args : (args && args.ticket) || ''
+const ticket = typeof args === 'string' ? args : Array.isArray(args) ? args.join(' ') : (args && args.ticket) || ''
 const dir = (args && args.dir) || ''
 
 const SCHEMA = {

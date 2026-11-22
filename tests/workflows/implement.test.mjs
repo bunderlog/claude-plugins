@@ -230,6 +230,9 @@ test('implement takes at most five Tickets, and a Ticket named twice once', asyn
   const none = await run('implement', '  ', many())
   assert.equal(none.result.verdict, 'blocked:no-ticket')
   assert.deepEqual(none.calls, [])
+  // An array, the shape the Workflow tool's description suggests for a list, is the same list.
+  const array = await run('implement', ['a', 'b'], many())
+  assert.equal(array.result.results.length, 2)
   const s = many()
   const twice = await run('implement', 'a b c d e a', s)
   assert.equal(twice.result.results.length, 5)
