@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest import mock
 
-from bagheera import doctor, failure, names, review, setup, version
+from bagheera import doctor, failure, names, review, version
 from tests import testkit
 from tests.bagheera import commands, test_cli, test_review
 from tests.bagheera.commands import PLUGIN, in_repo, run, set_up, start, write
@@ -215,12 +215,14 @@ class Doctor(unittest.TestCase):
         del fields["attribution"]
         write(os.path.join(dir, names.PROJECT_SETTINGS), json.dumps(fields))
         commands.installed(dir, **{names.BUILD_ID: []})
-        needs = setup.needs(dir)
-        self.assertEqual(len(needs), 3, needs)
         code, out = doctor_run(self)
         self.assertEqual(code, 1, out)
-        self.assertEqual([line for line in problem_lines(out) if "/bagheera:setup" in line],
-                         [f"- {need}: /bagheera:setup fixes it" for need in needs])
+        self.assertEqual([line for line in problem_lines(out) if "/bagheera:setup" in line], [
+            "- attribution off in .claude/settings.json is missing: /bagheera:setup fixes it",
+            "- louie@bunderlog is turned on with no install of it for this project: "
+            "/bagheera:setup fixes it",
+            "- its Git hooks are off in this clone: /bagheera:setup fixes it",
+        ])
 
     # With no record of what is installed, doctor says nothing of any plugin's version: the file is
     # Claude Code's and undocumented, so an unreadable one is no evidence of anything (ADR doctor).
