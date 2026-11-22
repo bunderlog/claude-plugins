@@ -39,6 +39,11 @@ do that they would otherwise have done later or not at all.
   (ADR doctor). The session's version is the one its session start ran, even once a later
   session's start points the Status line's link at a newer copy (ADR binary). The Release gives
   every plugin one version, so bagheera's stands for all three.
+- `⤓` and the version released, without its patch (`⤓ 0.72`), yellow, after `⇡`, while Claude
+  Code's clone of the marketplace holds a newer bagheera than it records as installed for the
+  project, which an update, `/bagheera:setup`'s among them, installs. The clone is as fresh as
+  Claude Code last refreshed it; the line reads its files and asks GitHub for nothing. Where the
+  clone or a file on the way isn't there or has another shape, `⤓` doesn't show.
 - The 5-hour and 7-day Usage figures show the latest any session of the person's got from Claude
   Code, kept in the plugin's data folder: of what Claude Code gives the session and what is kept,
   the highest percentage whose reset is still ahead, since use only grows until the limit resets;
@@ -46,7 +51,7 @@ do that they would otherwise have done later or not at all.
 - The line runs `git` for `±` and `↑` each time it draws, and waits for it at most 150 ms; past
   that, it shows the counts it last got in that folder, or none.
 - Where the line doesn't fit, PRD visibility's order holds (the details, then the model); `±N`,
-  `↑N` and `⇡` stay. Past that, the folder's name is cut short with `…`, then the figures go.
+  `↑N`, `⇡` and `⤓` stay. Past that, the folder's name is cut short with `…`, then the figures go.
 - ADR status-line and the glossary's Status line are rewritten with the change that builds this,
   with PRD visibility's.
 
@@ -75,6 +80,10 @@ do that they would otherwise have done later or not at all.
   another session has started on 0.52.0; a session that started on 0.52.0 doesn't.
   → test: tests/bagheera/test_statusline.py "Restart.test_restart"
   → test: tests/bagheera/test_statusline.py "Restart.test_recorded"
+- With 0.71.0 installed for the project, the line shows `⤓ 0.72` once Claude Code's clone of the
+  marketplace holds 0.72.1, yellow, after `⇡`; with 0.71.0 there, no clone, or bagheera listed
+  with a source outside the clone, no `⤓`.
+  → test: tests/bagheera/test_statusline.py "Update.test_update"
 - With `git` made to take 1 s, the line draws within 300 ms, with the counts from the draw before,
   or with none on the first.
   → test: tests/bagheera/test_cli.py "Line.test_slow_git"

@@ -1,13 +1,15 @@
 # The Status line is the plugin's, set by each person in their own settings
 
-Date: 2026-11-11
+Date: 2026-11-22
 
 The plugin ships a Status line: the project's folder and the branch on the left, with `±5` for the
 entries `git status` lists and `↑2` for the commits not pushed (PRD status-line); the context,
 5-hour and 7-day Usage figures and the Cache figure centered; and on the right how many sessions
 wait for their person and how many of the machine's projects need attention (PRD visibility), and `⇡
 0.54` where a newer version is installed than the session started on, for the project or, outside a
-repo, for the user, which only a restart runs, then the model with its effort. Each figure is an
+repo, for the user, which only a restart runs, and `⤓ 0.72` where Claude Code's clone of the
+marketplace holds a newer version than is installed, which an update installs, then the model
+with its effort. Each figure is an
 icon and a number in place of a label and a bar: `▤ 12% 120K` the context with its tokens, `◷ 42%
 02:42` the 5-hour limit with when it resets, `◷ 61% Sat` the 7-day one with the weekday it resets
 on, `↻ 40m` the cache; `⧗ 3` the sessions waiting and `⚑ 2` the projects, each only when it isn't 0.
@@ -18,12 +20,12 @@ The groups of the middle and of the right are a grey `·` apart, as Claude Code'
 a group's parts a space. The whole line is grey while all is well, `±` and `↑` too, as work in
 progress is, but for the folder, light cyan, and the branch, light blue as Claude Code draws inline
 code, so the eye finds which project and branch a terminal shows; a figure's icon and number turn yellow and red together at its thresholds, the details
-after it stay grey, and `⧗`, `⚑` and `⇡` are yellow, since each shown is something to do. The folder
+after it stay grey, and `⧗`, `⚑`, `⇡` and `⤓` are yellow, since each shown is something to do. The folder
 is the last part of the path Claude Code runs in (`workspace.project_dir`, else `current_dir`), not
 of the folder a command moved to, so a terminal shows which project, or which worktree of one, a
 session works in. The plugin draws it, `run.py status-line`, from what Claude Code gives a status
 line command on stdin; a line too narrow drops the details, then the model, then cuts the folder's
-name short, then drops the figures, and keeps `±`, `↑`, `⧗`, `⚑` and `⇡`. Each Usage figure turns
+name short, then drops the figures, and keeps `±`, `↑`, `⧗`, `⚑`, `⇡` and `⤓`. Each Usage figure turns
 yellow and red at percentages, by default the context at 15 and 20, the 5-hour at 70 and 85, the
 7-day at 80 and 95.
 
@@ -42,6 +44,15 @@ against what the clone last fetched. The line waits for `git` at most 150 ms, an
 the counts it last got in that folder, kept in the plugin's data folder. The version a session
 started on is kept there too, by session, at its session start: the line runs through the link the
 latest session start points at its own version, so it can't tell the session's from its own.
+
+The version released is the one in Claude Code's own clone of the marketplace, found through its
+`plugins/known_marketplaces.json` and the clone's `marketplace.json`: Claude Code refreshes the
+clone from GitHub, the line only reads its files, so it costs no network call and no time, and is
+as fresh as Claude Code's last refresh. That file is Claude Code's and undocumented, as
+`installed_plugins.json` is, so a shape the line can't read shows no `⤓`. ADR doctor's reasons
+against asking GitHub were the call and an update the person hadn't installed; the clone has no
+call, and since `/bagheera:setup` installs updates (PRD setup) an update not yet installed has a
+command that fixes it.
 
 The counts on the right come from what the last check of the machine's projects found, kept in the
 plugin's data folder; the line never runs that check itself, which reads every repo of the last 30
