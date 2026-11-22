@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.72.1 — 2026-11-22
+
+### bagheera
+
+#### Fixes
+
+- bagheera: have doctor name Git hooks off in the clone, in the words the attention list uses (19b7395)
+
 ## 0.72.0 — 2026-11-22
 
 ### bagheera
