@@ -51,8 +51,12 @@ person has, has it installed or updated by that same run, with no `/plugin` type
   - Where the project has no `.hathi.yml`, the skill asks once whether to add `hathi` (yes
     recommended). On yes, where `hathi` isn't on the `PATH` or is older than 1.2.0, it installs
     the latest with `mise use --global "github:bunderlog/hathi@latest"`, mise being how `hathi`'s
-    README installs it; with no `mise` on the `PATH`, or where that fails, it stops, says to
-    install `hathi` with mise, and writes nothing. The pin in `mise.toml` is the installed
+    README installs it; with no `mise` on the `PATH` it stops, names mise's installer, `curl
+    https://mise.run | sh`, and writes nothing; where mise fails, it stops, says to install
+    `hathi` with mise, and writes nothing; where mise ran but its `hathi` still isn't on the
+    `PATH`, it stops naming how to put mise's shims on every shell's `PATH`, the non-login ones
+    Git hooks run in too, and how to check it. The skill offers the person each command a stop
+    names, to run themselves, and runs setup again once they have. The pin in `mise.toml` is the installed
     version, 1.2.0 or later, and a second run leaves it. On no, it writes no Git hook, and the
     item stays missing for `doctor`
     unless the project already checks Secrets in a hook of its own.
@@ -170,7 +174,8 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 - With `hathi` added and none on the `PATH`, it runs `mise use --global
   "github:bunderlog/hathi@latest"`, checked with a stand-in `mise` that puts a `hathi` on the
   `PATH`, and pins that `hathi`'s version in `mise.toml`; with neither on the `PATH`, it stops
-  naming mise, and writes nothing.
+  naming mise's installer, and writes nothing; with a `mise` that puts no `hathi` there, it stops
+  naming `bash -c 'command -v hathi'`, and writes nothing.
   → test: tests/bagheera/test_setup.py "Setup.test_installs_hathi"
   → test: tests/bagheera/test_setup.py "Setup.test_stops"
 - In a repo with husky's setup in `package.json`, it stops naming that setup, and writes nothing.
