@@ -200,6 +200,7 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 - In a set-up repo that tracks `.githooks/` while its clone's `core.hooksPath` is unset, `doctor`
   names the Git hooks off a problem, with `/bagheera:setup`, and exits non-zero; with
   `core.hooksPath` set to `.githooks`, it doesn't.
+  → test: tests/bagheera/test_doctor.py "Doctor.test_hooks_off"
 - In a repo that turns `louie@bunderlog` on with no install of it, and `baloo@bunderlog` on with
   an install of 0.34.0 at project scope while the bagheera installed is 0.61.1, the script runs
   `claude plugin install louie@bunderlog --scope project` and `claude plugin update
