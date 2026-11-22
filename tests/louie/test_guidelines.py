@@ -46,11 +46,6 @@ class Fitting(unittest.TestCase):
                 always + ["dependencies", "typescript", "vue"],
             ),
             (
-                "a package.json naming tailwindcss",
-                {"web/package.json": '{"devDependencies": {"tailwindcss": "^4"}}'},
-                always + ["dependencies", "tailwind"],
-            ),
-            (
                 "a package.json naming neither",
                 {"package.json": '{"name": "vue", "scripts": {"typescript": "tsc"}}'},
                 always + ["dependencies"],
@@ -134,7 +129,7 @@ class Index(unittest.TestCase):
                 text, why = guidelines.index(plugin, {"principles": True}, shell)
                 self.assertIsNone(why)
                 self.assertEqual("- one\nIn zsh:\n- quote globs\n" in text, want)
-        text, _ = guidelines.index(plugin, {"tailwind": True}, "zsh")
+        text, _ = guidelines.index(plugin, {"design": True}, "zsh")
         self.assertNotIn("zsh", text)
 
     def test_index(self):
@@ -145,10 +140,10 @@ class Index(unittest.TestCase):
         lines = (
             "Read a file when its task comes up:\n"
             f"- {when('principles')}: {os.path.join(plugin, 'guidelines', 'principles.md')}\n"
-            f"- {when('tailwind')}: {os.path.join(plugin, 'guidelines', 'tailwind.md')}"
+            f"- {when('design')}: {os.path.join(plugin, 'guidelines', 'design.md')}"
         )
         on = {
-            "principles": True, "go": True, "tailwind": True, "vue": True, "typescript": True,
+            "principles": True, "design": True, "go": True, "vue": True, "typescript": True,
             "testing": True, "python": True,
         }
         text, why = guidelines.index(plugin, on, "")

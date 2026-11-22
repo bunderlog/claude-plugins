@@ -72,11 +72,6 @@ ALL = [
         "Writing or testing a Vue component, a composable or a Pinia store, or starting a Vue app",
         lambda m: "vue" in m.packages,
     ),
-    Guideline(
-        "tailwind",
-        "Styling with Tailwind CSS: classes, theme tokens, dark mode",
-        lambda m: "tailwindcss" in m.packages,
-    ),
 ]
 
 

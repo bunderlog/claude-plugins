@@ -61,7 +61,7 @@ first deploy.
 same origin as the API: where `APP_DIR` names the app's build, the server serves it beside `/api/`,
 every path that isn't a file getting `index.html`, so one image and one port serve both. Vue because
 it is the stack its operator already runs, and one app is enough until a product needs a second. The
-app follows louie's `vue`, `typescript` and `tailwind` Guidelines: `src/app/` holds the entry,
+app follows louie's `vue` and `typescript` Guidelines: `src/app/` holds the entry,
 `App.vue` and the router, and `src/views/` the pages no feature owns, each loaded when its named
 route is first visited; a feature gets its folder in `src/features/` when the first one comes, and
 code any part of the app uses goes in `src/shared/` when the first such code comes. Its test sits

@@ -64,19 +64,12 @@ class SessionStart(unittest.TestCase):
         dir = in_repo(self)
         os.environ["BALOO_SESSION_REVIEW"] = "1"
         write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "settings.json"), ENABLE)
-        write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
         write(os.path.join(dir, ".claude/baloo.yml"), "output-style: short-replies\nstatus-line: true\n")
         code, out, _ = start(self)
         self.assertEqual(code, 0)
         self.assertTrue(out.startswith("Guidelines, "), out)
-        self.assertTrue(
-            out.endswith(
-                "- Styling with Tailwind CSS: classes, theme tokens, dark mode: "
-                + os.path.join(PLUGIN, "guidelines", "tailwind.md")
-                + "\n"
-            ),
-            out,
-        )
+        design = os.path.join(PLUGIN, "guidelines", "design.md")
+        self.assertTrue(out.endswith("tested from: " + design + "\n"), out)
         self.assertFalse(out.startswith("louie:"), out)
         for path in [names.LOCAL_SETTINGS, ".git/hooks/pre-commit"]:
             self.assertFalse(os.path.exists(os.path.join(dir, path)), path)
@@ -105,10 +98,9 @@ class SessionStart(unittest.TestCase):
     def test_guidelines(self):
         dir = in_repo(self)
         os.environ["SHELL"] = "/bin/bash"
-        write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
         write(os.path.join(dir, "src", "a.py"), "x = 1\n")
         write(
-            os.path.join(dir, ".claude/baloo.yml"), "guidelines:\n  tailwind: false\n  principles: false\n"
+            os.path.join(dir, ".claude/baloo.yml"), "guidelines:\n  design: false\n  principles: false\n"
         )
         code, out, err = start(self)
         self.assertEqual((code, err), (0, ""))
@@ -117,7 +109,6 @@ class SessionStart(unittest.TestCase):
         for want in [
             "On every task:\nFor a trivial change",
             "- Done is verifiable: say how someone else can check it without asking you.\n",
-            "dark mode: " + os.path.join(folder, "tailwind.md") + "\n",
             "change): " + os.path.join(folder, "principles.md") + "\n",
             "tested from: " + os.path.join(folder, "design.md") + "\n",
         ]:

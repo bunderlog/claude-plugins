@@ -98,12 +98,11 @@ class SubagentStart(unittest.TestCase):
     def test_subagent_start(self):
         dir = in_repo(self)
         verifier = '{"agent_type": "louie:verifier"}'
-        write(os.path.join(dir, "package.json"), '{"devDependencies": {"tailwindcss": "^4"}}')
         write(os.path.join(dir, "go.mod"), "module x\n")
         write(os.path.join(dir, "src", "a.py"), "x = 1\n")
         for name, stdin, want in [
             ("the verifier", verifier,
-             "dark mode: " + os.path.join(PLUGIN, "guidelines", "tailwind.md")),
+             "- Writing Python: " + os.path.join(PLUGIN, "guidelines", "python.md")),
             ("another agent", '{"agent_type": "Explore"}', ""),
             ("not JSON", "nope", ""),
         ]:

@@ -396,9 +396,10 @@ class New(unittest.TestCase):
             "package.json.tmpl", "pnpm-workspace.yaml.tmpl",
         ])
 
-    # The template's app follows the vue, typescript and tailwind Guidelines where a search can
-    # tell: each component opens with a comment, then `<script setup lang="ts">` where it has a
-    # script, each is styled with theme tokens only, and each TypeScript file opens with a comment.
+    # The template's app follows the vue and typescript Guidelines and its ADR stack where a
+    # search can tell: each component opens with a comment, then `<script setup lang="ts">` where
+    # it has a script, each is styled with theme tokens only, and each TypeScript file opens with
+    # a comment.
     def test_template_app_follows_the_guidelines(self):
         app = os.path.join(TEMPLATE, "apps", "app")
         palette = re.compile(
