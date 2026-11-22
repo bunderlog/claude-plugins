@@ -4,8 +4,8 @@ Date: 2026-11-23
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
-`dependencies` for one with a package manager's manifest, `go`, `python`, `typescript`, `vue` and
-`tailwind` for their stacks. Each is on wherever louie is, with no switch of its own (PRD
+`dependencies` for one with a package manager's manifest, `go`, `python`, `typescript` and `vue`
+for their stacks. Each is on wherever louie is, with no switch of its own (PRD
 no-config). At session start the plugin prints, for each Guideline that fits the repo, one line:
 when to read it and its path.
 Claude reads the file itself when a task calls for it. `principles` also carries the few rules
@@ -14,10 +14,10 @@ tool's shell, `CLAUDE_CODE_SHELL` or `SHELL`, is zsh: a glob with no match or a 
 `=` fails the whole command there. Outside a repo session start names none. How Claude
 writes its replies is not a Guideline but an Output style (ADR output-styles).
 
-Only `tailwind`, which no file's type signals, waits for Claude to read it: a Guideline was read
-before an edit on its subject in 5 of 79 cases, and in one project in 0 of 29 (ADR measurement);
-in a week of 2026-10 it was 0 of 30 for `debugging` and the others tied to a task, while those a
-Hook gives came before the first edit of their subject in 15 of 22 cases, after it in the rest. A
+A Guideline left for Claude to read was read before an edit on its subject in 5 of 79 cases, and
+in one project in 0 of 29 (ADR measurement); in a week of 2026-10 it was 0 of 30 for `debugging`
+and the others tied to a task, while those a Hook gives came before the first edit of their
+subject in 15 of 22 cases, after it in the rest. A
 Hook gives Claude the whole file, as its added context within Claude Code's limit (below), the
 first time in a session that a signal of its subject or task comes:
 - `PostToolUse` on Read, Edit, Write and MultiEdit, for a file in the repo: `.ts`, `.tsx`, `.mts`,
@@ -95,7 +95,7 @@ always, `ci` only where the repo's root holds a CI's config (`.github/workflows/
 `.buildkite/`), `dependencies` only where the repo holds a package manager's manifest (`go.mod`,
 `package.json`, `Cargo.toml`, `pyproject.toml`), and a stack's only where the repo's files name
 that stack: `go.mod` for `go`, a `.py` file for `python`, a `package.json` depending on `typescript`
-for `typescript`, one depending on `vue` for `vue`, one depending on `tailwindcss` for `tailwind`.
+for `typescript`, one depending on `vue` for `vue`.
 `python` is told by a file, not a manifest, as a repo of scripts, this one too, has no
 `pyproject.toml`. The index leaves out `go`, `python`, `typescript` and `vue`, as it does every
 Guideline a Hook gives, but the verifier, whom no such Hook reaches, is named each one that fits.
@@ -141,6 +141,9 @@ CI never gets `ci`'s line.
 - `testing` on a Read of a test too (until 2026-10-19) — in context before the first edit of a
   test, but a test read to answer a question about a design gave it, and Claude Sonnet then
   coded instead of answering (see above).
+- `tailwind`, the one stack's Guideline left for Claude to read (until 2026-11-23) — an eval
+  found it read in every run, and each of its rules either kept without louie or not followed
+  with it read: `cn()`, `cva` and no `dark:` beside the theme's tokens (PRD stack-guidelines).
 - Only the index line for `go` too (until 2026-11-16) — Claude read it before the first edit of a
   `.go` file in 0 of 17 sessions from 2026-10-17 to 2026-11-16 (PRD assessment).
 - Only the index line for `typescript`, `vue` and `testing` too (until 2026-10-07) — Claude read
@@ -220,8 +223,6 @@ CI never gets `ci`'s line.
 - Every Bash command runs the Hook's Python once more after it.
 - Every Read runs the Hook's `sh` once more, and a Guideline a Hook gives adds 1,700 to 7,000
   characters to a session once its subject or task comes up, at most 10,000 at once.
-- Whether `tailwind` is read is Claude's call; a rule that must always hold goes among
-  the ones `principles` prints whole.
 - A Guideline left out for the limit reaches Claude only if Claude reads the file it is named
   with, as it never read the file Claude Code saved the cut context to; one longer than the limit
   itself is never given whole, only named at each signal.

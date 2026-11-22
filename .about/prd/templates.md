@@ -32,7 +32,7 @@ Git hooks and CI with no file of the template changed by hand.
   the project came from, passes them with no trailer of Claude's. Creating the GitHub repo,
   pushing and deploying are the person's; the skill says the commands.
 - The template is cut from the settled choices of `chainofsale` (its ADR stack) and of
-  `checkmeup` (its CI); where they and louie's `go`, `vue`, `typescript` or `tailwind` Guidelines
+  `checkmeup` (its CI); where they and louie's `go`, `vue` or `typescript` Guidelines
   differ, the Guidelines win (eslint with their rules). It holds:
   - `apps/api`, the Go module `github.com/<owner>/<name>`, serving `GET /api/up`, with Postgres
     through sqlc and goose;

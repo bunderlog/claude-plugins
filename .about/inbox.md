@@ -2,7 +2,7 @@
 
 2026-10-03 · user · kept 2026-11-22
 
-Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `rust`, `react`, `sql`
+Guidelines beside `go`, `python`, `typescript` and `vue` for `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible). From 2026-11-09 they
 are louie's (ADR plugin): each is a file whose `paths:` say which files bring it, so no stack is
 detected for a Config. Settled by deciding which stacks get one, or none. Kept to write each when

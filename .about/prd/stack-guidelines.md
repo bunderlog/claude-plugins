@@ -11,24 +11,23 @@ Claude and a redundant one costs context for nothing.
 
 ## Users
 
-- Everyone in a project with louie on who has Claude write Go, TypeScript, Vue or Tailwind, write
+- Everyone in a project with louie on who has Claude write Go, TypeScript or Vue, write
   tests, or update dependencies.
 - Not for: a project with its own documented conventions, which win over a Guideline as before.
 
 ## Success signal
 
-- Each rule in `go.md`, `typescript.md`, `vue.md`, `tailwind.md`, `testing.md` and
-  `dependencies.md` has a grader, in a case in `evals/<guideline>/`, that fails without louie in at
+- Each rule in `go.md`, `typescript.md`, `vue.md`, `testing.md` and `dependencies.md` has a grader, in a case in `evals/<guideline>/`, that fails without louie in at
   least one run on the default model (Claude Opus on 2026-11-22) or Claude Sonnet and passes with
   it in every run on both, 3 runs an arm (ADR evals); a rule with no such grader is not in the
-  file. On 2026-11-22, before this work, none of the six had a case.
+  file. On 2026-11-22, before this work, none of the five had a case.
 - No rule is wrong for the current release on the day of its file's pass: Go 1.27, TypeScript 7,
-  Node 24, Vue 3.5, Tailwind 4. A rule for a feature newer than a project may run names the
+  Node 24, Vue 3.5. A rule for a feature newer than a project may run names the
   release it came in, as `uuid` does Go 1.27.
 
 ## Scope
 
-- Each of the six files, one at a time, each its own commit:
+- Each of the five files, one at a time, each its own commit:
   1. An eval case per file in `evals/<guideline>/`, written before any text it tests (ADR
      evals), its graders one per rule, a regex over the file Claude writes where one can tell the
      rule's breach, run 3 times an arm with louie and without, on the default model and on Claude
@@ -50,6 +49,10 @@ Claude and a redundant one costs context for nothing.
   - `typescript.md`: no `any`, `unknown` at the edge, no `enum`, no class, the `node:` prefix and
     `import type` removed, as both models kept all six unasked; the script on `bun` removed too,
     as both ran a script on Node unasked, its `.ts` imports and all. Neither case stays.
+- `tailwind.md` is removed, with its index line and its signal, a `package.json` depending on
+  `tailwindcss`: in `evals/tailwind/`, on both models, each of its rules was either kept without
+  louie or not followed with the file read, as `cn()`, `cva` and no `dark:` beside the theme's
+  tokens were. The go-vue template's ADR stack keeps the template's own Tailwind choices.
 - `dependencies.md` gains, with no case, a cooldown on a release too fresh to trust (pnpm's
   `minimumReleaseAge`, npm's `min-release-age`) and an audit before the report (`npm audit`,
   `govulncheck`): they need a registry, which the eval's sandbox has no network for, and ADR evals
@@ -85,11 +88,11 @@ Claude and a redundant one costs context for nothing.
   package and logs with a `…Context` variant of `slog`; each of the three graders fails without
   louie in at least one run on one of the two models and passes with it in every run on both, 3
   runs an arm.
-- Every bullet left in each of the six files, `go.md`'s and `typescript.md`'s among them, has a
+- Every bullet left in each of the five files, `go.md`'s and `typescript.md`'s among them, has a
   grader in a case in `evals/<guideline>/` scored as above, but `dependencies.md`'s cooldown and
   audit.
 - In `plugins/louie/guidelines/`, ``grep -nE '`(chi|bun|any|enum)`' go.md typescript.md`` finds
   nothing.
-- Each of the six files, after its pass, has no more characters than before it but for the rules a
+- Each of the five files, after its pass, has no more characters than before it but for the rules a
   failing grader added, each with its grader named in its commit.
 - `mise run check` passes.

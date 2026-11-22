@@ -38,7 +38,7 @@ in a project.
   repo's manifests (ADR guidelines); session start's index names the ones no Hook gives, each
   where it fits the repo as a new Config's defaults do today: `principles`, `design`, `debugging`
   and `writing-for-agents` always, `ci` where the root holds a CI's config, `dependencies` where a
-  package manager's manifest is, and `go`, `typescript`, `vue` and `tailwind` where a manifest
+  package manager's manifest is, and `go`, `typescript` and `vue` where a manifest
   names their stack, found by today's walk of the repo, once per session start; outside a repo,
   none, as today.
 - Where no settings file Claude Code reads (the person's, the project's or the clone's local)
@@ -62,7 +62,7 @@ in a project.
 - A simpler Session review: a PRD of its own before it moves.
 - Writing the person's `~/.claude/settings.json`: this binds baloo until bagheera ships, and the
   visibility PRD may replace it, with the person's yes.
-- New Hook signals for `go` or `tailwind`: louie's stack Guidelines.
+- New Hook signals for `go`: louie's stack Guidelines.
 - Removing `.claude/baloo.yml` from the projects: setting each project up does, once Release 4 is
   out.
 

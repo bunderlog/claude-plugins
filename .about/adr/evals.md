@@ -73,6 +73,11 @@ both, and were dropped with their rules.
 under 7 days old waits, unless the project's pnpm `minimumReleaseAge` or npm `min-release-age` says
 otherwise, and the manager's audit runs before the report. Both need a package registry, which the
 sandbox has no network for (PRD stack-guidelines).
+`tailwind/badge` and `tailwind/banner` left with the `tailwind` Guideline: theme tokens, no hex,
+pairs of colors, whole class names, `focus-visible`, a new color in `@theme`, no
+`tailwind.config.js` and no `@apply` in a component passed without louie on both models, while
+`cn()` for a caller's class, `cva` for variants and no `dark:` failed with louie too, though every
+run read the file: Claude adds no package the task didn't ask for.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

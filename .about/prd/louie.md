@@ -29,7 +29,7 @@ baloo ships no Python; a project with louie on gets each Guideline by its task's
 ## Non-goals
 
 - Workflows from a Ticket to a pull request, `verify` as one, and templates: PRDs of their own.
-- New signals for `go` or `tailwind`.
+- New signals for `go`.
 
 ## Anti-goals
 
