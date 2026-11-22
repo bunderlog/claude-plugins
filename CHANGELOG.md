@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.72.0 — 2026-11-22
+
+### bagheera
+
+#### Features
+
+- bagheera: show ⤓ and the version in the Status line where a newer Release is out to update to (95b4db0)
+
+### louie
+
+#### Features
+
+- bagheera: show ⤓ and the version in the Status line where a newer Release is out to update to (95b4db0)
+
 ## 0.71.1 — 2026-11-22
 
 ### bagheera
