@@ -69,6 +69,10 @@ On 2026-11-23 `vue/details` failed without louie on both models: no run kept the
 page's component, and every run did with louie. Its graders for `<script setup>`, typed props and
 emits, no `<style>` block, navigating by route name and `flushPromises` passed without louie on
 both, and were dropped with their rules.
+`dependencies` got two rules with no case, the exception to a case written first: a release
+under 7 days old waits, unless the project's pnpm `minimumReleaseAge` or npm `min-release-age` says
+otherwise, and the manager's audit runs before the report. Both need a package registry, which the
+sandbox has no network for (PRD stack-guidelines).
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in
