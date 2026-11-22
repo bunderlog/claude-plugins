@@ -154,22 +154,25 @@ _FOLDER, _BRANCH = "96", "38;2;177;185;249"
 
 # Each part's icon, in place of its label.
 _ICONS = {"context": "▤", "5h": "◷", "7d": "◷", "cache": "↻"}
-# The icons of how many sessions wait and how many projects need attention (PRD visibility), and
-# of a newer version installed, which a restart runs (PRD status-line).
-WAITING, ATTENTION, RESTART = "⧗", "⚑", "⇡"
+# The icons of how many sessions wait and how many projects need attention (PRD visibility), of a
+# newer version installed, which a restart runs, and of a newer one released, which an update
+# installs (PRD status-line).
+WAITING, ATTENTION, RESTART, UPDATE = "⧗", "⚑", "⇡", "⤓"
 
 
 @dataclass
 class Marks:
     """What the line shows beside Claude Code's input: in the clone, how many entries `git status`
     lists and how many commits aren't pushed (PRD status-line); on the machine, how many sessions
-    wait and how many projects need attention (PRD visibility); and the version a restart runs."""
+    wait and how many projects need attention (PRD visibility); the version a restart runs, and
+    the version an update installs."""
 
     changed: int = 0
     ahead: int = 0
     waiting: int = 0
     attention: int = 0
     restart: str = ""
+    update: str = ""
 
 # The least room between the line's left, middle and right; a group's own parts are one space
 # apart.
@@ -330,6 +333,8 @@ class Layout:
                  for icon, n in ((WAITING, m.waiting), (ATTENTION, m.attention)) if n > 0]
         if m.restart:
             marks.append(_paint(_YELLOW, RESTART + " " + m.restart))
+        if m.update:
+            marks.append(_paint(_YELLOW, UPDATE + " " + m.update))
 
         def left_of(name: str) -> str:
             return " ".join(p for p in ((_paint(_FOLDER, name) if name else ""), tail) if p)
@@ -423,6 +428,17 @@ def restart(data: str, session: str, root: str) -> str:
     if not (running and newer and newer > running):
         return ""
     return ".".join(there.split(".")[:2])
+
+
+def update(root: str) -> str:
+    """The version in Claude Code's clone of the marketplace, as "0.72", where it is newer than the
+    one Claude Code records as installed for the repo at `root`, which an update installs; ""
+    otherwise."""
+    out = version.released()
+    there, newer = _numbers(version.installed(root)), _numbers(out)
+    if not (there and newer and newer > there):
+        return ""
+    return ".".join(out.split(".")[:2])
 
 
 # The file of the plugin's data folder that keeps the latest 5-hour and 7-day limits any session

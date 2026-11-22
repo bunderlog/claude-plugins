@@ -187,6 +187,7 @@ def status_line(text: str, stdout: TextIO) -> int:
     marks = statusline.Marks(
         git.changed, git.ahead, found.waiting(in_.session_id), found.attention(),
         statusline.restart(data, in_.session_id, root) if data and in_.session_id else "",
+        statusline.update(root),
     )
     stdout.write(statusline.default().render(in_, git.branch, width, marks) + "\n")
     if data:

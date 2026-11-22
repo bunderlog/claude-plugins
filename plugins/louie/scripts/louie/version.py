@@ -69,6 +69,29 @@ def install(root: str, plugin: str = names.PLUGIN_ID) -> Tuple[str, str]:
     return "", ""
 
 
+def released(plugin: str = names.PLUGIN) -> str:
+    """The version of `plugin` in Claude Code's clone of the marketplace, the Release an update
+    installs (ADR status-line); "" where the clone or a file on the way isn't there or has another
+    shape, plugins/known_marketplaces.json being Claude Code's and undocumented. It reads files
+    only: Claude Code refreshes the clone from GitHub, the plugin asks GitHub for nothing."""
+    own = repo.own_folder()
+    if not own:
+        return ""
+    try:
+        with open(os.path.join(own, "plugins", "known_marketplaces.json"), encoding="utf-8") as f:
+            clone = json.load(f)[names.MARKETPLACE]["installLocation"]
+        with open(os.path.join(clone, ".claude-plugin", "marketplace.json"), encoding="utf-8") as f:
+            listed = json.load(f)["plugins"]
+        # A source that isn't a folder of the clone, such as a GitHub repo's, raises TypeError.
+        source = next(p["source"] for p in listed if p.get("name") == plugin)
+        with open(os.path.join(clone, source, ".claude-plugin", "plugin.json"),
+                  encoding="utf-8") as f:
+            v = json.load(f)["version"]
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, StopIteration):
+        return ""
+    return v if isinstance(v, str) else ""
+
+
 def _numbers(v: str):
     try:
         return tuple(int(x) for x in v.split("."))

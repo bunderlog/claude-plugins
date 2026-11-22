@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import os
 import re
@@ -389,6 +390,38 @@ class Restart(unittest.TestCase):
             self.assertEqual(f.read(), manifest)
 
 
+class Update(unittest.TestCase):
+    def marketplace(self, version, source: object = "./plugins/bagheera"):
+        """Claude Code's clone of the marketplace, its bagheera at `version`, listed with `source`."""
+        clone = testkit.tempdir(self)
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "known_marketplaces.json"),
+              json.dumps({names.MARKETPLACE: {"installLocation": clone}}))
+        write(os.path.join(clone, ".claude-plugin", "marketplace.json"),
+              json.dumps({"plugins": [{"name": "bagheera", "source": source}]}))
+        write(os.path.join(clone, "plugins", "bagheera", ".claude-plugin", "plugin.json"),
+              json.dumps({"version": version}))
+
+    # The line shows the version in Claude Code's clone of the marketplace, yellow, where it is newer
+    # than the one installed for the project; none where it isn't, or where the clone can't be read
+    # (PRD status-line).
+    def test_update(self):
+        dir = commands.in_repo(self)
+        write(os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "plugins", "installed_plugins.json"),
+              json.dumps({"plugins": {names.PLUGIN_ID: [
+                  {"scope": "project", "projectPath": dir, "version": "0.71.0"}]}}))
+        self.assertEqual(statusline.update(dir), "")
+        self.marketplace("0.72.1")
+        self.assertEqual(statusline.update(dir), "0.72")
+        self.marketplace("0.71.0")
+        self.assertEqual(statusline.update(dir), "")
+        self.marketplace("0.72.1", source={"source": "github", "repo": "bunderlog/claude-plugins"})
+        self.assertEqual(statusline.update(dir), "")
+        colored = default().render(usage(MODEL), "main", 120,
+                                   statusline.Marks(restart="0.71", update="0.72"))
+        self.assertTrue(plain(colored).endswith("⇡ 0.71 · ⤓ 0.72 · Opus 5.5 high"), plain(colored))
+        self.assertIn(YELLOW + "⤓ 0.72", colored)
+
+
 class Limits(unittest.TestCase):
     NOW = at(24, 14, 0)
     FIVE, SEVEN = NOW + 3 * 3600, NOW + 4 * 86400
@@ -435,16 +468,20 @@ class Fits(unittest.TestCase):
     # where nothing else is left to drop, the folder's name is cut short.
     def test_all_in_120(self):
         in_ = usage(MODEL + ', "workspace": {"project_dir": "/w/claude-plugins"}')
-        marks = statusline.Marks(changed=5, ahead=2, waiting=3, attention=2, restart="0.54")
+        marks = statusline.Marks(changed=5, ahead=2, waiting=3, attention=2, restart="0.54",
+                                 update="0.55")
         line = plain(default().render(in_, "main", 120, marks))
-        for want in ("claude-plugins main ±5 ↑2", "▤ 12%", "◷ 55% 14:00", "⧗ 3 · ⚑ 2 · ⇡ 0.54 · Opus 5.5 high"):
+        for want in ("claude-plugins main ±5 ↑2", "▤ 12%", "◷ 55% 14:00",
+                     "⧗ 3 · ⚑ 2 · ⇡ 0.54 · ⤓ 0.55 · Opus 5.5 high"):
             self.assertIn(want, line)
-        for columns in (44, 60):
-            narrow = plain(default().render(in_, "main", columns, marks))
+        # Every mark at once, ⤓ too, is wider than 44 columns leave: it fits in 60.
+        no_update = dataclasses.replace(marks, update="")
+        for columns, m, end in ((44, no_update, "⇡ 0.54"), (60, marks, "⇡ 0.54 · ⤓ 0.55")):
+            narrow = plain(default().render(in_, "main", columns, m))
             self.assertLessEqual(len(narrow), columns - 4, narrow)
             self.assertIn("main ±5 ↑2", narrow)
-            self.assertTrue(narrow.endswith("⧗ 3 · ⚑ 2 · ⇡ 0.54"), narrow)
-        self.assertIn("…", plain(default().render(in_, "main", 44, marks)))
+            self.assertTrue(narrow.endswith("⧗ 3 · ⚑ 2 · " + end), narrow)
+        self.assertIn("…", plain(default().render(in_, "main", 44, no_update)))
 
 
 class Cache(unittest.TestCase):
