@@ -114,3 +114,15 @@ context names says", but a Workflow's agent starts with no `SubagentStart` and s
 index (ADR verify), and the Hook gives the index to the verifier alone; PRD implement's Scope says
 each stage is given it. Settled by the stage reading `principles.md` from louie's folder as the
 implement stage now reads `testing.md`, or the PRD dropping the index for the other agents.
+
+## Checking a PRD's Success signal after its Release
+
+2026-11-22 · user
+
+Most PRDs name a Success signal with a window ("in the first 30 days after the Release"), but
+nothing reminds anyone to check it once the window ends: the Assessment counts how the plugins do,
+not whether a project's feature met its PRD. The rest of the cycle after a merge (deploy, CI,
+monitoring) stays the project's and the person's (PRD harness, Anti-goals; PRD hand-back), so this
+is the one gap worth closing. Settled by deciding whether, and where, a reminder is left: e.g. an
+Inbox item `/louie:merge` writes when it merges a change serving a PRD, dated for the window's
+end, or `/baloo:prd` checking signals whose window has passed; or by deciding not to.
