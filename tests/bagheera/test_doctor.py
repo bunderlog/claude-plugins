@@ -44,6 +44,7 @@ class Doctor(unittest.TestCase):
             "  " + names.KNOWLEDGE_ID.ljust(key) + version.read() + "\n",
             "  " + "link".ljust(key) + link + " -> " + PLUGIN + "\n",
             "no-secrets-in-context  on\n",
+            "no-hidden-characters   on\n",
         ]:
             self.assertIn(want, out)
 
@@ -292,6 +293,17 @@ class Doctor(unittest.TestCase):
             failed = json.load(f)
         write(kept, json.dumps(dict(failed, version="0.0.1")))
         self.assertEqual(doctor_run(self)[0], 0)
+
+    # A failure of no-hidden-characters is named as the other Checks' are (PRD hidden-characters).
+    def test_hidden_characters_failed(self):
+        set_up(in_repo(self))
+        self.assertEqual(start(self)[0], 0)
+        call = '{"tool_name": "Write", "tool_input": {"file_path": "a.py", "content": "a"}}'
+        with mock.patch("bagheera.checks.no_hidden_characters", side_effect=KeyError("a")):
+            self.assertEqual(run("pre-tool-use", stdin=call), (0, "", ""))
+        code, out = doctor_run(self)
+        self.assertEqual(code, 1, out)
+        self.assertIn("\n- bagheera:no-hidden-characters failed on a Write call at ", out)
 
     # Without the plugin's data folder, the link can't be checked: a problem.
     def test_no_data(self):

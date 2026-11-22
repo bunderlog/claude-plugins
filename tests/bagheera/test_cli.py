@@ -211,6 +211,11 @@ class PreToolUse(unittest.TestCase):
              ("deny", "bagheera:no-secrets-in-context: " + dir + "/.env" + env_file)),
             ('{"tool_name": "Edit", "tool_input": {"file_path": "' + dir + '/.claude/baloo.yml"}}',
              ("", "")),
+            (json.dumps({"tool_name": "Write", "tool_input": {
+                "file_path": dir + "/a.py", "content": "a" + chr(0x202E)}}),
+             ("deny", "bagheera:no-hidden-characters: the Write holds U+202E RIGHT-TO-LEFT "
+                      "OVERRIDE at line 1, column 2, which a person can't see in a terminal or a "
+                      "diff. If it's meant, write it as an escape, such as \\u202e.")),
             (bash("claude plugin disable bagheera@bunderlog"), ("", "")),
             (bash("git push -f"), ("", "")),
             (bash("git status"), ("", "")),

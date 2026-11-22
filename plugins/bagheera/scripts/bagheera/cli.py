@@ -260,6 +260,10 @@ def pre_tool_use(text: str, stdout: TextIO) -> int:
         why = checks.no_secrets_in_context(call, cwd)
         if why:
             return _deny(stdout, f"{names.PLUGIN}:{check}: {why}")
+        check = "no-hidden-characters"
+        why = checks.no_hidden_characters(call)
+        if why:
+            return _deny(stdout, f"{names.PLUGIN}:{check}: {why}")
     except Exception as e:
         failure.record(os.environ.get("CLAUDE_PLUGIN_DATA", ""), check, tool, e)
     return 0

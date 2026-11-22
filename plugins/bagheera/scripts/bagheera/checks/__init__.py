@@ -6,12 +6,13 @@ from __future__ import annotations
 from bagheera.checks.bypass import no_git_hook_bypass
 from bagheera.checks.context import no_secrets_in_context
 from bagheera.checks.git import Error
+from bagheera.checks.hidden import no_hidden_characters
 from bagheera.checks.secrets import ALLOW_SECRET, mask_secrets
 
 __all__ = [
     "ALLOW_SECRET", "HOOK_CHECKS", "Error", "mask_secrets", "no_git_hook_bypass",
-    "no_secrets_in_context",
+    "no_hidden_characters", "no_secrets_in_context",
 ]
 
 # The Checks a Hook runs, by name: each is always on (ADR checks).
-HOOK_CHECKS = ["no-git-hook-bypass", "no-secrets-in-context"]
+HOOK_CHECKS = ["no-git-hook-bypass", "no-hidden-characters", "no-secrets-in-context"]
