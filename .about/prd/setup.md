@@ -102,7 +102,10 @@ person has, has it installed or updated by that same run, with no `/plugin` type
   the repo when its `projectPath` is the repo, whatever its scope, else when its scope is `user`,
   as `doctor` already reads bagheera's own version from `plugins/installed_plugins.json`, which
   is Claude Code's and undocumented, so a shape it can't read says nothing. Each is a problem of
-  the repo `doctor` runs in, and ADR doctor is amended by the change that builds this.
+  the repo `doctor` runs in, and ADR doctor is amended by the change that builds this. So are
+  Git hooks the repo tracks that its clone hasn't turned on, with `/bagheera:setup` as the fix:
+  `doctor`, the projects needing attention (PRD visibility) and the projects `/bagheera:setup`
+  offers name the same needs, in the same words.
 - `/bagheera:setup` offers the machine's other projects `doctor` names as lacking an item or with
   a plugin not installed or older than the Release, or with its Git hooks off in that clone (PRD
   visibility), whether or not its own repo lacked one or its run stopped, and does in each
@@ -194,6 +197,9 @@ person has, has it installed or updated by that same run, with no `/plugin` type
 - With `installed_plugins.json` gone, or holding a shape the code can't read, `doctor` names
   neither problem and says nothing of any plugin's installed version, bagheera's own included.
   → test: tests/bagheera/test_doctor.py "Doctor.test_no_records"
+- In a set-up repo that tracks `.githooks/` while its clone's `core.hooksPath` is unset, `doctor`
+  names the Git hooks off a problem, with `/bagheera:setup`, and exits non-zero; with
+  `core.hooksPath` set to `.githooks`, it doesn't.
 - In a repo that turns `louie@bunderlog` on with no install of it, and `baloo@bunderlog` on with
   an install of 0.34.0 at project scope while the bagheera installed is 0.61.1, the script runs
   `claude plugin install louie@bunderlog --scope project` and `claude plugin update
