@@ -108,6 +108,21 @@ such pull request carries the Verification's verdict on each acceptance criterio
 - Fixing a red CI run after the pull request: a session with the `ci` Guideline, or Claude Code's
   own fixing of a pull request's CI.
 - Merging the pull request: `/louie:merge` (PRD merge), on the person naming it.
+- A stage that reviews the code's architecture, as `/baloo:architecture` does: that skill is a
+  conversation where the person picks a candidate, it looks at the code that changes often rather
+  than the Ticket's change, and a refactoring beyond the Ticket is one no criterion verifies and
+  that makes parallel pull requests touch more of the same files. A refactoring the person picks
+  there becomes a Ticket of its own (`/baloo:ticket`) and goes through `/louie:plan` and
+  `/louie:implement` like any other; the new code's shape is already checked by the `design`
+  Guideline and its verifier. Reopened if Verifications let shallow modules through: the planner
+  marking such a place as an Open decision comes before a stage.
+- Keeping each stage to its own commands: no agent of its own for the push and pull request
+  stages, which would lose only Edit and Write and could still change and commit through Bash,
+  and no PreToolUse Hook allowing each agent only its commands, though one could tell agents
+  apart by the `agent_id` that `SubagentStart` names with its `agent_type`. What reaches a pull
+  request is held by the script's check that the pushed branch ends at the commit the last
+  Verification passed, and the default branch by the code host (ADR merge). Reopened when a run
+  pushes outside its push stage.
 - Closing a Ticket in a tracker, or writing a Ticket: the person's, and the `ticket` skill's.
 - Removing old worktrees and branches: the person's.
 - Templates and `upgrade-all`: PRD templates.

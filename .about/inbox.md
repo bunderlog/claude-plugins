@@ -1,17 +1,17 @@
 ## Guidelines for more stacks
 
-2026-10-03 · user · kept 2026-11-21
+2026-10-03 · user · kept 2026-11-22
 
 Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `rust`, `react`, `sql`
 (migrations, a schema change that stays backward compatible) and `docker`. From 2026-11-09 they
 are louie's (ADR plugin): each is a file whose `paths:` say which files bring it, so no stack is
 detected for a Config. Settled by deciding which stacks get one, or none. Kept to write each when
-a project in that stack takes up the plugins; `python`, this repo's stack (ADR binary), is being
-written from 2026-11-21.
+a project in that stack takes up the plugins; `python`, this repo's stack (ADR binary), shipped in
+0.71.0 on 2026-11-21.
 
 ## Eval cases for verify, doctor and retro
 
-2026-11-01 · evals · kept 2026-11-21
+2026-11-01 · evals · kept 2026-11-22
 
 Their cases need Bash (the verifier reads the diff through git, doctor and retro run the plugin's
 scripts). On 2026-11-02 Bash was granted by moving every link out of `~/.docker` for the run
@@ -36,10 +36,11 @@ each case moves with its part, in the PRD of that move. On 2026-11-12 none of th
 `evals/`, having only been run by hand (`evals/verify/offer` is another case, the offer of a
 Verification), and on Claude Code 2.1.322 a run granted `Bash(git *)` still refuses to start while
 `~/.docker/contexts` holds a link, even with `DOCKER_CONFIG` set to an empty folder.
+On 2026-11-22, on 2.1.330, the link is still there; no run was tried.
 
 ## A commit's body says why
 
-2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-21
+2026-11-08 · Missing Semester 2026, Beyond the Code · kept 2026-11-22
 
 The lecture asks a commit's body for what forced the change, the alternatives weighed, the
 trade-offs and what may surprise, at a length that grows with the change: a subject alone for a
@@ -54,7 +55,7 @@ the rule and passing with it (ADR evals): then lines in `principles`; or by drop
 
 ## A Guideline that names the discipline it rests on
 
-2026-11-18 · user, from a post on nine personal agents · kept 2026-11-21
+2026-11-18 · user, from a post on nine personal agents · kept 2026-11-22
 
 The post's agents work well once each is given a recognised method to follow (a textbook, a
 standard, a book such as Nygard's *Release It!*), not rules written from scratch. louie's
@@ -68,7 +69,7 @@ idea.
 
 ## The Assessment asks about a figure that crosses a line
 
-2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-21
+2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-22
 
 The post's system watches how a device is used and comes with one apt question. The Assessment
 watches, but says nothing until asked, by its Non-goal "Showing anything in the Status line or at
@@ -80,31 +81,15 @@ a Proposal to this repo's Inbox; or by keeping the report asked for.
 
 ## A Proposal kind that has earned it applies itself
 
-2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-21
+2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-22
 
 The post's devices climb a ladder of trust: watch, suggest, act on a command, act alone on agreed
 scenarios, each step up only by the person's leave, and a dangerous one only switched off. The
 Session review stands at suggest: every Proposal waits for the user (ADR measurement, after it
 wrote into `.about/` unasked). A kind the user accepted every time, such as a glossary edit
 accepted 10 times of 10, might with the user's yes apply itself and say so. On 2026-11-18 the
-log held 11 accepted and 3 rejected in 30 days, across every kind. Settled by the Session
-review's log showing a kind accepted unedited often enough to trust, and the user's yes; or by
-keeping every Proposal asked.
-
-## The pull request stage as an agent of its own, kept from what implement may run
-
-2026-11-18 · user · kept 2026-11-21
-
-`louie:implementer` runs every writing stage of `implement` (prepare, implement, rework, pull
-request, discard), though they need different commands: implement runs the checks, `git add`,
-`git commit` and `git diff`; the pull request stage only `git push` and `gh pr create`. An agent's
-`tools` can't tell one Bash command from another, so a separate agent for the pull request alone
-would lose only Edit and Write, and could still change and commit through Bash. The script's
-check that the pushed head is the commit the Verification passed is in PRD implement since
-2026-11-18. Left:
-- a pull request agent of its own;
-- a PreToolUse Hook that allows each agent only its commands: no `git push` for the implementer,
-  nothing but `git push` and `gh pr` for the pull request's agent. It needs Claude Code to name
-  the agent in PreToolUse's input, to check first; louie tells agents apart only at
-  SubagentStart now.
-Settled by deciding them in PRD implement, once the Hook is known to be possible.
+log held 11 accepted and 3 rejected in 30 days, across every kind. On 2026-11-22, across every
+repo on the machine over 30 days: `adr edit` accepted unedited 12 of 13, `glossary edit` 6 of 7,
+`inbox add` 39 of 46 (5 rejected); the user kept every Proposal asked, the samples being small.
+Settled by the Session review's log showing a kind accepted unedited often enough to trust, and
+the user's yes; or by keeping every Proposal asked.
