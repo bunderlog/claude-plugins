@@ -1,6 +1,6 @@
 # Tickets are written by a skill of their own, to the project's tracker or `.about/tickets/`
 
-Date: 2026-11-18
+Date: 2026-11-22
 
 Users asked for tickets by hand: about 17 requests in 8 sessions of one project, each time over
 several messages. The `ticket` skill writes one Ticket per request, a bug to fix or a task to do,
@@ -22,6 +22,9 @@ a bug left for later to the Inbox, and the `inbox` skill's "file a ticket" moves
 there. Session start lists each Ticket by its title, with the ADRs and PRDs (PRD index), but
 doesn't count them: a count is for what waits on the user. The skill
 writes one Ticket a request and none from a PRD's criteria, which stay in one place (ADR prd).
+A Ticket's acceptance criteria hold only what its own change does, never what any change must,
+such as the project's checks passing: a verifier can't mark that one met, so `/louie:merge` stops
+on it, and `implement` and `merge` run the checks anyway.
 
 louie's `implement` Workflow takes a Ticket from there to a pull request (PRD implement), or up to
 five, all planned before any is built (PRD batch): it reads the Ticket, branches, commits, pushes
