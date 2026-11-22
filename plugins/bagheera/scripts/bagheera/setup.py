@@ -1,6 +1,7 @@
 """Setting a repo up for bunderlog's plugins (PRD setup): what its working tree lacks of PRD
-project-setup's list, which doctor names and session start tells of, and the run that adds it,
-which the setup skill makes. Before it writes, a run installs hathi with mise where it needs one;
+project-setup's list, which session start tells of; `needs`, the one list of what a run would fix
+there, which doctor, the projects needing attention and setup --others show; and the run that adds
+it, which the setup skill makes. Before it writes, a run installs hathi with mise where it needs one;
 it then writes only files in the repo and its clone's .git/hooks, installs and updates the plugins
 the repo turns on with Claude Code's `claude plugin`, and turns the clone's Git hooks on, its only
 change to git's config being core.hooksPath where it is unset. It makes no commit."""
@@ -160,6 +161,23 @@ def missing(root: str) -> List[str]:
 def problems(root: str) -> List[str]:
     """What doctor says of each item of the list the repo at `root` lacks."""
     return [i.lack or f"{i.name} is missing" for i in _items(root) if not i.present]
+
+
+def needs(root: str) -> List[str]:
+    """What a run of setup would fix in the repo at `root`, a sentence each, the one list doctor,
+    the projects needing attention and setup's offer of other projects show (PRD setup): each item
+    of the list it lacks, only once it is set up, since its owner may have chosen not to; each
+    plugin it turns on with no install, or an install older than the Release; and its Git hooks,
+    where its clone hasn't turned them on."""
+    out = problems(root) if started(root) else []
+    for plugin, there in turned_on(root):
+        if not there:
+            out.append(f"{plugin} is turned on with no install of it for this project")
+    for plugin, there, release in old_installs(root):
+        out.append(f"{plugin} {there} is installed, older than the {release} this machine has")
+    if hooks_off(root):
+        out.append("its Git hooks are off in this clone")
+    return out
 
 
 def _items(root: str) -> List[_Item]:
