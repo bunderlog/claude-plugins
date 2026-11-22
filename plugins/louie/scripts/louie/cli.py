@@ -209,12 +209,6 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
     rel = os.path.relpath(path, root)
     if rel == ".." or rel.startswith(".." + os.sep):
         return 0
-    try:
-        given = guidelines.for_file(
-            plugin, data, session, rel, guidelines.EVERY, tool, created
-        )
-    except OSError:
-        given = ""
     named = ""
     if not agent:
         try:
@@ -223,6 +217,14 @@ def post_tool_use(text: str, stdout: TextIO) -> int:
             named = knowledge.for_file(data, session, root, rel)
         except OSError:
             named = ""
+    # The Guidelines get what room the names leave in Claude Code's limit.
+    room = guidelines.ROOM - guidelines.size(named)
+    try:
+        given = guidelines.for_file(
+            plugin, data, session, rel, guidelines.EVERY, tool, created, room
+        )
+    except OSError:
+        given = ""
     # The names before the Guidelines, whose thousands of characters would bury them.
     told = "\n\n".join(t for t in (named, given) if t)
     if told:

@@ -275,6 +275,19 @@ def _for_agents(rel: str) -> bool:
     )
 
 
+# Claude Code saves a Hook's added context longer than 10,000 characters to a file and gives Claude
+# a 2 KB preview of it, which Claude doesn't open: a new `.ts` file's three Guidelines, about
+# 12,500, reached it as the start of `principles` alone (PRD louie). Counted in UTF-8 bytes, which
+# are never fewer than characters.
+LIMIT = 10_000
+# What a Hook adds around the Guidelines: the plugin's heading and line breaks.
+ROOM = LIMIT - 100
+
+
+def size(text: str) -> int:
+    return len(text.encode("utf-8"))
+
+
 # The Guidelines that reach Claude by the file it reads or edits, not by its own choice (ADR
 # guidelines): each says whether a file, by its path from the repo's root, is one of its subject.
 BY_PATH: Dict[str, Callable[[str], bool]] = {
@@ -316,11 +329,11 @@ KEPT = 7 * 24 * 3600
 
 def for_file(
     plugin: str, data: str, session: str, rel: str, on: Dict[str, bool], tool: str = "Read",
-    created: bool = False,
+    created: bool = False, room: int = ROOM,
 ) -> str:
     """What Claude is to be told of the Guidelines `on` whose subject the file at `rel`, from the
     repo's root, is, now that the tool `tool` read or changed it, `created` where a Write made it
-    new (see give)."""
+    new, in `room` bytes (see give)."""
     due = [n for n, f in BY_PATH.items() if f(rel)]
     if tool != "Read":
         due += [n for n, f in BY_EDIT.items() if f(rel)]
@@ -329,7 +342,7 @@ def for_file(
     if tool != "Read":
         _mark_red_step(data, session, rel)
     verb = "created" if created else "read or changed"
-    return give(plugin, data, session, due, on, f"{rel}, which you just {verb}", rel)
+    return give(plugin, data, session, due, on, f"{rel}, which you just {verb}", rel, room)
 
 
 def _red_step(data: str, session: str) -> str:
@@ -473,14 +486,16 @@ def for_command(
 
 def give(
     plugin: str, data: str, session: str, due: List[str], on: Dict[str, bool], about: str,
-    logged: str,
+    logged: str, room: int = ROOM,
 ) -> str:
-    """What Claude is to be told of the Guidelines `due` that `on` turns on and the session
-    `session` hasn't been given yet: each one's whole text, from the plugin at `plugin`, as
-    applying to `about`. Each one given is marked for the session and logged in the plugin's data
-    folder `data`, a line each: when, in UTC, the session, the Guideline and `logged`, the file
-    or the command. It is "" where none is due. A file it can't read or write raises OSError."""
-    due = [g.name for g in ALL if g.name in due and on.get(g.name)]
+    """What Claude is to be told of the Guidelines `due`, in their order, that `on` turns on and
+    the session `session` hasn't been given yet: each one's whole text, from the plugin at
+    `plugin`, as applying to `about`, while the text stays within `room` bytes; past it, a line
+    naming each other one's file to read, which isn't marked, so its next signal gives it whole.
+    Each one given whole is marked for the session and logged in the plugin's data folder `data`,
+    a line each: when, in UTC, the session, the Guideline and `logged`, the file or the command.
+    It is "" where none is due. A file it can't read or write raises OSError."""
+    due = [n for n in dict.fromkeys(due) if on.get(n)]
     if not due or not data:  # without its data folder, it can't give each one only once
         return ""
     folder = os.path.join(data, "guidelines")
@@ -490,18 +505,34 @@ def give(
     given = _lines(seen)
     text: List[str] = []
     new: List[str] = []
+    later: List[str] = []
+    due = [n for n in due if n not in given]
+    # Room is kept for a line naming each one's file, as any of them may need it; one given whole
+    # takes its line's room and what more its text needs. The line doesn't start "The <name>
+    # Guideline applies to", by which bagheera counts one given (PRD assessment).
+    pointers = {
+        n: f"Read {_path(plugin, n)} before you go on: the {n} Guideline applies here too, and "
+        "is too long to add."
+        for n in due
+    }
+    left = room - sum(size(p) + 2 for p in pointers.values())
     for name in due:
-        if name in given:
-            continue
         with open(_path(plugin, name), encoding="utf-8") as f:
             body = f.read()
-        text.append(
+        whole = (
             f"The {name} Guideline applies to {about}; follow it for the rest of this "
             f"session:\n\n{body.strip()}"
         )
+        more = size(whole) - size(pointers[name])
+        if more > left:
+            later.append(pointers[name])
+            continue
+        left -= more
+        text.append(whole)
         new.append(name)
+    text += later
     if not new:
-        return ""
+        return "\n\n".join(text)
     os.makedirs(shown, mode=0o700, exist_ok=True)
     if session:
         _write(seen, "\n".join(given + new) + "\n")

@@ -284,6 +284,39 @@ class ForFile(unittest.TestCase):
                 got = [n for n in names if f"The {n} Guideline applies to {rel}" in text]
                 self.assertEqual(got, want)
 
+    # A Write that creates a .vue file gives four Guidelines at once, more than Claude Code adds
+    # to the context before it shows Claude a preview alone: the file's own come whole first, each
+    # that doesn't fit is named with its file to read, and comes whole at its next signal.
+    def test_within_the_limit(self):
+        plugin = os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "louie")
+        data = temp(self)
+        names = ["typescript", "vue", "design", "principles"]
+        on = {n: True for n in names}
+
+        def whole(text, rel):
+            return [n for n in names if f"The {n} Guideline applies to {rel}" in text]
+
+        text = guidelines.for_file(plugin, data, "s1", "src/A.vue", on, "Write", True)
+        self.assertLessEqual(len(text.encode("utf-8")), 10_000 - 100)
+        got = whole(text, "src/A.vue")
+        self.assertEqual(got[:2], ["typescript", "vue"])
+        later = [n for n in names if n not in got]
+        self.assertTrue(later)
+        for n in later:
+            self.assertIn(f"Read {os.path.join(plugin, 'guidelines', n + '.md')} before you go on", text)
+
+        given = []
+        for rel in ("src/b.ts", "src/c.ts"):
+            text = guidelines.for_file(plugin, data, "s1", rel, on, "Write", True)
+            self.assertLessEqual(len(text.encode("utf-8")), 10_000 - 100)
+            given += whole(text, rel)
+        self.assertEqual(sorted(given), sorted(later))
+
+        # Less room, as the names of the ADRs and PRDs take some, leaves less for them.
+        text = guidelines.for_file(plugin, temp(self), "s1", "src/A.vue", on, "Write", True, 2_000)
+        self.assertLessEqual(len(text.encode("utf-8")), 2_000)
+        self.assertEqual(whole(text, "src/A.vue"), [])
+
 
 class ForCommand(unittest.TestCase):
     # A command gives the Guideline of the task it shows: debugging a failed run of tests or
