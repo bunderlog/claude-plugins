@@ -2,6 +2,20 @@
 
 The marketplace's Releases, newest first.
 
+## 0.73.0 — 2026-11-22
+
+### bagheera
+
+#### Features
+
+- bagheera: deny writing characters a person can't see, with the Check no-hidden-characters (8481aa7)
+
+### louie
+
+#### Features
+
+- louie: have the reviewer try to disprove each finding before reporting it (41b58a1)
+
 ## 0.72.1 — 2026-11-22
 
 ### bagheera
