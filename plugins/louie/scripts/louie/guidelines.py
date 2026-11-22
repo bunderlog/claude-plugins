@@ -277,8 +277,8 @@ def _for_agents(rel: str) -> bool:
 
 # Claude Code saves a Hook's added context longer than 10,000 characters to a file and gives Claude
 # a 2 KB preview of it, which Claude doesn't open: a new `.ts` file's three Guidelines, about
-# 12,500, reached it as the start of `principles` alone (PRD louie). Counted in UTF-8 bytes, which
-# are never fewer than characters.
+# 12,500, reached it as the start of `principles` alone (ADR guidelines). Counted in UTF-8 bytes,
+# which are never fewer than characters.
 LIMIT = 10_000
 # What a Hook adds around the Guidelines: the plugin's heading and line breaks.
 ROOM = LIMIT - 100

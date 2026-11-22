@@ -297,13 +297,15 @@ class ForFile(unittest.TestCase):
             return [n for n in names if f"The {n} Guideline applies to {rel}" in text]
 
         text = guidelines.for_file(plugin, data, "s1", "src/A.vue", on, "Write", True)
+        # Claude Code's limit, less up to 100 for the Hook's heading around the Guidelines.
         self.assertLessEqual(len(text.encode("utf-8")), 10_000 - 100)
         got = whole(text, "src/A.vue")
         self.assertEqual(got[:2], ["typescript", "vue"])
         later = [n for n in names if n not in got]
         self.assertTrue(later)
         for n in later:
-            self.assertIn(f"Read {os.path.join(plugin, 'guidelines', n + '.md')} before you go on", text)
+            path = os.path.join(plugin, "guidelines", n + ".md")
+            self.assertIn(f"Read {path} before you go on", text)
 
         given = []
         for rel in ("src/b.ts", "src/c.ts"):
