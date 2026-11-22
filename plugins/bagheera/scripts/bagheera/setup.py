@@ -165,8 +165,8 @@ def _problems(root: str) -> List[str]:
 
 def needs(root: str) -> List[str]:
     """What a run of setup would fix in the repo at `root`, a sentence each, the one list doctor,
-    the projects needing attention and setup's offer of other projects show (PRD setup): each item
-    of the list it lacks, only once it is set up, since its owner may have chosen not to; each
+    the projects needing attention and `/bagheera:setup`'s offer of other projects show (PRD
+    setup): each item of the list it lacks, only once it is set up, since its owner may have chosen not to; each
     plugin it turns on with no install, or an install older than the Release; and its Git hooks,
     where its clone hasn't turned them on."""
     out = _problems(root) if started(root) else []
