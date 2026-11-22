@@ -168,14 +168,14 @@ class Doctor(unittest.TestCase):
                 code, out = doctor_run(self)
                 self.assertEqual((code, missing in out, stale in out),
                                  (1 if wanted else 0, wanted == missing, wanted == stale), out)
-                # The fix is setup's, never one the person types: not /plugin, not claude plugin.
+                # The fix is a run of /bagheera:setup, never one the person types: not /plugin, not claude plugin.
                 if wanted:
                     self.assertIn(wanted.rstrip("\n"), problem_lines(out))
                 for line in problem_lines(out):
                     self.assertNotIn("/plugin ", line)
                     self.assertNotIn("claude plugin update", line)
         # A key set to false isn't turned on, so neither problem is its; setting a project up turns
-        # both on, so the repo now lacks that item instead, which is setup's problem, not this one.
+        # both on, so the repo now lacks that item instead, which /bagheera:setup fixes, not this problem.
         with open(os.path.join(dir, names.PROJECT_SETTINGS), encoding="utf-8") as f:
             fields = json.load(f)
         fields["enabledPlugins"] = {names.KNOWLEDGE_ID: True, names.BUILD_ID: False}
