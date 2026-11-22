@@ -116,6 +116,7 @@ const end = (r, verdict, reason, extra) => ({
 const failedOn = (v, bugs) =>
   JSON.stringify([
     ...v.criteria.filter((c) => c.verdict === 'not-met').map((c) => `criterion: ${c.criterion}`),
+    ...v.criteria.filter((c) => c.verdict === 'met-untested').map((c) => `untested: ${c.criterion}`),
     ...v.departures.filter((d) => d.blocks).map((d) => `${d.source}: ${d.at} ${d.from}`),
     ...bugs.map((b) => `bug: ${b.at} ${b.what}`),
   ].sort())
@@ -221,10 +222,22 @@ async function build(r) {
     if (!review || !Array.isArray(review.findings)) return end(r, 'blocked:tooling', 'the review returned nothing')
     const bugs = review.findings.filter((f) => f.bug)
     r.rounds.push({ mode, commits: impl.commits, verdict: verification.verdict, bugs })
-    if (verification.verdict === 'pass' && !bugs.length) break
+    const untested = verification.criteria.filter((c) => c.verdict === 'met-untested')
+    const passed = verification.verdict === 'pass' && !bugs.length
+    if (passed && !untested.length) break
 
-    const report = [verification.report, ...(bugs.length ? ['', 'Bugs the review found:', ...listed(bugs)] : [])].join('\n')
+    const report = [
+      verification.report,
+      ...(bugs.length ? ['', 'Bugs the review found:', ...listed(bugs)] : []),
+      ...(untested.length
+        ? ['', 'Criteria met with no test:', ...untested.map((c) => `- ${c.criterion}`)]
+        : []),
+    ].join('\n')
     const now = failedOn(verification, bugs)
+    // A criterion met with no test reworks for its test; still untested once the budget is spent
+    // or a rework changed nothing, with nothing else failing, it opens the draft rather than fail
+    // the run: a criterion only the person checks by hand has no test to write (PRD implement).
+    if (passed && (round >= MAX_REWORK || now === last)) break
     if (round >= MAX_REWORK) return end(r, 'failed:rework-budget', report)
     if (now === last) return end(r, 'failed:not-converging', report)
     last = now

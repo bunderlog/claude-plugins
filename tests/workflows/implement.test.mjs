@@ -47,10 +47,26 @@ test('implement opens the pull request when the Verification passes', async () =
   assert.match(pr.prompt, /met-tested: c1 — test t/)
 })
 
-test('implement opens a draft when a criterion is met with no test', async () => {
-  const { result, calls } = await run('implement', 'x.md', stages({ verifications: [{ ...pass, criteria: [met('met-untested')] }] }))
+const untested = { ...pass, criteria: [met('met-untested')] }
+
+test('implement reworks for a criterion met with no test', async () => {
+  const { result, calls } = await run('implement', 'x.md', stages({ verifications: [untested, pass] }))
+  assert.equal(result.verdict, 'done:pr-opened')
+  assert.match(calls.find((c) => c.label === 'rework 1').prompt, /no test[^\n]*\n- c1/)
+})
+
+// A criterion only the person checks by hand stays untested: the rework changes nothing, and the
+// run opens the draft rather than fail.
+test('implement opens a draft when a criterion stays untested after a rework', async () => {
+  const { result, calls } = await run('implement', 'x.md', stages({ verifications: [untested] }))
   assert.equal(result.verdict, 'done:draft-pr')
+  assert.equal(result.rounds.length, 2)
   assert.match(calls.find((c) => c.label === 'pull request').prompt, /as a draft[\s\S]*met-untested: c1/)
+})
+
+test('implement opens a draft when only an untested criterion is left once the reworks are spent', async () => {
+  const { result } = await run('implement', 'x.md', stages({ verifications: [fail(1), fail(2), untested] }))
+  assert.equal(result.verdict, 'done:draft-pr')
 })
 
 test('implement lists the plan\'s assumptions in the pull request\'s body, for the person to review', async () => {
