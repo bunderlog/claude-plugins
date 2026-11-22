@@ -58,8 +58,9 @@ figures in it, so that decision can be about a part of any of them.
     `hathi check` run by hand is no Git hook's failure. The commits and pushes of the agents of a
     Workflow the session ran count as the session's, each agent's in its own order;
   - each Guideline in the context: given by louie's Hook, whose added context names it (`The
-    <name> Guideline applies to …`), or a Read of its file in louie's `guidelines/`; session
-    start's index and the rules of `principles` it prints whole in every session are not counted.
+    <name> Guideline applies to …`) unless Claude Code cut that context to a preview, or a Read
+    of its file in louie's `guidelines/`; session start's index and the rules of `principles` it
+    prints whole in every session are not counted.
     For a Guideline a Read of its file kind gives or Claude reads (ADR guidelines: `go` for `.go`,
     `typescript`, `vue`, `writing-for-agents`), whether it was in the context before the session's
     first edit of such a file; `testing` and `dependencies` come after their first edit by design,
@@ -160,6 +161,9 @@ figures in it, so that decision can be about a part of any of them.
   session where the Hook gave `debugging` counts it in one session; session start's index alone
   counts no Guideline.
   → test: tests/bagheera/test_assess.py "test_guidelines_before_the_first_edit_and_the_index_alone"
+- A session whose Write of a `.ts` file got louie's Hook context cut by Claude Code to a preview
+  naming `principles` counts `typescript` "0 of 1" and no session for `principles`.
+  → test: tests/bagheera/test_assess.py "test_a_guideline_in_a_cut_context_is_not_in_it"
 - A session that ran louie's `verify` Workflow, whose task-notification says it completed, and one
   that ran `plan` with no task-notification, count `verify` 1 run, completed 1, and `plan` 1 run,
   no end 1.
