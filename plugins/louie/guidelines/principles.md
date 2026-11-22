@@ -11,6 +11,8 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
 - A commit holds only this task's changes: leave other pending changes unstaged, or ask.
 - Write the least code that solves the stated problem: nothing speculative, no options nobody
   asked for.
+- New behavior starts with its test: write it, run it and see it fail for the reason you
+  expect, before the code that turns it green.
 - A comment says what the code can't: why not the obvious way, a choice correctness rests on,
   where a constant comes from. A fix that departs from the obvious way gets one, even in a file
   with none, so a later tidy-up doesn't undo it.

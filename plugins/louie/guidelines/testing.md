@@ -5,8 +5,6 @@ existing codebase, its documented test conventions (where tests live, what they 
 
 ## 1. Red first
 
-- Write one failing test, run it, and see it fail for the reason you expect. A test you never
-  saw fail proves nothing.
 - Write only the code that turns it green, then the next test.
 - Grow one behavior at a time, the first one end to end. Tests written in bulk ahead of the
   code guess at behavior and freeze a design you don't have yet.
@@ -19,8 +17,6 @@ existing codebase, its documented test conventions (where tests live, what they 
 - Go through the interface callers use; a part inside a module with a seam of its own is tested
   through that seam, never past it. Name the interfaces you'll test at before the first test; for
   new behavior, agree them with the user.
-- Name a test after the behavior ("rejects an expired token"), not the function.
-- Check results through the interface: read the user back rather than query its table.
 - Spend tests where bugs are likely and costly: the main path and the tricky logic.
 
 **Test:** reworking what's behind the interface a test goes through breaks no test.
@@ -34,11 +30,8 @@ existing codebase, its documented test conventions (where tests live, what they 
 
 **Test:** each test fails when the behavior it names breaks.
 
-## 4. Fake only what you don't own
+## 4. External services
 
-- Fake the network, the clock, randomness, and a database or filesystem with no local stand-in.
-  The project's own code runs for real.
-- Assert on outcomes, not on which calls were made or in what order.
 - Wrap an external service in one function per operation, so each fake returns one shape.
 
-**Test:** no test fakes a module of the project.
+**Test:** each fake of an external service stands in for one function of its wrapper.
