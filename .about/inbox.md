@@ -7,7 +7,9 @@ Guidelines beside `go`, `typescript`, `vue` and `tailwind` for `rust`, `react`, 
 are louie's (ADR plugin): each is a file whose `paths:` say which files bring it, so no stack is
 detected for a Config. Settled by deciding which stacks get one, or none. Kept to write each when
 a project in that stack takes up the plugins; `python`, this repo's stack (ADR binary), shipped in
-0.71.0 on 2026-11-21; `docker` became PRD docker and Ticket docker-guideline on 2026-11-22.
+0.71.0 on 2026-11-21. `docker` gets none: on 2026-11-22 its four eval cases (not as root, `.env`
+and `.git` kept out of the build context, Compose without `version:`, a Secret as a build mount)
+scored 1.00 without louie on the default model and Claude Sonnet, 3 runs an arm (ADR evals).
 
 ## Eval cases for verify, doctor and retro
 
