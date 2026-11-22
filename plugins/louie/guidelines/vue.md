@@ -16,8 +16,6 @@ tests' too.
   the `@/` alias across layers.
 - `eslint-plugin-vue-modular` with its recommended config checks this layout and the names
   below; add it to a new app rather than keeping these rules by hand.
-- Navigate by route name (`router.push({ name: 'monitor', params })`); a route's path is written
-  only in its `routes.ts`.
 
 **Test:** removing a feature's folder breaks only the imports of its `index.ts`.
 
@@ -32,11 +30,6 @@ tests' too.
 
 ## 3. Components
 
-- `<script setup lang="ts">`, then `<template>`, then `<style>` if there is one; no Options API.
-- Props, emits and models are typed where they're declared: `defineProps<{ monitor: Monitor }>()`,
-  `defineEmits<{ saved: [id: string] }>()`, `defineModel<string>()`.
-- Styling comes from Tailwind classes and the design system's tokens (`tailwind.md`); a `<style>`
-  block is the exception.
 - A component renders and reacts. Fetching and business rules live in a composable it calls.
 
 **Test:** a component's script is mostly wiring: props, a composable, handlers.
@@ -67,8 +60,6 @@ its top level, and every view shows the server's data after a write.
 - Each test gets a fresh Pinia: `setActivePinia(createPinia())` in `beforeEach`.
 - A test that starts timers uses fake ones and restores real timers in `afterEach`: an interval
   left running fires into the next test.
-- After mounting, or calling a composable that fetches as it starts, `await flushPromises()`
-  before checking.
 - `vi.hoisted()` runs before the file's imports, so it can't use them; import inside it:
   `const count = await vi.hoisted(async () => (await import('vue')).ref(0))`.
 
