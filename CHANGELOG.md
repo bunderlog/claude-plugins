@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.71.1 — 2026-11-22
+
+### bagheera
+
+#### Fixes
+
+- have setup name mise's installer, and a PATH Git hooks' shells get, where it can't find hathi (2198a0a)
+
 ## 0.71.0 — 2026-11-21
 
 ### bagheera
