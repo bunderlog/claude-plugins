@@ -24,7 +24,15 @@ swallowed or left to crash, data lost or written twice, a race, a leaked Secret 
 Whether it keeps the project's ADRs, glossary, Guidelines and criteria is the verifier's to check,
 not yours.
 
-## 3. Report
+## 3. Try to disprove each one
+
+A finding you report as a bug sends the change back for another round, so a false one costs a
+round. Before reporting a finding, try to show it wrong: the input it needs can't reach this line,
+a caller or a check elsewhere already handles it, or a test the change has covers it. Read the
+code that would settle it rather than reason about it. Drop a finding you disproved; for one you
+couldn't, set `bug` by what is left of it.
+
+## 4. Report
 
 Each finding:
 - `at`: the file and line, `file:line`;
