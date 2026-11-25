@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.75.0 — 2026-11-25
+
+### bagheera
+
+#### Features
+
+- bagheera: mask a People Data Labs API key in a Transcript (cf2802c)
+
 ## 0.74.2 — 2026-11-23
 
 ### louie
