@@ -23,6 +23,9 @@ _SECRET_KINDS = [
         ("an Anthropic API key", r"\bsk-ant-[A-Za-z0-9_-]{20,}"),
         ("an OpenAI API key", r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}"),
         ("a Google API key", r"\bAIza[0-9A-Za-z_-]{35}"),
+        # People Data Labs publishes no format; this is the prefix of a real sandbox key, `sdbx`
+        # taken as the environment, and a length that leaves out a short placeholder.
+        ("a People Data Labs API key", r"\bpdl_[a-z]+_apikey_[A-Za-z0-9_-]{16,}"),
         ("a JWT", r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}"),
         # The password in a URL, between `://user:` and `@`, unless it is a placeholder: `$VAR`,
         # `${VAR}`, `<password>`, `****`.

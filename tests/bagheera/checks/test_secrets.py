@@ -19,6 +19,7 @@ SECRETS = [
     ("a JWT", "eyJ" + "hbGciOiJIUzI1NiJ9.eyJ" + "zdWIiOiIxMjM0NTY3ODkwIn0." + "Sf" * 20),
     ("a password in a URL", "ftp://dm:" + "hunter2-Pass" + "@10.0.0.1/devices"),
     ("a password in a URL", "redis://:" + "hunter2" + "@cache:6379"),
+    ("a People Data Labs API key", "pdl_sdbx_" + "apikey_" + "a1B2" * 8),
 ]
 AWS = SECRETS[2][1]
 
