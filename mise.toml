@@ -6,7 +6,7 @@ shellcheck = "0.11.0"
 ruff = "0.17.0"
 # Only for the tests of louie's Workflows, which Claude Code runs as JavaScript (PRD delivery).
 node = "24.22.1"
-"github:bunderlog/hathi" = "1.2.0"
+"github:bunderlog/hathi" = "1.3.0"
 
 [tasks.check]
 description = "Test and lint the Python code, test the Workflows, and lint the Hooks' sh"
