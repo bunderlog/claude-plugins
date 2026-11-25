@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.76.0 — 2026-11-25
+
+### louie
+
+#### Features
+
+- louie: start a go-vue product with hathi 1.3.0, which finds a People Data Labs API key (3187856)
+
 ## 0.75.0 — 2026-11-25
 
 ### bagheera
