@@ -181,7 +181,7 @@ class New(unittest.TestCase):
             text(os.path.join(dest, ".hathi.yml")),
         )
         mise = text(os.path.join(dest, "mise.toml"))
-        self.assertIn('"github:bunderlog/hathi" = "1.2.0"', mise)
+        self.assertIn('"github:bunderlog/hathi" = "1.3.0"', mise)
         self.assertIn(
             '\nDATABASE_URL = "postgres://my-app2@localhost:5433/my-app2?sslmode=disable"\n', mise
         )
