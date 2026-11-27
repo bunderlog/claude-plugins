@@ -90,6 +90,11 @@ before the first edit of their files 0 of 13, 0 of 9 and 0 of 5. Settled by deci
 (a Check's denials mostly false, a part unused for 30 days) and where the question goes, such as
 a Proposal to this repo's Inbox; or by keeping the report asked for.
 
+A post of 2026-11-25 (habr.com/ru/articles/1112164, Agentic Playbooks) gives such lines for its
+own learned rules: a rule only after three alike signals, then a trial; quarantined while its
+violations are at least its applications; retired after 90 days unapplied. They would fit a
+Guideline or a Check here: `no-git-hook-bypass` at 4 of 4 false is past the quarantine line.
+
 ## A Proposal kind that has earned it applies itself
 
 2026-11-18 · user, from a post on a smart home that grows its own controls · kept 2026-11-22
@@ -126,3 +131,30 @@ monitoring) stays the project's and the person's (PRD harness, Anti-goals; PRD h
 is the one gap worth closing. Settled by deciding whether, and where, a reminder is left: e.g. an
 Inbox item `/louie:merge` writes when it merges a change serving a PRD, dated for the window's
 end, or `/baloo:prd` checking signals whose window has passed; or by deciding not to.
+
+## A Verification that checked nothing passes
+
+2026-11-27 · user, from a post on agents' playbooks (habr.com/ru/articles/1112164)
+
+The post's point: a check of a report's shape passes an empty one, so a run that found nothing
+looks like one that looked and found nothing. `workflows/verify.js` is so: a verifier that returns
+no departures and an empty `criteria` gives `Verdict: pass`, with "none found for this change"
+under the criteria, even when a Ticket or PRD with criteria was named; and the schema has no
+field for what each source checked (verifier.md asks for it in a line, the schema drops it).
+Settled by the script failing, or saying not checked, when the criteria source returns no
+criterion for a target that has them, and a `checked` field each verifier fills (the ADRs, terms
+or Guidelines it read); or by deciding the pass with nothing found is right.
+
+## louie's agents can't read a Ticket kept in a tracker reached only by a connector
+
+2026-11-27 · user, while settling PRD code-host
+
+`louie:planner`, `louie:implementer` and `louie:verifier` name only `Read, Grep, Glob, Bash` in
+their `tools:`, and an agent with that list gets no MCP tool, so a Workflow's stage reads a
+tracker's Ticket only through a command-line client in Bash (`gh issue view`, `jira`). A project
+whose tracker is reached only by a connector (Atlassian's, say) gets no Ticket in `/louie:plan`,
+`/louie:implement` or `/louie:verify`; a company project's subagents read Jira only because its own
+agents name the Jira server's tools. Not checked in a run. Settled by a run on a Jira Ticket with
+no `jira` client, and, if it fails, by the skill that starts the Workflow reading the Ticket in the
+main session, which has the connectors, and handing its text to the Workflow; where Tickets are
+kept stays as ADR tickets has it.
