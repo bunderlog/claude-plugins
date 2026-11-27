@@ -205,6 +205,12 @@ _In code_: the `verify` Workflow; `agents/verifier.md`; `names.VERIFIER`
 
 ## Building
 
+**Code host**:
+Where a project's remote `origin` lives and its pull requests are opened, checked and merged:
+GitHub, or Bitbucket Cloud (PRD code-host).
+_Avoid_: "forge", "remote" for the host
+_In code_: louie's MCP server `code-host` (ADR code-host)
+
 **Plan**:
 louie's answer for a Ticket before it is built: each change, where it goes and the acceptance
 criterion it serves, how sure it is, its Open decisions and Assumptions; or nothing to build,
