@@ -1,6 +1,6 @@
 # The skills are measured by eval suites in `evals/`, run by hand with `claude plugin eval`
 
-Date: 2026-11-23
+Date: 2026-11-27
 
 Nothing measured whether a skill's text makes Claude follow it: the tests cover the plugin's code,
 and the measurement of 2026-10-07 (ADR measurement) read sessions, which show whether a part was
@@ -84,6 +84,19 @@ failed with louie too while `testing` came only at the first edit of a test, onc
 written; with a line in On every task, every run saw its test red first. Its judge of the trace agreed with a hand count in 12 of 12 runs.
 Its graders for the project's store run for real, no assertion on calls, no query of the store's
 table and tests named for behavior passed without louie on both, and left with their rules.
+
+On 2026-11-27 four cases for tests that QA and an embedded team write, `testing/worker` (work on
+another thread), `testing/hold` (behavior that depends on elapsed time), `testing/flaky` (a UI
+test that clicks before the page is ready) and `c/seam` (C over a vendor SDK on the host), scored
+1.00 without louie on Opus and Sonnet and were dropped: in a small repo made for the case the bare
+model awaits the work, owns the clock, fixes the flake at its cause and fakes the SDK at link
+time. The first two tasks on a company's own C++ code, beside tests that sleep, failed: a test
+slept without louie in 1 of 6 runs for the hold and 4 of 6 for the worker, and with louie in each
+of the 6 hold tests written, as "match the existing style" and "the least code" read as sleeping
+like the tests beside it. With a line in On every task that a test waits for a state, never for a
+time, 0 of 12 slept, each hold test moving a clock of its own. Cases on a company's code live in
+`evals/local/`, which git ignores, so that code never enters this repo: a case's scaffold copies
+it from the person's own checkout, and `--output-dir` keeps its traces out of the repo too.
 
 A case on a design proposal, such as `contradicts-adr`, `code-contradicts-adr` or
 `open-question`, measures the plugin as a whole, not `adr`: on 2026-10-20 the skill loaded in

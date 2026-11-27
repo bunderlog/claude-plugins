@@ -1,5 +1,7 @@
 /.claude/settings.local.json
 __pycache__/
 evals/**/results/
+# Eval cases on a company's own code, copied from a person's checkout (ADR evals).
+evals/local/
 /.about/proposals/
 /.claude/worktrees/
