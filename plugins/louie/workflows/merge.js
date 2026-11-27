@@ -28,9 +28,10 @@ const named =
   typeof args === 'string' ? args.split(/\s+/) : Array.isArray(args) ? args : args && Array.isArray(args.prs) ? args.prs : []
 const tokens = named.map((i) => String(i).trim()).filter(Boolean)
 
-// 42, #42 or …/pull/42; anything else is no pull request.
+// 42, #42, GitHub's …/pull/42 or Bitbucket Cloud's …/pull-requests/42, also with a tab of it
+// after (/files, /diff); anything else is no pull request.
 const numberOf = (t) => {
-  const m = /^#?(\d+)$/.exec(t) || /\/pull\/(\d+)\/?(?:[?#].*)?$/.exec(t)
+  const m = /^#?(\d+)$/.exec(t) || /\/pull(?:-requests)?\/(\d+)(?:\/[a-z-]+)?\/?(?:[?#].*)?$/.exec(t)
   return m ? Number(m[1]) : null
 }
 const unknown = tokens.filter((t) => numberOf(t) === null)
@@ -51,7 +52,7 @@ const PREPARE_SCHEMA = {
   properties: {
     status: {
       type: 'string',
-      enum: ['ok', 'closed', 'draft', 'not-default', 'no-ticket', 'merge-method', 'other-repo'],
+      enum: ['ok', 'closed', 'draft', 'not-default', 'no-ticket', 'merge-method', 'other-repo', 'no-token'],
       description: 'ok, or why prepare stopped, changing nothing',
     },
     reason: { type: 'string', description: 'when not ok: why, with what you found; else empty' },
@@ -60,7 +61,12 @@ const PREPARE_SCHEMA = {
     head: { type: 'string', description: 'the full sha of the pull request\'s head commit, recorded now; empty when not ok' },
     default_branch: { type: 'string', description: 'the remote\'s default branch' },
     ticket: { type: 'string', description: 'the Ticket: its tracker key or URL, or its file in .about/tickets/; empty when not found' },
-    method: { type: 'string', enum: ['merge', 'squash', 'rebase', ''], description: 'the merge method; empty when not ok' },
+    method: {
+      type: 'string',
+      // In the Code host's own terms: GitHub's, then Bitbucket Cloud's (PRD code-host).
+      enum: ['merge', 'squash', 'rebase', 'merge_commit', 'fast_forward', 'squash_fast_forward', 'rebase_fast_forward', 'rebase_merge', ''],
+      description: 'the merge method, in the Code host\'s own terms; empty when not ok',
+    },
     worktree: { type: 'string', description: 'the detached worktree\'s absolute path; empty when not ok' },
   },
   required: ['status', 'reason', 'number', 'branch', 'head', 'default_branch', 'ticket', 'method', 'worktree'],
