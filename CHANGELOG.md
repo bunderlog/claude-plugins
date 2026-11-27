@@ -2,6 +2,15 @@
 
 The marketplace's Releases, newest first.
 
+## 0.78.0 — 2026-11-27
+
+### louie
+
+#### Features
+
+- louie: a test waits for a state, never for a time, even where the tests beside it sleep (8841a83)
+- louie: give testing to C, C++ and Robot tests, and debugging to a failed ctest or robot run (8150e71)
+
 ## 0.77.0 — 2026-11-27
 
 ### louie
