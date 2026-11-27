@@ -1,21 +1,25 @@
-# `/louie:merge`'s push and merge rest on the implementer's instructions, the code host holding main
+# `/louie:merge`'s push rests on the implementer's instructions, its merge on louie's `code-host` server, the Code host holding main
 
-Date: 2026-11-21
+Date: 2026-11-27
 
 A Workflow's script runs no git of its own, so what a `louie:implementer` stage did is only what
 it reports. The force-push stage's rules (only with `--force-with-lease`, only to the pull
-request's branch, never the default branch) and the merge stage's check that the default branch's
-tip is still the rebase's base stay text in `plugins/louie/agents/implementer.md`, which the
-script's prompt backs by naming the exact lease and base: the script checks the sha the push
-reports, as it does now, and takes `base-moved` on the merge stage's word.
+request's branch, never the default branch) stay text in `plugins/louie/agents/implementer.md`,
+which the script's prompt backs by naming the exact lease: the script checks the sha the push
+reports. The merge's rules are in the code of louie's MCP server `code-host`, whose `pr_merge` the
+implementer is told to call (ADR code-host): it merges only when the pull request's head is the
+commit the last Verification passed and the default branch's tip is still the rebase's base, and
+deletes no branch; on GitHub `gh pr merge --match-head-commit` checks the head, on Bitbucket Cloud
+it is read again right before the merge. As before, nothing stops a stage running another
+command, and the script takes `base-moved` on the merge stage's word.
 
 What holds the default branch is the code host: in this repo a ruleset on it (`main: no
 force-push or deletion`, since 2026-11-21) refuses a force-push and a deletion, while the plain
 pushes of `mise run release` still go through. A project using louie protects its own default
 branch the same way; louie doesn't set it up.
 
-A merge onto a base that moved in the seconds between the stage's `git ls-remote` and `gh pr
-merge` is accepted: the default branch's CI runs after every merge and catches a combination that
+A merge onto a base that moved in the seconds between `pr_merge` reading the tip and merging is
+accepted, and on Bitbucket Cloud one whose head moved in those seconds too: the default branch's CI runs after every merge and catches a combination that
 breaks, and the merge can be reverted (PRD merge's non-goal of rebasing again stands).
 
 ## Considered options

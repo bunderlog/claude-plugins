@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 This repo is the `bunderlog` marketplace's source: `plugins/baloo/` (the knowledge skills and one
-`sh` session-start Hook), `plugins/louie/` (the Guidelines and the Hooks that give them, the agents
-and the Workflows) and `plugins/bagheera/` (the Checks in Hooks, the Status line, doctor, the
+`sh` session-start Hook), `plugins/louie/` (the Guidelines and the Hooks that give them, the agents,
+the Workflows and the MCP server `code-host`) and `plugins/bagheera/` (the Checks in Hooks, the Status line, doctor, the
 Session review, Retro, the Assessment and the Output style) are what ships, louie's and
 bagheera's Python in their `scripts/`, standard library only, Python 3.9 and later, sharing no
 code (ADR plugin); `tests/<plugin>/` tests each, and `src/release/release.py` makes and tags

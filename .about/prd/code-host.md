@@ -35,9 +35,10 @@ instructions, which nothing tests (ADR merge).
   `origin` it works on, and answers in JSON. Every stage of `implement` and `merge` that asks the
   Code host calls these tools in place of the Code host's own client, and the implementer's
   `tools:` names them.
-- It tells the Code host from the URL of the remote `origin`: a host of `bitbucket.org` is
-  Bitbucket Cloud; any other is GitHub, as now, so a GitHub Enterprise or SSH-alias remote runs as
-  it does today. The project configures nothing for it.
+- It tells the Code host from the URL of the remote `origin`: a host of `bitbucket.org`, or its
+  SSH hosts `ssh.bitbucket.org` and `altssh.bitbucket.org`, is Bitbucket Cloud; any other is
+  GitHub, as now, so a GitHub Enterprise or SSH-alias remote runs as it does today. The project
+  configures nothing for it.
 - On GitHub it calls `gh`, signed in by the person as now; louie holds no GitHub token.
 - On Bitbucket Cloud it calls Bitbucket's API with the token in the environment variable
   `BITBUCKET_TOKEN`: with `BITBUCKET_EMAIL` set too, as an API token and that account's email
@@ -67,7 +68,7 @@ instructions, which nothing tests (ADR merge).
 - `/louie:merge` takes a Bitbucket pull request's URL (`…/pull-requests/42`) as its number, as it
   takes a GitHub one's (`…/pull/42`).
 - A draft is the Code host's own; `merge`'s prepare stops on one `blocked:draft` on both.
-- Two parts, each in a Release of its own, GitHub's first:
+- Two parts, which may ship in one Release, as the Bitbucket Cloud part changes nothing on GitHub:
   - GitHub: the server for GitHub, with `implement` and `merge` calling it; nothing else changes;
   - Bitbucket Cloud: the server for Bitbucket Cloud.
 - With the GitHub part, ADR merge says the merge's rules are in the server's code, whose tools the
@@ -96,41 +97,51 @@ instructions, which nothing tests (ADR merge).
 GitHub:
 - Started as louie's manifest declares it, the server answers MCP's `initialize` over stdio and
   lists the five tools with their parameters, and a `tools/call` of `repo` returns its JSON.
+  → test: tests/louie/test_codehost.py "test_speaks_mcp_over_stdio"
 - With `gh` stubbed, `pr_merge` passes the head it is given to `gh pr merge` as
   `--match-head-commit`, never `--delete-branch`; returns `head-moved` when `gh` refuses that
   head; and with the default branch's tip, as `gh` reports it, other than the base it is given,
   returns `base-moved` and calls no merge.
-- With `gh` stubbed, `pr_checks` returns passed for a passed and a skipped check, failed
-  naming the failing check and its link (also while another runs), running while one runs or a
-  run for the head is queued with no check shown, and none for none.
+  → test: tests/louie/test_codehost.py "test_merges_matching_the_head_and_deletes_no_branch",
+  "test_head_moved_when_gh_refuses_that_head", "test_base_moved_calls_no_merge"
+- With `gh` stubbed, `pr_checks` returns passed for a passed and a skipped check, failed naming
+  the failing check and its link (also while another runs), running while one runs or a run for
+  the head is queued with no check shown, and none for none.
+  → test: tests/louie/test_codehost.py the class `GitHubChecks`
 - `implementer.md`, `implement.js` and `merge.js` name no `gh pr`, `gh run` or `gh repo` command:
-  a test reads them.
+  a test reads them. → test: tests/louie/test_codehost.py "test_no_stage_names_the_hosts_client"
 - With their agents stubbed, `implement`'s and `merge`'s Workflow tests pass unchanged.
+  → test: tests/workflows/implement.test.mjs, tests/workflows/merge.test.mjs
 - In this repo, `/louie:implement` on a Ticket opens its pull request, and `/louie:merge` merges it
   after CI, as before. Checked by hand at its part's Release.
 
 Bitbucket Cloud:
-- The server tells Bitbucket Cloud from `git@bitbucket.org:ws/repo.git` and
-  `https://bitbucket.org/ws/repo`, and GitHub from `github.com`, a GitHub Enterprise host and an
-  SSH alias.
+- The server tells Bitbucket Cloud from `git@bitbucket.org:ws/repo.git`,
+  `git@ssh.bitbucket.org:ws/repo.git` and `https://bitbucket.org/ws/repo`, and GitHub from
+  `github.com`, a GitHub Enterprise host and an SSH alias. → test: tests/louie/test_codehost.py
+  "test_bitbucket_cloud_from_its_urls", "test_github_from_any_other"
 - With Bitbucket's API stubbed, the server sends the token as Basic auth with `BITBUCKET_EMAIL`
-  set and as Bearer without it; opens a draft when asked and never asks to close the
-  source branch; `pr_merge` merges only when the head it reads right before is the one it is
-  given, else
+  set and as Bearer without it; opens a draft when asked and never asks to close the source
+  branch; `pr_merge` merges only when the head it reads right before is the one it is given, else
   returns `head-moved` and merges nothing; reads a stopped or failed build as failed, and a
   pending pipeline with no build shown as running; with the token's variable not set, returns
   `no-token` from every tool and calls no API; and writes the token's value in no output, also
   when the API's error repeats it.
+  → test: tests/louie/test_codehost.py the classes `BitbucketAuth` and `BitbucketTools`
 - With its agents stubbed, an `implement` run whose prepare stops naming `no-token` ends
   `blocked:prepare` naming it and runs no later stage; a `merge` run on two pull requests stopping
-  so returns each `blocked:no-token`, runs no rebase stage, and ends `blocked:none`.
+  so returns each `blocked:no-token`, runs no rebase stage, and ends `blocked:none`. → test:
+  tests/workflows/implement.test.mjs "implement stops before changing anything when prepare stops,
+  or the plan isn't ready"; tests/workflows/merge.test.mjs "merge on two pull requests with no
+  token for their Code host stops each at prepare and runs no rebase"
 - With its agents stubbed, `/louie:merge` given a Bitbucket pull request's URL and its number runs
-  it once.
-- In `webui`, whose `AGENTS.md` names the merge method, `/louie:implement` on a small
-  Ticket with criteria opens a pull request whose title is the Ticket's and whose body names each
-  criterion with its verdict; `/louie:merge` merges it by that method once its build passed, and
-  on a pull request whose build fails ends `blocked:ci` naming the build, merging nothing. Checked
-  by hand at its part's Release.
+  it once. → test: tests/workflows/merge.test.mjs "merge takes a Bitbucket Cloud pull request's
+  URL as its number"
+- In `webui`, whose `CLAUDE.md` or `AGENTS.md` names the merge method, `/louie:implement` on a
+  small Ticket with criteria opens a pull request whose title is the Ticket's and whose body names
+  each criterion with its verdict; `/louie:merge` merges it by that method once its build passed,
+  and on a pull request whose build fails ends `blocked:ci` naming the build, merging nothing.
+  Checked by hand at its part's Release.
 - Over those runs, the token's value is found in none of the Transcripts (`grep -rF` for it under
   all of `~/.claude/projects/`, the worktrees' folders included). Checked by hand at its part's
   Release.

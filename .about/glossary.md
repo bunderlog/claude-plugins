@@ -30,7 +30,7 @@ _Avoid_: "baloo" for these parts
 
 **louie**:
 The plugin a project turns on to build: the Guidelines, each given by its task's signal or named
-where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from a Ticket to a pull request and on to the default branch; to come,
+where it fits, the ADRs and PRDs named at the file they concern (PRD index), the Verification, and the Workflows from a Ticket to a pull request and on to the default branch, which reach the Code host through its MCP server `code-host`; to come,
 templates for a new product (PRD louie, PRD implement, PRD templates).
 _Avoid_: "baloo" for these parts
 
