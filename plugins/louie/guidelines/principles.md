@@ -13,6 +13,9 @@ For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremon
   asked for.
 - New behavior starts with its test: write it, run it and see it fail for the reason you
   expect, before the code that turns it green.
+- A test waits for a state, never for a time, even where the tests beside it sleep: code whose
+  behavior depends on elapsed time takes a clock the test moves, and work done on another thread
+  is awaited by its result.
 - A comment says what the code can't: why not the obvious way, a choice correctness rests on,
   where a constant comes from. A fix that departs from the obvious way gets one, even in a file
   with none, so a later tidy-up doesn't undo it.
