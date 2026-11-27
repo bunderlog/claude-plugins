@@ -1,6 +1,6 @@
 # Guidelines are files given by their task's signal or named where they fit, not skills
 
-Date: 2026-11-23
+Date: 2026-11-27
 
 A Guideline is a file of working rules in `plugins/louie/guidelines/`: `principles`, `design`,
 `testing`, `debugging` and `writing-for-agents` for any project, `ci` for a repo with a CI,
@@ -28,7 +28,9 @@ first time in a session that a signal of its subject or task comes:
   it.
 - The same, but on an edit only: a package manager's manifest for `dependencies`, which a Read
   alone doesn't give, as a `package.json` is read for its scripts too; and a test for `testing`
-  (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a file under `__tests__/`), as a
+  (`*_test.go`, `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.py`, a `.robot` suite, a file of code
+  named `*_test.*`, `*Test.*` or `test*.*`, or under `__tests__/`, `test/` or `tests/`, as C and C++
+  projects keep theirs), as a
   test is read to answer a question too, and `testing` given then turned the answer into code: in
   an eval of 2026-10-19, Claude Sonnet asked whether to change a design read a test, was given
   `testing`, and wrote a test-first change instead of checking the ADRs, in 6 of 8 runs; with
@@ -36,7 +38,8 @@ first time in a session that a signal of its subject or task comes:
 - A Write that creates a code file, but a test (its result's `type` is `create`), for `design` and
   `principles`: a new module is where they apply first.
 - `PostToolUse` and `PostToolUseFailure` on Bash, for the command: a run of tests or checks
-  (`pytest`, `vitest`, `go test`, `npm run test:…`, `mise run check`…) that failed, by its exit or
+  (`pytest`, `vitest`, `go test`, `ctest`, `robot`, `make test_run`, `npm run test:…`, `mise run
+  check`…) that failed, by its exit or
   by what it printed, since a pipe into `tail` exits 0, for `debugging`, but a run meant to fail:
   one the same command changes files before (`git stash`, `cp`, `sed -i`, a `>` into a file), as
   breaking code to see a test go red does, and one after the session's last edit of code was to a

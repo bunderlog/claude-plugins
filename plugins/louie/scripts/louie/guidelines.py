@@ -247,16 +247,25 @@ def _has_ext(*exts: str) -> Callable[[str], bool]:
 
 def _is_test(rel: str) -> bool:
     """Whether the file at `rel` is a test: Go's, Python's, or a JavaScript or TypeScript one by
-    its name or its __tests__ folder."""
-    name = os.path.basename(rel)
-    stem = os.path.splitext(name)[0]
+    its name, a Robot Framework suite, or a file of code named for its test (`worker_test.cpp`,
+    `AlarmTest.cpp`, `testPorts.cpp`) or in a test folder, as C and C++ projects keep theirs."""
+    parts = rel.replace(os.sep, "/").split("/")
+    name = parts[-1]
+    stem, ext = os.path.splitext(name)
+    if ext == ".robot" or stem.endswith((".test", ".spec")):
+        return True
+    if ext not in _CODE:
+        return False
     return (
-        name.endswith("_test.go")
-        or (name.endswith(".py") and (name.startswith("test_") or stem.endswith("_test")))
-        or stem.endswith(".test")
-        or stem.endswith(".spec")
-        or "__tests__" in os.path.dirname(rel).replace(os.sep, "/").split("/")
+        stem.startswith("test_")
+        or stem.endswith(("_test", "Test", "Tests"))
+        or re.match(r"test[A-Z]", stem) is not None
+        or any(d in _TEST_DIRS for d in parts[:-1])
     )
+
+
+# The folders whose code is tests: `__tests__`'s, Jest's, and `test` or `tests` beside the code.
+_TEST_DIRS = {"__tests__", "test", "tests"}
 
 
 def _for_agents(rel: str) -> bool:
@@ -375,8 +384,13 @@ _CI_FAILED = re.compile(
     r"\b(fail|failed|failure|failing|timed_out|startup_failure)\b|##\[error\]", re.I
 )
 # Programs that run tests or checks, and the names of a task runner's tasks that do.
-_RUNNERS = {"pytest", "vitest", "jest", "mocha", "playwright", "tsc", "eslint", "phpunit", "rspec"}
+_RUNNERS = {
+    "pytest", "vitest", "jest", "mocha", "playwright", "tsc", "eslint", "phpunit", "rspec", "ctest",
+    "robot", "pabot",
+}
 _TASKS = {"test", "check", "lint", "vet", "typecheck", "clippy"}
+# make's and ninja's options that take the next argument as their value.
+_MAKE_VALUED = {"-C", "-f", "-I", "-o", "-W", "--directory", "--file", "--makefile"}
 _TASK_RUNNERS = {"npm", "pnpm", "yarn", "bun", "deno", "mise", "task"}
 # Package managers and the subcommands that change the dependencies, with an install that names a
 # package, not one that installs the lockfile's.
@@ -395,6 +409,13 @@ def _runs_checks(p: Program) -> bool:
         return True
     if a and a[0] in _TASKS:
         return True
+    if p.name in ("make", "gmake", "ninja"):
+        # A target named for a task anywhere among the arguments, such as `-C dir test_run`, but
+        # no option's value: `-C test` is a folder.
+        return any(
+            re.match(r"(test|check)([_:-]|$)", x) and (i == 0 or a[i - 1] not in _MAKE_VALUED)
+            for i, x in enumerate(a)
+        )
     if p.name in _TASK_RUNNERS and len(a) > 1 and a[0] == "run":
         return any(t in a[1] for t in _TASKS)
     if p.name.startswith("python") and "-m" in a:
