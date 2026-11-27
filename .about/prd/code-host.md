@@ -20,11 +20,11 @@ instructions, which nothing tests (ADR merge).
 
 ## Success signal
 
-- In the month after the first Release, every `/louie:merge` run in this repo ends as it would have
-  before, and the default branch's CI passes after every merge it makes.
-- In the month after the second, `webui`'s pull requests reach its default branch through
-  `/louie:implement` and `/louie:merge` with no pull-request step typed by hand, and the token's
-  value appears in none of those sessions' Transcripts.
+- In the month after the GitHub part's Release, every `/louie:merge` run in this repo ends as it
+  would have before, and the default branch's CI passes after every merge it makes.
+- In the month after the Bitbucket Cloud part's, `webui`'s pull requests reach its default branch
+  through `/louie:implement` and `/louie:merge` with no pull-request step typed by hand, and the
+  token's value appears in none of those sessions' Transcripts.
 
 ## Scope
 
@@ -67,14 +67,14 @@ instructions, which nothing tests (ADR merge).
 - `/louie:merge` takes a Bitbucket pull request's URL (`…/pull-requests/42`) as its number, as it
   takes a GitHub one's (`…/pull/42`).
 - A draft is the Code host's own; `merge`'s prepare stops on one `blocked:draft` on both.
-- Two Releases:
-  1. the server for GitHub, with `implement` and `merge` calling it; nothing else changes;
-  2. Bitbucket Cloud.
-- At the first Release, ADR merge says the merge's rules are in the server's code, whose tools the
-  implementer is told to call; as now, nothing stops a stage running another command. At the
-  second, that on Bitbucket Cloud the head is read again right before the merge. The README names,
-  for Bitbucket Cloud, the two variables and the token's permissions; and, for both hosts, the
-  tools to allow for a run with no permission prompt.
+- Two parts, each in a Release of its own, GitHub's first:
+  - GitHub: the server for GitHub, with `implement` and `merge` calling it; nothing else changes;
+  - Bitbucket Cloud: the server for Bitbucket Cloud.
+- With the GitHub part, ADR merge says the merge's rules are in the server's code, whose tools the
+  implementer is told to call; as now, nothing stops a stage running another command. With the
+  Bitbucket Cloud part, that on Bitbucket Cloud the head is read again right before the merge. The
+  README names, for Bitbucket Cloud, the two variables and the token's permissions; and, for both
+  hosts, the tools to allow for a run with no permission prompt.
 
 ## Non-goals
 
@@ -93,7 +93,7 @@ instructions, which nothing tests (ADR merge).
 
 ## Acceptance criteria
 
-First Release:
+GitHub:
 - Started as louie's manifest declares it, the server answers MCP's `initialize` over stdio and
   lists the five tools with their parameters, and a `tools/call` of `repo` returns its JSON.
 - With `gh` stubbed, `pr_merge` passes the head it is given to `gh pr merge` as
@@ -107,9 +107,9 @@ First Release:
   a test reads them.
 - With their agents stubbed, `implement`'s and `merge`'s Workflow tests pass unchanged.
 - In this repo, `/louie:implement` on a Ticket opens its pull request, and `/louie:merge` merges it
-  after CI, as before. Checked by hand at its Release.
+  after CI, as before. Checked by hand at its part's Release.
 
-Second Release:
+Bitbucket Cloud:
 - The server tells Bitbucket Cloud from `git@bitbucket.org:ws/repo.git` and
   `https://bitbucket.org/ws/repo`, and GitHub from `github.com`, a GitHub Enterprise host and an
   SSH alias.
@@ -130,18 +130,18 @@ Second Release:
   Ticket with criteria opens a pull request whose title is the Ticket's and whose body names each
   criterion with its verdict; `/louie:merge` merges it by that method once its build passed, and
   on a pull request whose build fails ends `blocked:ci` naming the build, merging nothing. Checked
-  by hand at its Release.
+  by hand at its part's Release.
 - Over those runs, the token's value is found in none of the Transcripts (`grep -rF` for it under
-  all of `~/.claude/projects/`, the worktrees' folders included). Checked by hand at its Release.
+  all of `~/.claude/projects/`, the worktrees' folders included). Checked by hand at its part's
+  Release.
 
 ## Open questions
 
-  - Settled 2026-11-27: one MCP server of louie's for both hosts (ADR code-host), GitHub's through
-  `gh`, in two Releases; the
-  host told from `origin`, nothing configured; the token from `BITBUCKET_TOKEN`, Basic auth when
-  `BITBUCKET_EMAIL` is set, Bearer when not, never shown; the head read again before a Bitbucket
-  merge, the race accepted; drafts the host's own; checked end to end in `webui`, on a small
-  Ticket.
+- Settled 2026-11-27: one MCP server of louie's for both hosts (ADR code-host), GitHub's through
+  `gh`, in two parts, GitHub's first; the host told from `origin`, nothing configured; the token
+  from `BITBUCKET_TOKEN`, Basic auth when `BITBUCKET_EMAIL` is set, Bearer when not, never shown;
+  the head read again before a Bitbucket merge, the race accepted; drafts the host's own; checked
+  end to end in `webui`, on a small Ticket.
 - Which merge methods Bitbucket Cloud's API offers, and which `webui` allows. Settled by the API's
   reference and `webui`'s settings, at the plan.
 - Whether a Workflow's stage, an agent whose `tools:` names a plugin's MCP tools, can call them.
