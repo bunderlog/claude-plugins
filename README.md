@@ -45,6 +45,17 @@ louie's Workflows, such as `/louie:verify`, run only where Claude Code's dynamic
 `"enableWorkflows": true` in the project's `.claude/settings.json`, which setting a project up
 adds. Where they are off, Claude runs the `louie:verifier` agent by name instead.
 
+`/louie:implement` and `/louie:merge` reach the Code host through louie's MCP server `code-host`,
+which starts with each session where louie is on (ADR code-host): GitHub through `gh`, signed in
+as you, or Bitbucket Cloud where `origin` is on `bitbucket.org`. For Bitbucket Cloud, set
+`BITBUCKET_TOKEN` in the environment Claude Code starts with: an Atlassian API token with
+`BITBUCKET_EMAIL` set to its account's email, or a repository or workspace access token without
+it, either allowed to read the repository and to read and write its pull requests and, for
+Pipelines, to read them. Name the merge method in the project's `CLAUDE.md` or `AGENTS.md`, in the
+host's terms (`rebase` on GitHub, `squash` or `merge_commit` on Bitbucket Cloud), unless the host
+allows only one. To let a run go without a permission prompt for each call, allow
+`mcp__plugin_louie_code-host` in your settings' `permissions.allow`.
+
 ## Doctor
 
 `/bagheera:doctor`, or asking Claude what bagheera has on or why a Check didn't run, shows its

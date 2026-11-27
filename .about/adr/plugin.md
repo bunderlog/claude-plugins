@@ -1,12 +1,13 @@
 # Three plugins in the `bunderlog` marketplace, split by who turns a part on and what it is made of
 
-Date: 2026-11-18
+Date: 2026-11-27
 
 This repo is the `bunderlog` marketplace, and it holds three plugins (PRD harness): `baloo`, the
 project's method — the knowledge skills and one SessionStart Hook in `sh`, no Python; `louie`,
 building — the Guidelines, each given by its task's signal or named where it fits, the `PostToolUse`
 Hook that names, at a file Claude reads, edits or writes, the ADRs and PRDs that concern it (PRD
-index), the verifier, the reviewer and the Workflows `verify`, `plan`, `implement` and `merge`, and
+index), the verifier, the reviewer, the Workflows `verify`, `plan`, `implement` and `merge`, and the
+MCP server `code-host` they reach the Code host through (ADR code-host), and
 to come templates and `upgrade-all` (PRD louie, PRD implement); and `bagheera`, the person's sessions and
 repos — Checks in Hooks beyond Claude Code's deny rules, the Status line and `doctor`, the Session
 review and Retro, the `short-replies` Output style, and setting a project up. A part goes where who
