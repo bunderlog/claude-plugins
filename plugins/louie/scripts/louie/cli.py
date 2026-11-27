@@ -14,6 +14,7 @@ from louie import (
     guidelines,
     hook,
     knowledge,
+    mcp,
     names,
     new,
     once,
@@ -24,7 +25,7 @@ from louie import (
 
 USAGE = (
     "usage: louie version | session-start [UserPromptSubmit] | allow-guideline | subagent-start |\n"
-    "  post-tool-use | user-prompt-submit | new <path> <name> <owner>"
+    "  post-tool-use | user-prompt-submit | new <path> <name> <owner> | mcp"
 )
 
 
@@ -56,6 +57,8 @@ def run(args: List[str], stdin: TextIO, stdout: TextIO, stderr: TextIO) -> int:
             return 0
         if command == "session-start":
             return session_start.run_hook("SessionStart", _read(stdin), stdout, stderr)
+        if command == "mcp":
+            return mcp.serve(stdin, stdout)
         hooks = {
             "allow-guideline": allow_guideline,
             "subagent-start": subagent_start,

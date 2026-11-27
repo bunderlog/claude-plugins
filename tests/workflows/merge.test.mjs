@@ -188,14 +188,30 @@ test('merge merges nothing when the pushed branch isn\'t the commit the Verifica
   assert.ok(!labels(slow.calls).includes('merge'))
 })
 
-test('merge stops a pull request at prepare when it is a draft, closed, not on the default branch, in another repo, or has no Ticket or no merge method it can tell', async () => {
-  for (const status of ['draft', 'closed', 'no-ticket', 'merge-method', 'not-default', 'other-repo']) {
+test('merge stops a pull request at prepare when it is a draft, closed, not on the default branch, in another repo, or has no Ticket, no merge method it can tell or no token for its Code host', async () => {
+  for (const status of ['draft', 'closed', 'no-ticket', 'merge-method', 'not-default', 'other-repo', 'no-token']) {
     const prepare = { status, reason: 'r', number: 1, branch: '', head: '', default_branch: 'main', ticket: '', method: '', worktree: '' }
     const { result, calls } = await run('merge', '1', stages({ by: { 1: { prepare } } }))
     assert.equal(result.verdict, 'blocked:none')
     assert.deepEqual([result.results[0].verdict, result.results[0].reason], [`blocked:${status}`, 'r'])
     assert.deepEqual(labels(calls), ['prepare'])
   }
+})
+
+test('merge on two pull requests with no token for their Code host stops each at prepare and runs no rebase', async () => {
+  const prepare = { status: 'no-token', reason: 'BITBUCKET_TOKEN isn\'t set', number: 1, branch: '', head: '', default_branch: '', ticket: '', method: '', worktree: '' }
+  const { result, calls } = await run('merge', '1 2', stages({ by: { 1: { prepare }, 2: { prepare: { ...prepare, number: 2 } } } }))
+  assert.deepEqual(result.results.map((r) => r.verdict), ['blocked:no-token', 'blocked:no-token'])
+  assert.equal(result.verdict, 'blocked:none')
+  assert.deepEqual(labels(calls), ['prepare #1', 'prepare #2'])
+})
+
+test('merge takes a Bitbucket Cloud pull request\'s URL as its number', async () => {
+  const s = stages()
+  const once = await run('merge', '42 https://bitbucket.org/ws/repo/pull-requests/42 https://bitbucket.org/ws/repo/pull-requests/42/diff https://github.com/o/r/pull/42/files', s)
+  assert.equal(once.result.verdict, 'done:all')
+  assert.equal(s.events.filter((e) => e === 'prepare 42').length, 1)
+  assert.match(once.calls[0].prompt, /#42, named as 42, https:\/\/bitbucket\.org\/ws\/repo\/pull-requests\/42, /)
 })
 
 test('merge stops a pull request when the default branch moved since its rebase or the code host refuses the merge', async () => {

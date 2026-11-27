@@ -129,6 +129,9 @@ test('implement opens no pull request when the pushed branch ends at another com
 test('implement stops before changing anything when prepare stops, or the plan isn\'t ready', async () => {
   const blocked = await run('implement', 'x.md', stages({ prepare: { ...prep, ok: false, reason: 'no remote' } }))
   assert.equal(blocked.result.verdict, 'blocked:prepare')
+  const noToken = await run('implement', 'x.md', stages({ prepare: { ...prep, ok: false, reason: 'no-token: BITBUCKET_TOKEN isn\'t set' } }))
+  assert.deepEqual([noToken.result.verdict, noToken.calls.map((c) => c.label)], ['blocked:prepare', ['prepare']])
+  assert.match(noToken.result.reason + JSON.stringify(noToken.result.results || ''), /no-token/)
   assert.equal(blocked.result.reason, 'no remote')
   assert.deepEqual(blocked.calls.map((c) => c.label), ['prepare'])
   for (const [verdict, want] of [['needs-decision', 'blocked:needs-decision'], ['done:nothing-to-build', 'done:nothing-to-build']]) {
