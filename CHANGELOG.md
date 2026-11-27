@@ -2,6 +2,14 @@
 
 The marketplace's Releases, newest first.
 
+## 0.77.0 — 2026-11-27
+
+### louie
+
+#### Features
+
+- louie: open, check and merge pull requests on Bitbucket Cloud too, through louie's MCP server (444c5d8)
+
 ## 0.76.0 — 2026-11-25
 
 ### louie
